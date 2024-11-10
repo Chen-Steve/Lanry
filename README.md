@@ -1,36 +1,80 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# LightNovel Database
+
+A modern web application for uploading, discovering, and tracking light novels.
+
+## Project Overview
+
+LightNovel Database is a platform where users can:
+- Browse a collection of light novels
+- Upload new light novels to the database
+- Search and filter light novels by various criteria
+- Create user accounts to track their reading progress and favorites
+
+## Technology Stack
+
+- Frontend: Next.js with TypeScript
+- Styling: Tailwind CSS
+- Backend: Next.js API routes
+- Database: PostgreSQL
+- ORM: Prisma
+- Authentication: NextAuth.js
+
+## Development Phases
+
+### Phase 1: Project Setup and Basic Structure
+
+1. Initialize Next.js project with TypeScript
+2. Set up Tailwind CSS
+3. Create basic layout components
+4. Set up PostgreSQL database
+5. Configure Prisma ORM
+
+### Phase 2: Core Functionality
+
+1. Implement light novel listing page
+2. Create light novel detail page
+3. Develop search and filter functionality
+4. Build light novel upload form
+
+### Phase 3: User Authentication and Profiles
+
+1. Integrate NextAuth.js for user authentication
+2. Create user profile pages
+3. Implement favorite/bookmark functionality
+4. Add reading progress tracking
+
+### Phase 4: Advanced Features
+
+1. Implement user ratings and reviews
+2. Add chapter release tracking
+3. Create recommendation system
+4. Develop admin panel for content moderation
+
+### Phase 5: Optimization and Deployment
+
+1. Optimize performance and loading times
+2. Implement SEO best practices
+3. Set up continuous integration and deployment
+4. Deploy to production environment
 
 ## Getting Started
 
-First, run the development server:
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Set up environment variables (database connection, auth providers, etc.)
+4. Run the development server:
+   ```bash
+   npm run dev
+   ```
+5. Open [http://localhost:3000](http://localhost:3000) in your browser
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Contributing
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for more information.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## License
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

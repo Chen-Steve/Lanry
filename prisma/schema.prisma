@@ -1,0 +1,48 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Novel {
+  id             String    @id @default(uuid())
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  title          String
+  author         String
+  description    String
+  coverImageUrl  String?   @map("cover_image_url")
+  status         NovelStatus
+  chapters       Chapter[]
+
+  @@map("novels")
+}
+
+model Chapter {
+  id            String    @id @default(uuid())
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  chapterNumber Int       @map("chapter_number")
+  title         String
+  content       String
+  novel         Novel     @relation(fields: [novelId], references: [id], onDelete: Cascade)
+  novelId       String    @map("novel_id")
+
+  @@unique([novelId, chapterNumber])
+  @@map("chapters")
+}
+
+enum NovelStatus {
+  ONGOING
+  COMPLETED
+  HIATUS
+}
