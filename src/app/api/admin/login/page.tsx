@@ -23,7 +23,7 @@ export default function AdminLogin() {
       } else {
         setError('Invalid credentials');
       }
-    } catch (error) {
+    } catch {
       setError('Authentication failed');
     }
   };
