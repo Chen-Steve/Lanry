@@ -3,25 +3,51 @@ import { prisma } from '@/lib/prisma';
 
 export async function POST(
   request: Request,
-  { params }: { params: { novelId: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
     const body = await request.json();
     const { chapterNumber, title, content } = body;
+    const novelId = params.id;
+
+    // Validate required fields
+    if (typeof chapterNumber !== 'number' || !content?.trim()) {
+      return NextResponse.json(
+        { error: 'Missing required fields' },
+        { status: 400 }
+      );
+    }
+
+    // First verify the novel exists
+    const novel = await prisma.novel.findUnique({
+      where: { id: novelId },
+    });
+
+    if (!novel) {
+      return NextResponse.json(
+        { error: 'Novel not found' },
+        { status: 404 }
+      );
+    }
 
     const chapter = await prisma.chapter.create({
       data: {
         chapterNumber,
-        title,
-        content,
-        novelId: params.novelId,
+        title: title?.trim() ?? '',
+        content: content.trim(),
+        novel: {
+          connect: { id: novelId }
+        }
       },
     });
 
     return NextResponse.json(chapter);
   } catch (error) {
     console.error('Error creating chapter:', error);
-    return NextResponse.json({ error: 'Error creating chapter' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Error creating chapter' },
+      { status: 500 }
+    );
   }
 }
 

@@ -26,15 +26,15 @@ const handlePrismaError = (error: unknown) => {
 
 interface ChapterInput {
   chapterNumber: number;
-  title: string;
+  title?: string;
   content: string;
 }
 
-// Input validation function
+// Updated input validation function
 const validateInput = (body: ChapterInput): boolean => {
-  const { chapterNumber, title, content } = body;
+  const { chapterNumber, content } = body;
   
-  if (!title?.trim() || !content?.trim()) {
+  if (!content?.trim()) {
     return false;
   }
   
@@ -67,7 +67,7 @@ export async function PUT(
       },
       data: {
         chapterNumber: body.chapterNumber,
-        title: body.title.trim(),
+        title: body.title?.trim() ?? '',
         content: body.content.trim(),
       },
     });

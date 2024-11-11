@@ -71,12 +71,16 @@ export default function ChapterManagementForm() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          ...formData,
           chapterNumber: parseInt(formData.chapterNumber),
+          title: formData.title.trim() || undefined,
+          content: formData.content,
         }),
       });
 
-      if (!response.ok) throw new Error(`Failed to ${editingChapter ? 'update' : 'create'} chapter`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Failed to ${editingChapter ? 'update' : 'create'} chapter`);
+      }
 
       // Reset form and refresh chapters
       setFormData({ chapterNumber: '', title: '', content: '' });
@@ -85,7 +89,7 @@ export default function ChapterManagementForm() {
       alert(`Chapter ${editingChapter ? 'updated' : 'created'} successfully!`);
     } catch (error) {
       console.error(`Error ${editingChapter ? 'updating' : 'creating'} chapter:`, error);
-      alert(`Failed to ${editingChapter ? 'update' : 'create'} chapter`);
+      alert(error instanceof Error ? error.message : `Failed to ${editingChapter ? 'update' : 'create'} chapter`);
     }
   };
 
@@ -136,7 +140,8 @@ export default function ChapterManagementForm() {
                   onClick={() => handleChapterClick(chapter)}
                 >
                   <h4 className="font-medium">
-                    Chapter {chapter.chapterNumber}: {chapter.title}
+                    Chapter {chapter.chapterNumber}
+                    {chapter.title && `: ${chapter.title}`}
                   </h4>
                 </div>
               ))}
@@ -167,17 +172,16 @@ export default function ChapterManagementForm() {
 
                 <div>
                   <label className="block text-sm font-medium mb-1">
-                    Chapter Title
+                    Chapter Title <span className="text-gray-500 text-xs">(optional)</span>
                   </label>
                   <input
-                    title="Enter the chapter title"
+                    title="Enter the chapter title (optional)"
                     type="text"
                     value={formData.title}
                     onChange={(e) =>
                       setFormData({ ...formData, title: e.target.value })
                     }
                     className="w-full p-2 border rounded"
-                    required
                   />
                 </div>
 
