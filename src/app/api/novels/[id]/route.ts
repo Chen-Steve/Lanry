@@ -99,4 +99,40 @@ export async function PUT(
       { status: 500 }
     );
   }
+}
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    await prisma.novel.delete({
+      where: { id: params.id },
+    });
+
+    return NextResponse.json(
+      { message: 'Novel deleted successfully' },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error('Error deleting novel:', error);
+    
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2025') {
+        return NextResponse.json(
+          { error: 'Novel not found' },
+          { status: 404 }
+        );
+      }
+      return NextResponse.json(
+        { error: 'Database operation failed' },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
 } 

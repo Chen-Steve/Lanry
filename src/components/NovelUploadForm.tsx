@@ -89,6 +89,38 @@ export default function NovelUploadForm() {
     });
   };
 
+  const handleDelete = async (novelId: string) => {
+    if (!confirm('Are you sure you want to delete this novel? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/novels/${novelId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) throw new Error('Failed to delete novel');
+
+      // Reset form if we're currently editing this novel
+      if (editingNovel?.id === novelId) {
+        setEditingNovel(null);
+        setFormData({
+          title: '',
+          description: '',
+          author: '',
+          status: 'ONGOING',
+        });
+      }
+
+      // Refresh novels list
+      fetchNovels();
+      alert('Novel deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting novel:', error);
+      alert('Failed to delete novel');
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -101,11 +133,26 @@ export default function NovelUploadForm() {
                 className={`p-3 border rounded hover:bg-gray-100 cursor-pointer ${
                   editingNovel?.id === novel.id ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-gray-50'
                 }`}
-                onClick={() => handleNovelClick(novel)}
               >
-                <h4 className="font-medium">{novel.title}</h4>
-                <p className="text-sm text-gray-600">by {novel.author}</p>
-                <span className="text-xs bg-gray-200 px-2 py-1 rounded">{novel.status}</span>
+                <div className="flex justify-between items-start">
+                  <div onClick={() => handleNovelClick(novel)}>
+                    <h4 className="font-medium">{novel.title}</h4>
+                    <p className="text-sm text-gray-600">by {novel.author}</p>
+                    <span className="text-xs bg-gray-200 px-2 py-1 rounded">{novel.status}</span>
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(novel.id);
+                    }}
+                    className="text-red-500 hover:text-red-700 p-1"
+                    title="Delete novel"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                </div>
               </div>
             ))}
           </div>
