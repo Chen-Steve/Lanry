@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import NovelListing from '@/components/NovelListing';
-import AdSection from '@/components/AdSection';
 import { Novel } from '@/types/database';
 
 export default function Home() {
@@ -46,9 +45,6 @@ export default function Home() {
         ) : (
           <NovelListing novels={novels} />
         )}
-      </div>
-      <div className="w-full sm:w-64 sm:flex-shrink-0">
-        <AdSection />
       </div>
     </div>
   );
