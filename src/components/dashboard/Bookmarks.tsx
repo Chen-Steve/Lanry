@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { Icon } from '@iconify/react';
+import Link from 'next/link';
 
 interface Novel {
   id: string;
@@ -33,27 +34,29 @@ const fetchBookmarks = async () => {
 };
 
 // Reusable bookmark card component
-const BookmarkCard = ({ bookmark, onRemove }: { bookmark: Bookmark; onRemove: (id: string) => void }) => (
-  <div className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-    <h3 className="font-medium mb-2">{bookmark.novel.title}</h3>
-    <div className="flex justify-between items-center">
-      <button
-        onClick={() => {/* Add read handler */}}
-        className="text-blue-500 hover:text-blue-600 flex items-center gap-1"
-      >
-        <Icon icon="mdi:book-open-page-variant" width="20" />
-        <span>Read</span>
-      </button>
-      <button
-        onClick={() => onRemove(bookmark.id)}
-        className="text-red-500 hover:text-red-600 flex items-center gap-1"
-      >
-        <Icon icon="mdi:bookmark-remove" width="20" />
-        <span>Remove</span>
-      </button>
+const BookmarkCard = ({ bookmark, onRemove }: { bookmark: Bookmark; onRemove: (id: string) => void }) => {
+  return (
+    <div className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+      <h3 className="font-medium mb-2">{bookmark.novel.title}</h3>
+      <div className="flex justify-between items-center">
+        <Link
+          href={`/novels/${bookmark.novel.id}`}
+          className="text-blue-500 hover:text-blue-600 flex items-center gap-1"
+        >
+          <Icon icon="mdi:book-open-page-variant" width="20" />
+          <span>Read</span>
+        </Link>
+        <button
+          onClick={() => onRemove(bookmark.id)}
+          className="text-red-500 hover:text-red-600 flex items-center gap-1"
+        >
+          <Icon icon="mdi:bookmark-remove" width="20" />
+          <span>Remove</span>
+        </button>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 // Loading skeleton
 const BookmarksSkeleton = () => (
