@@ -2,25 +2,13 @@
 
 import { useState } from 'react';
 import NovelUploadForm from '@/components/NovelUploadForm';
+import ChapterManagementForm from '@/components/ChapterManagementForm';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('novels');
 
   return (
     <div className="max-w-6xl mx-auto p-6">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-        <button
-          onClick={() => {
-            sessionStorage.removeItem('adminAuthenticated');
-            window.location.href = '/admin/login';
-          }}
-          className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-        >
-          Logout
-        </button>
-      </div>
-
       <div className="mb-6">
         <div className="border-b border-gray-200">
           <nav className="-mb-px flex">
@@ -52,7 +40,7 @@ export default function AdminDashboard() {
         {activeTab === 'novels' ? (
           <NovelUploadForm />
         ) : (
-          <div>Chapter management component will go here</div>
+          <ChapterManagementForm />
         )}
       </div>
     </div>

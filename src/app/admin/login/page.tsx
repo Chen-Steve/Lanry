@@ -14,16 +14,23 @@ export default function AdminLogin() {
       const response = await fetch('/api/admin/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(credentials),
+        body: JSON.stringify({
+          username: credentials.username,
+          password: credentials.password,
+        }),
       });
 
+      const data = await response.json();
+
       if (response.ok) {
-        sessionStorage.setItem('adminAuthenticated', 'true');
+        // Store the session
+        sessionStorage.setItem('adminSession', JSON.stringify(data.session));
         router.push('/admin/dashboard');
       } else {
-        setError('Invalid credentials');
+        setError(data.error || 'Authentication failed');
       }
-    } catch {
+    } catch (error) {
+      console.error('Login error:', error);
       setError('Authentication failed');
     }
   };
@@ -36,10 +43,10 @@ export default function AdminLogin() {
         
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Username</label>
+            <label className="block text-sm font-medium mb-1">Email</label>
             <input
-              aria-label="Username"
-              type="text"
+              title="Enter your email"
+              type="email"
               value={credentials.username}
               onChange={(e) => setCredentials({ ...credentials, username: e.target.value })}
               className="w-full p-2 border rounded"
@@ -50,7 +57,7 @@ export default function AdminLogin() {
           <div>
             <label className="block text-sm font-medium mb-1">Password</label>
             <input
-              aria-label="Password"
+              title="Enter your password"
               type="password"
               value={credentials.password}
               onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}

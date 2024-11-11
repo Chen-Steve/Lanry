@@ -1,10 +1,19 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { title, author, description, status } = body;
+
+    // Validate input
+    if (!title || !author || !description || !status) {
+      return NextResponse.json(
+        { error: 'Missing required fields' },
+        { status: 400 }
+      );
+    }
 
     const novel = await prisma.novel.create({
       data: {
@@ -18,7 +27,25 @@ export async function POST(request: Request) {
     return NextResponse.json(novel);
   } catch (error) {
     console.error('Error creating novel:', error);
-    return NextResponse.json({ error: 'Error creating novel' }, { status: 500 });
+    
+    if (error instanceof Prisma.PrismaClientInitializationError) {
+      return NextResponse.json(
+        { error: 'Database connection error' },
+        { status: 503 }
+      );
+    }
+
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      return NextResponse.json(
+        { error: 'Database operation failed' },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
 }
 

@@ -8,8 +8,8 @@ const Header = () => {
 
   return (
     <header className="w-full">
-      <div className="max-w-5xl mx-auto px-4 mt-8">
-        <div className="bg-white border-2 border-black rounded-md px-6 py-3 flex flex-col sm:flex-row justify-between items-center gap-4">
+      <div className="max-w-5xl mx-auto px-4 mt-8 mb-10">
+        <div className="bg-white border-b border-black rounded-md px-6 py-3 flex flex-col sm:flex-row justify-between items-center gap-4">
           <Link href="/" className="text-2xl font-bold text-gray-800 hover:text-gray-600 transition-colors">
             Lanry
           </Link>
