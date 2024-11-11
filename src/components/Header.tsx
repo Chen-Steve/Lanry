@@ -15,19 +15,16 @@ const Header = () => {
   const [username, setUsername] = useState<string | null>(null);
 
   useEffect(() => {
+    // Initial session check
     checkAuth();
     
+    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setIsAuthenticated(event === 'SIGNED_IN');
+      setIsAuthenticated(!!session);
       if (session?.user) {
-        // Fetch the profile to get the username
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('username')
-          .eq('id', session.user.id)
-          .single();
-        
-        setUsername(profile?.username || 'User'); // Provide a fallback value
+        await fetchUserProfile(session.user.id);
+      } else {
+        setUsername(null);
       }
     });
 
@@ -36,18 +33,21 @@ const Header = () => {
     };
   }, []);
 
+  const fetchUserProfile = async (userId: string) => {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('username')
+      .eq('id', userId)
+      .single();
+    
+    setUsername(profile?.username || 'User');
+  };
+
   const checkAuth = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     setIsAuthenticated(!!session);
     if (session?.user) {
-      // Fetch the profile to get the username
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('username')
-        .eq('id', session.user.id)
-        .single();
-      
-      setUsername(profile?.username || 'User'); // Provide a fallback value
+      await fetchUserProfile(session.user.id);
     }
   };
 

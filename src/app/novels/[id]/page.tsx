@@ -2,11 +2,12 @@
 
 import { Novel, Chapter } from '@/types/database';
 import { Icon } from '@iconify/react';
-import { notFound, useRouter } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import { formatDate } from '@/lib/utils';
 import { useEffect, useState, use } from 'react';
 import { supabase } from '@/lib/supabase';
+import toast from 'react-hot-toast';
 
 async function getNovel(id: string): Promise<Novel | null> {
   try {
@@ -48,7 +49,6 @@ export default function NovelPage({ params }: { params: Promise<{ id: string }> 
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isBookmarkLoading] = useState(false);
-  const router = useRouter();
 
   useEffect(() => {
     const fetchNovel = async () => {
@@ -88,7 +88,16 @@ export default function NovelPage({ params }: { params: Promise<{ id: string }> 
 
   const handleBookmark = async () => {
     if (!isAuthenticated) {
-      router.push('/auth');
+      toast.error('Please create an account to save bookmarks', {
+        duration: 3000,
+        position: 'bottom-center',
+        style: {
+          background: '#F87171',
+          color: 'white',
+          padding: '12px 24px',
+        },
+        icon: <Icon icon="mdi:bookmark-plus" className="text-xl" />,
+      });
       return;
     }
 
@@ -125,6 +134,7 @@ export default function NovelPage({ params }: { params: Promise<{ id: string }> 
       }
     } catch (error) {
       console.error('Error toggling bookmark:', error);
+      toast.error('Failed to update bookmark');
     }
   };
 
@@ -175,9 +185,11 @@ export default function NovelPage({ params }: { params: Promise<{ id: string }> 
                 disabled={isBookmarkLoading}
                 aria-label={isBookmarked ? "Remove Bookmark" : "Add Bookmark"} 
                 className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                  isBookmarked 
-                    ? 'bg-amber-400 hover:bg-amber-500 text-amber-950'
-                    : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                  !isAuthenticated 
+                    ? 'bg-gray-100 hover:bg-gray-200 text-gray-500'
+                    : isBookmarked 
+                      ? 'bg-amber-400 hover:bg-amber-500 text-amber-950'
+                      : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
                 } ${isBookmarkLoading ? 'opacity-50' : ''}`}
               >
                 <Icon 
