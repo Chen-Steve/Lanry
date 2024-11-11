@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import ReadingHistorySection from '@/components/dashboard/ReadingHistory';
 import Bookmarks from '@/components/dashboard/Bookmarks';
 import Settings from '@/components/dashboard/Settings';
+import { Icon } from '@iconify/react';
 
 type DashboardTab = 'reading' | 'bookmarks' | 'settings';
 
@@ -36,33 +37,36 @@ export default function UserDashboard() {
         <nav className="-mb-px flex space-x-8">
           <button
             onClick={() => setActiveTab('reading')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+            className={`py-4 px-1 border-b-2 font-medium flex items-center gap-2 ${
               activeTab === 'reading'
                 ? 'border-blue-500 text-blue-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
+            title="Reading History"
           >
-            Reading History
+            <Icon icon="mdi:book-open-page-variant" width="20" />
           </button>
           <button
             onClick={() => setActiveTab('bookmarks')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+            className={`py-4 px-1 border-b-2 font-medium flex items-center gap-2 ${
               activeTab === 'bookmarks'
                 ? 'border-blue-500 text-blue-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
+            title="Bookmarks"
           >
-            Bookmarks
+            <Icon icon="mdi:bookmark" width="20" />
           </button>
           <button
             onClick={() => setActiveTab('settings')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+            className={`py-4 px-1 border-b-2 font-medium flex items-center gap-2 ${
               activeTab === 'settings'
                 ? 'border-blue-500 text-blue-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
+            title="Settings"
           >
-            Settings
+            <Icon icon="mdi:cog" width="20" />
           </button>
         </nav>
       </div>

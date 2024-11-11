@@ -6,14 +6,13 @@ interface Novel {
   title: string;
   author: string;
   description: string;
-  // Add other novel properties as needed
 }
 
 interface Bookmark {
   id: string;
-  user_id: string;
-  novel_id: string;
-  created_at: string;
+  profileId: string;
+  novelId: string;
+  createdAt: string;
   novel: Novel;
 }
 
@@ -33,7 +32,7 @@ export default function Bookmarks() {
       const { data, error } = await supabase
         .from('bookmarks')
         .select('*, novel:novels(*)')
-        .eq('user_id', user.id)
+        .eq('profile_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;

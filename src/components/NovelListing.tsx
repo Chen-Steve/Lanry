@@ -5,12 +5,12 @@ import { Novel } from '@/types/database';
 import { Icon } from '@iconify/react';
 
 const NovelCard = ({ novel }: { novel: Novel }) => (
-  <div className="flex flex-col sm:flex-row border p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
-    <div className="w-full sm:w-24 h-48 sm:h-36 mb-4 sm:mb-0 sm:mr-4 flex-shrink-0">
+  <div className="flex flex-row border p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 gap-4">
+    <div className="w-32 h-40 flex-shrink-0">
       <div className="w-full h-full bg-gray-300 rounded"></div>
     </div>
     <div className="flex-grow overflow-hidden">
-      <h3 className="text-lg sm:text-xl font-semibold mb-2 truncate">{novel.title}</h3>
+      <h3 className="text-lg font-semibold mb-2 truncate">{novel.title}</h3>
       <p className="text-sm text-gray-600 mb-2">by {novel.author}</p>
       <p className="text-sm text-gray-500 line-clamp-3">{novel.description}</p>
     </div>
@@ -102,7 +102,7 @@ const NovelListing = ({ novels }: { novels: Novel[] }) => {
       </div>
 
       {/* Novel Grid */}
-      <div className="grid grid-cols-1 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {novels.map((novel) => (
           <NovelCard key={novel.id} novel={novel} />
         ))}

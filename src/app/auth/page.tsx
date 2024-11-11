@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { Icon } from '@iconify/react';
+import { generateUsername } from '@/utils/username';
 
 type AuthMode = 'signin' | 'signup';
 type PasswordStrength = 'weak' | 'medium' | 'strong';
@@ -69,6 +71,7 @@ export default function AuthPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,8 +87,25 @@ export default function AuthPage() {
 
         if (error) throw error;
         
-        // If signup successful, automatically sign them in
+        // If signup successful, create profile and sign them in
         if (data.user) {
+          const generatedUsername = generateUsername();
+          
+          // Create profile with generated username
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .insert([
+              {
+                id: data.user.id,
+                username: generatedUsername,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+              }
+            ]);
+
+          if (profileError) throw profileError;
+
+          // Automatically sign them in
           const { error: signInError } = await supabase.auth.signInWithPassword({
             email: credentials.email,
             password: credentials.password,
@@ -141,15 +161,29 @@ export default function AuthPage() {
 
           <div>
             <label className="block text-sm font-medium mb-2">Password</label>
-            <input
-              title="Password"
-              type="password"
-              value={credentials.password}
-              onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
-              className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              required
-              minLength={6}
-            />
+            <div className="relative">
+              <input
+                title="Password"
+                type={showPassword ? 'text' : 'password'}
+                value={credentials.password}
+                onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
+                className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                required
+                minLength={6}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                <Icon 
+                  icon={showPassword ? 'mdi:eye-off' : 'mdi:eye'} 
+                  className="text-xl"
+                  aria-hidden="true"
+                />
+              </button>
+            </div>
             {mode === 'signup' && (
               <PasswordStrengthIndicator password={credentials.password} />
             )}

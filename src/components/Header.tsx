@@ -1,12 +1,94 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
+import { supabase } from '@/lib/supabase';
 
 const Header = () => {
   const [isForumHovered, setIsForumHovered] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const [username, setUsername] = useState<string | null>(null);
+
+  useEffect(() => {
+    checkAuth();
+    
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      setIsAuthenticated(event === 'SIGNED_IN');
+      if (session?.user) {
+        // Fetch the profile to get the username
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('username')
+          .eq('id', session.user.id)
+          .single();
+        
+        setUsername(profile?.username || 'User'); // Provide a fallback value
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const checkAuth = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    setIsAuthenticated(!!session);
+    if (session?.user) {
+      // Fetch the profile to get the username
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('id', session.user.id)
+        .single();
+      
+      setUsername(profile?.username || 'User'); // Provide a fallback value
+    }
+  };
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    setIsProfileDropdownOpen(false);
+  };
+
+  const renderAuthLink = () => {
+    if (isAuthenticated) {
+      return (
+        <div className="relative">
+          <button
+            onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+            className="text-gray-600 hover:text-gray-800 transition-colors"
+          >
+            Profile
+          </button>
+          {isProfileDropdownOpen && (
+            <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 border border-gray-200">
+              <Link
+                href="/user-dashboard"
+                className="block px-4 py-2 text-sm text-gray-700 border-b border-gray-200 hover:bg-gray-100"
+              >
+                {username}
+              </Link>
+              <button
+                onClick={handleSignOut}
+                className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+              >
+                Sign Out
+              </button>
+            </div>
+          )}
+        </div>
+      );
+    }
+    return (
+      <Link href="/auth" className="text-gray-600 hover:text-gray-800 transition-colors">
+        Sign In
+      </Link>
+    );
+  };
 
   return (
     <header className="w-full">
@@ -48,9 +130,7 @@ const Header = () => {
                   </Link>
                 </li>
                 <li>
-                  <Link href="/auth" className="text-gray-600 hover:text-gray-800 transition-colors">
-                    Sign In
-                  </Link>
+                  {renderAuthLink()}
                 </li>
               </ul>
             </nav>
@@ -94,13 +174,41 @@ const Header = () => {
                   </Link>
                 </li>
                 <li>
-                  <Link 
-                    href="/profile" 
-                    className="block px-2 py-2 text-gray-600 hover:text-gray-800 transition-colors"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Profile
-                  </Link>
+                  {isAuthenticated ? (
+                    <div>
+                      <button 
+                        onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+                        className="block w-full text-left px-2 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                      >
+                        Profile
+                      </button>
+                      {isProfileDropdownOpen && (
+                        <div className="bg-gray-50 py-1">
+                          <Link
+                            href="/user-dashboard"
+                            className="block px-4 py-2 text-sm text-gray-700 border-b border-gray-200 hover:bg-gray-100"
+                            onClick={() => setIsMenuOpen(false)}
+                          >
+                            {username}
+                          </Link>
+                          <button
+                            onClick={handleSignOut}
+                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          >
+                            Sign Out
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <Link 
+                      href="/auth" 
+                      className="block px-2 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Sign In
+                    </Link>
+                  )}
                 </li>
               </ul>
             </nav>

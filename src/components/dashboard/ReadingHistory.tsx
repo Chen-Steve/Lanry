@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import type { ReadingHistory as ReadingHistoryType } from '@/types/database';
+import type { ReadingHistory } from '@/types/database';
 
 export default function ReadingHistorySection() {
-  const [history, setHistory] = useState<ReadingHistoryType[]>([]);
+  const [history, setHistory] = useState<ReadingHistory[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -18,7 +18,7 @@ export default function ReadingHistorySection() {
       const { data, error } = await supabase
         .from('reading_history')
         .select('*, novel:novels(*)')
-        .eq('user_id', user.id)
+        .eq('profile_id', user.id)
         .order('last_read', { ascending: false });
 
       if (error) throw error;
