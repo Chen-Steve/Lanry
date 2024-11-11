@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
 import { supabase } from '@/lib/supabase';
+import SearchSection from './SearchSection';
+import type { Novel } from '@/types/database';
 
 const Header = () => {
   const [isForumHovered, setIsForumHovered] = useState(false);
@@ -90,15 +92,25 @@ const Header = () => {
     );
   };
 
+  const handleSearchResults = (query: string, results: Novel[]) => {
+    // Handle search results here if needed
+    console.log('Search results:', results);
+  };
+
   return (
     <header className="w-full">
       <div className="max-w-5xl mx-auto px-4 mt-4 sm:mt-8 mb-6 sm:mb-10">
         <div className="bg-white border-b border-black rounded-md px-4 sm:px-6 py-3">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between space-x-4">
             {/* Logo */}
             <Link href="/" className="text-xl sm:text-2xl font-bold text-gray-800 hover:text-gray-600 transition-colors">
               Lanry
             </Link>
+
+            {/* Search Section */}
+            <div className="hidden md:block">
+              <SearchSection onSearch={handleSearchResults} />
+            </div>
 
             {/* Mobile Menu Button */}
             <button 
@@ -136,26 +148,12 @@ const Header = () => {
             </nav>
           </div>
 
-          {/* Search Bar - Full Width on Mobile */}
-          <div className="mt-4 mb-2">
-            <div className="flex">
-              <input
-                type="text"
-                placeholder="Search for novels..."
-                className="w-full px-4 py-2 border rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <button 
-                aria-label="Search" 
-                className="bg-blue-500 text-white px-4 py-2 rounded-r-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <Icon icon="mdi:magnify" className="text-xl" />
-              </button>
-            </div>
-          </div>
-
-          {/* Mobile Navigation */}
+          {/* Move search to mobile menu */}
           {isMenuOpen && (
             <nav className="md:hidden border-t border-gray-200 mt-2">
+              <div className="py-2">
+                <SearchSection onSearch={handleSearchResults} />
+              </div>
               <ul className="py-2 space-y-2">
                 <li>
                   <span 
