@@ -35,7 +35,7 @@ async function getNovel(id: string): Promise<Novel | null> {
     return {
       ...novel,
       bookmarks: novel.bookmarks.length,
-      chapters: novel.chapters.sort((a: Chapter, b: Chapter) => b.chapter_number - a.chapter_number).slice(0, 3)
+      chapters: novel.chapters.sort((a: Chapter, b: Chapter) => a.chapter_number - b.chapter_number)
     };
   } catch (error) {
     console.error('Error fetching novel:', error);
@@ -267,6 +267,68 @@ export default function NovelPage({ params }: { params: { id: string } }) {
                 {formatDate(novel.updated_at)}
               </span>
             </div>
+          </div>
+
+          {/* All Chapters */}
+          <div className="mt-12 relative">
+            {/* Quick Jump Navigation */}
+            <div className="fixed right-4 top-1/2 transform -translate-y-1/2 space-y-2">
+              {Array.from({ length: Math.ceil(novel.chapters.length / 150) }).map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => {
+                    const element = document.getElementById(`chapter-section-${index}`);
+                    element?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-sm"
+                  title={`Chapters ${index * 150 + 1}-${Math.min((index + 1) * 150, novel.chapters.length)}`}
+                >
+                  {index + 1}
+                </button>
+              ))}
+            </div>
+
+            {/* Chapter Sections */}
+            {Array.from({ length: Math.ceil(novel.chapters.length / 150) }).map((_, sectionIndex) => {
+              const sectionChapters = novel.chapters
+                .sort((a, b) => a.chapter_number - b.chapter_number)
+                .slice(sectionIndex * 150, (sectionIndex + 1) * 150);
+
+              return (
+                <div key={sectionIndex} id={`chapter-section-${sectionIndex}`} className="mb-16">
+                  <h2 className="text-xl font-semibold mb-4">
+                    Chapters {sectionIndex * 150 + 1}-{Math.min((sectionIndex + 1) * 150, novel.chapters.length)}
+                  </h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {(() => {
+                      const chaptersPerColumn = Math.ceil(sectionChapters.length / 3);
+                      
+                      return Array.from({ length: 3 }).map((_, columnIndex) => (
+                        <div key={columnIndex} className="space-y-2">
+                          {sectionChapters
+                            .slice(
+                              columnIndex * chaptersPerColumn,
+                              (columnIndex + 1) * chaptersPerColumn
+                            )
+                            .map((chapter) => (
+                              <Link
+                                key={chapter.id}
+                                href={`/novels/${id}/chapters/${chapter.id}`}
+                                className="block p-3 rounded-lg hover:bg-gray-50 text-black border border-gray-200"
+                              >
+                                <span className="font-medium">
+                                  Chapter {chapter.chapter_number}
+                                  {chapter.title && `: ${chapter.title}`}
+                                </span>
+                              </Link>
+                            ))}
+                        </div>
+                      ));
+                    })()}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
