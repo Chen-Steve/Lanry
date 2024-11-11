@@ -17,34 +17,33 @@ const NovelCard = ({ novel }: { novel: Novel }) => (
 );
 
 const NovelListing = ({ novels }: { novels: Novel[] }) => {
-  const [popularityFilter, setPopularityFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('popular');
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-bold">Popular Novels</h2>
+    <>
+      <div className="flex justify-end mb-6">
         <div className="flex space-x-2">
-          {['week', 'month', 'year', 'all'].map((filter) => (
+          {['popular', 'new', 'completed', 'dropped', 'hiatus'].map((filter) => (
             <button 
               key={filter}
-              onClick={() => setPopularityFilter(filter)}
+              onClick={() => setStatusFilter(filter)}
               className={`px-4 py-2 rounded-full transition-colors duration-200 ${
-                popularityFilter === filter 
+                statusFilter === filter 
                   ? 'bg-blue-500 text-white' 
                   : 'bg-gray-200 hover:bg-gray-300'
               }`}
             >
-              {filter === 'all' ? 'All Time' : `1 ${filter.charAt(0).toUpperCase() + filter.slice(1)}`}
+              {filter.charAt(0).toUpperCase() + filter.slice(1)}
             </button>
           ))}
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {novels.map((novel) => (
           <NovelCard key={novel.id} novel={novel} />
         ))}
       </div>
-    </div>
+    </>
   );
 };
 
