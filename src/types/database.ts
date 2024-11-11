@@ -5,6 +5,7 @@ export interface Chapter {
   novel_id: string;
   created_at: string;
   chapter_number: number;
+  slug: string;
   novel?: Novel;
 }
 

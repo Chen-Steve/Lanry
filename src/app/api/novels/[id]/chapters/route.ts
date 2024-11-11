@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { generateChapterSlug } from '@/lib/utils';
 
 export async function POST(
   request: Request,
@@ -30,11 +31,15 @@ export async function POST(
       );
     }
 
+    // Generate slug
+    const slug = generateChapterSlug(novel.title, chapterNumber, title);
+
     const chapter = await prisma.chapter.create({
       data: {
         chapterNumber,
         title: title?.trim() ?? '',
         content: content.trim(),
+        slug,
         novel: {
           connect: { id: novelId }
         }
