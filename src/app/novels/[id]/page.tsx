@@ -5,7 +5,7 @@ import { Icon } from '@iconify/react';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import { formatDate } from '@/lib/utils';
-import { useEffect, useState, use } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 
@@ -42,8 +42,8 @@ async function getNovel(id: string): Promise<Novel | null> {
   }
 }
 
-export default function NovelPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+export default function NovelPage({ params }: { params: { id: string } }) {
+  const { id } = params;
   const [novel, setNovel] = useState<Novel | null>(null);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
