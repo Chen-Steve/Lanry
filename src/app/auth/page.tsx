@@ -67,7 +67,11 @@ const PasswordStrengthIndicator = ({ password }: { password: string }) => {
 
 export default function AuthPage() {
   const [mode, setMode] = useState<AuthMode>('signin');
-  const [credentials, setCredentials] = useState({ email: '', password: '' });
+  const [credentials, setCredentials] = useState({ 
+    email: '', 
+    password: '',
+    confirmPassword: ''
+  });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -76,6 +80,12 @@ export default function AuthPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (mode === 'signup' && credentials.password !== credentials.confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -154,7 +164,7 @@ export default function AuthPage() {
               type="email"
               value={credentials.email}
               onChange={(e) => setCredentials({ ...credentials, email: e.target.value })}
-              className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-black focus:border-black"
               required
             />
           </div>
@@ -167,7 +177,7 @@ export default function AuthPage() {
                 type={showPassword ? 'text' : 'password'}
                 value={credentials.password}
                 onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
-                className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-black focus:border-black"
                 required
                 minLength={6}
               />
@@ -188,12 +198,44 @@ export default function AuthPage() {
               <PasswordStrengthIndicator password={credentials.password} />
             )}
           </div>
+
+          {mode === 'signup' && (
+            <div>
+              <label className="block text-sm font-medium mb-2">Confirm Password</label>
+              <div className="relative">
+                <input
+                  title="Confirm Password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={credentials.confirmPassword}
+                  onChange={(e) => setCredentials({ ...credentials, confirmPassword: e.target.value })}
+                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-black focus:border-black"
+                  required
+                  minLength={6}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  <Icon 
+                    icon={showPassword ? 'mdi:eye-off' : 'mdi:eye'} 
+                    className="text-xl"
+                    aria-hidden="true"
+                  />
+                </button>
+              </div>
+              {credentials.confirmPassword && credentials.password !== credentials.confirmPassword && (
+                <p className="text-red-500 text-xs mt-1">Passwords do not match</p>
+              )}
+            </div>
+          )}
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full p-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-base font-medium"
+          className="w-full p-4 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed text-base font-medium"
         >
           {loading ? 'Loading...' : mode === 'signin' ? 'Sign In' : 'Sign Up'}
         </button>
@@ -202,7 +244,7 @@ export default function AuthPage() {
           <button
             type="button"
             onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}
-            className="text-blue-500 hover:text-blue-600 text-base py-2"
+            className="text-black hover:text-gray-600 text-base py-2"
           >
             {mode === 'signin' 
               ? "Don't have an account? Sign up" 

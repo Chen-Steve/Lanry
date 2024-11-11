@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
 import { supabase } from '@/lib/supabase';
@@ -13,6 +13,7 @@ const Header = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [username, setUsername] = useState<string | null>(null);
+  const profileDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Initial session check
@@ -32,6 +33,21 @@ const Header = () => {
       subscription.unsubscribe();
     };
   }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        profileDropdownRef.current && 
+        !profileDropdownRef.current.contains(event.target as Node) &&
+        isProfileDropdownOpen
+      ) {
+        setIsProfileDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isProfileDropdownOpen]);
 
   const fetchUserProfile = async (userId: string) => {
     const { data: profile } = await supabase
@@ -59,7 +75,7 @@ const Header = () => {
   const renderAuthLink = () => {
     if (isAuthenticated) {
       return (
-        <div className="relative">
+        <div className="relative" ref={profileDropdownRef}>
           <button
             onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
             className="text-gray-600 hover:text-gray-800 transition-colors"
