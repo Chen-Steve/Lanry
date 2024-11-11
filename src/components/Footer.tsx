@@ -6,11 +6,11 @@ import { Icon } from '@iconify/react';
 const Footer = () => {
   return (
     <footer className="bg-white border-t mt-auto">
-      <div className="max-w-5xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+      <div className="px-4 py-6 sm:py-8 max-w-5xl mx-auto">
+        <div className="space-y-8 sm:grid sm:grid-cols-2 lg:grid-cols-4 sm:gap-8 sm:space-y-0">
           {/* Brand Section */}
-          <div className="col-span-1 md:col-span-2">
-            <Link href="/" className="text-xl font-bold text-gray-800">
+          <div className="col-span-1 lg:col-span-2">
+            <Link href="/" className="text-lg sm:text-xl font-bold text-gray-800">
               Lanry
             </Link>
             <p className="mt-2 text-sm text-gray-600">
@@ -19,9 +19,9 @@ const Footer = () => {
           </div>
 
           {/* Quick Links */}
-          <div>
-            <h3 className="font-semibold text-gray-800 mb-3">Quick Links</h3>
-            <ul className="space-y-2">
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold text-gray-800">Quick Links</h3>
+            <ul className="space-y-3">
               <li>
                 <Link 
                   href="/" 
@@ -50,8 +50,8 @@ const Footer = () => {
           </div>
 
           {/* Connect */}
-          <div>
-            <h3 className="font-semibold text-gray-800 mb-3">Connect</h3>
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold text-gray-800">Connect</h3>
             <div className="flex space-x-4">
               <a
                 href="https://github.com/Chen-Steve/novelwiki"
@@ -76,12 +76,12 @@ const Footer = () => {
         </div>
 
         {/* Bottom Bar */}
-        <div className="border-t mt-8 pt-6">
-          <div className="flex flex-col sm:flex-row justify-between items-center">
-            <p className="text-sm text-gray-600">
+        <div className="border-t mt-6 sm:mt-8 pt-6">
+          <div className="flex flex-col items-center space-y-4 sm:flex-row sm:justify-between sm:space-y-0">
+            <p className="text-sm text-gray-600 text-center sm:text-left">
               © {new Date().getFullYear()} Lanry. All rights reserved.
             </p>
-            <div className="flex space-x-4 mt-4 sm:mt-0">
+            <div className="flex space-x-4">
               <Link href="/privacy" className="text-sm text-gray-600 hover:text-gray-800 transition-colors">
                 Privacy Policy
               </Link>

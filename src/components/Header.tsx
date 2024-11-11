@@ -48,8 +48,8 @@ const Header = () => {
                   </Link>
                 </li>
                 <li>
-                  <Link href="/profile" className="text-gray-600 hover:text-gray-800 transition-colors">
-                    Profile
+                  <Link href="/auth" className="text-gray-600 hover:text-gray-800 transition-colors">
+                    Sign In
                   </Link>
                 </li>
               </ul>
