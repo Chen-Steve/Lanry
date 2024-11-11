@@ -130,7 +130,7 @@ export default function ChapterManagementForm() {
               {chapters.map((chapter) => (
                 <div
                   key={chapter.id}
-                  className={`p-4 border rounded hover:bg-gray-100 cursor-pointer ${
+                  className={`p-1 border rounded hover:bg-gray-100 cursor-pointer ${
                     editingChapter?.id === chapter.id ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-gray-50'
                   }`}
                   onClick={() => handleChapterClick(chapter)}
