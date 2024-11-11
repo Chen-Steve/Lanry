@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 
 export async function PUT(
   request: Request,
@@ -24,6 +25,21 @@ export async function PUT(
     return NextResponse.json(updatedChapter);
   } catch (error) {
     console.error('Error updating chapter:', error);
+    
+    if (error instanceof Prisma.PrismaClientInitializationError) {
+      return NextResponse.json(
+        { error: 'Database connection error' },
+        { status: 503 }
+      );
+    }
+
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      return NextResponse.json(
+        { error: 'Database operation failed' },
+        { status: 400 }
+      );
+    }
+
     return NextResponse.json(
       { error: 'Failed to update chapter' },
       { status: 500 }
