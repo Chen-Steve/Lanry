@@ -17,6 +17,14 @@ const Footer = () => {
             <p className="mt-2 text-sm text-gray-600">
               Read light novels with ease.
             </p>
+            <Link 
+              href="https://forms.gle/DV9X9C5wQjUxKece7" 
+              className="text-sm text-gray-600 hover:text-gray-800 hover:underline bg-yellow-100 px-2 py-1 rounded transition-colors"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Any feedback for us?
+            </Link>
           </div>
 
           {/* Quick Links */}
