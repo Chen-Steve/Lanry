@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
 
@@ -12,7 +14,7 @@ const Footer = () => {
               Lanry
             </Link>
             <p className="mt-2 text-sm text-gray-600">
-              A modern database for light novel enthusiasts, making it easy to discover and track your favorite novels.
+              Read light novels with ease.
             </p>
           </div>
 
@@ -21,7 +23,16 @@ const Footer = () => {
             <h3 className="font-semibold text-gray-800 mb-3">Quick Links</h3>
             <ul className="space-y-2">
               <li>
-                <Link href="/novels" className="text-sm text-gray-600 hover:text-gray-800 transition-colors">
+                <Link 
+                  href="/" 
+                  className="text-sm text-gray-600 hover:text-gray-800 transition-colors"
+                  onClick={(e) => {
+                    if (window.location.pathname === '/') {
+                      e.preventDefault();
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                  }}
+                >
                   Browse Novels
                 </Link>
               </li>
@@ -43,22 +54,13 @@ const Footer = () => {
             <h3 className="font-semibold text-gray-800 mb-3">Connect</h3>
             <div className="flex space-x-4">
               <a
-                href="https://github.com"
+                href="https://github.com/Chen-Steve/novelwiki"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-600 hover:text-gray-800 transition-colors"
                 aria-label="GitHub"
               >
                 <Icon icon="mdi:github" className="text-2xl" />
-              </a>
-              <a
-                href="https://twitter.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-600 hover:text-gray-800 transition-colors"
-                aria-label="Twitter"
-              >
-                <Icon icon="mdi:twitter" className="text-2xl" />
               </a>
               <a
                 href="https://discord.com"
