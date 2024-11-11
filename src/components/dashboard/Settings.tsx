@@ -1,6 +1,22 @@
 import { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import type { UserProfile } from '@/types/database';
+
+// Separate data fetching function
+const fetchProfile = async (): Promise<UserProfile> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', user.id)
+    .single();
+
+  if (error) throw error;
+  return data;
+};
 
 export default function Settings() {
   const [profile, setProfile] = useState<UserProfile>({
@@ -9,58 +25,49 @@ export default function Settings() {
     created_at: '',
     updated_at: ''
   });
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
 
+  const queryClient = useQueryClient();
+
+  // Use React Query for fetching profile
+  const { isLoading, data } = useQuery({
+    queryKey: ['profile'],
+    queryFn: fetchProfile,
+  });
+
+  // Update profile when data changes
   useEffect(() => {
-    fetchProfile();
-  }, []);
-
-  const fetchProfile = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-      if (error) throw error;
-      if (data) {
-        setProfile(data);
-      }
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-    } finally {
-      setLoading(false);
+    if (data) {
+      setProfile(data);
     }
-  };
+  }, [data]);
 
-  const saveSettings = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
-
-    try {
+  // Use mutation for saving settings
+  const mutation = useMutation({
+    mutationFn: async (updatedProfile: UserProfile) => {
       const { error } = await supabase
         .from('profiles')
         .upsert({
-          ...profile,
+          ...updatedProfile,
           updated_at: new Date().toISOString(),
         });
-
       if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
       alert('Settings saved successfully!');
-    } catch (error) {
+    },
+    onError: (error) => {
       console.error('Error saving settings:', error);
       alert('Failed to save settings');
-    } finally {
-      setSaving(false);
-    }
+    },
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    mutation.mutate(profile);
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="p-6 text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
@@ -71,7 +78,7 @@ export default function Settings() {
   return (
     <div className="p-6">
       <h2 className="text-xl font-semibold mb-6">Account Settings</h2>
-      <form onSubmit={saveSettings} className="max-w-md space-y-6">
+      <form onSubmit={handleSubmit} className="max-w-md space-y-6">
         <div>
           <label htmlFor="username" className="block text-sm font-medium text-gray-700">
             Username
@@ -87,10 +94,10 @@ export default function Settings() {
 
         <button
           type="submit"
-          disabled={saving}
+          disabled={mutation.isPending}
           className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {saving ? 'Saving...' : 'Save Settings'}
+          {mutation.isPending ? 'Saving...' : 'Save Settings'}
         </button>
       </form>
     </div>

@@ -1,12 +1,23 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import ReadingHistorySection from '@/components/dashboard/ReadingHistory';
-import Bookmarks from '@/components/dashboard/Bookmarks';
-import Settings from '@/components/dashboard/Settings';
 import { Icon } from '@iconify/react';
+
+// Lazy load components
+const ReadingHistorySection = lazy(() => import('@/components/dashboard/ReadingHistory'));
+const Bookmarks = lazy(() => import('@/components/dashboard/Bookmarks'));
+const Settings = lazy(() => import('@/components/dashboard/Settings'));
+
+// Loading skeleton component
+const TabSkeleton = () => (
+  <div className="animate-pulse">
+    <div className="h-8 bg-gray-200 rounded-lg w-3/4 mb-4"></div>
+    <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
+    <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+  </div>
+);
 
 type DashboardTab = 'reading' | 'bookmarks' | 'settings';
 
@@ -73,9 +84,11 @@ export default function UserDashboard() {
 
       {/* Dashboard Content */}
       <div className="bg-white rounded-lg shadow">
-        {activeTab === 'reading' && <ReadingHistorySection />}
-        {activeTab === 'bookmarks' && <Bookmarks />}
-        {activeTab === 'settings' && <Settings />}
+        <Suspense fallback={<TabSkeleton />}>
+          {activeTab === 'reading' && <ReadingHistorySection />}
+          {activeTab === 'bookmarks' && <Bookmarks />}
+          {activeTab === 'settings' && <Settings />}
+        </Suspense>
       </div>
     </div>
   );

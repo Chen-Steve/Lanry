@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import HeaderWrapper from '@/components/HeaderWrapper';
 import FooterWrapper from '@/components/FooterWrapper';
+import Providers from '@/components/Providers';
 
 export const metadata: Metadata = {
   title: "LightNovel Database",
@@ -16,13 +17,15 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <div className="flex flex-col min-h-screen">
-          <HeaderWrapper />
-          <main className="flex-grow">
-            {children}
-          </main>
-          <FooterWrapper />
-        </div>
+        <Providers>
+          <div className="flex flex-col min-h-screen">
+            <HeaderWrapper />
+            <main className="flex-grow">
+              {children}
+            </main>
+            <FooterWrapper />
+          </div>
+        </Providers>
       </body>
     </html>
   );
