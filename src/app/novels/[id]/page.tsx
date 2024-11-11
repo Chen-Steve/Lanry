@@ -231,16 +231,20 @@ export default function NovelPage({ params }: { params: { id: string } }) {
           <div className="mb-8">
             <h2 className="text-xl font-semibold mb-4">Latest Chapters</h2>
             <div className="space-y-2">
-              {novel.chapters.map((chapter) => (
-                <div
+              {novel.chapters?.map((chapter) => (
+                <Link
                   key={chapter.id}
-                  className="flex justify-between items-center p-3 rounded-lg hover:bg-gray-50"
+                  href={`/novels/${id}/chapters/${chapter.id}`}
+                  className="flex justify-between items-center p-3 rounded-lg hover:bg-gray-50 text-black"
                 >
-                  <span className="font-medium">{chapter.title}</span>
+                  <span className="font-medium">
+                    Chapter {chapter.chapter_number}
+                    {chapter.title && `: ${chapter.title}`}
+                  </span>
                   <span className="text-sm text-gray-500">
                     {formatDate(chapter.created_at)}
                   </span>
-                </div>
+                </Link>
               ))}
             </div>
           </div>
