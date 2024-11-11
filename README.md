@@ -1,61 +1,68 @@
-# LightNovel Database
+# Lanry
 
-A modern web application for uploading, discovering, and tracking light novels.
+A modern web platform for reading translated light novels.
 
 ## Project Overview
 
-LightNovel Database is a platform where users can:
-- Browse a collection of light novels
-- Upload new light novels to the database
-- Search and filter light novels by various criteria
-- Create user accounts to track their reading progress and favorites
+Lanry is a platform where readers can:
+- Read translated light novels for free
+- Track their reading progress
+- Get notifications for new chapter releases
+- Discuss chapters with other readers
+- Support translators through donations
 
 ## Technology Stack
 
 - Frontend: Next.js with TypeScript
 - Styling: Tailwind CSS
 - Backend: Next.js API routes
-- Database: PostgreSQL
-- ORM: Prisma
-- Authentication: NextAuth.js
+- Database: PostgreSQL with Prisma ORM
+- Authentication: Supabase Auth
+- Content Delivery: Supabase Storage
 
-## Development Phases
+## Features
 
-### Phase 1: Project Setup and Basic Structure
+### For Readers
+- Clean, distraction-free reading interface
+- Bookmark system to track reading progress
+- Dark/Light mode for comfortable reading
+- Mobile-responsive design
+- Chapter comments and discussions
+- Search functionality
 
-1. Initialize Next.js project with TypeScript
-2. Set up Tailwind CSS
-3. Create basic layout components
-4. Set up PostgreSQL database
-5. Configure Prisma ORM
+### For Content Management
+- Efficient chapter upload system
+- Content scheduling capabilities
+- Translation progress tracking
+- Built-in markdown editor
+- Image optimization for novel covers
+- Automated backup system
 
-### Phase 2: Core Functionality
+## Development Roadmap
 
-1. Implement light novel listing page
-2. Create light novel detail page
-3. Develop search and filter functionality
-4. Build light novel upload form
+### Phase 1: Core Platform (Current)
+1. ✅ Basic project structure
+2. ✅ Database schema setup
+3. 🏗️ Novel/Chapter management system
+4. Authentication system
 
-### Phase 3: User Authentication and Profiles
+### Phase 2: Reading Experience
+1. Reading interface
+2. Progress tracking
+3. Bookmarking system
+4. Dark/Light mode
 
-1. Integrate NextAuth.js for user authentication
-2. Create user profile pages
-3. Implement favorite/bookmark functionality
-4. Add reading progress tracking
+### Phase 3: Community Features
+1. Comment system
+2. User profiles
+3. Reading lists
+4. Chapter notifications
 
-### Phase 4: Advanced Features
-
-1. Implement user ratings and reviews
-2. Add chapter release tracking
-3. Create recommendation system
-4. Develop admin panel for content moderation
-
-### Phase 5: Optimization and Deployment
-
-1. Optimize performance and loading times
-2. Implement SEO best practices
-3. Set up continuous integration and deployment
-4. Deploy to production environment
+### Phase 4: Creator Tools
+1. Translation dashboard
+2. Markdown editor
+3. Schedule manager
+4. Analytics dashboard
 
 ## Getting Started
 
@@ -64,17 +71,30 @@ LightNovel Database is a platform where users can:
    ```bash
    npm install
    ```
-3. Set up environment variables (database connection, auth providers, etc.)
+3. Set up environment variables:
+   ```env
+   DATABASE_URL="your-database-url"
+   DIRECT_URL="your-direct-url"
+   NEXT_PUBLIC_SUPABASE_URL="your-supabase-url"
+   NEXT_PUBLIC_SUPABASE_ANON_KEY="your-supabase-key"
+   ```
 4. Run the development server:
    ```bash
    npm run dev
    ```
-5. Open [http://localhost:3000](http://localhost:3000) in your browser
+5. Open [http://localhost:3000](http://localhost:3000)
 
 ## Contributing
 
-We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for more information.
+While this is primarily a personal project, bug reports and suggestions are welcome through GitHub issues.
+
+## Legal Notice
+
+All translations are either:
+1. Original works translated with permission
+2. Works in the public domain
+3. Works translated under fair use guidelines
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project's source code is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
