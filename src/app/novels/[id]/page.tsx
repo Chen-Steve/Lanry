@@ -1,66 +1,142 @@
-import { Novel } from '@/types/database';
+'use client';
+
+import { Novel, Chapter } from '@/types/database';
 import { Icon } from '@iconify/react';
-import { notFound } from 'next/navigation';
-import { prisma } from '@/lib/prisma';
+import { notFound, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { formatDate } from '@/lib/utils';
+import { useEffect, useState, use } from 'react';
+import { supabase } from '@/lib/supabase';
 
 async function getNovel(id: string): Promise<Novel | null> {
   try {
-    const novel = await prisma.novel.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        title: true,
-        author: true,
-        description: true,
-        coverImageUrl: true,
-        status: true,
-        createdAt: true,
-        updatedAt: true,
-        chapters: {
-          orderBy: { createdAt: 'desc' },
-          take: 3,
-          select: {
-            id: true,
-            title: true,
-            createdAt: true,
-          },
-        },
-      },
-    });
+    const { data: novel, error } = await supabase
+      .from('novels')
+      .select(`
+        *,
+        chapters (
+          id,
+          title,
+          created_at,
+          chapter_number
+        ),
+        bookmarks (
+          id
+        )
+      `)
+      .eq('id', id)
+      .single();
 
+    if (error) throw error;
     if (!novel) return null;
 
     return {
       ...novel,
-      coverImage: novel.coverImageUrl ?? undefined,
-      bookmarks: 0,
-      chapters: novel.chapters,
+      bookmarks: novel.bookmarks.length,
+      chapters: novel.chapters.sort((a: Chapter, b: Chapter) => b.chapter_number - a.chapter_number).slice(0, 3)
     };
   } catch (error) {
     console.error('Error fetching novel:', error);
-    throw new Error('Failed to fetch novel');
+    return null;
   }
 }
 
-function isValidId(id: unknown): id is string {
-  return typeof id === 'string' && id.length > 0;
-}
+export default function NovelPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
+  const [novel, setNovel] = useState<Novel | null>(null);
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isBookmarkLoading] = useState(false);
+  const router = useRouter();
 
-export default async function NovelPage({ params }: { params: { id: string } }) {
-  const { id } = await params;
+  useEffect(() => {
+    const fetchNovel = async () => {
+      const data = await getNovel(id);
+      setNovel(data);
+      setIsLoading(false);
+    };
+    fetchNovel();
+  }, [id]);
 
-  if (!isValidId(id)) {
-    notFound();
+  useEffect(() => {
+    // Check authentication and bookmark status
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setIsAuthenticated(!!user);
+
+      if (user) {
+        // Check if novel is bookmarked
+        const { data: bookmark, error } = await supabase
+          .from('bookmarks')
+          .select('id')
+          .eq('profile_id', user.id)
+          .eq('novel_id', id)
+          .maybeSingle();
+
+        if (error) {
+          console.error('Error checking bookmark:', error);
+          return;
+        }
+
+        setIsBookmarked(!!bookmark);
+      }
+    };
+
+    checkAuth();
+  }, [id]);
+
+  const handleBookmark = async () => {
+    if (!isAuthenticated) {
+      router.push('/auth');
+      return;
+    }
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      if (isBookmarked) {
+        // Remove bookmark
+        const { error } = await supabase
+          .from('bookmarks')
+          .delete()
+          .match({
+            profile_id: user.id,
+            novel_id: id
+          });
+
+        if (error) throw error;
+        setIsBookmarked(false);
+      } else {
+        // Add bookmark with UUID
+        const { error } = await supabase
+          .from('bookmarks')
+          .upsert({
+            id: crypto.randomUUID(),
+            profile_id: user.id,
+            novel_id: id,
+          }, {
+            onConflict: 'profile_id,novel_id'
+          });
+
+        if (error) throw error;
+        setIsBookmarked(true);
+      }
+    } catch (error) {
+      console.error('Error toggling bookmark:', error);
+    }
+  };
+
+  if (isLoading) {
+    return <div>Loading...</div>;
   }
-
-  const novel = await getNovel(id);
 
   if (!novel) {
     notFound();
   }
 
+  // Rest of your JSX remains the same, just update the bookmark button:
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="flex flex-col md:flex-row gap-8">
@@ -93,8 +169,21 @@ export default async function NovelPage({ params }: { params: { id: string } }) 
             
             {/* Moved buttons to top right */}
             <div className="flex gap-2">
-              <button aria-label="Bookmark" className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors">
-                <Icon icon="mdi:bookmark-outline" className="text-xl" />
+              <button 
+                onClick={handleBookmark}
+                type="button"
+                disabled={isBookmarkLoading}
+                aria-label={isBookmarked ? "Remove Bookmark" : "Add Bookmark"} 
+                className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                  isBookmarked 
+                    ? 'bg-amber-400 hover:bg-amber-500 text-amber-950'
+                    : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                } ${isBookmarkLoading ? 'opacity-50' : ''}`}
+              >
+                <Icon 
+                  icon={isBookmarked ? "mdi:bookmark" : "mdi:bookmark-outline"} 
+                  className={`text-xl ${isBookmarkLoading ? 'animate-pulse' : ''}`}
+                />
               </button>
               
               <button className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600 transition-colors">
@@ -133,7 +222,7 @@ export default async function NovelPage({ params }: { params: { id: string } }) 
                 >
                   <span className="font-medium">{chapter.title}</span>
                   <span className="text-sm text-gray-500">
-                    {formatDate(chapter.createdAt)}
+                    {formatDate(chapter.created_at)}
                   </span>
                 </div>
               ))}
@@ -149,13 +238,13 @@ export default async function NovelPage({ params }: { params: { id: string } }) 
             <div>
               <span className="text-gray-600">Released:</span>
               <span className="ml-2 font-medium">
-                {formatDate(novel.createdAt)}
+                {formatDate(novel.created_at)}
               </span>
             </div>
             <div>
               <span className="text-gray-600">Updated:</span>
               <span className="ml-2 font-medium">
-                {formatDate(novel.updatedAt)}
+                {formatDate(novel.updated_at)}
               </span>
             </div>
           </div>

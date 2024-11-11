@@ -1,4 +1,9 @@
-import { NovelStatus } from '@prisma/client';
+export interface Chapter {
+  id: string;
+  title: string;
+  created_at: string;
+  chapter_number: number;
+}
 
 export interface Novel {
   id: string;
@@ -6,15 +11,16 @@ export interface Novel {
   author: string;
   description: string;
   coverImage?: string;
-  bookmarks: number;
-  status: NovelStatus;
-  createdAt: Date;
-  updatedAt: Date;
-  chapters: Array<{
+  status: 'ONGOING' | 'COMPLETED' | 'HIATUS';
+  created_at: string;
+  updated_at: string;
+  chapters: {
     id: string;
     title: string;
-    createdAt: Date;
-  }>;
+    created_at: string;
+    chapter_number: number;
+  }[];
+  bookmarks: number;
 }
 
 export interface Bookmark {
