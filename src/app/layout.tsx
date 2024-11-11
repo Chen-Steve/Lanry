@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import HeaderWrapper from '@/components/HeaderWrapper';
-import Footer from '@/components/Footer';
+import FooterWrapper from '@/components/FooterWrapper';
 
 export const metadata: Metadata = {
   title: "LightNovel Database",
@@ -21,7 +21,7 @@ export default function RootLayout({
           <main className="flex-grow container mx-auto py-8">
             {children}
           </main>
-          <Footer />
+          <FooterWrapper />
         </div>
       </body>
     </html>

@@ -24,6 +24,8 @@ model Novel {
   coverImageUrl  String?   @map("cover_image_url")
   status         NovelStatus
   chapters       Chapter[]
+  bookmarks      Bookmark[]
+  readingHistory ReadingHistory[]
 
   @@map("novels")
 }
@@ -40,6 +42,46 @@ model Chapter {
 
   @@unique([novelId, chapterNumber])
   @@map("chapters")
+}
+
+model Profile {
+  id                 String    @id
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+  username           String?   @unique
+  emailNotifications Boolean   @default(false) @map("email_notifications")
+  theme              String    @default("light")
+  bookmarks          Bookmark[]
+  readingHistory     ReadingHistory[]
+
+  @@map("profiles")
+}
+
+model Bookmark {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map("created_at")
+  profile   Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  profileId String   @map("profile_id")
+  novel     Novel    @relation(fields: [novelId], references: [id], onDelete: Cascade)
+  novelId   String   @map("novel_id")
+
+  @@unique([profileId, novelId])
+  @@map("bookmarks")
+}
+
+model ReadingHistory {
+  id           String   @id @default(uuid())
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  profile      Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  profileId    String   @map("profile_id")
+  novel        Novel    @relation(fields: [novelId], references: [id], onDelete: Cascade)
+  novelId      String   @map("novel_id")
+  lastChapter  Int      @map("last_chapter")
+  lastRead     DateTime @default(now()) @map("last_read")
+
+  @@unique([profileId, novelId])
+  @@map("reading_history")
 }
 
 enum NovelStatus {

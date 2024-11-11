@@ -1,18 +1,37 @@
 export interface Novel {
   id: string;
-  created_at: string;
   title: string;
   author: string;
   description: string;
   cover_image_url?: string;
-  status: 'ongoing' | 'completed' | 'hiatus';
+  status: string;
+  created_at: string;
+  updated_at: string;
 }
 
-export interface Chapter {
+export interface Bookmark {
   id: string;
-  created_at: string;
+  user_id: string;
   novel_id: string;
-  chapter_number: number;
-  title: string;
-  content: string;
+  created_at: string;
+  novel: Novel;
+}
+
+export interface ReadingHistory {
+  id: string;
+  user_id: string;
+  novel_id: string;
+  last_chapter: number;
+  last_read: string;
+  created_at: string;
+  novel: Novel;
+}
+
+export interface UserProfile {
+  id: string;
+  username: string;
+  email_notifications: boolean;
+  theme: 'light' | 'dark';
+  created_at: string;
+  updated_at: string;
 } 
