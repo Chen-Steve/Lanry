@@ -166,25 +166,14 @@ export default function NovelPage({ params }: { params: { id: string } }) {
                 <div className="w-full h-full bg-gray-300" />
               )}
             </div>
-          </div>
-        </div>
-
-        {/* Right Column - Novel Information */}
-        <div className="flex-grow">
-          <div className="flex justify-between items-start mb-4">
-            <div>
-              <h1 className="text-3xl font-bold mb-2">{novel.title}</h1>
-              <p className="text-lg text-gray-600">by {novel.author}</p>
-            </div>
-            
-            {/* Moved buttons to top right */}
-            <div className="flex gap-2">
+            {/* Added buttons below image */}
+            <div className="flex flex-col gap-2 mt-4">
               <button 
                 onClick={handleBookmark}
                 type="button"
                 disabled={isBookmarkLoading}
                 aria-label={isBookmarked ? "Remove Bookmark" : "Add Bookmark"} 
-                className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors w-full ${
                   !isAuthenticated 
                     ? 'bg-gray-100 hover:bg-gray-200 text-gray-500'
                     : isBookmarked 
@@ -196,12 +185,23 @@ export default function NovelPage({ params }: { params: { id: string } }) {
                   icon={isBookmarked ? "mdi:bookmark" : "mdi:bookmark-outline"} 
                   className={`text-xl ${isBookmarkLoading ? 'animate-pulse' : ''}`}
                 />
+                <span>{isBookmarked ? 'Bookmarked' : 'Bookmark'}</span>
               </button>
               
-              <button className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600 transition-colors">
+              <button className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600 transition-colors w-full">
                 <Icon icon="mdi:book-open-page-variant" className="text-xl" />
                 <span>Start Reading</span>
               </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column - Novel Information */}
+        <div className="flex-grow">
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              <h1 className="text-3xl font-bold mb-2">{novel.title}</h1>
+              <p className="text-lg text-gray-600">by {novel.author}</p>
             </div>
           </div>
           
