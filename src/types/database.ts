@@ -1,12 +1,20 @@
+import { NovelStatus } from '@prisma/client';
+
 export interface Novel {
   id: string;
   title: string;
   author: string;
   description: string;
-  cover_image_url?: string;
-  status: string;
-  created_at: string;
-  updated_at: string;
+  coverImage?: string;
+  bookmarks: number;
+  status: NovelStatus;
+  createdAt: Date;
+  updatedAt: Date;
+  chapters: Array<{
+    id: string;
+    title: string;
+    createdAt: Date;
+  }>;
 }
 
 export interface Bookmark {
