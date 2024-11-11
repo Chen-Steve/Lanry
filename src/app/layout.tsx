@@ -3,6 +3,7 @@ import "./globals.css";
 import HeaderWrapper from '@/components/HeaderWrapper';
 import FooterWrapper from '@/components/FooterWrapper';
 import Providers from '@/components/Providers';
+import { Toaster } from 'react-hot-toast';
 
 export const metadata: Metadata = {
   title: "LightNovel Database",
@@ -25,6 +26,7 @@ export default function RootLayout({
             </main>
             <FooterWrapper />
           </div>
+          <Toaster position="bottom-right" />
         </Providers>
       </body>
     </html>

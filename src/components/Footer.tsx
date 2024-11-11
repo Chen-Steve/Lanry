@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
+import toast from 'react-hot-toast';
 
 const Footer = () => {
   return (
@@ -42,9 +43,9 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <span className="text-sm text-gray-600 cursor-not-allowed">
-                  Forum (Coming Soon)
-                </span>
+                <Link href="/translation-policy" className="text-sm text-gray-600 hover:text-gray-800 transition-colors">
+                  Translation Policy
+                </Link>
               </li>
             </ul>
           </div>
@@ -62,15 +63,13 @@ const Footer = () => {
               >
                 <Icon icon="mdi:github" className="text-2xl" />
               </a>
-              <a
-                href="https://discord.com"
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                onClick={() => toast.error('Discord server coming soon!')}
                 className="text-gray-600 hover:text-gray-800 transition-colors"
                 aria-label="Discord"
               >
                 <Icon icon="mdi:discord" className="text-2xl" />
-              </a>
+              </button>
             </div>
           </div>
         </div>
