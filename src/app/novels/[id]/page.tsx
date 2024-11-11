@@ -8,6 +8,7 @@ import { formatDate } from '@/lib/utils';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
+import Link from 'next/link';
 
 async function getNovel(id: string): Promise<Novel | null> {
   try {
@@ -188,10 +189,13 @@ export default function NovelPage({ params }: { params: { id: string } }) {
                 <span>{isBookmarked ? 'Bookmarked' : 'Bookmark'}</span>
               </button>
               
-              <button className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600 transition-colors w-full">
+              <Link 
+                href={`/novels/${id}/chapters/${novel.chapters[novel.chapters.length - 1].id}`}
+                className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600 transition-colors w-full"
+              >
                 <Icon icon="mdi:book-open-page-variant" className="text-xl" />
                 <span>Start Reading</span>
-              </button>
+              </Link>
             </div>
           </div>
         </div>

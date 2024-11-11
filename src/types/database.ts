@@ -1,8 +1,11 @@
 export interface Chapter {
   id: string;
   title: string;
+  content: string;
+  novel_id: string;
   created_at: string;
   chapter_number: number;
+  novel?: Novel;
 }
 
 export interface Novel {
@@ -14,12 +17,7 @@ export interface Novel {
   status: 'ONGOING' | 'COMPLETED' | 'HIATUS';
   created_at: string;
   updated_at: string;
-  chapters: {
-    id: string;
-    title: string;
-    created_at: string;
-    chapter_number: number;
-  }[];
+  chapters: Chapter[];
   bookmarks: number;
 }
 
