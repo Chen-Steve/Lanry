@@ -22,6 +22,7 @@ export default function ChapterManagementForm() {
     title: '',
     content: '',
   });
+  const [editingChapter, setEditingChapter] = useState<Chapter | null>(null);
 
   useEffect(() => {
     fetchNovels();
@@ -60,8 +61,12 @@ export default function ChapterManagementForm() {
     if (!selectedNovel) return;
 
     try {
-      const response = await fetch(`/api/novels/${selectedNovel}/chapters`, {
-        method: 'POST',
+      const url = editingChapter
+        ? `/api/novels/${selectedNovel}/chapters/${editingChapter.id}`
+        : `/api/novels/${selectedNovel}/chapters`;
+
+      const response = await fetch(url, {
+        method: editingChapter ? 'PUT' : 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -71,24 +76,35 @@ export default function ChapterManagementForm() {
         }),
       });
 
-      if (!response.ok) throw new Error('Failed to create chapter');
+      if (!response.ok) throw new Error(`Failed to ${editingChapter ? 'update' : 'create'} chapter`);
 
       // Reset form and refresh chapters
-      setFormData({
-        chapterNumber: '',
-        title: '',
-        content: '',
-      });
+      setFormData({ chapterNumber: '', title: '', content: '' });
+      setEditingChapter(null);
       fetchChapters(selectedNovel);
-      alert('Chapter created successfully!');
+      alert(`Chapter ${editingChapter ? 'updated' : 'created'} successfully!`);
     } catch (error) {
-      console.error('Error creating chapter:', error);
-      alert('Failed to create chapter');
+      console.error(`Error ${editingChapter ? 'updating' : 'creating'} chapter:`, error);
+      alert(`Failed to ${editingChapter ? 'update' : 'create'} chapter`);
     }
   };
 
+  const handleChapterClick = (chapter: Chapter) => {
+    setEditingChapter(chapter);
+    setFormData({
+      chapterNumber: chapter.chapterNumber.toString(),
+      title: chapter.title,
+      content: chapter.content,
+    });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingChapter(null);
+    setFormData({ chapterNumber: '', title: '', content: '' });
+  };
+
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-7xl mx-auto">
       <div className="mb-6">
         <label className="block text-sm font-medium mb-1">Select Novel</label>
         <select
@@ -107,71 +123,17 @@ export default function ChapterManagementForm() {
       </div>
 
       {selectedNovel && (
-        <>
-          <form onSubmit={handleSubmit} className="mb-8">
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Chapter Number
-                </label>
-                <input
-                  title="Enter the chapter number"
-                  type="number"
-                  value={formData.chapterNumber}
-                  onChange={(e) =>
-                    setFormData({ ...formData, chapterNumber: e.target.value })
-                  }
-                  className="w-full p-2 border rounded"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Chapter Title
-                </label>
-                <input
-                  title="Enter the chapter title"
-                  type="text"
-                  value={formData.title}
-                  onChange={(e) =>
-                    setFormData({ ...formData, title: e.target.value })
-                  }
-                  className="w-full p-2 border rounded"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">Content</label>
-                <textarea
-                  title="Enter the chapter content"
-                  value={formData.content}
-                  onChange={(e) =>
-                    setFormData({ ...formData, content: e.target.value })
-                  }
-                  className="w-full p-2 border rounded"
-                  rows={10}
-                  required
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
-              >
-                Add Chapter
-              </button>
-            </div>
-          </form>
-
-          <div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="md:col-span-1">
             <h3 className="text-lg font-semibold mb-4">Existing Chapters</h3>
             <div className="space-y-2">
               {chapters.map((chapter) => (
                 <div
                   key={chapter.id}
-                  className="p-4 border rounded bg-gray-50"
+                  className={`p-4 border rounded hover:bg-gray-100 cursor-pointer ${
+                    editingChapter?.id === chapter.id ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-gray-50'
+                  }`}
+                  onClick={() => handleChapterClick(chapter)}
                 >
                   <h4 className="font-medium">
                     Chapter {chapter.chapterNumber}: {chapter.title}
@@ -180,7 +142,80 @@ export default function ChapterManagementForm() {
               ))}
             </div>
           </div>
-        </>
+
+          <div className="md:col-span-2">
+            <form onSubmit={handleSubmit} className="mb-8">
+              <h3 className="text-lg font-semibold mb-4">
+                {editingChapter ? 'Edit Chapter' : 'Add New Chapter'}
+              </h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Chapter Number
+                  </label>
+                  <input
+                    title="Enter the chapter number"
+                    type="number"
+                    value={formData.chapterNumber}
+                    onChange={(e) =>
+                      setFormData({ ...formData, chapterNumber: e.target.value })
+                    }
+                    className="w-full p-2 border rounded"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Chapter Title
+                  </label>
+                  <input
+                    title="Enter the chapter title"
+                    type="text"
+                    value={formData.title}
+                    onChange={(e) =>
+                      setFormData({ ...formData, title: e.target.value })
+                    }
+                    className="w-full p-2 border rounded"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Content</label>
+                  <textarea
+                    title="Enter the chapter content"
+                    value={formData.content}
+                    onChange={(e) =>
+                      setFormData({ ...formData, content: e.target.value })
+                    }
+                    className="w-full p-2 border rounded"
+                    rows={10}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-4 mt-4">
+                <button
+                  type="submit"
+                  className="flex-1 bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
+                >
+                  {editingChapter ? 'Update Chapter' : 'Add Chapter'}
+                </button>
+                {editingChapter && (
+                  <button
+                    type="button"
+                    onClick={handleCancelEdit}
+                    className="flex-1 bg-gray-500 text-white py-2 px-4 rounded hover:bg-gray-600"
+                  >
+                    Cancel Edit
+                  </button>
+                )}
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );
