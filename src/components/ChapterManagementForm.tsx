@@ -11,6 +11,7 @@ type Chapter = {
   title: string;
   content: string;
   novelId: string;
+  slug: string;
 };
 
 export default function ChapterManagementForm() {
@@ -21,6 +22,7 @@ export default function ChapterManagementForm() {
     chapterNumber: '',
     title: '',
     content: '',
+    slug: '',
   });
   const [editingChapter, setEditingChapter] = useState<Chapter | null>(null);
 
@@ -74,6 +76,7 @@ export default function ChapterManagementForm() {
           chapterNumber: parseInt(formData.chapterNumber),
           title: formData.title.trim() || undefined,
           content: formData.content,
+          slug: formData.slug.trim() || undefined,
         }),
       });
 
@@ -83,7 +86,7 @@ export default function ChapterManagementForm() {
       }
 
       // Reset form and refresh chapters
-      setFormData({ chapterNumber: '', title: '', content: '' });
+      setFormData({ chapterNumber: '', title: '', content: '', slug: '' });
       setEditingChapter(null);
       fetchChapters(selectedNovel);
       alert(`Chapter ${editingChapter ? 'updated' : 'created'} successfully!`);
@@ -99,23 +102,25 @@ export default function ChapterManagementForm() {
       chapterNumber: chapter.chapterNumber.toString(),
       title: chapter.title,
       content: chapter.content,
+      slug: chapter.slug,
     });
   };
 
   const handleCancelEdit = () => {
     setEditingChapter(null);
-    setFormData({ chapterNumber: '', title: '', content: '' });
+    setFormData({ chapterNumber: '', title: '', content: '', slug: '' });
   };
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="max-w-7xl mx-auto px-4 py-6">
+      {/* Novel Selection */}
       <div className="mb-6">
-        <label className="block text-sm font-medium mb-1">Select Novel</label>
+        <label className="block text-sm font-medium mb-2">Select Novel</label>
         <select
           title="Select a novel"
           value={selectedNovel}
           onChange={(e) => setSelectedNovel(e.target.value)}
-          className="w-full p-2 border rounded"
+          className="w-full p-3 border rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         >
           <option value="">Select a novel...</option>
           {novels.map((novel) => (
@@ -127,35 +132,47 @@ export default function ChapterManagementForm() {
       </div>
 
       {selectedNovel && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-1">
-            <h3 className="text-lg font-semibold mb-4">Existing Chapters</h3>
-            <div className="space-y-2">
-              {chapters.map((chapter) => (
-                <div
-                  key={chapter.id}
-                  className={`p-1 border rounded hover:bg-gray-100 cursor-pointer ${
-                    editingChapter?.id === chapter.id ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-gray-50'
-                  }`}
-                  onClick={() => handleChapterClick(chapter)}
-                >
-                  <h4 className="font-medium">
-                    Chapter {chapter.chapterNumber}
-                    {chapter.title && `: ${chapter.title}`}
-                  </h4>
-                </div>
-              ))}
+        <div className="block lg:grid lg:grid-cols-3 lg:gap-8">
+          {/* Chapters List */}
+          <div className="mb-6 lg:mb-0">
+            <div className="lg:sticky lg:top-4">
+              <h3 className="text-lg font-semibold mb-4">Existing Chapters</h3>
+              <div className="bg-white rounded-lg border shadow-sm max-h-[300px] lg:max-h-[calc(100vh-200px)] overflow-y-auto">
+                {chapters.length === 0 ? (
+                  <p className="p-4 text-gray-500 text-center">No chapters yet</p>
+                ) : (
+                  <div className="divide-y">
+                    {chapters.map((chapter) => (
+                      <button
+                        key={chapter.id}
+                        onClick={() => handleChapterClick(chapter)}
+                        className={`w-full text-left p-4 hover:bg-gray-50 transition-colors ${
+                          editingChapter?.id === chapter.id ? 'bg-blue-50' : ''
+                        }`}
+                      >
+                        <h4 className="font-medium">
+                          Chapter {chapter.chapterNumber}
+                          {chapter.title && `: ${chapter.title}`}
+                        </h4>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
-          <div className="md:col-span-2">
-            <form onSubmit={handleSubmit} className="mb-8">
-              <h3 className="text-lg font-semibold mb-4">
+          {/* Chapter Form */}
+          <div className="lg:col-span-2">
+            <form onSubmit={handleSubmit} className="bg-white rounded-lg border shadow-sm p-4 lg:p-6">
+              <h3 className="text-lg font-semibold mb-6">
                 {editingChapter ? 'Edit Chapter' : 'Add New Chapter'}
               </h3>
-              <div className="space-y-4">
+              
+              <div className="space-y-4 lg:space-y-6">
+                {/* Chapter Number */}
                 <div>
-                  <label className="block text-sm font-medium mb-1">
+                  <label className="block text-sm font-medium mb-2">
                     Chapter Number
                   </label>
                   <input
@@ -165,13 +182,14 @@ export default function ChapterManagementForm() {
                     onChange={(e) =>
                       setFormData({ ...formData, chapterNumber: e.target.value })
                     }
-                    className="w-full p-2 border rounded"
+                    className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     required
                   />
                 </div>
 
+                {/* Chapter Title */}
                 <div>
-                  <label className="block text-sm font-medium mb-1">
+                  <label className="block text-sm font-medium mb-2">
                     Chapter Title <span className="text-gray-500 text-xs">(optional)</span>
                   </label>
                   <input
@@ -181,29 +199,47 @@ export default function ChapterManagementForm() {
                     onChange={(e) =>
                       setFormData({ ...formData, title: e.target.value })
                     }
-                    className="w-full p-2 border rounded"
+                    className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
 
+                {/* Slug */}
                 <div>
-                  <label className="block text-sm font-medium mb-1">Content</label>
+                  <label className="block text-sm font-medium mb-2">
+                    Slug <span className="text-gray-500 text-xs">(auto-generated if empty)</span>
+                  </label>
+                  <input
+                    title="Enter custom slug (optional)"
+                    type="text"
+                    value={formData.slug}
+                    onChange={(e) =>
+                      setFormData({ ...formData, slug: e.target.value.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-') })
+                    }
+                    className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="custom-slug-here"
+                  />
+                </div>
+
+                {/* Content */}
+                <div>
+                  <label className="block text-sm font-medium mb-2">Content</label>
                   <textarea
                     title="Enter the chapter content"
                     value={formData.content}
                     onChange={(e) =>
                       setFormData({ ...formData, content: e.target.value })
                     }
-                    className="w-full p-2 border rounded"
-                    rows={10}
+                    className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[200px] lg:min-h-[300px]"
                     required
                   />
                 </div>
               </div>
 
-              <div className="flex gap-4 mt-4">
+              {/* Form Actions */}
+              <div className="flex flex-col sm:flex-row gap-3 mt-6">
                 <button
                   type="submit"
-                  className="flex-1 bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
+                  className="flex-1 bg-blue-500 text-white py-3 px-4 rounded-lg hover:bg-blue-600 transition-colors"
                 >
                   {editingChapter ? 'Update Chapter' : 'Add Chapter'}
                 </button>
@@ -211,7 +247,7 @@ export default function ChapterManagementForm() {
                   <button
                     type="button"
                     onClick={handleCancelEdit}
-                    className="flex-1 bg-gray-500 text-white py-2 px-4 rounded hover:bg-gray-600"
+                    className="flex-1 bg-gray-100 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-200 transition-colors"
                   >
                     Cancel Edit
                   </button>
