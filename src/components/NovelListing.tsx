@@ -13,6 +13,7 @@ const NovelCard = ({ novel }: { novel: Novel }) => (
             src={`/novel-covers/${novel.coverImageUrl}`}
             alt={`Cover for ${novel.title}`}
             fill
+            priority
             className="object-cover rounded"
             sizes="(max-width: 768px) 112px, 112px"
           />

@@ -171,6 +171,7 @@ export default function NovelPage({ params }: { params: { id: string } }) {
                   src={`/novel-covers/${novel.coverImageUrl}`}
                   alt={novel.title}
                   fill
+                  priority
                   className="object-cover"
                   sizes="(max-width: 768px) 100vw, 320px"
                 />
