@@ -86,20 +86,42 @@ async function getChapter(novelId: string, chapterId: string): Promise<ChapterWi
 }
 
 async function getChapterNavigation(novelId: string, currentChapterNumber: number) {
-  const { data: chapters } = await supabase
-    .from('chapters')
-    .select('id, chapter_number, title')
-    .eq('novel_id', novelId)
-    .order('chapter_number');
+  try {
+    // First get the novel's actual ID (similar to other functions)
+    const { data: novel, error: novelError } = await supabase
+      .from('novels')
+      .select('id')
+      .or(`id.eq.${novelId},slug.eq.${novelId}`)
+      .single();
 
-  if (!chapters) return { prevChapter: null, nextChapter: null };
+    if (novelError || !novel) {
+      console.error('Novel not found:', novelError);
+      return { prevChapter: null, nextChapter: null };
+    }
 
-  const currentIndex = chapters.findIndex(ch => ch.chapter_number === currentChapterNumber);
-  
-  return {
-    prevChapter: currentIndex > 0 ? chapters[currentIndex - 1] : null,
-    nextChapter: currentIndex < chapters.length - 1 ? chapters[currentIndex + 1] : null,
-  };
+    const actualNovelId = novel.id;
+
+    // Now fetch chapters with the actual novel ID
+    const { data: chapters } = await supabase
+      .from('chapters')
+      .select('id, chapter_number, title')
+      .eq('novel_id', actualNovelId)
+      .order('chapter_number');
+
+    if (!chapters || chapters.length === 0) {
+      return { prevChapter: null, nextChapter: null };
+    }
+
+    const currentIndex = chapters.findIndex(ch => ch.chapter_number === currentChapterNumber);
+    
+    return {
+      prevChapter: currentIndex > 0 ? chapters[currentIndex - 1] : null,
+      nextChapter: currentIndex < chapters.length - 1 ? chapters[currentIndex + 1] : null,
+    };
+  } catch (error) {
+    console.error('Error fetching chapter navigation:', error);
+    return { prevChapter: null, nextChapter: null };
+  }
 }
 
 async function getTotalChapters(novelId: string) {
@@ -157,6 +179,7 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
       
       if (chapterData) {
         const nav = await getChapterNavigation(novelId, chapterData.chapter_number);
+        console.log('Navigation state:', nav);
         setNavigation(nav);
       }
       
@@ -217,21 +240,23 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
       <div className="flex flex-col gap-4 border-t pt-4">
         <div className="flex justify-between items-center gap-3">
           {/* Previous Chapter */}
-          {navigation.prevChapter ? (
-            <Link
-              href={`/novels/${novelId}/chapters/c${navigation.prevChapter.chapter_number}`}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
-            >
-              <Icon icon="mdi:chevron-left" className="text-xl" />
-              <span>Previous Chapter</span>
-            </Link>
-          ) : (
-            <div className="invisible flex-1">
-              <button className="px-4 py-2">Previous Chapter</button>
-            </div>
-          )}
+          <div className="flex-1">
+            {navigation.prevChapter ? (
+              <Link
+                href={`/novels/${novelId}/chapters/c${navigation.prevChapter.chapter_number}`}
+                className="inline-block px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-900"
+              >
+                <div className="flex items-center gap-2">
+                  <Icon icon="mdi:chevron-left" className="text-xl" />
+                  <span>Previous Chapter {navigation.prevChapter.chapter_number}</span>
+                </div>
+              </Link>
+            ) : (
+              <div className="px-4 py-2">No previous chapter</div>
+            )}
+          </div>
 
-          {/* Chapter Dropdown */}
+          {/* Chapter Dropdown (middle) */}
           <div className="relative">
             <button
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
@@ -259,19 +284,21 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
           </div>
 
           {/* Next Chapter */}
-          {navigation.nextChapter ? (
-            <Link
-              href={`/novels/${novelId}/chapters/c${navigation.nextChapter.chapter_number}`}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
-            >
-              <span>Next Chapter</span>
-              <Icon icon="mdi:chevron-right" className="text-xl" />
-            </Link>
-          ) : (
-            <div className="invisible flex-1">
-              <button className="px-4 py-2">Next Chapter</button>
-            </div>
-          )}
+          <div className="flex-1 flex justify-end">
+            {navigation.nextChapter ? (
+              <Link
+                href={`/novels/${novelId}/chapters/c${navigation.nextChapter.chapter_number}`}
+                className="inline-block px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-900"
+              >
+                <div className="flex items-center gap-2">
+                  <span>Next Chapter {navigation.nextChapter.chapter_number}</span>
+                  <Icon icon="mdi:chevron-right" className="text-xl" />
+                </div>
+              </Link>
+            ) : (
+              <div className="px-4 py-2">No next chapter</div>
+            )}
+          </div>
         </div>
       </div>
     </div>
