@@ -7,6 +7,8 @@ import { Icon } from '@iconify/react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { formatDate } from '@/lib/utils';
+import TextCustomization from '@/components/TextCustomization';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 
 type ChapterWithNovel = Chapter & {
   novel: Novel;
@@ -184,41 +186,24 @@ function ChapterNavigation({
     : 'bottom-full left-1/2 -translate-x-1/2 mb-2';
 
   return (
-    <div className="flex justify-between items-center gap-3">
-      {/* Previous Chapter */}
-      <div className="flex-1">
-        {navigation.prevChapter ? (
-          <Link
-            href={`/novels/${novelId}/chapters/c${navigation.prevChapter.chapter_number}`}
-            className="inline-block px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-900"
-          >
-            <div className="flex items-center gap-2">
-              <Icon icon="mdi:chevron-left" className="text-xl" />
-              <span>Previous Chapter {navigation.prevChapter.chapter_number}</span>
-            </div>
-          </Link>
-        ) : (
-          <div className="px-4 py-2">No previous chapter</div>
-        )}
-      </div>
-
-      {/* Chapter Dropdown */}
-      <div className="relative">
+    <div className="flex flex-col gap-3">
+      {/* Chapter Selector */}
+      <div className="relative w-full">
         <button
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-          className="px-4 py-2 border rounded-lg flex items-center gap-2 hover:bg-gray-50"
+          className="w-full px-4 py-3 border rounded-lg flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors"
         >
           <span>Chapter {currentChapter}</span>
           <Icon icon="mdi:chevron-down" />
         </button>
 
         {isDropdownOpen && (
-          <div className={`absolute ${dropdownPosition} w-48 max-h-96 overflow-y-auto bg-white border rounded-lg shadow-lg z-50`}>
+          <div className={`absolute ${dropdownPosition} w-48 max-h-[60vh] overflow-y-auto bg-white border rounded-lg shadow-lg z-50 left-1/2 -translate-x-1/2`}>
             {Array.from({ length: totalChapters }, (_, i) => i + 1).map((num) => (
               <button
                 key={num}
                 onClick={() => handleChapterSelect(num)}
-                className={`w-full px-4 py-2 text-left hover:bg-gray-50 ${
+                className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${
                   num === currentChapter ? 'bg-blue-50' : ''
                 }`}
               >
@@ -229,21 +214,43 @@ function ChapterNavigation({
         )}
       </div>
 
-      {/* Next Chapter */}
-      <div className="flex-1 flex justify-end">
-        {navigation.nextChapter ? (
-          <Link
-            href={`/novels/${novelId}/chapters/c${navigation.nextChapter.chapter_number}`}
-            className="inline-block px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-900"
-          >
-            <div className="flex items-center gap-2">
-              <span>Next Chapter {navigation.nextChapter.chapter_number}</span>
-              <Icon icon="mdi:chevron-right" className="text-xl" />
-            </div>
-          </Link>
-        ) : (
-          <div className="px-4 py-2">No next chapter</div>
-        )}
+      {/* Navigation Buttons */}
+      <div className="flex justify-between items-center gap-3">
+        {/* Previous Chapter */}
+        <div className="flex-1 min-w-[120px]">
+          {navigation.prevChapter ? (
+            <Link
+              href={`/novels/${novelId}/chapters/c${navigation.prevChapter.chapter_number}`}
+              className="flex items-center justify-center w-full px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-900 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <Icon icon="mdi:chevron-left" className="text-xl" />
+                <span className="hidden sm:inline">Previous</span>
+                <span>Ch.{navigation.prevChapter.chapter_number}</span>
+              </div>
+            </Link>
+          ) : (
+            <div className="hidden sm:block px-4 py-2 text-gray-500">No previous chapter</div>
+          )}
+        </div>
+
+        {/* Next Chapter */}
+        <div className="flex-1 min-w-[120px]">
+          {navigation.nextChapter ? (
+            <Link
+              href={`/novels/${novelId}/chapters/c${navigation.nextChapter.chapter_number}`}
+              className="flex items-center justify-center w-full px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-900 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <span className="hidden sm:inline">Next</span>
+                <span>Ch.{navigation.nextChapter.chapter_number}</span>
+                <Icon icon="mdi:chevron-right" className="text-xl" />
+              </div>
+            </Link>
+          ) : (
+            <div className="hidden sm:block px-4 py-2 text-gray-500">No next chapter</div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -299,6 +306,11 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
   }>({ prevChapter: null, nextChapter: null });
   const [totalChapters, setTotalChapters] = useState(0);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [fontFamily, setFontFamily] = useLocalStorage(
+    'chapter-font-family',
+    'ui-sans-serif, system-ui, sans-serif'
+  );
+  const [fontSize, setFontSize] = useLocalStorage('chapter-font-size', 16);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -345,8 +357,18 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
           <Icon icon="mdi:arrow-left" />
           <span>Back to Novel</span>
         </Link>
-        <h1 className="text-xl md:text-2xl font-bold mt-3">{chapter.novel.title}</h1>
-        <p className="text-sm md:text-base text-gray-600">by {chapter.novel.author}</p>
+        <div className="flex justify-between items-center mt-3">
+          <div>
+            <h1 className="text-xl md:text-2xl font-bold">{chapter.novel.title}</h1>
+            <p className="text-sm md:text-base text-gray-600">by {chapter.novel.author}</p>
+          </div>
+          <TextCustomization
+            currentFont={fontFamily}
+            currentSize={fontSize}
+            onFontChange={setFontFamily}
+            onSizeChange={setFontSize}
+          />
+        </div>
       </div>
 
       {/* Top Navigation */}
@@ -365,18 +387,26 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
 
       {/* Chapter Content */}
       <div className="mb-6 md:mb-8">
-        <div className="mb-4">
-          <h2 className="text-lg md:text-xl font-semibold">
-            Chapter {chapter.chapter_number}: {chapter.title}
-          </h2>
-          <p className="text-xs md:text-sm text-gray-500">
-            Published {formatDate(chapter.created_at)}
-          </p>
+        <div className="mb-4 flex justify-between items-center">
+          <div>
+            <h2 className="text-lg md:text-xl font-semibold">
+              Chapter {chapter.chapter_number}: {chapter.title}
+            </h2>
+            <p className="text-xs md:text-sm text-gray-500">
+              Published {formatDate(chapter.created_at)}
+            </p>
+          </div>
         </div>
         
-        <div className="prose prose-sm md:prose-base max-w-none">
+        <div 
+          className="prose prose-sm md:prose-base max-w-none"
+          style={{ 
+            fontFamily: fontFamily,
+            fontSize: `${fontSize}px`
+          }}
+        >
           {chapter.content.split('\n').map((paragraph, index) => (
-            <p key={index} className="mb-4 text-base leading-relaxed">
+            <p key={index} className="mb-4 leading-relaxed">
               {paragraph}
             </p>
           ))}
