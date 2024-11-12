@@ -6,7 +6,7 @@ import Image from 'next/image';
 
 const NovelCard = ({ novel }: { novel: Novel }) => (
   <Link href={`/novels/${novel.slug}`} className="block">
-    <div className="flex flex-row border p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 gap-4">
+    <div className="flex flex-row gap-4">
       <div className="w-32 h-40 flex-shrink-0 relative">
         {novel.coverImageUrl ? (
           <Image
