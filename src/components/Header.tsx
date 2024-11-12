@@ -54,9 +54,9 @@ const Header = () => {
       .from('profiles')
       .select('username')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
     
-    if (error) {
+    if (error && error.code !== 'PGRST116') {
       console.error('Error fetching profile:', error);
       return;
     }

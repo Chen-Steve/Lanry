@@ -21,6 +21,7 @@ export interface Novel {
   slug: string;
   chapters: Chapter[];
   bookmarks: number;
+  isBookmarked: boolean;
 }
 
 export interface Bookmark {

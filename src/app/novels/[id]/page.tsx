@@ -10,9 +10,9 @@ import supabase from '@/lib/supabaseClient';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 
-async function getNovel(id: string): Promise<Novel | null> {
+async function getNovel(id: string, userId?: string): Promise<Novel | null> {
   try {
-    // Try to get novel by ID or slug
+    // Try to get novel by ID or slug with bookmark status for current user
     const { data, error } = await supabase
       .from('novels')
       .select(`
@@ -23,22 +23,16 @@ async function getNovel(id: string): Promise<Novel | null> {
           created_at,
           chapter_number
         ),
-        bookmarks (
-          id
+        bookmarks!left (
+          id,
+          profile_id
         )
       `)
       .or(`id.eq.${id},slug.eq.${id}`)
       .single();
 
-    console.log('Raw Supabase data:', data);
-
-    if (error) {
+    if (error || !data) {
       console.error('Error fetching novel:', error);
-      return null;
-    }
-
-    if (!data) {
-      console.log('No data found for id:', id);
       return null;
     }
 
@@ -46,12 +40,12 @@ async function getNovel(id: string): Promise<Novel | null> {
       ...data,
       coverImageUrl: data.cover_image_url,
       bookmarks: data.bookmarks?.length ?? 0,
+      isBookmarked: userId ? data.bookmarks?.some(b => b.profile_id === userId) ?? false : false,
       chapters: (data.chapters ?? []).sort((a: Chapter, b: Chapter) => 
         a.chapter_number - b.chapter_number
       )
     };
 
-    console.log('Transformed novel data:', novel);
     return novel;
   } catch (error) {
     console.error('Detailed error in getNovel:', error);
@@ -68,39 +62,19 @@ export default function NovelPage({ params }: { params: { id: string } }) {
   const [isBookmarkLoading] = useState(false);
 
   useEffect(() => {
-    const fetchNovel = async () => {
-      const data = await getNovel(id);
-      setNovel(data);
-      setIsLoading(false);
-    };
-    fetchNovel();
-  }, [id]);
-
-  useEffect(() => {
-    // Check authentication and bookmark status
-    const checkAuth = async () => {
+    const fetchNovelAndAuth = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setIsAuthenticated(!!user);
-
-      if (user) {
-        // Check if novel is bookmarked
-        const { data: bookmark, error } = await supabase
-          .from('bookmarks')
-          .select('id')
-          .eq('profile_id', user.id)
-          .eq('novel_id', id)
-          .maybeSingle();
-
-        if (error) {
-          console.error('Error checking bookmark:', error);
-          return;
-        }
-
-        setIsBookmarked(!!bookmark);
+      
+      const data = await getNovel(id, user?.id);
+      if (data) {
+        setNovel(data);
+        setIsBookmarked(data.isBookmarked);
       }
+      setIsLoading(false);
     };
 
-    checkAuth();
+    fetchNovelAndAuth();
   }, [id]);
 
   const handleBookmark = async () => {
@@ -137,7 +111,7 @@ export default function NovelPage({ params }: { params: { id: string } }) {
       const actualNovelId = novelData.id;
 
       if (isBookmarked) {
-        // Remove bookmark using actual novel ID
+        // Remove bookmark
         const { error } = await supabase
           .from('bookmarks')
           .delete()
@@ -148,8 +122,10 @@ export default function NovelPage({ params }: { params: { id: string } }) {
 
         if (error) throw error;
         setIsBookmarked(false);
+        // Update the novel's bookmark count
+        setNovel(prev => prev ? { ...prev, bookmarks: Math.max(0, prev.bookmarks - 1) } : null);
       } else {
-        // Add bookmark with UUID using actual novel ID
+        // Add bookmark
         const { error } = await supabase
           .from('bookmarks')
           .upsert({
@@ -162,6 +138,8 @@ export default function NovelPage({ params }: { params: { id: string } }) {
 
         if (error) throw error;
         setIsBookmarked(true);
+        // Update the novel's bookmark count
+        setNovel(prev => prev ? { ...prev, bookmarks: prev.bookmarks + 1 } : null);
       }
     } catch (error) {
       console.error('Error toggling bookmark:', error);
