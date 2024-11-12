@@ -15,17 +15,8 @@ export function formatDate(date: Date | string): string {
   }).format(dateObject);
 }
 
-export function generateChapterSlug(chapterNumber: number, chapterTitle?: string): string {
-  const baseSlug = `c${chapterNumber}`;
-  
-  if (chapterTitle) {
-    const titleSlug = chapterTitle.toLowerCase()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/\s+/g, '-');
-    return `${baseSlug}-${titleSlug}`;
-  }
-  
-  return baseSlug;
+export function generateChapterSlug(chapterNumber: number): string {
+  return `c${chapterNumber}`;
 }
 
 export function generateNovelSlug(title: string): string {

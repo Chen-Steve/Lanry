@@ -61,20 +61,8 @@ export async function PUT(
       );
     }
 
-    // Get novel title for slug generation
-    const novel = await prisma.novel.findUnique({
-      where: { id: novelId },
-    });
-
-    if (!novel) {
-      return NextResponse.json(
-        { error: 'Novel not found' },
-        { status: 404 }
-      );
-    }
-
-    // Generate new slug
-    const slug = generateChapterSlug(body.chapterNumber, body.title);
+    // Generate simple slug
+    const slug = generateChapterSlug(body.chapterNumber);
 
     const updatedChapter = await prisma.chapter.update({
       where: {
