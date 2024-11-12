@@ -4,7 +4,7 @@ import { Novel } from '@/types/database';
 import Link from 'next/link';
 
 const NovelCard = ({ novel }: { novel: Novel }) => (
-  <Link href={`/novels/${novel.id}`} className="block">
+  <Link href={`/novels/${novel.slug}`} className="block">
     <div className="flex flex-row border p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 gap-4">
       <div className="w-32 h-40 flex-shrink-0">
         <div className="w-full h-full bg-gray-300 rounded"></div>

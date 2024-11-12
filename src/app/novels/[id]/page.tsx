@@ -199,13 +199,15 @@ export default function NovelPage({ params }: { params: { id: string } }) {
                 <span>{isBookmarked ? 'Bookmarked' : 'Bookmark'}</span>
               </button>
               
-              <Link 
-                href={`/novels/${novel.slug}/chapters/c${novel.chapters[novel.chapters.length - 1].chapter_number}`}
-                className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600 transition-colors w-full"
-              >
-                <Icon icon="mdi:book-open-page-variant" className="text-xl" />
-                <span>Start Reading</span>
-              </Link>
+              {novel.chapters.length > 0 && (
+                <Link 
+                  href={`/novels/${novel.slug}/chapters/c${novel.chapters[novel.chapters.length - 1].chapter_number}`}
+                  className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600 transition-colors w-full"
+                >
+                  <Icon icon="mdi:book-open-page-variant" className="text-xl" />
+                  <span>Start Reading</span>
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -244,7 +246,7 @@ export default function NovelPage({ params }: { params: { id: string } }) {
               {novel.chapters?.map((chapter) => (
                 <Link
                   key={chapter.id}
-                  href={`/novels/${id}/chapters/c${chapter.chapter_number}`}
+                  href={`/novels/${novel.slug}/chapters/c${chapter.chapter_number}`}
                   className="flex justify-between items-center p-3 rounded-lg hover:bg-gray-50 text-black"
                 >
                   <span className="font-medium">
@@ -323,7 +325,7 @@ export default function NovelPage({ params }: { params: { id: string } }) {
                             .map((chapter) => (
                               <Link
                                 key={chapter.id}
-                                href={`/novels/${id}/chapters/c${chapter.chapter_number}`}
+                                href={`/novels/${novel.slug}/chapters/c${chapter.chapter_number}`}
                                 className="block p-3 rounded-lg hover:bg-gray-50 text-black border border-gray-200"
                               >
                                 <span className="font-medium">
