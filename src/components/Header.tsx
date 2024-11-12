@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
-import { supabase } from '@/lib/supabase';
+import supabase from '@/lib/supabase';
 import SearchSection from './SearchSection';
 import type { Novel } from '@/types/database';
 

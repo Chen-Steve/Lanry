@@ -38,32 +38,6 @@ Lanry is a platform where readers can:
 - Image optimization for novel covers
 - Automated backup system
 
-## Development Roadmap
-
-### Phase 1: Core Platform (Current)
-1. ✅ Basic project structure
-2. ✅ Database schema setup
-3. 🏗️ Novel/Chapter management system
-4. Authentication system
-
-### Phase 2: Reading Experience
-1. Reading interface
-2. Progress tracking
-3. Bookmarking system
-4. Dark/Light mode
-
-### Phase 3: Community Features
-1. Comment system
-2. User profiles
-3. Reading lists
-4. Chapter notifications
-
-### Phase 4: Creator Tools
-1. Translation dashboard
-2. Markdown editor
-3. Schedule manager
-4. Analytics dashboard
-
 ## Getting Started
 
 1. Clone the repository

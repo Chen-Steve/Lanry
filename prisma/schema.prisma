@@ -22,6 +22,7 @@ model Novel {
   author         String
   description    String
   coverImageUrl  String?   @map("cover_image_url")
+  slug           String    @unique
   status         NovelStatus
   chapters       Chapter[]
   bookmarks      Bookmark[]

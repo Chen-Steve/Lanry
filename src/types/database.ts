@@ -18,6 +18,7 @@ export interface Novel {
   status: 'ONGOING' | 'COMPLETED' | 'HIATUS';
   created_at: string;
   updated_at: string;
+  slug: string;
   chapters: Chapter[];
   bookmarks: number;
 }

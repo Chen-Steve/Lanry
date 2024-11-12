@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import supabase from '@/lib/supabase';
 import { Chapter, Novel } from '@/types/database';
 import { Icon } from '@iconify/react';
 import Link from 'next/link';
@@ -14,6 +14,28 @@ type ChapterWithNovel = Chapter & {
 
 async function getChapter(novelId: string, chapterId: string): Promise<ChapterWithNovel | null> {
   try {
+    if (chapterId.startsWith('c')) {
+      const chapterNumber = parseInt(chapterId.slice(1));
+      const { data: chapter, error } = await supabase
+        .from('chapters')
+        .select(`
+          *,
+          novel:novels (
+            id,
+            title,
+            author
+          )
+        `)
+        .eq('novel_id', novelId)
+        .eq('chapter_number', chapterNumber)
+        .single();
+
+      if (error) throw error;
+      if (!chapter) return null;
+
+      return chapter as ChapterWithNovel;
+    }
+
     const { data: chapter, error } = await supabase
       .from('chapters')
       .select(`
@@ -131,7 +153,7 @@ export default function ChapterPage({
       <div className="flex justify-between items-center gap-3 border-t pt-4">
         {navigation.prevChapter ? (
           <Link
-            href={`/novels/${novelId}/chapters/${navigation.prevChapter.id}`}
+            href={`/novels/${novelId}/chapters/c${navigation.prevChapter.chapter_number}`}
             className="flex items-center gap-2 px-3 py-2 md:px-4 md:py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
           >
             <Icon icon="mdi:chevron-left" className="flex-shrink-0" />
@@ -148,7 +170,7 @@ export default function ChapterPage({
 
         {navigation.nextChapter ? (
           <Link
-            href={`/novels/${novelId}/chapters/${navigation.nextChapter.id}`}
+            href={`/novels/${novelId}/chapters/c${navigation.nextChapter.chapter_number}`}
             className="flex items-center gap-2 px-3 py-2 md:px-4 md:py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors ml-auto"
           >
             <div className="min-w-0">
@@ -170,7 +192,7 @@ export default function ChapterPage({
           <div className="w-1/3">
             {navigation.prevChapter && (
               <Link
-                href={`/novels/${novelId}/chapters/${navigation.prevChapter.id}`}
+                href={`/novels/${novelId}/chapters/c${navigation.prevChapter.chapter_number}`}
                 className="flex flex-col items-start px-2 py-1"
               >
                 <span className="text-xs text-gray-500">Previous</span>
@@ -189,7 +211,7 @@ export default function ChapterPage({
           <div className="w-1/3 text-right">
             {navigation.nextChapter && (
               <Link
-                href={`/novels/${novelId}/chapters/${navigation.nextChapter.id}`}
+                href={`/novels/${novelId}/chapters/c${navigation.nextChapter.chapter_number}`}
                 className="flex flex-col items-end px-2 py-1"
               >
                 <span className="text-xs text-gray-500">Next</span>

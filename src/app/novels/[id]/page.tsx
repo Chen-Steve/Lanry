@@ -6,12 +6,25 @@ import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import { formatDate } from '@/lib/utils';
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import supabase from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 
 async function getNovel(id: string): Promise<Novel | null> {
   try {
+    // First, try a simple query to test basic access
+    const testQuery = await supabase
+      .from('novels')
+      .select('id, title')
+      .eq('id', id)
+      .single();
+    
+    if (testQuery.error) {
+      console.error('Basic query test failed:', testQuery.error);
+      throw testQuery.error;
+    }
+
+    // If basic query works, try the full query
     const { data, error } = await supabase
       .from('novels')
       .select(`
@@ -30,19 +43,24 @@ async function getNovel(id: string): Promise<Novel | null> {
       .single();
 
     if (error) {
-      console.error('Error fetching novel:', error);
+      console.error('Full query failed:', error);
       throw error;
     }
 
-    if (!data) return null;
+    if (!data) {
+      console.log('No data found for id:', id);
+      return null;
+    }
 
     return {
       ...data,
-      bookmarks: data.bookmarks.length,
-      chapters: data.chapters.sort((a: Chapter, b: Chapter) => a.chapter_number - b.chapter_number)
+      bookmarks: data.bookmarks?.length ?? 0,
+      chapters: (data.chapters ?? []).sort((a: Chapter, b: Chapter) => 
+        a.chapter_number - b.chapter_number
+      )
     };
   } catch (error) {
-    console.error('Error fetching novel:', error);
+    console.error('Detailed error in getNovel:', error);
     return null;
   }
 }
@@ -194,7 +212,7 @@ export default function NovelPage({ params }: { params: { id: string } }) {
               </button>
               
               <Link 
-                href={`/novels/${id}/chapters/${novel.chapters[novel.chapters.length - 1].id}`}
+                href={`/novels/${novel.slug}/chapters/c${novel.chapters[novel.chapters.length - 1].chapter_number}`}
                 className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600 transition-colors w-full"
               >
                 <Icon icon="mdi:book-open-page-variant" className="text-xl" />

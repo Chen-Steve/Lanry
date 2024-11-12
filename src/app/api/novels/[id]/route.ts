@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
+import { generateNovelSlug } from '@/lib/utils';
 
 export async function GET(
   request: Request,
@@ -67,6 +68,9 @@ export async function PUT(
       );
     }
 
+    // Generate new slug from title
+    const slug = generateNovelSlug(title);
+
     const novel = await prisma.novel.update({
       where: { id: params.id },
       data: {
@@ -74,6 +78,7 @@ export async function PUT(
         author,
         description,
         status: status.toUpperCase(),
+        slug, // Add the slug field
       },
     });
 

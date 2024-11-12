@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { generateNovelSlug } from '@/lib/utils';
 
 type Novel = {
   id: string;
@@ -8,6 +9,7 @@ type Novel = {
   description: string;
   author: string;
   status: 'ONGOING' | 'COMPLETED' | 'HIATUS';
+  slug: string;
 };
 
 export default function NovelUploadForm() {
@@ -18,6 +20,7 @@ export default function NovelUploadForm() {
     description: '',
     author: '',
     status: 'ONGOING' as Novel['status'],
+    slug: '',
   });
 
   useEffect(() => {
@@ -39,6 +42,8 @@ export default function NovelUploadForm() {
     e.preventDefault();
 
     try {
+      const slug = generateNovelSlug(formData.title);
+
       const url = editingNovel 
         ? `/api/novels/${editingNovel.id}`
         : '/api/novels';
@@ -48,7 +53,10 @@ export default function NovelUploadForm() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          slug,
+        }),
       });
 
       if (!response.ok) throw new Error(`Failed to ${editingNovel ? 'update' : 'create'} novel`);
@@ -59,6 +67,7 @@ export default function NovelUploadForm() {
         description: '',
         author: '',
         status: 'ONGOING',
+        slug: '',
       });
       setEditingNovel(null);
       fetchNovels();
@@ -76,6 +85,7 @@ export default function NovelUploadForm() {
       description: novel.description,
       author: novel.author,
       status: novel.status,
+      slug: novel.slug,
     });
   };
 
@@ -86,6 +96,7 @@ export default function NovelUploadForm() {
       description: '',
       author: '',
       status: 'ONGOING',
+      slug: '',
     });
   };
 
@@ -109,6 +120,7 @@ export default function NovelUploadForm() {
           description: '',
           author: '',
           status: 'ONGOING',
+          slug: '',
         });
       }
 
