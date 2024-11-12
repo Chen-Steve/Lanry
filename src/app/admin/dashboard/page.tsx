@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import NovelUploadForm from '@/components/NovelUploadForm';
-import ChapterManagementForm from '@/components/ChapterManagementForm';
+import NovelUploadForm from '@/components/admin-dashboard/NovelUploadForm';
+import ChapterManagementForm from '@/components/admin-dashboard/ChapterManagementForm';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('novels');
