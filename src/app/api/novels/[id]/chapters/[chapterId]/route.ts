@@ -74,7 +74,7 @@ export async function PUT(
     }
 
     // Generate new slug
-    const slug = generateChapterSlug(novel.title, body.chapterNumber, body.title);
+    const slug = generateChapterSlug(body.chapterNumber, body.title);
 
     const updatedChapter = await prisma.chapter.update({
       where: {

@@ -32,7 +32,7 @@ export async function POST(
     }
 
     // Generate slug
-    const slug = generateChapterSlug(novel.title, chapterNumber, title);
+    const slug = generateChapterSlug(chapterNumber, title);
 
     const chapter = await prisma.chapter.create({
       data: {
