@@ -221,48 +221,26 @@ export default function NovelPage({ params }: { params: { id: string } }) {
             </div>
           </div>
           
-          {/* Stats */}
-          <div className="flex gap-6 mb-6 text-sm text-gray-600">
-            <div className="flex items-center gap-1">
-              <Icon icon="mdi:bookmark" />
-              <span>{novel.bookmarks.toLocaleString()} Bookmarks</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Icon icon="mdi:book" />
-              <span>{novel.chapters.length} Chapters</span>
-            </div>
-          </div>
-
-          {/* Synopsis */}
+          {/* Synopsis with Stats */}
           <div className="prose max-w-none mb-8">
-            <h2 className="text-xl font-semibold mb-2">Synopsis</h2>
+            <div className="flex items-center gap-6 mb-2">
+              <h2 className="text-xl font-semibold m-0">Synopsis</h2>
+              <div className="flex items-center gap-4 text-sm text-gray-600">
+                <div className="flex items-center gap-1">
+                  <Icon icon="mdi:book-open-page-variant" className="text-lg" />
+                  <span>{novel.chapters.length} Chapters</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Icon icon="mdi:bookmark" className="text-lg" />
+                  <span>{novel.bookmarks} Bookmarks</span>
+                </div>
+              </div>
+            </div>
             <p className="text-gray-700 whitespace-pre-line">{novel.description}</p>
           </div>
 
-          {/* Latest Chapters */}
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold mb-4">Latest Chapters</h2>
-            <div className="space-y-2">
-              {novel.chapters?.map((chapter) => (
-                <Link
-                  key={chapter.id}
-                  href={`/novels/${novel.slug}/chapters/c${chapter.chapter_number}`}
-                  className="flex justify-between items-center p-3 rounded-lg hover:bg-gray-50 text-black"
-                >
-                  <span className="font-medium">
-                    Chapter {chapter.chapter_number}
-                    {chapter.title && `: ${chapter.title}`}
-                  </span>
-                  <span className="text-sm text-gray-500">
-                    {formatDate(chapter.created_at)}
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </div>
-
           {/* Additional Info */}
-          <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="grid grid-cols-2 gap-4 text-sm mb-8">
             <div>
               <span className="text-gray-600">Status:</span>
               <span className="ml-2 font-medium">{novel.status}</span>
