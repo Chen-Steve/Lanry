@@ -102,11 +102,39 @@ async function getChapterNavigation(novelId: string, currentChapterNumber: numbe
   };
 }
 
-export default function ChapterPage({ 
-  params 
-}: { 
-  params: { id: string; chapterId: string } 
-}) {
+async function getTotalChapters(novelId: string) {
+  try {
+    // First get the novel's actual ID
+    const { data: novel, error: novelError } = await supabase
+      .from('novels')
+      .select('id')
+      .or(`id.eq.${novelId},slug.eq.${novelId}`)
+      .single();
+
+    if (novelError || !novel) {
+      console.error('Novel not found:', novelError);
+      return 0;
+    }
+
+    const actualNovelId = novel.id;
+
+    // Now get the total chapters
+    const { data: chapters } = await supabase
+      .from('chapters')
+      .select('chapter_number')
+      .eq('novel_id', actualNovelId)
+      .order('chapter_number', { ascending: false })
+      .limit(1)
+      .single();
+
+    return chapters?.chapter_number || 0;
+  } catch (error) {
+    console.error('Error getting total chapters:', error);
+    return 0;
+  }
+}
+
+export default function ChapterPage({ params }: { params: { id: string; chapterId: string } }) {
   const { id: novelId, chapterId } = params;
   const [chapter, setChapter] = useState<ChapterWithNovel | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -114,22 +142,33 @@ export default function ChapterPage({
     prevChapter: { id: string; chapter_number: number; title: string } | null;
     nextChapter: { id: string; chapter_number: number; title: string } | null;
   }>({ prevChapter: null, nextChapter: null });
+  const [totalChapters, setTotalChapters] = useState(0);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   useEffect(() => {
-    const fetchChapter = async () => {
-      const data = await getChapter(novelId, chapterId);
-      setChapter(data);
+    const fetchData = async () => {
+      const [chapterData, total] = await Promise.all([
+        getChapter(novelId, chapterId),
+        getTotalChapters(novelId)
+      ]);
       
-      if (data) {
-        const nav = await getChapterNavigation(novelId, data.chapter_number);
+      setChapter(chapterData);
+      setTotalChapters(total);
+      
+      if (chapterData) {
+        const nav = await getChapterNavigation(novelId, chapterData.chapter_number);
         setNavigation(nav);
       }
       
       setIsLoading(false);
     };
     
-    fetchChapter();
+    fetchData();
   }, [novelId, chapterId]);
+
+  const handleChapterSelect = (chapterNum: number) => {
+    window.location.href = `/novels/${novelId}/chapters/c${chapterNum}`;
+  };
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -174,81 +213,67 @@ export default function ChapterPage({
         </div>
       </div>
 
-      {/* Chapter Navigation */}
-      <div className="flex justify-between items-center gap-3 border-t pt-4">
-        {navigation.prevChapter ? (
-          <Link
-            href={`/novels/${novelId}/chapters/c${navigation.prevChapter.chapter_number}`}
-            className="flex items-center gap-2 px-3 py-2 md:px-4 md:py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
-          >
-            <Icon icon="mdi:chevron-left" className="flex-shrink-0" />
-            <div className="min-w-0">
-              <div className="text-xs text-gray-600">Previous</div>
-              <div className="text-sm truncate">
-                Chapter {navigation.prevChapter.chapter_number}: {navigation.prevChapter.title}
-              </div>
+      {/* End of Chapter Navigation */}
+      <div className="flex flex-col gap-4 border-t pt-4">
+        <div className="flex justify-between items-center gap-3">
+          {/* Previous Chapter */}
+          {navigation.prevChapter ? (
+            <Link
+              href={`/novels/${novelId}/chapters/c${navigation.prevChapter.chapter_number}`}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
+            >
+              <Icon icon="mdi:chevron-left" className="text-xl" />
+              <span>Previous Chapter</span>
+            </Link>
+          ) : (
+            <div className="invisible flex-1">
+              <button className="px-4 py-2">Previous Chapter</button>
             </div>
-          </Link>
-        ) : (
-          <div className="flex-1" />
-        )}
+          )}
 
-        {navigation.nextChapter ? (
-          <Link
-            href={`/novels/${novelId}/chapters/c${navigation.nextChapter.chapter_number}`}
-            className="flex items-center gap-2 px-3 py-2 md:px-4 md:py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors ml-auto"
-          >
-            <div className="min-w-0">
-              <div className="text-xs text-gray-600">Next</div>
-              <div className="text-sm truncate">
-                Chapter {navigation.nextChapter.chapter_number}: {navigation.nextChapter.title}
+          {/* Chapter Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className="px-4 py-2 border rounded-lg flex items-center gap-2 hover:bg-gray-50"
+            >
+              <span>Chapter {chapter.chapter_number}</span>
+              <Icon icon="mdi:chevron-down" />
+            </button>
+
+            {isDropdownOpen && (
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 max-h-96 overflow-y-auto bg-white border rounded-lg shadow-lg z-50">
+                {Array.from({ length: totalChapters }, (_, i) => i + 1).map((num) => (
+                  <button
+                    key={num}
+                    onClick={() => handleChapterSelect(num)}
+                    className={`w-full px-4 py-2 text-left hover:bg-gray-50 ${
+                      num === chapter.chapter_number ? 'bg-blue-50' : ''
+                    }`}
+                  >
+                    Chapter {num}
+                  </button>
+                ))}
               </div>
-            </div>
-            <Icon icon="mdi:chevron-right" className="flex-shrink-0" />
-          </Link>
-        ) : (
-          <div className="flex-1" />
-        )}
-      </div>
-
-      {/* Fixed Bottom Navigation for Mobile */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t py-2 px-4 sm:hidden">
-        <div className="flex justify-between items-center max-w-4xl mx-auto">
-          <div className="w-1/3">
-            {navigation.prevChapter && (
-              <Link
-                href={`/novels/${novelId}/chapters/c${navigation.prevChapter.chapter_number}`}
-                className="flex flex-col items-start px-2 py-1"
-              >
-                <span className="text-xs text-gray-500">Previous</span>
-                <span className="text-sm truncate">Ch. {navigation.prevChapter.chapter_number}</span>
-              </Link>
             )}
           </div>
 
-          <Link
-            href={`/novels/${novelId}`}
-            className="flex items-center justify-center w-12 h-12 rounded-full bg-gray-100"
-          >
-            <Icon icon="mdi:book-open-variant" className="text-xl" />
-          </Link>
-
-          <div className="w-1/3 text-right">
-            {navigation.nextChapter && (
-              <Link
-                href={`/novels/${novelId}/chapters/c${navigation.nextChapter.chapter_number}`}
-                className="flex flex-col items-end px-2 py-1"
-              >
-                <span className="text-xs text-gray-500">Next</span>
-                <span className="text-sm truncate">Ch. {navigation.nextChapter.chapter_number}</span>
-              </Link>
-            )}
-          </div>
+          {/* Next Chapter */}
+          {navigation.nextChapter ? (
+            <Link
+              href={`/novels/${novelId}/chapters/c${navigation.nextChapter.chapter_number}`}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
+            >
+              <span>Next Chapter</span>
+              <Icon icon="mdi:chevron-right" className="text-xl" />
+            </Link>
+          ) : (
+            <div className="invisible flex-1">
+              <button className="px-4 py-2">Next Chapter</button>
+            </div>
+          )}
         </div>
       </div>
-
-      {/* Bottom Padding for Mobile Navigation */}
-      <div className="h-16 sm:hidden" />
     </div>
   );
 } 
