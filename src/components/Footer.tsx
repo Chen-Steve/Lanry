@@ -10,27 +10,37 @@ const Footer = () => {
       <div className="px-4 py-6 sm:py-8 max-w-5xl mx-auto">
         <div className="space-y-8 sm:grid sm:grid-cols-2 lg:grid-cols-4 sm:gap-8 sm:space-y-0">
           {/* Brand Section */}
-          <div className="col-span-1 lg:col-span-2">
+          <div className="col-span-1 lg:col-span-2 flex flex-col items-center sm:items-start text-center sm:text-left">
             <Link href="/" className="text-lg sm:text-xl font-bold text-gray-800">
               Lanry
             </Link>
             <p className="mt-2 text-sm text-gray-600">
               Read light novels with ease.
             </p>
-            <Link 
-              href="https://forms.gle/DV9X9C5wQjUxKece7" 
-              className="text-sm text-gray-600 hover:text-gray-800 hover:underline bg-yellow-100 px-2 py-1 rounded transition-colors"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Any feedback for us?
-            </Link>
+            <div className="flex flex-col sm:flex-row gap-2 mt-2">
+              <Link 
+                href="https://forms.gle/DV9X9C5wQjUxKece7" 
+                className="text-sm text-gray-600 hover:text-gray-800 hover:underline bg-yellow-100 px-2 py-1 rounded transition-colors text-center"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Any feedback for us?
+              </Link>
+              <Link 
+                href="https://forms.gle/dYXhMkxfTi3odiLc8" 
+                className="text-sm text-gray-600 hover:text-gray-800 hover:underline bg-blue-100 px-2 py-1 rounded transition-colors text-center"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Request a novel translation
+              </Link>
+            </div>
           </div>
 
           {/* Quick Links */}
-          <div className="space-y-3">
+          <div className="space-y-3 flex flex-col items-center sm:items-start">
             <h3 className="text-sm font-semibold text-gray-800">Quick Links</h3>
-            <ul className="space-y-3">
+            <ul className="space-y-3 text-center sm:text-left">
               <li>
                 <Link 
                   href="/" 
@@ -59,11 +69,11 @@ const Footer = () => {
           </div>
 
           {/* Connect */}
-          <div className="space-y-3">
+          <div className="space-y-3 flex flex-col items-center sm:items-start">
             <h3 className="text-sm font-semibold text-gray-800">Connect</h3>
             <div className="flex space-x-4">
               <a
-                href="https://github.com/Chen-Steve/novelwiki"
+                href="https://github.com/Chen-Steve/lanry"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-600 hover:text-gray-800 transition-colors"

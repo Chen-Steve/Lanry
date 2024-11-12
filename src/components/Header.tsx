@@ -75,6 +75,7 @@ const Header = () => {
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     setIsProfileDropdownOpen(false);
+    setIsMenuOpen(false);
   };
 
   const renderAuthLink = () => {
