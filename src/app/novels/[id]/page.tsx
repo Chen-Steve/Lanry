@@ -29,10 +29,15 @@ async function getNovel(id: string, userId?: string): Promise<Novel | null> {
         )
       `)
       .eq(isNumericId ? 'id' : 'slug', isNumericId ? Number(id) : id)
-      .single();
+      .single()
+      .throwOnError();
 
-    if (error || !data) {
-      console.error('Error fetching novel:', error);
+    if (error) {
+      console.error('Supabase error:', error);
+      return null;
+    }
+
+    if (!data) {
       return null;
     }
 
@@ -63,18 +68,32 @@ export default function NovelPage({ params }: { params: { id: string } }) {
 
   useEffect(() => {
     const fetchNovelAndAuth = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setIsAuthenticated(!!user);
-      
-      const data = await getNovel(id, user?.id);
-      if (data) {
-        setNovel(data);
-        setIsBookmarked(data.isBookmarked);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        setIsAuthenticated(!!session?.user);
+        
+        const data = await getNovel(id, session?.user?.id);
+        if (data) {
+          setNovel(data);
+          setIsBookmarked(data.isBookmarked);
+        }
+      } catch (error) {
+        console.error('Auth error:', error);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
 
     fetchNovelAndAuth();
+
+    // Set up auth listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [id]);
 
   const handleBookmark = async () => {

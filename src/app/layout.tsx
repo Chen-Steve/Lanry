@@ -6,8 +6,8 @@ import Providers from '@/components/Providers';
 import { Toaster } from 'react-hot-toast';
 
 export const metadata: Metadata = {
-  title: "LightNovel Database",
-  description: "A modern database for light novel enthusiasts",
+  title: "Lanry",
+  description: "read light novel",
 };
 
 export default function RootLayout({

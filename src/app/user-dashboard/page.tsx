@@ -34,7 +34,18 @@ export default function UserDashboard() {
   return (
     <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-0">My Dashboard</h1>
+        <div className="flex items-center gap-4 mb-4 sm:mb-0">
+          <h1 className="text-2xl sm:text-3xl font-bold">My Dashboard</h1>
+          <a
+            href="https://forms.gle/dYXhMkxfTi3odiLc8"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-500 hover:text-blue-600 transition-colors flex items-center gap-1"
+          >
+            <Icon icon="mdi:plus-circle" width="20" />
+            <span>Request a Novel</span>
+          </a>
+        </div>
         <button
           onClick={handleSignOut}
           className="text-red-500 hover:text-red-600 transition-colors"
