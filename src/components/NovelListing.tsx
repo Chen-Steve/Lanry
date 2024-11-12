@@ -7,23 +7,23 @@ import Image from 'next/image';
 const NovelCard = ({ novel }: { novel: Novel }) => (
   <Link href={`/novels/${novel.slug}`} className="block">
     <div className="flex flex-row gap-4">
-      <div className="w-32 h-40 flex-shrink-0 relative">
+      <div className="w-28 h-44 flex-shrink-0 relative">
         {novel.coverImageUrl ? (
           <Image
             src={`/novel-covers/${novel.coverImageUrl}`}
             alt={`Cover for ${novel.title}`}
             fill
             className="object-cover rounded"
-            sizes="(max-width: 768px) 128px, 128px"
+            sizes="(max-width: 768px) 112px, 112px"
           />
         ) : (
           <div className="w-full h-full bg-gray-300 rounded"></div>
         )}
       </div>
-      <div className="flex-grow overflow-hidden">
-        <h3 className="text-lg font-semibold mb-2 truncate">{novel.title}</h3>
+      <div className="flex-grow overflow-hidden h-44">
+        <h3 className="text-lg font-semibold mb-1 truncate">{novel.title}</h3>
         <p className="text-sm text-gray-600 mb-2">by {novel.author}</p>
-        <p className="text-sm text-gray-500 line-clamp-3">{novel.description}</p>
+        <p className="text-sm text-gray-500 line-clamp-5 leading-relaxed">{novel.description}</p>
       </div>
     </div>
   </Link>
