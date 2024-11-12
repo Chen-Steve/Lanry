@@ -116,26 +116,40 @@ export default function NovelPage({ params }: { params: { id: string } }) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // First, get the actual novel ID if we're using a slug
+      const { data: novelData, error: novelError } = await supabase
+        .from('novels')
+        .select('id')
+        .or(`id.eq.${id},slug.eq.${id}`)
+        .single();
+
+      if (novelError || !novelData) {
+        console.error('Error getting novel:', novelError);
+        throw new Error('Novel not found');
+      }
+
+      const actualNovelId = novelData.id;
+
       if (isBookmarked) {
-        // Remove bookmark
+        // Remove bookmark using actual novel ID
         const { error } = await supabase
           .from('bookmarks')
           .delete()
           .match({
             profile_id: user.id,
-            novel_id: id
+            novel_id: actualNovelId
           });
 
         if (error) throw error;
         setIsBookmarked(false);
       } else {
-        // Add bookmark with UUID
+        // Add bookmark with UUID using actual novel ID
         const { error } = await supabase
           .from('bookmarks')
           .upsert({
             id: crypto.randomUUID(),
             profile_id: user.id,
-            novel_id: id,
+            novel_id: actualNovelId,
           }, {
             onConflict: 'profile_id,novel_id'
           });
