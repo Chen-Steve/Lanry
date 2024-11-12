@@ -40,7 +40,7 @@ async function getNovel(id: string, userId?: string): Promise<Novel | null> {
       ...data,
       coverImageUrl: data.cover_image_url,
       bookmarks: data.bookmarks?.length ?? 0,
-      isBookmarked: userId ? data.bookmarks?.some(b => b.profile_id === userId) ?? false : false,
+      isBookmarked: userId ? data.bookmarks?.some((b: { profile_id: string }) => b.profile_id === userId) ?? false : false,
       chapters: (data.chapters ?? []).sort((a: Chapter, b: Chapter) => 
         a.chapter_number - b.chapter_number
       )
