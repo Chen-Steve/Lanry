@@ -156,6 +156,99 @@ async function getTotalChapters(novelId: string) {
   }
 }
 
+// First, create a ChapterNavigation component (at the top of the file)
+function ChapterNavigation({ 
+  navigation, 
+  novelId, 
+  currentChapter, 
+  totalChapters, 
+  isDropdownOpen, 
+  setIsDropdownOpen, 
+  handleChapterSelect,
+  position = 'bottom'
+}: {
+  navigation: {
+    prevChapter: { chapter_number: number } | null;
+    nextChapter: { chapter_number: number } | null;
+  };
+  novelId: string;
+  currentChapter: number;
+  totalChapters: number;
+  isDropdownOpen: boolean;
+  setIsDropdownOpen: (open: boolean) => void;
+  handleChapterSelect: (num: number) => void;
+  position?: 'top' | 'bottom';
+}) {
+  const dropdownPosition = position === 'top' 
+    ? 'top-full left-1/2 -translate-x-1/2 mt-2' 
+    : 'bottom-full left-1/2 -translate-x-1/2 mb-2';
+
+  return (
+    <div className="flex justify-between items-center gap-3">
+      {/* Previous Chapter */}
+      <div className="flex-1">
+        {navigation.prevChapter ? (
+          <Link
+            href={`/novels/${novelId}/chapters/c${navigation.prevChapter.chapter_number}`}
+            className="inline-block px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-900"
+          >
+            <div className="flex items-center gap-2">
+              <Icon icon="mdi:chevron-left" className="text-xl" />
+              <span>Previous Chapter {navigation.prevChapter.chapter_number}</span>
+            </div>
+          </Link>
+        ) : (
+          <div className="px-4 py-2">No previous chapter</div>
+        )}
+      </div>
+
+      {/* Chapter Dropdown */}
+      <div className="relative">
+        <button
+          onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+          className="px-4 py-2 border rounded-lg flex items-center gap-2 hover:bg-gray-50"
+        >
+          <span>Chapter {currentChapter}</span>
+          <Icon icon="mdi:chevron-down" />
+        </button>
+
+        {isDropdownOpen && (
+          <div className={`absolute ${dropdownPosition} w-48 max-h-96 overflow-y-auto bg-white border rounded-lg shadow-lg z-50`}>
+            {Array.from({ length: totalChapters }, (_, i) => i + 1).map((num) => (
+              <button
+                key={num}
+                onClick={() => handleChapterSelect(num)}
+                className={`w-full px-4 py-2 text-left hover:bg-gray-50 ${
+                  num === currentChapter ? 'bg-blue-50' : ''
+                }`}
+              >
+                Chapter {num}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Next Chapter */}
+      <div className="flex-1 flex justify-end">
+        {navigation.nextChapter ? (
+          <Link
+            href={`/novels/${novelId}/chapters/c${navigation.nextChapter.chapter_number}`}
+            className="inline-block px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-900"
+          >
+            <div className="flex items-center gap-2">
+              <span>Next Chapter {navigation.nextChapter.chapter_number}</span>
+              <Icon icon="mdi:chevron-right" className="text-xl" />
+            </div>
+          </Link>
+        ) : (
+          <div className="px-4 py-2">No next chapter</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function ChapterPage({ params }: { params: { id: string; chapterId: string } }) {
   const { id: novelId, chapterId } = params;
   const [chapter, setChapter] = useState<ChapterWithNovel | null>(null);
@@ -216,6 +309,20 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
         <p className="text-sm md:text-base text-gray-600">by {chapter.novel.author}</p>
       </div>
 
+      {/* Top Navigation */}
+      <div className="mb-6">
+        <ChapterNavigation
+          navigation={navigation}
+          novelId={novelId}
+          currentChapter={chapter.chapter_number}
+          totalChapters={totalChapters}
+          isDropdownOpen={isDropdownOpen}
+          setIsDropdownOpen={setIsDropdownOpen}
+          handleChapterSelect={handleChapterSelect}
+          position="top"
+        />
+      </div>
+
       {/* Chapter Content */}
       <div className="mb-6 md:mb-8">
         <div className="mb-4">
@@ -236,70 +343,18 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
         </div>
       </div>
 
-      {/* End of Chapter Navigation */}
-      <div className="flex flex-col gap-4 border-t pt-4">
-        <div className="flex justify-between items-center gap-3">
-          {/* Previous Chapter */}
-          <div className="flex-1">
-            {navigation.prevChapter ? (
-              <Link
-                href={`/novels/${novelId}/chapters/c${navigation.prevChapter.chapter_number}`}
-                className="inline-block px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-900"
-              >
-                <div className="flex items-center gap-2">
-                  <Icon icon="mdi:chevron-left" className="text-xl" />
-                  <span>Previous Chapter {navigation.prevChapter.chapter_number}</span>
-                </div>
-              </Link>
-            ) : (
-              <div className="px-4 py-2">No previous chapter</div>
-            )}
-          </div>
-
-          {/* Chapter Dropdown (middle) */}
-          <div className="relative">
-            <button
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="px-4 py-2 border rounded-lg flex items-center gap-2 hover:bg-gray-50"
-            >
-              <span>Chapter {chapter.chapter_number}</span>
-              <Icon icon="mdi:chevron-down" />
-            </button>
-
-            {isDropdownOpen && (
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 max-h-96 overflow-y-auto bg-white border rounded-lg shadow-lg z-50">
-                {Array.from({ length: totalChapters }, (_, i) => i + 1).map((num) => (
-                  <button
-                    key={num}
-                    onClick={() => handleChapterSelect(num)}
-                    className={`w-full px-4 py-2 text-left hover:bg-gray-50 ${
-                      num === chapter.chapter_number ? 'bg-blue-50' : ''
-                    }`}
-                  >
-                    Chapter {num}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Next Chapter */}
-          <div className="flex-1 flex justify-end">
-            {navigation.nextChapter ? (
-              <Link
-                href={`/novels/${novelId}/chapters/c${navigation.nextChapter.chapter_number}`}
-                className="inline-block px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-900"
-              >
-                <div className="flex items-center gap-2">
-                  <span>Next Chapter {navigation.nextChapter.chapter_number}</span>
-                  <Icon icon="mdi:chevron-right" className="text-xl" />
-                </div>
-              </Link>
-            ) : (
-              <div className="px-4 py-2">No next chapter</div>
-            )}
-          </div>
-        </div>
+      {/* Bottom Navigation */}
+      <div className="border-t pt-4">
+        <ChapterNavigation
+          navigation={navigation}
+          novelId={novelId}
+          currentChapter={chapter.chapter_number}
+          totalChapters={totalChapters}
+          isDropdownOpen={isDropdownOpen}
+          setIsDropdownOpen={setIsDropdownOpen}
+          handleChapterSelect={handleChapterSelect}
+          position="bottom"
+        />
       </div>
     </div>
   );
