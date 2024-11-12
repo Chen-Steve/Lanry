@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import supabase from '@/lib/supabase';
+import supabase from '@/lib/supabaseClient';
 import { Icon } from '@iconify/react';
 import { generateUsername } from '@/utils/username';
 
@@ -90,18 +90,22 @@ export default function AuthPage() {
 
     try {
       if (mode === 'signup') {
-        const { data, error } = await supabase.auth.signUp({
+        // First attempt signup
+        const { data, error: signUpError } = await supabase.auth.signUp({
           email: credentials.email,
           password: credentials.password,
         });
 
-        if (error) throw error;
+        if (signUpError) {
+          console.error('Signup error:', signUpError);
+          throw new Error(signUpError.message);
+        }
         
-        // If signup successful, create profile and sign them in
+        // If signup successful and we have a user
         if (data.user) {
           const generatedUsername = generateUsername();
           
-          // Create profile with generated username
+          // Create profile
           const { error: profileError } = await supabase
             .from('profiles')
             .insert([
@@ -113,15 +117,22 @@ export default function AuthPage() {
               }
             ]);
 
-          if (profileError) throw profileError;
+          if (profileError) {
+            console.error('Profile creation error:', profileError);
+            throw new Error('Failed to create user profile');
+          }
 
-          // Automatically sign them in
+          // Auto sign-in
           const { error: signInError } = await supabase.auth.signInWithPassword({
             email: credentials.email,
             password: credentials.password,
           });
 
-          if (signInError) throw signInError;
+          if (signInError) {
+            console.error('Auto sign-in error:', signInError);
+            throw new Error('Account created but failed to sign in automatically');
+          }
+
           router.push('/');
           router.refresh();
         }

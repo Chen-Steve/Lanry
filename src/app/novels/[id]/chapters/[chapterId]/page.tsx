@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import supabase from '@/lib/supabase';
+import supabase from '@/lib/supabaseClient';
 import { Chapter, Novel } from '@/types/database';
 import { Icon } from '@iconify/react';
 import Link from 'next/link';
@@ -14,8 +14,28 @@ type ChapterWithNovel = Chapter & {
 
 async function getChapter(novelId: string, chapterId: string): Promise<ChapterWithNovel | null> {
   try {
+    // First try to get the novel by ID or slug
+    const { data: novel, error: novelError } = await supabase
+      .from('novels')
+      .select('id')
+      .or(`id.eq.${novelId},slug.eq.${novelId}`)
+      .single();
+
+    if (novelError || !novel) {
+      console.error('Novel not found:', novelError);
+      return null;
+    }
+
+    const actualNovelId = novel.id;
+
+    // Now fetch the chapter
     if (chapterId.startsWith('c')) {
       const chapterNumber = parseInt(chapterId.slice(1));
+      if (isNaN(chapterNumber)) {
+        console.error('Invalid chapter number format');
+        return null;
+      }
+
       const { data: chapter, error } = await supabase
         .from('chapters')
         .select(`
@@ -26,16 +46,19 @@ async function getChapter(novelId: string, chapterId: string): Promise<ChapterWi
             author
           )
         `)
-        .eq('novel_id', novelId)
+        .eq('novel_id', actualNovelId)
         .eq('chapter_number', chapterNumber)
         .single();
 
-      if (error) throw error;
-      if (!chapter) return null;
-
+      if (error) {
+        console.error('Supabase error:', error);
+        return null;
+      }
+      
       return chapter as ChapterWithNovel;
     }
 
+    // Handle direct chapter ID or slug lookup
     const { data: chapter, error } = await supabase
       .from('chapters')
       .select(`
@@ -46,12 +69,14 @@ async function getChapter(novelId: string, chapterId: string): Promise<ChapterWi
           author
         )
       `)
-      .eq('id', chapterId)
-      .eq('novel_id', novelId)
+      .or(`id.eq.${chapterId},slug.eq.${chapterId}`)
+      .eq('novel_id', actualNovelId)
       .single();
 
-    if (error) throw error;
-    if (!chapter) return null;
+    if (error) {
+      console.error('Supabase error:', error);
+      return null;
+    }
 
     return chapter as ChapterWithNovel;
   } catch (error) {

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
-import supabase from '@/lib/supabase';
+import supabase from '@/lib/supabaseClient';
 import SearchSection from './SearchSection';
 import type { Novel } from '@/types/database';
 
@@ -50,11 +50,16 @@ const Header = () => {
   }, [isProfileDropdownOpen]);
 
   const fetchUserProfile = async (userId: string) => {
-    const { data: profile } = await supabase
+    const { data: profile, error } = await supabase
       .from('profiles')
       .select('username')
       .eq('id', userId)
       .single();
+    
+    if (error) {
+      console.error('Error fetching profile:', error);
+      return;
+    }
     
     setUsername(profile?.username || 'User');
   };

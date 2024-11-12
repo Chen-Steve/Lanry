@@ -6,25 +6,13 @@ import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import { formatDate } from '@/lib/utils';
 import { useEffect, useState } from 'react';
-import supabase from '@/lib/supabase';
+import supabase from '@/lib/supabaseClient';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 
 async function getNovel(id: string): Promise<Novel | null> {
   try {
-    // First, try a simple query to test basic access
-    const testQuery = await supabase
-      .from('novels')
-      .select('id, title')
-      .eq('id', id)
-      .single();
-    
-    if (testQuery.error) {
-      console.error('Basic query test failed:', testQuery.error);
-      throw testQuery.error;
-    }
-
-    // If basic query works, try the full query
+    // Try to get novel by ID or slug
     const { data, error } = await supabase
       .from('novels')
       .select(`
@@ -39,12 +27,12 @@ async function getNovel(id: string): Promise<Novel | null> {
           id
         )
       `)
-      .eq('id', id)
+      .or(`id.eq.${id},slug.eq.${id}`)
       .single();
 
     if (error) {
-      console.error('Full query failed:', error);
-      throw error;
+      console.error('Error fetching novel:', error);
+      return null;
     }
 
     if (!data) {
@@ -256,7 +244,7 @@ export default function NovelPage({ params }: { params: { id: string } }) {
               {novel.chapters?.map((chapter) => (
                 <Link
                   key={chapter.id}
-                  href={`/novels/${id}/chapters/${chapter.id}`}
+                  href={`/novels/${id}/chapters/c${chapter.chapter_number}`}
                   className="flex justify-between items-center p-3 rounded-lg hover:bg-gray-50 text-black"
                 >
                   <span className="font-medium">
@@ -335,7 +323,7 @@ export default function NovelPage({ params }: { params: { id: string } }) {
                             .map((chapter) => (
                               <Link
                                 key={chapter.id}
-                                href={`/novels/${id}/chapters/${chapter.id}`}
+                                href={`/novels/${id}/chapters/c${chapter.chapter_number}`}
                                 className="block p-3 rounded-lg hover:bg-gray-50 text-black border border-gray-200"
                               >
                                 <span className="font-medium">
