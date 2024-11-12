@@ -249,6 +249,46 @@ function ChapterNavigation({
   );
 }
 
+function ScrollToTopButton() {
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const toggleVisibility = () => {
+      // Show button when page is scrolled more than 300px
+      if (window.pageYOffset > 300) {
+        setIsVisible(true);
+      } else {
+        setIsVisible(false);
+      }
+    };
+
+    window.addEventListener('scroll', toggleVisibility);
+
+    return () => {
+      window.removeEventListener('scroll', toggleVisibility);
+    };
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    });
+  };
+
+  return (
+    <button
+      onClick={scrollToTop}
+      className={`fixed bottom-8 right-8 p-3 bg-gray-800 text-white rounded-full shadow-lg transition-opacity duration-300 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400 ${
+        isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
+      }`}
+      aria-label="Scroll to top"
+    >
+      <Icon icon="mdi:chevron-up" className="text-xl" />
+    </button>
+  );
+}
+
 export default function ChapterPage({ params }: { params: { id: string; chapterId: string } }) {
   const { id: novelId, chapterId } = params;
   const [chapter, setChapter] = useState<ChapterWithNovel | null>(null);
@@ -356,6 +396,9 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
           position="bottom"
         />
       </div>
+
+      {/* Add the ScrollToTop button */}
+      <ScrollToTopButton />
     </div>
   );
 } 
