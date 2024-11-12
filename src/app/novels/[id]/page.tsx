@@ -12,7 +12,7 @@ import Link from 'next/link';
 
 async function getNovel(id: string, userId?: string): Promise<Novel | null> {
   try {
-    // Try to get novel by ID or slug with bookmark status for current user
+    const isNumericId = !isNaN(Number(id));
     const { data, error } = await supabase
       .from('novels')
       .select(`
@@ -28,7 +28,7 @@ async function getNovel(id: string, userId?: string): Promise<Novel | null> {
           profile_id
         )
       `)
-      .or(`id.eq.${id},slug.eq.${id}`)
+      .eq(isNumericId ? 'id' : 'slug', isNumericId ? Number(id) : id)
       .single();
 
     if (error || !data) {
@@ -96,11 +96,11 @@ export default function NovelPage({ params }: { params: { id: string } }) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // First, get the actual novel ID if we're using a slug
+      const isNumericId = !isNaN(Number(id));
       const { data: novelData, error: novelError } = await supabase
         .from('novels')
         .select('id')
-        .or(`id.eq.${id},slug.eq.${id}`)
+        .eq(isNumericId ? 'id' : 'slug', isNumericId ? Number(id) : id)
         .single();
 
       if (novelError || !novelData) {
@@ -109,6 +109,7 @@ export default function NovelPage({ params }: { params: { id: string } }) {
       }
 
       const actualNovelId = novelData.id;
+      const now = new Date().toISOString();
 
       if (isBookmarked) {
         // Remove bookmark
@@ -125,13 +126,15 @@ export default function NovelPage({ params }: { params: { id: string } }) {
         // Update the novel's bookmark count
         setNovel(prev => prev ? { ...prev, bookmarks: Math.max(0, prev.bookmarks - 1) } : null);
       } else {
-        // Add bookmark
+        // Add bookmark with timestamps
         const { error } = await supabase
           .from('bookmarks')
           .upsert({
             id: crypto.randomUUID(),
             profile_id: user.id,
             novel_id: actualNovelId,
+            created_at: now,
+            updated_at: now
           }, {
             onConflict: 'profile_id,novel_id'
           });

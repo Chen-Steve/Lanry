@@ -8,6 +8,7 @@ interface Novel {
   title: string;
   author: string;
   description: string;
+  slug: string | null;
 }
 
 interface Bookmark {
@@ -25,7 +26,16 @@ const fetchBookmarks = async () => {
 
   const { data, error } = await supabase
     .from('bookmarks')
-    .select('*, novel:novels(*)')
+    .select(`
+      *,
+      novel:novels (
+        id,
+        title,
+        author,
+        description,
+        slug
+      )
+    `)
     .eq('profile_id', user.id)
     .order('created_at', { ascending: false });
 
@@ -40,7 +50,7 @@ const BookmarkCard = ({ bookmark, onRemove }: { bookmark: Bookmark; onRemove: (i
       <h3 className="font-medium mb-2">{bookmark.novel.title}</h3>
       <div className="flex justify-between items-center">
         <Link
-          href={`/novels/${bookmark.novel.id}`}
+          href={`/novels/${bookmark.novel.slug || bookmark.novel.id}`}
           className="text-blue-500 hover:text-blue-600 flex items-center gap-1"
         >
           <Icon icon="mdi:book-open-page-variant" width="20" />
