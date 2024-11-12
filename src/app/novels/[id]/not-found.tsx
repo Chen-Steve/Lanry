@@ -8,7 +8,7 @@ export default function NovelNotFound() {
         The novel you&apos;re looking for doesn&apos;t exist or has been removed.
       </p>
       <Link
-        href="/novels"
+        href="/"
         className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
       >
         Back to Novels

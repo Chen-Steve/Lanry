@@ -12,7 +12,7 @@ import Link from 'next/link';
 
 async function getNovel(id: string): Promise<Novel | null> {
   try {
-    const { data: novel, error } = await supabase
+    const { data, error } = await supabase
       .from('novels')
       .select(`
         *,
@@ -29,13 +29,17 @@ async function getNovel(id: string): Promise<Novel | null> {
       .eq('id', id)
       .single();
 
-    if (error) throw error;
-    if (!novel) return null;
+    if (error) {
+      console.error('Error fetching novel:', error);
+      throw error;
+    }
+
+    if (!data) return null;
 
     return {
-      ...novel,
-      bookmarks: novel.bookmarks.length,
-      chapters: novel.chapters.sort((a: Chapter, b: Chapter) => a.chapter_number - b.chapter_number)
+      ...data,
+      bookmarks: data.bookmarks.length,
+      chapters: data.chapters.sort((a: Chapter, b: Chapter) => a.chapter_number - b.chapter_number)
     };
   } catch (error) {
     console.error('Error fetching novel:', error);
