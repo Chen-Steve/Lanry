@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 
 export async function POST(request: Request) {
   try {
@@ -12,37 +11,29 @@ export async function POST(request: Request) {
       );
     }
 
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
-
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: username,
-      password: password,
-    });
-
-    if (error) {
-      console.error('Auth error:', error);
+    // Check against environment variables
+    if (
+      username !== process.env.ADMIN_EMAIL ||
+      password !== process.env.ADMIN_PASSWORD
+    ) {
       return NextResponse.json(
         { error: 'Invalid credentials' },
         { status: 401 }
       );
     }
 
-    console.log('User data:', data.user);
-    console.log('User metadata:', data.user?.user_metadata);
-
-    if (data.user?.user_metadata?.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Unauthorized - Not an admin user' },
-        { status: 403 }
-      );
-    }
+    // Create a simple session object
+    const session = {
+      user: {
+        email: username,
+        role: 'admin'
+      },
+      expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+    };
 
     return NextResponse.json({ 
       success: true,
-      session: data.session 
+      session 
     });
   } catch (error) {
     console.error('Auth error:', error);
