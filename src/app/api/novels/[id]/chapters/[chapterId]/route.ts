@@ -48,10 +48,10 @@ const validateInput = (body: ChapterInput): boolean => {
 
 export async function PUT(
   request: Request,
-  { params }: { params: { novelId: string; chapterId: string } }
+  { params }: { params: { id: string; chapterId: string } }
 ) {
   try {
-    const { novelId, chapterId } = params;
+    const { id: novelId, chapterId } = params;
     const body = await request.json() as ChapterInput;
 
     if (!validateInput(body)) {

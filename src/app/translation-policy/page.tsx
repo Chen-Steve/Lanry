@@ -71,7 +71,7 @@ const TranslationPolicyPage = () => {
           </p>
           <div className="bg-gray-50 p-4 rounded-lg">
             <ol className="list-decimal pl-5 space-y-2 text-gray-700">
-              <li>Submit a formal request to dmca@lanry.com</li>
+              <li>Submit a formal request through our <a href="https://forms.gle/oz7pFHRrVDnvYEJ58" className="text-blue-600 hover:text-blue-800 underline">DMCA takedown form</a></li>
               <li>Provide proof of copyright ownership</li>
               <li>Identify the specific content for removal</li>
               <li>Content will be removed within 24-48 hours of verification</li>
