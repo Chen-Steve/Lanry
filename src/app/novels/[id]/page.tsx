@@ -30,6 +30,8 @@ async function getNovel(id: string): Promise<Novel | null> {
       .or(`id.eq.${id},slug.eq.${id}`)
       .single();
 
+    console.log('Raw Supabase data:', data);
+
     if (error) {
       console.error('Error fetching novel:', error);
       return null;
@@ -40,13 +42,17 @@ async function getNovel(id: string): Promise<Novel | null> {
       return null;
     }
 
-    return {
+    const novel = {
       ...data,
+      coverImageUrl: data.cover_image_url,
       bookmarks: data.bookmarks?.length ?? 0,
       chapters: (data.chapters ?? []).sort((a: Chapter, b: Chapter) => 
         a.chapter_number - b.chapter_number
       )
     };
+
+    console.log('Transformed novel data:', novel);
+    return novel;
   } catch (error) {
     console.error('Detailed error in getNovel:', error);
     return null;
@@ -179,9 +185,9 @@ export default function NovelPage({ params }: { params: { id: string } }) {
         <div className="w-full md:w-80 flex-shrink-0">
           <div className="sticky top-8">
             <div className="relative w-full aspect-[2/3] rounded-lg overflow-hidden shadow-lg">
-              {novel.coverImage ? (
+              {novel.coverImageUrl ? (
                 <Image
-                  src={novel.coverImage}
+                  src={`/novel-covers/${novel.coverImageUrl}`}
                   alt={novel.title}
                   fill
                   className="object-cover"

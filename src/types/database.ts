@@ -14,7 +14,7 @@ export interface Novel {
   title: string;
   author: string;
   description: string;
-  coverImage?: string;
+  coverImageUrl?: string;
   status: 'ONGOING' | 'COMPLETED' | 'HIATUS';
   created_at: string;
   updated_at: string;
