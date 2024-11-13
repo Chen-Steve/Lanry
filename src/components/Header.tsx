@@ -90,19 +90,43 @@ const Header = () => {
   };
 
   const handleSignOut = async () => {
+    console.log('Sign out initiated');
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        console.error('Error signing out:', error);
+      // Add timeout to prevent hanging
+      const signOutPromise = supabase.auth.signOut();
+      const timeoutPromise = new Promise<never>((_, reject) => 
+        setTimeout(() => reject(new Error('Sign out timeout')), 5000)
+      );
+
+      const result = await Promise.race([signOutPromise, timeoutPromise]);
+      
+      console.log('Sign out API call completed');
+      
+      if ('error' in result && result.error) {
+        console.error('Error signing out:', result.error);
         return;
       }
-      // Only clear states after successful sign out
+
+      // Force refresh the auth state
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log('Current session after sign out:', session ? 'still active' : 'null');
+
+      // Clear states regardless of session check
       setIsAuthenticated(false);
       setUsername(null);
       setIsProfileDropdownOpen(false);
       setIsMenuOpen(false);
+
+      // Force page refresh as a last resort
+      window.location.href = '/';
     } catch (err) {
       console.error('Unexpected error during sign out:', err);
+      // Force sign out on client side if server call fails
+      setIsAuthenticated(false);
+      setUsername(null);
+      setIsProfileDropdownOpen(false);
+      setIsMenuOpen(false);
+      window.location.href = '/';
     }
   };
 
@@ -125,11 +149,8 @@ const Header = () => {
                 {username}
               </Link>
               <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  handleSignOut();
-                }}
+                type="button"
+                onClick={handleSignOut}
                 className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
               >
                 Sign Out
@@ -244,11 +265,8 @@ const Header = () => {
                             {username}
                           </Link>
                           <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              handleSignOut();
-                            }}
+                            type="button"
+                            onClick={handleSignOut}
                             className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                           >
                             Sign Out
