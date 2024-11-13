@@ -6,80 +6,81 @@ import { Icon } from '@iconify/react';
 import supabase from '@/lib/supabaseClient';
 import SearchSection from './SearchSection';
 import type { Novel } from '@/types/database';
+import { useQuery } from '@tanstack/react-query';
 
 const Header = () => {
   const [isForumHovered, setIsForumHovered] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
-  const [username, setUsername] = useState<string | null>(() => {
-    return typeof window !== 'undefined' 
-      ? localStorage.getItem('cached_username') 
-      : null;
-  });
-  const profileDropdownRef = useRef<HTMLDivElement>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const profileDropdownRef = useRef<HTMLDivElement>(null);
 
-  const fetchUserProfile = async (userId: string) => {
-    try {
+  const { data: username } = useQuery({
+    queryKey: ['profile', userId],
+    queryFn: async () => {
+      if (!userId) return null;
+      
       const cachedUsername = localStorage.getItem('cached_username');
-      if (cachedUsername) {
-        setUsername(cachedUsername);
-        return;
-      }
+      if (cachedUsername) return cachedUsername;
 
-      const { data: profile, error } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
         .select('username')
         .eq('id', userId)
-        .maybeSingle();
-        
+        .single();
+      
       if (error) throw error;
       
-      if (profile?.username) {
-        localStorage.setItem('cached_username', profile.username);
-        setUsername(profile.username);
-      } else {
-        setUsername(null);
+      if (data?.username) {
+        localStorage.setItem('cached_username', data.username);
+        return data.username;
       }
-    } catch (err) {
-      console.error('[Profile] Error:', err);
-      setUsername(null);
-    }
-  };
+      return null;
+    },
+    enabled: !!userId,
+    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
+  });
 
   useEffect(() => {
+    let mounted = true;
+
     const initAuth = async () => {
       try {
-        const sessionPromise = supabase.auth.getSession();
-        const { data: { session } } = await sessionPromise;
-
-        if (session?.user) {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (mounted && session?.user) {
           setIsAuthenticated(true);
-          await fetchUserProfile(session.user.id);
+          setUserId(session.user.id);
         }
       } catch (error) {
         console.error('[Init] Error:', error);
       } finally {
-        setIsLoading(false);
+        if (mounted) setIsLoading(false);
       }
     };
 
     initAuth();
     
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!mounted) return;
+
       if (event === 'SIGNED_OUT') {
         localStorage.removeItem('cached_username');
-        setUsername(null);
+        setUserId(null);
         setIsAuthenticated(false);
       } else if (session?.user) {
         setIsAuthenticated(true);
-        await fetchUserProfile(session.user.id);
+        setUserId(session.user.id);
       }
       setIsLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
@@ -122,7 +123,7 @@ const Header = () => {
 
       // Clear states
       setIsAuthenticated(false);
-      setUsername(null);
+      setUserId(null);
       setIsProfileDropdownOpen(false);
       setIsMenuOpen(false);
 
