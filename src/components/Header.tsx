@@ -12,33 +12,36 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
-  const [username, setUsername] = useState<string | null>(null);
+  const [username, setUsername] = useState<string | null>(() => {
+    return typeof window !== 'undefined' 
+      ? localStorage.getItem('cached_username') 
+      : null;
+  });
   const profileDropdownRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const initRef = useRef(false);
 
   const fetchUserProfile = async (userId: string) => {
     try {
+      const cachedUsername = localStorage.getItem('cached_username');
+      if (cachedUsername) {
+        setUsername(cachedUsername);
+        return;
+      }
+
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('username')
         .eq('id', userId)
         .maybeSingle();
         
-      if (error) {
-        console.error('[Profile] Database Error:', error);
-        setUsername(null);
-        return;
-      }
+      if (error) throw error;
       
-      if (!profile?.username) {
-        console.log('[Profile] No username found');
+      if (profile?.username) {
+        localStorage.setItem('cached_username', profile.username);
+        setUsername(profile.username);
+      } else {
         setUsername(null);
-        return;
       }
-      
-      console.log('[Profile] Username found:', profile.username);
-      setUsername(profile.username);
     } catch (err) {
       console.error('[Profile] Error:', err);
       setUsername(null);
@@ -46,34 +49,18 @@ const Header = () => {
   };
 
   useEffect(() => {
-    let mounted = true;
-
     const initAuth = async () => {
-      if (initRef.current) return;
-      initRef.current = true;
-
       try {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError) {
-          console.error('[Init] Session Error:', sessionError);
-          return;
-        }
-
-        if (!mounted) return;
+        const sessionPromise = supabase.auth.getSession();
+        const { data: { session } } = await sessionPromise;
 
         if (session?.user) {
-          console.log('[Init] Session found:', session.user.id);
           setIsAuthenticated(true);
           await fetchUserProfile(session.user.id);
-        } else {
-          console.log('[Init] No session');
-          setIsAuthenticated(false);
-          setUsername(null);
         }
-        setIsLoading(false);
       } catch (error) {
         console.error('[Init] Error:', error);
+      } finally {
         setIsLoading(false);
       }
     };
@@ -81,29 +68,18 @@ const Header = () => {
     initAuth();
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('[Auth Event]', event, session?.user?.id);
-      
-      if (!mounted) return;
-
-      try {
-        if (session?.user) {
-          setIsAuthenticated(true);
-          await fetchUserProfile(session.user.id);
-        } else {
-          setIsAuthenticated(false);
-          setUsername(null);
-        }
-        setIsLoading(false);
-      } catch (error) {
-        console.error('[Auth Event] Error:', error);
-        setIsLoading(false);
+      if (event === 'SIGNED_OUT') {
+        localStorage.removeItem('cached_username');
+        setUsername(null);
+        setIsAuthenticated(false);
+      } else if (session?.user) {
+        setIsAuthenticated(true);
+        await fetchUserProfile(session.user.id);
       }
+      setIsLoading(false);
     });
 
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
+    return () => subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
