@@ -3,13 +3,21 @@ import { Chapter, Novel } from '@/types/database';
 
 type ChapterWithNovel = Chapter & {
   novel: Novel;
+  isLocked?: boolean;
 };
 
 export async function getChapter(novelId: string, chapterId: string): Promise<ChapterWithNovel | null> {
   try {
+    const chapterNumber = parseInt(chapterId.replace('c', ''));
+    if (isNaN(chapterNumber)) {
+      console.error('Invalid chapter number format');
+      return null;
+    }
+
+    // Get the novel first to verify it exists
     const { data: novel, error: novelError } = await supabase
       .from('novels')
-      .select('id')
+      .select('id, slug')
       .or(`id.eq.${novelId},slug.eq.${novelId}`)
       .single();
 
@@ -18,69 +26,52 @@ export async function getChapter(novelId: string, chapterId: string): Promise<Ch
       return null;
     }
 
-    const actualNovelId = novel.id;
-    const now = new Date().toISOString();
+    // Get the user first
+    const { data: { user } } = await supabase.auth.getUser();
 
-    if (chapterId.startsWith('c')) {
-      const chapterNumber = parseInt(chapterId.slice(1));
-      if (isNaN(chapterNumber)) return null;
-
-      const { data: chapter, error } = await supabase
-        .from('chapters')
-        .select(`*, novel:novels (id, title, author)`)
-        .eq('novel_id', actualNovelId)
-        .eq('chapter_number', chapterNumber)
-        .or(`publish_at.is.null,publish_at.lte.${now}`)
-        .single();
-
-      if (error) return null;
-
-      if (chapter.publish_at && new Date(chapter.publish_at) > new Date()) {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.user) return null;
-
-        const { data: unlock } = await supabase
-          .from('chapter_unlocks')
-          .select('id')
-          .eq('profile_id', session.user.id)
-          .eq('novel_id', actualNovelId)
-          .eq('chapter_number', chapterNumber)
-          .single();
-
-        if (!unlock) return null; // Chapter not unlocked
-      }
-
-      return chapter as ChapterWithNovel;
-    }
-
-    const { data: chapter, error } = await supabase
+    // First get the chapter
+    const { data: chapter, error: chapterError } = await supabase
       .from('chapters')
-      .select(`*, novel:novels (id, title, author)`)
-      .or(`id.eq.${chapterId},slug.eq.${chapterId}`)
-      .eq('novel_id', actualNovelId)
-      .or(`publish_at.is.null,publish_at.lte.${now}`)
+      .select(`
+        *,
+        novel:novels!inner (
+          id,
+          title,
+          author
+        )
+      `)
+      .eq('novel_id', novel.id)
+      .eq('chapter_number', chapterNumber)
       .single();
 
-    if (error) return null;
-
-    if (chapter.publish_at && new Date(chapter.publish_at) > new Date()) {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) return null;
-
-      const { data: unlock } = await supabase
-        .from('chapter_unlocks')
-        .select('id')
-        .eq('profile_id', session.user.id)
-        .eq('novel_id', actualNovelId)
-        .eq('chapter_number', chapter.chapter_number)
-        .single();
-
-      if (!unlock) return null; // Chapter not unlocked
+    if (chapterError || !chapter) {
+      console.error('Chapter fetch error:', chapterError);
+      return null;
     }
 
-    return chapter as ChapterWithNovel;
+    // If user is authenticated, check for unlocks
+    let isUnlocked = false;
+    if (user) {
+      const { data: unlocks } = await supabase
+        .from('chapter_unlocks')
+        .select('profile_id')
+        .eq('novel_id', novel.id)
+        .eq('chapter_number', chapterNumber)
+        .eq('profile_id', user.id)
+        .single();
+      
+      isUnlocked = !!unlocks;
+    }
+
+    const isPublished = !chapter.publish_at || new Date(chapter.publish_at) <= new Date();
+
+    return {
+      ...chapter,
+      isLocked: !isPublished && !isUnlocked
+    } as ChapterWithNovel;
+
   } catch (error) {
-    console.error('Error fetching chapter:', error);
+    console.error('Error in getChapter:', error);
     return null;
   }
 }
@@ -96,24 +87,43 @@ export async function getChapterNavigation(novelId: string, currentChapterNumber
     if (novelError || !novel) return { prevChapter: null, nextChapter: null };
 
     const actualNovelId = novel.id;
-    const now = new Date().toISOString();
+    const { data: { user } } = await supabase.auth.getUser();
 
-    const { data: chapters } = await supabase
+    const query = supabase
       .from('chapters')
-      .select('id, chapter_number, title')
+      .select(`
+        id, 
+        chapter_number, 
+        title,
+        publish_at,
+        chapter_unlocks!left (
+          chapter_number,
+          profile_id
+        )
+      `)
       .eq('novel_id', actualNovelId)
-      .or(`publish_at.is.null,publish_at.lte.${now}`)
       .order('chapter_number');
+
+    const { data: chapters } = await query;
 
     if (!chapters || chapters.length === 0) {
       return { prevChapter: null, nextChapter: null };
     }
 
-    const currentIndex = chapters.findIndex(ch => ch.chapter_number === currentChapterNumber);
+    // Filter chapters that are either published or unlocked
+    const accessibleChapters = chapters.filter(chapter => {
+      const isPublished = !chapter.publish_at || new Date(chapter.publish_at) <= new Date();
+      const isUnlocked = user ? chapter.chapter_unlocks?.some(
+        (unlock: { profile_id: string }) => unlock.profile_id === user.id
+      ) : false;
+      return isPublished || isUnlocked;
+    });
+
+    const currentIndex = accessibleChapters.findIndex(ch => ch.chapter_number === currentChapterNumber);
     
     return {
-      prevChapter: currentIndex > 0 ? chapters[currentIndex - 1] : null,
-      nextChapter: currentIndex < chapters.length - 1 ? chapters[currentIndex + 1] : null,
+      prevChapter: currentIndex > 0 ? accessibleChapters[currentIndex - 1] : null,
+      nextChapter: currentIndex < accessibleChapters.length - 1 ? accessibleChapters[currentIndex + 1] : null,
     };
   } catch (error) {
     console.error('Error fetching chapter navigation:', error);
@@ -132,18 +142,33 @@ export async function getTotalChapters(novelId: string): Promise<number> {
     if (novelError || !novel) return 0;
 
     const actualNovelId = novel.id;
-    const now = new Date().toISOString();
+    const { data: { user } } = await supabase.auth.getUser();
 
     const { data: chapters } = await supabase
       .from('chapters')
-      .select('chapter_number')
+      .select(`
+        chapter_number,
+        publish_at,
+        chapter_unlocks!left (
+          chapter_number,
+          profile_id
+        )
+      `)
       .eq('novel_id', actualNovelId)
-      .or(`publish_at.is.null,publish_at.lte.${now}`)
-      .order('chapter_number', { ascending: false })
-      .limit(1)
-      .single();
+      .order('chapter_number', { ascending: false });
 
-    return chapters?.chapter_number || 0;
+    if (!chapters) return 0;
+
+    // Count chapters that are either published or unlocked
+    const accessibleChapters = chapters.filter(chapter => {
+      const isPublished = !chapter.publish_at || new Date(chapter.publish_at) <= new Date();
+      const isUnlocked = user ? chapter.chapter_unlocks?.some(
+        (unlock: { profile_id: string }) => unlock.profile_id === user.id
+      ) : false;
+      return isPublished || isUnlocked;
+    });
+
+    return accessibleChapters.length;
   } catch (error) {
     console.error('Error getting total chapters:', error);
     return 0;

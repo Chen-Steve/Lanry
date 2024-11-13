@@ -218,13 +218,14 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
         const chapterData = await getChapter(novelId, chapterId);
         
         if (!chapterData) {
-          setError('Advanced Chapter');
+          setError('Chapter not found');
           return;
         }
 
-        // Check if chapter is published
-        if (chapterData.publish_at && new Date(chapterData.publish_at) > new Date()) {
+        // Check if chapter is locked
+        if (chapterData.isLocked) {
           setError('This chapter is not yet available');
+          setChapter(chapterData); // We still set the chapter to show publish date if available
           return;
         }
 
@@ -283,9 +284,19 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
             {error}
           </h1>
           {error === 'This chapter is not yet available' && chapter && (
-            <p className="text-gray-500">
-              This chapter will be available on {formatDate(chapter.publish_at!)}
-            </p>
+            <div className="space-y-2">
+              <p className="text-gray-500">
+                {chapter.publish_at ? 
+                  `This chapter will be available on ${formatDate(chapter.publish_at)}` :
+                  'This chapter requires unlocking to read'}
+              </p>
+              <Link
+                href={`/novels/${novelId}`}
+                className="inline-block px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+              >
+                Go to Novel Page to Unlock
+              </Link>
+            </div>
           )}
         </div>
       </div>

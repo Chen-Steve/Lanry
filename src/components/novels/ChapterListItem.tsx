@@ -26,6 +26,7 @@ export function ChapterListItem({
   const router = useRouter();
 
   const isPublished = !chapter.publish_at || new Date(chapter.publish_at) <= new Date();
+  const isUnlocked = chapter.isUnlocked;
   
   const unlockChapter = async () => {
     try {
@@ -181,7 +182,7 @@ export function ChapterListItem({
       isPublished ? 'hover:bg-gray-50' : 'bg-gray-50/50'
     } transition-colors rounded-lg gap-2`}>
       <div className="flex-grow flex flex-col w-full gap-2">
-        {!isPublished && chapter.publish_at ? (
+        {!isPublished && !isUnlocked ? (
           <>
             <div 
               className="text-gray-600 cursor-pointer"
@@ -193,7 +194,7 @@ export function ChapterListItem({
               <div className="flex items-center gap-2 bg-purple-50 text-purple-800 px-2 py-1 rounded-md text-sm">
                 <Icon icon="material-symbols:lock" className="text-lg" />
                 <span className="font-medium">
-                {formatDate(chapter.publish_at)} • {coinCost} coins
+                  {formatDate(chapter.publish_at || new Date())} • {coinCost} coins
                   {userProfile && (
                     <span className="ml-2">
                       ({userProfile.coins} coins available)
@@ -210,6 +211,11 @@ export function ChapterListItem({
           >
             <div className="flex items-center gap-2">
               {chapterContent}
+              {isUnlocked && (
+                <span className="text-green-600 text-sm">
+                  (Unlocked)
+                </span>
+              )}
             </div>
           </Link>
         )}
