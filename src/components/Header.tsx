@@ -92,7 +92,12 @@ const Header = () => {
   const handleSignOut = async () => {
     console.log('Sign out initiated');
     try {
-      // Add timeout to prevent hanging
+      // First, clear any stored session data
+      if (typeof window !== 'undefined') {
+        window.localStorage.removeItem('supabase.auth.token');
+        window.localStorage.removeItem('supabase.auth.refreshToken');
+      }
+
       const signOutPromise = supabase.auth.signOut();
       const timeoutPromise = new Promise<never>((_, reject) => 
         setTimeout(() => reject(new Error('Sign out timeout')), 5000)
@@ -107,25 +112,20 @@ const Header = () => {
         return;
       }
 
-      // Force refresh the auth state
-      const { data: { session } } = await supabase.auth.getSession();
-      console.log('Current session after sign out:', session ? 'still active' : 'null');
-
-      // Clear states regardless of session check
+      // Clear states
       setIsAuthenticated(false);
       setUsername(null);
       setIsProfileDropdownOpen(false);
       setIsMenuOpen(false);
 
-      // Force page refresh as a last resort
+      // Force a hard refresh to clear any remaining state
       window.location.href = '/';
     } catch (err) {
       console.error('Unexpected error during sign out:', err);
       // Force sign out on client side if server call fails
-      setIsAuthenticated(false);
-      setUsername(null);
-      setIsProfileDropdownOpen(false);
-      setIsMenuOpen(false);
+      if (typeof window !== 'undefined') {
+        window.localStorage.clear(); // More aggressive clearing
+      }
       window.location.href = '/';
     }
   };
