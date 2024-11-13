@@ -19,27 +19,44 @@ const Header = () => {
     let mounted = true;
 
     const initAuth = async () => {
-      // Initial session check
-      const { data: { session } } = await supabase.auth.getSession();
-      if (mounted) {
-        setIsAuthenticated(!!session);
+      try {
+        // Initial session check
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!mounted) return;
+
         if (session?.user) {
+          console.log('Session found, user:', session.user.id); // Debug log
+          setIsAuthenticated(true);
+          // Immediately fetch profile after confirming session
           await fetchUserProfile(session.user.id);
+        } else {
+          console.log('No session found'); // Debug log
+          setIsAuthenticated(false);
+          setUsername(null);
         }
+      } catch (error) {
+        console.error('Error during auth initialization:', error);
       }
     };
 
+    // Run initial auth check
     initAuth();
     
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (mounted) {
-        setIsAuthenticated(!!session);
-        if (session?.user) {
-          await fetchUserProfile(session.user.id);
-        } else {
-          setUsername(null);
-        }
+      console.log('Auth state changed:', event); // Debug log
+      
+      if (!mounted) return;
+
+      if (session?.user) {
+        console.log('New session detected:', session.user.id); // Debug log
+        setIsAuthenticated(true);
+        await fetchUserProfile(session.user.id);
+      } else {
+        console.log('Session ended'); // Debug log
+        setIsAuthenticated(false);
+        setUsername(null);
       }
     });
 
@@ -65,6 +82,8 @@ const Header = () => {
   }, [isProfileDropdownOpen]);
 
   const fetchUserProfile = async (userId: string) => {
+    console.log('Fetching profile for user:', userId); // Debug log
+    
     try {
       const { data: profile, error } = await supabase
         .from('profiles')
@@ -73,16 +92,19 @@ const Header = () => {
         .maybeSingle();
       
       if (error) {
-        if (error.code !== 'PGRST116') {
-          console.error('Error fetching profile:', error);
-        }
-        // Set a fallback username even on error
+        console.error('Error fetching profile:', error);
         setUsername('User');
         return;
       }
       
-      // Set username with fallback if profile or username is null
-      setUsername(profile?.username || 'User');
+      if (!profile || !profile.username) {
+        console.log('No profile or username found, using fallback'); // Debug log
+        setUsername('User');
+        return;
+      }
+      
+      console.log('Profile fetched successfully:', profile.username); // Debug log
+      setUsername(profile.username);
     } catch (err) {
       console.error('Unexpected error fetching profile:', err);
       setUsername('User');
@@ -138,7 +160,7 @@ const Header = () => {
             onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
             className="text-gray-600 hover:text-gray-800 transition-colors"
           >
-            Profile
+            {username || 'Loading...'}
           </button>
           {isProfileDropdownOpen && (
             <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 border border-gray-200">
@@ -146,7 +168,7 @@ const Header = () => {
                 href="/user-dashboard"
                 className="block px-4 py-2 text-sm text-gray-700 border-b border-gray-200 hover:bg-gray-100"
               >
-                {username}
+                {username || 'Loading...'}
               </Link>
               <button
                 type="button"
