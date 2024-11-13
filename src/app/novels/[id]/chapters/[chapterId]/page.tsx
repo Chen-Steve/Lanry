@@ -7,7 +7,7 @@ import { Icon } from '@iconify/react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { formatDate } from '@/lib/utils';
-import TextCustomization from '@/components/TextCustomization';
+import TextCustomization from '@/components/chapter/TextCustomization';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 
 type ChapterWithNovel = Chapter & {

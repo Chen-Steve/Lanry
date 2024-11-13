@@ -172,12 +172,10 @@ export default function ChapterManagementForm() {
               <div className="space-y-4 lg:space-y-6">
                 {/* Chapter Number */}
                 <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Chapter Number
-                  </label>
                   <input
                     title="Enter the chapter number"
                     type="number"
+                    placeholder="Chapter Number"
                     value={formData.chapterNumber}
                     onChange={(e) =>
                       setFormData({ ...formData, chapterNumber: e.target.value })
@@ -189,12 +187,10 @@ export default function ChapterManagementForm() {
 
                 {/* Chapter Title */}
                 <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Chapter Title <span className="text-gray-500 text-xs">(optional)</span>
-                  </label>
                   <input
                     title="Enter the chapter title (optional)"
                     type="text"
+                    placeholder="Chapter Title (optional)"
                     value={formData.title}
                     onChange={(e) =>
                       setFormData({ ...formData, title: e.target.value })
@@ -205,26 +201,23 @@ export default function ChapterManagementForm() {
 
                 {/* Slug */}
                 <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Slug <span className="text-gray-500 text-xs">(auto-generated if empty)</span>
-                  </label>
                   <input
                     title="Enter custom slug (optional)"
                     type="text"
+                    placeholder="Custom Slug (auto-generated if empty)"
                     value={formData.slug}
                     onChange={(e) =>
                       setFormData({ ...formData, slug: e.target.value.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-') })
                     }
                     className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="custom-slug-here"
                   />
                 </div>
 
                 {/* Content */}
                 <div>
-                  <label className="block text-sm font-medium mb-2">Content</label>
                   <textarea
                     title="Enter the chapter content"
+                    placeholder="Chapter Content"
                     value={formData.content}
                     onChange={(e) =>
                       setFormData({ ...formData, content: e.target.value })

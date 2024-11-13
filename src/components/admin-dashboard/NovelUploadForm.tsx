@@ -177,10 +177,10 @@ export default function NovelUploadForm() {
             </h3>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Title</label>
               <input
                 title="Title"
                 type="text"
+                placeholder="Title"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 className="w-full p-2 border rounded"
@@ -189,9 +189,9 @@ export default function NovelUploadForm() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Description</label>
               <textarea
                 title="Description"
+                placeholder="Description"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 className="w-full p-2 border rounded"
@@ -201,10 +201,10 @@ export default function NovelUploadForm() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Author</label>
               <input
                 title="Author"
                 type="text"
+                placeholder="Author"
                 value={formData.author}
                 onChange={(e) => setFormData({ ...formData, author: e.target.value })}
                 className="w-full p-2 border rounded"
@@ -213,7 +213,6 @@ export default function NovelUploadForm() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Status</label>
               <select
                 title="Status"
                 value={formData.status}
