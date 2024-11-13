@@ -12,4 +12,11 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   }
 });
 
+// Add a debug listener for auth state changes
+if (process.env.NODE_ENV !== 'production') {
+  supabase.auth.onAuthStateChange((event, session) => {
+    console.log('Supabase Auth State Change:', event, session?.user?.id);
+  });
+}
+
 export default supabase;
