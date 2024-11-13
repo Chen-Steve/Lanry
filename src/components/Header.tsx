@@ -15,54 +15,57 @@ const Header = () => {
   const [username, setUsername] = useState<string | null>(null);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
   const [profileFetched, setProfileFetched] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const initRef = useRef(false);
 
   useEffect(() => {
     let mounted = true;
 
     const initAuth = async () => {
+      if (initRef.current) return;
+      initRef.current = true;
+
       try {
+        setIsLoading(true);
         const { data: { session } } = await supabase.auth.getSession();
         
         if (!mounted) return;
 
         if (session?.user) {
-          console.log('[Refresh] Session found, user:', session.user.id);
+          console.log('[Init] Session found:', session.user.id);
           setIsAuthenticated(true);
-          setTimeout(async () => {
-            if (mounted && !profileFetched) {
-              console.log('[Refresh] Fetching profile after delay');
-              await fetchUserProfile(session.user.id);
-              setProfileFetched(true);
-            }
-          }, 100);
+          await fetchUserProfile(session.user.id);
         } else {
-          console.log('[Refresh] No session found');
+          console.log('[Init] No session');
           setIsAuthenticated(false);
           setUsername(null);
-          setProfileFetched(false);
         }
       } catch (error) {
-        console.error('Error during auth initialization:', error);
+        console.error('[Init] Error:', error);
+      } finally {
+        if (mounted) {
+          setIsLoading(false);
+          setProfileFetched(true);
+        }
       }
     };
 
     initAuth();
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (isLoading) return;
+      
       console.log('[Auth Event]', event);
       
       if (!mounted) return;
 
       if (session?.user) {
-        console.log('[Auth Event] Session detected:', session.user.id);
         setIsAuthenticated(true);
-        if (event === 'SIGNED_IN') {
-          console.log('[Auth Event] New sign in, fetching profile');
+        if (event === 'SIGNED_IN' && !profileFetched) {
           await fetchUserProfile(session.user.id);
           setProfileFetched(true);
         }
       } else {
-        console.log('[Auth Event] Session ended');
         setIsAuthenticated(false);
         setUsername(null);
         setProfileFetched(false);
@@ -73,7 +76,7 @@ const Header = () => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [profileFetched]);
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -91,8 +94,6 @@ const Header = () => {
   }, [isProfileDropdownOpen]);
 
   const fetchUserProfile = async (userId: string) => {
-    console.log('[Profile] Starting fetch for user:', userId);
-    
     try {
       const { data: profile, error } = await supabase
         .from('profiles')
@@ -100,22 +101,16 @@ const Header = () => {
         .eq('id', userId)
         .maybeSingle();
       
-      if (error) {
-        console.error('[Profile] Error fetching:', error);
+      if (error) throw error;
+      
+      if (!profile?.username) {
         setUsername('User');
         return;
       }
       
-      if (!profile || !profile.username) {
-        console.log('[Profile] No profile found, using fallback');
-        setUsername('User');
-        return;
-      }
-      
-      console.log('[Profile] Fetch successful:', profile.username);
       setUsername(profile.username);
     } catch (err) {
-      console.error('[Profile] Unexpected error:', err);
+      console.error('[Profile] Error:', err);
       setUsername('User');
     }
   };
