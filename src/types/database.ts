@@ -36,11 +36,12 @@ export interface Bookmark {
 
 export interface ReadingHistory {
   id: string;
-  user_id: string;
+  profile_id: string;
   novel_id: string;
   last_chapter: number;
   last_read: string;
   created_at: string;
+  updated_at: string;
   novel: Novel;
 }
 

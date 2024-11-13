@@ -10,8 +10,8 @@ import { ChapterWithNovel } from '@/types/database';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import ChapterHeader from '@/components/chapter/ChapterHeader';
 import ChapterContent from '@/components/chapter/ChapterContent';
+import supabase from '@/lib/supabaseClient';
 
-// First, create a ChapterNavigation component (at the top of the file)
 function ChapterNavigation({ 
   navigation, 
   novelId, 
@@ -149,6 +149,49 @@ function ScrollToTopButton() {
   );
 }
 
+// Add this function near the top of the file
+const updateReadingHistory = async (
+  novelId: string, 
+  chapterNumber: number
+) => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    // First, get the actual novel ID if we're using a slug
+    const { data: novel, error: novelError } = await supabase
+      .from('novels')
+      .select('id')
+      .or(`id.eq.${novelId},slug.eq.${novelId}`)
+      .single();
+
+    if (novelError || !novel) {
+      console.error('Error getting novel:', novelError);
+      return;
+    }
+
+    const now = new Date().toISOString();
+
+    const { error } = await supabase
+      .from('reading_history')
+      .upsert({
+        id: crypto.randomUUID(),
+        profile_id: user.id,
+        novel_id: novel.id,
+        last_chapter: chapterNumber,
+        last_read: now,
+        created_at: now,
+        updated_at: now
+      }, {
+        onConflict: 'profile_id,novel_id'
+      });
+
+    if (error) throw error;
+  } catch (error) {
+    console.error('Error updating reading history:', error);
+  }
+};
+
 export default function ChapterPage({ params }: { params: { id: string; chapterId: string } }) {
   const { id: novelId, chapterId } = params;
   const [chapter, setChapter] = useState<ChapterWithNovel | null>(null);
@@ -205,6 +248,12 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
     
     fetchData();
   }, [novelId, chapterId]);
+
+  useEffect(() => {
+    if (chapter) {
+      updateReadingHistory(novelId, chapter.chapter_number);
+    }
+  }, [novelId, chapter]);
 
   const handleChapterSelect = (chapterNum: number) => {
     window.location.href = `/novels/${novelId}/chapters/c${chapterNum}`;

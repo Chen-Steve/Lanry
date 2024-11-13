@@ -1,36 +1,42 @@
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import supabase from '@/lib/supabaseClient';
 import type { ReadingHistory } from '@/types/database';
+import Link from 'next/link';
+import { formatDate } from '@/lib/utils';
+import { Icon } from '@iconify/react';
+
+// Separate data fetching logic
+const fetchReadingHistory = async () => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
+
+  const { data, error } = await supabase
+    .from('reading_history')
+    .select(`
+      *,
+      novel:novels (
+        id,
+        title,
+        slug,
+        author
+      )
+    `)
+    .eq('profile_id', user.id)
+    .order('last_read', { ascending: false });
+
+  if (error) throw error;
+  return data || [];
+};
 
 export default function ReadingHistorySection() {
-  const [history, setHistory] = useState<ReadingHistory[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Use React Query for data fetching
+  const { data: history, isLoading, error } = useQuery<ReadingHistory[]>({
+    queryKey: ['readingHistory'],
+    queryFn: fetchReadingHistory,
+    staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
+  });
 
-  useEffect(() => {
-    fetchReadingHistory();
-  }, []);
-
-  const fetchReadingHistory = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data, error } = await supabase
-        .from('reading_history')
-        .select('*, novel:novels(*)')
-        .eq('profile_id', user.id)
-        .order('last_read', { ascending: false });
-
-      if (error) throw error;
-      setHistory(data || []);
-    } catch (error) {
-      console.error('Error fetching reading history:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="p-6 text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
@@ -38,32 +44,50 @@ export default function ReadingHistorySection() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="p-6 text-center text-red-500">
+        <Icon icon="mdi:alert" className="w-12 h-12 mx-auto mb-2" />
+        <p>Error loading reading history</p>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6">
       <h2 className="text-xl font-semibold mb-4">Recently Read</h2>
-      {history.length === 0 ? (
-        <p className="text-gray-500 text-center py-8">
-          No reading history yet. Start reading some novels!
-        </p>
+      {!history || history.length === 0 ? (
+        <div className="text-center py-8">
+          <Icon icon="mdi:book-open-page-variant" className="w-12 h-12 mx-auto mb-2 text-gray-400" />
+          <p className="text-gray-500">
+            No reading history yet. Start reading some novels!
+          </p>
+        </div>
       ) : (
         <div className="space-y-4">
           {history.map((item) => (
             <div
               key={item.id}
-              className="flex items-center justify-between border-b pb-4"
+              className="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-4 gap-4"
             >
               <div>
-                <h3 className="font-medium">{item.novel.title}</h3>
+                <h3 className="font-medium hover:text-blue-600">
+                  <Link href={`/novels/${item.novel.slug}`}>
+                    {item.novel.title}
+                  </Link>
+                </h3>
+                <p className="text-sm text-gray-500">by {item.novel.author}</p>
                 <p className="text-sm text-gray-500">
-                  Last read: Chapter {item.last_chapter}
+                  Last read: Chapter {item.last_chapter} • {formatDate(item.last_read)}
                 </p>
               </div>
-              <button
-                onClick={() => {/* Add continue reading handler */}}
-                className="text-blue-500 hover:text-blue-600"
+              <Link
+                href={`/novels/${item.novel.slug}/chapters/c${item.last_chapter}`}
+                className="flex items-center gap-2 text-blue-500 hover:text-blue-600 transition-colors"
               >
-                Continue Reading
-              </button>
+                <Icon icon="mdi:book-open-page-variant" />
+                <span>Continue Reading</span>
+              </Link>
             </div>
           ))}
         </div>
