@@ -25,6 +25,7 @@ model Novel {
   slug           String    @unique
   status         NovelStatus
   bookmarkCount  Int       @default(0) @map("bookmark_count")
+  views          Int       @default(0)
   chapters       Chapter[]
   bookmarks      Bookmark[]
   readingHistory ReadingHistory[]
@@ -32,6 +33,7 @@ model Novel {
   @@index([title])
   @@index([author])
   @@index([bookmarkCount])
+  @@index([views])
   @@map("novels")
 }
 

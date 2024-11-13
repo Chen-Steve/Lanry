@@ -10,6 +10,7 @@ import supabase from '@/lib/supabaseClient';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { getNovel, toggleBookmark } from '@/services/novelService';
+import { track } from '@vercel/analytics';
 
 export default function NovelPage({ params }: { params: { id: string } }) {
   const { id } = params;
@@ -18,6 +19,7 @@ export default function NovelPage({ params }: { params: { id: string } }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isBookmarkLoading] = useState(false);
+  const [viewCount, setViewCount] = useState<number>(0);
 
   useEffect(() => {
     const fetchNovelAndAuth = async () => {
@@ -29,9 +31,22 @@ export default function NovelPage({ params }: { params: { id: string } }) {
         if (data) {
           setNovel(data);
           setIsBookmarked(data.isBookmarked);
+          setViewCount(data.views || 0);
+          
+          // Track page view
+          track('novel-view', {
+            novelId: id,
+            novelTitle: data.title
+          });
+          
+          // Update view count in database
+          await supabase
+            .from('novels')
+            .update({ views: (data.views || 0) + 1 })
+            .eq('id', id);
         }
       } catch (error) {
-        console.error('Auth error:', error);
+        console.error('Error:', error);
       } finally {
         setIsLoading(false);
       }
@@ -242,6 +257,10 @@ export default function NovelPage({ params }: { params: { id: string } }) {
             <div>
               <span className="text-gray-600">Status:</span>
               <span className="ml-2 font-medium text-black">{novel.status}</span>
+            </div>
+            <div>
+              <span className="text-gray-600">Views:</span>
+              <span className="ml-2 font-medium text-black">{viewCount}</span>
             </div>
             <div>
               <span className="text-gray-600">Released:</span>

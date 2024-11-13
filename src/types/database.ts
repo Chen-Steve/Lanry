@@ -23,6 +23,7 @@ export interface Novel {
   chapters: Chapter[];
   bookmarks: number;
   isBookmarked: boolean;
+  views?: number;
 }
 
 export interface Bookmark {
