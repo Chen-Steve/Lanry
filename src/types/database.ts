@@ -50,4 +50,8 @@ export interface UserProfile {
   updated_at: string;
   current_streak: number;
   last_visit: string | null;
-} 
+}
+
+export type ChapterWithNovel = Chapter & {
+  novel: Novel;
+}; 
