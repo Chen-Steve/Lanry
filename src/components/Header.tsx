@@ -16,20 +16,35 @@ const Header = () => {
   const profileDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Initial session check
-    checkAuth();
+    let mounted = true;
+
+    const initAuth = async () => {
+      // Initial session check
+      const { data: { session } } = await supabase.auth.getSession();
+      if (mounted) {
+        setIsAuthenticated(!!session);
+        if (session?.user) {
+          await fetchUserProfile(session.user.id);
+        }
+      }
+    };
+
+    initAuth();
     
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setIsAuthenticated(!!session);
-      if (session?.user) {
-        await fetchUserProfile(session.user.id);
-      } else {
-        setUsername(null);
+      if (mounted) {
+        setIsAuthenticated(!!session);
+        if (session?.user) {
+          await fetchUserProfile(session.user.id);
+        } else {
+          setUsername(null);
+        }
       }
     });
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
   }, []);
@@ -50,25 +65,27 @@ const Header = () => {
   }, [isProfileDropdownOpen]);
 
   const fetchUserProfile = async (userId: string) => {
-    const { data: profile, error } = await supabase
-      .from('profiles')
-      .select('username')
-      .eq('id', userId)
-      .maybeSingle();
-    
-    if (error && error.code !== 'PGRST116') {
-      console.error('Error fetching profile:', error);
-      return;
-    }
-    
-    setUsername(profile?.username || 'User');
-  };
-
-  const checkAuth = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    setIsAuthenticated(!!session);
-    if (session?.user) {
-      await fetchUserProfile(session.user.id);
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('id', userId)
+        .maybeSingle();
+      
+      if (error) {
+        if (error.code !== 'PGRST116') {
+          console.error('Error fetching profile:', error);
+        }
+        // Set a fallback username even on error
+        setUsername('User');
+        return;
+      }
+      
+      // Set username with fallback if profile or username is null
+      setUsername(profile?.username || 'User');
+    } catch (err) {
+      console.error('Unexpected error fetching profile:', err);
+      setUsername('User');
     }
   };
 
