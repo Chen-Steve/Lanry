@@ -1,6 +1,6 @@
 'use client';
 
-import { Novel, Chapter } from '@/types/database';
+import { Novel } from '@/types/database';
 import { Icon } from '@iconify/react';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
@@ -9,55 +9,7 @@ import { useEffect, useState } from 'react';
 import supabase from '@/lib/supabaseClient';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
-
-async function getNovel(id: string, userId?: string): Promise<Novel | null> {
-  try {
-    const isNumericId = !isNaN(Number(id));
-    const { data, error } = await supabase
-      .from('novels')
-      .select(`
-        *,
-        chapters (
-          id,
-          title,
-          created_at,
-          chapter_number,
-          publish_at
-        ),
-        bookmarks!left (
-          id,
-          profile_id
-        )
-      `)
-      .eq(isNumericId ? 'id' : 'slug', isNumericId ? Number(id) : id)
-      .single()
-      .throwOnError();
-
-    if (error) {
-      console.error('Supabase error:', error);
-      return null;
-    }
-
-    if (!data) {
-      return null;
-    }
-
-    const novel = {
-      ...data,
-      coverImageUrl: data.cover_image_url,
-      bookmarks: data.bookmarks?.length ?? 0,
-      isBookmarked: userId ? data.bookmarks?.some((b: { profile_id: string }) => b.profile_id === userId) ?? false : false,
-      chapters: (data.chapters ?? []).sort((a: Chapter, b: Chapter) => 
-        a.chapter_number - b.chapter_number
-      )
-    };
-
-    return novel;
-  } catch (error) {
-    console.error('Detailed error in getNovel:', error);
-    return null;
-  }
-}
+import { getNovel, toggleBookmark } from '@/services/novelService';
 
 export default function NovelPage({ params }: { params: { id: string } }) {
   const { id } = params;
@@ -116,50 +68,12 @@ export default function NovelPage({ params }: { params: { id: string } }) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const isNumericId = !isNaN(Number(id));
-      const { data: novelData, error: novelError } = await supabase
-        .from('novels')
-        .select('id')
-        .eq(isNumericId ? 'id' : 'slug', isNumericId ? Number(id) : id)
-        .single();
-
-      if (novelError || !novelData) {
-        console.error('Error getting novel:', novelError);
-        throw new Error('Novel not found');
-      }
-
-      const actualNovelId = novelData.id;
-
-      if (isBookmarked) {
-        // Remove bookmark - Simplified query
-        const { error } = await supabase
-          .from('bookmarks')
-          .delete()
-          .eq('profile_id', user.id)
-          .eq('novel_id', actualNovelId);
-
-        if (error) {
-          console.error('Delete bookmark error:', error);
-          throw error;
-        }
-        setIsBookmarked(false);
-        setNovel(prev => prev ? { ...prev, bookmarks: Math.max(0, prev.bookmarks - 1) } : null);
-      } else {
-        // Add bookmark - Simplified query
-        const { error } = await supabase
-          .from('bookmarks')
-          .insert({
-            profile_id: user.id,
-            novel_id: actualNovelId,
-          });
-
-        if (error) {
-          console.error('Insert bookmark error:', error);
-          throw error;
-        }
-        setIsBookmarked(true);
-        setNovel(prev => prev ? { ...prev, bookmarks: prev.bookmarks + 1 } : null);
-      }
+      const newBookmarkState = await toggleBookmark(id, user.id, isBookmarked);
+      setIsBookmarked(newBookmarkState);
+      setNovel(prev => prev ? { 
+        ...prev, 
+        bookmarks: prev.bookmarks + (newBookmarkState ? 1 : -1)
+      } : null);
     } catch (error) {
       console.error('Error toggling bookmark:', error);
       toast.error('Failed to update bookmark');
@@ -193,9 +107,19 @@ export default function NovelPage({ params }: { params: { id: string } }) {
               <div className="w-full h-full bg-gray-300" />
             )}
           </div>
-          <div className="flex-1 flex flex-col justify-center">
-            <h1 className="text-2xl font-bold mb-2 text-black">{novel.title}</h1>
-            <p className="text-base text-gray-600">by {novel.author}</p>
+          <div className="flex-1">
+            <h1 className="text-xl font-bold mb-1 text-black">{novel.title}</h1>
+            <p className="text-sm text-gray-600 mb-2">by {novel.author}</p>
+            <div className="flex flex-col gap-1 text-sm text-gray-600">
+              <div className="flex items-center gap-1">
+                <Icon icon="mdi:book-open-page-variant" className="text-lg" />
+                <span>{novel.chapters.length} Chapters</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Icon icon="mdi:bookmark" className="text-lg" />
+                <span>{novel.bookmarks} Bookmarks</span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -299,7 +223,7 @@ export default function NovelPage({ params }: { params: { id: string } }) {
           <div className="prose max-w-none mb-8">
             <div className="flex items-center gap-6 mb-2">
               <h2 className="text-xl font-semibold m-0 text-black">Synopsis</h2>
-              <div className="flex items-center gap-4 text-sm text-gray-600">
+              <div className="hidden md:flex items-center gap-4 text-sm text-gray-600">
                 <div className="flex items-center gap-1">
                   <Icon icon="mdi:book-open-page-variant" className="text-lg" />
                   <span>{novel.chapters.length} Chapters</span>
