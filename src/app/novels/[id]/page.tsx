@@ -1,6 +1,6 @@
 'use client';
 
-import { Novel } from '@/types/database';
+import { Novel, UserProfile } from '@/types/database';
 import { Icon } from '@iconify/react';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
@@ -11,6 +11,7 @@ import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { getNovel, toggleBookmark } from '@/services/novelService';
 import { track } from '@vercel/analytics';
+import { ChapterListItem } from '@/components/novels/ChapterListItem';
 
 export default function NovelPage({ params }: { params: { id: string } }) {
   const { id } = params;
@@ -18,40 +19,45 @@ export default function NovelPage({ params }: { params: { id: string } }) {
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isBookmarkLoading] = useState(false);
+  const [isBookmarkLoading, setIsBookmarkLoading] = useState(false);
   const [viewCount, setViewCount] = useState<number>(0);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
   useEffect(() => {
     const fetchNovelAndAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        // console.log('Auth state:', !!session?.user);
         setIsAuthenticated(!!session?.user);
+        
+        if (session?.user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+          
+          setUserProfile(profile);
+        }
         
         const data = await getNovel(id, session?.user?.id);
         if (data) {
           setNovel(data);
-          setIsBookmarked(data.isBookmarked);
+          setIsBookmarked(data.isBookmarked || false);
           setViewCount(data.views || 0);
           
-          // Track page view
           track('novel-view', {
             novelId: id,
             novelTitle: data.title
           });
           
-          // Update view count using RPC
           const { error: rpcError } = await supabase
-            .rpc('increment_novel_views', { 
-              novel_id: id 
-            });
+            .rpc('increment_novel_views', { novel_id: id });
 
           if (rpcError) {
             console.error('Error updating view count:', rpcError);
             return;
           }
 
-          // Update local view count after successful RPC call
           setViewCount((data.views || 0) + 1);
         }
       } catch (error) {
@@ -63,7 +69,6 @@ export default function NovelPage({ params }: { params: { id: string } }) {
 
     fetchNovelAndAuth();
 
-    // Set up auth listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setIsAuthenticated(!!session);
     });
@@ -88,19 +93,22 @@ export default function NovelPage({ params }: { params: { id: string } }) {
       return;
     }
 
+    setIsBookmarkLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
       const newBookmarkState = await toggleBookmark(id, user.id, isBookmarked);
       setIsBookmarked(newBookmarkState);
-      setNovel(prev => prev ? { 
-        ...prev, 
-        bookmarks: prev.bookmarks + (newBookmarkState ? 1 : -1)
+      setNovel(prev => prev ? {
+        ...prev,
+        bookmarkCount: prev.bookmarkCount + (newBookmarkState ? 1 : -1)
       } : null);
     } catch (error) {
       console.error('Error toggling bookmark:', error);
       toast.error('Failed to update bookmark');
+    } finally {
+      setIsBookmarkLoading(false);
     }
   };
 
@@ -142,7 +150,7 @@ export default function NovelPage({ params }: { params: { id: string } }) {
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-1">
                   <Icon icon="mdi:bookmark" className="text-lg" />
-                  <span>{novel.bookmarks} Bookmarks</span>
+                  <span>{novel.bookmarkCount} Bookmarks</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Icon icon="mdi:eye" className="text-lg" />
@@ -260,7 +268,7 @@ export default function NovelPage({ params }: { params: { id: string } }) {
                 </div>
                 <div className="flex items-center gap-1">
                   <Icon icon="mdi:bookmark" className="text-lg" />
-                  <span>{novel.bookmarks} Bookmarks</span>
+                  <span>{novel.bookmarkCount} Bookmarks</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Icon icon="mdi:eye" className="text-lg" />
@@ -324,61 +332,16 @@ export default function NovelPage({ params }: { params: { id: string } }) {
                     {Math.min((sectionIndex + 1) * 150, novel.chapters.length)}
                   </h3>
                   <div className="grid gap-2">
-                    {sectionChapters.map((chapter) => {
-                      const isPublished = !chapter.publish_at || new Date(chapter.publish_at) <= new Date();
-                      const chapterContent = (
-                        <>
-                          <span className="inline-block min-w-[3rem]">Ch. {chapter.chapter_number}</span>
-                          {chapter.title && <span className="ml-2">{chapter.title}</span>}
-                        </>
-                      );
-                      
-                      return (
-                        <div
-                          key={chapter.id}
-                          className={`flex flex-col border-b border-gray-100 py-3 px-4 ${
-                            isPublished ? 'hover:bg-gray-50' : 'bg-gray-50/50'
-                          } transition-colors rounded-lg gap-2`}
-                        >
-                          <div className="flex-grow flex flex-col w-full gap-2">
-                            {!isPublished && chapter.publish_at ? (
-                              <>
-                                <div 
-                                  className="text-gray-600 cursor-pointer"
-                                  onClick={() => toast.success('Buy with coins - Coming Soon!', {
-                                    duration: 3000,
-                                    position: 'bottom-center',
-                                    style: {
-                                      background: '#8B5CF6', // Purple color
-                                      color: 'white',
-                                      padding: '12px 24px',
-                                    },
-                                    icon: <Icon icon="material-symbols:payments-outline" className="text-xl" />,
-                                  })}
-                                >
-                                  {chapterContent}
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <div className="flex items-center gap-2 bg-purple-50 text-purple-800 px-2 py-1 rounded-md text-sm">
-                                    <Icon icon="material-symbols:lock" className="text-lg" />
-                                    <span className="font-medium">Available {formatDate(chapter.publish_at)}</span>
-                                  </div>
-                                </div>
-                              </>
-                            ) : (
-                              <Link 
-                                href={`/novels/${novel.slug}/chapters/c${chapter.chapter_number}`}
-                                className="flex-grow flex flex-col sm:flex-row sm:items-center text-gray-600 gap-1 hover:text-gray-900"
-                              >
-                                <div className="flex items-center gap-2">
-                                  {chapterContent}
-                                </div>
-                              </Link>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
+                    {sectionChapters.map((chapter) => (
+                      <ChapterListItem
+                        key={chapter.id}
+                        chapter={chapter}
+                        novelSlug={novel.slug}
+                        userProfile={userProfile}
+                        isAuthenticated={isAuthenticated}
+                        coinCost={5}
+                      />
+                    ))}
                   </div>
                 </div>
               );

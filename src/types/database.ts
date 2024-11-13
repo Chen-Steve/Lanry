@@ -21,9 +21,9 @@ export interface Novel {
   updated_at: string;
   slug: string;
   chapters: Chapter[];
-  bookmarks: number;
-  isBookmarked: boolean;
-  views?: number;
+  bookmarkCount: number;
+  views: number;
+  isBookmarked?: boolean;
 }
 
 export interface Bookmark {
@@ -52,6 +52,8 @@ export interface UserProfile {
   updated_at: string;
   current_streak: number;
   last_visit: string | null;
+  coins: number;
+  transactions?: CoinTransaction[];
 }
 
 export interface ChapterComment {
@@ -73,4 +75,14 @@ export interface CommentsByParagraph {
 
 export type ChapterWithNovel = Chapter & {
   novel: Novel;
-}; 
+};
+
+export interface CoinTransaction {
+  id: string;
+  created_at: string;
+  profile_id: string;
+  amount: number;
+  type: string;
+  order_id?: string;
+  profile?: UserProfile;
+} 

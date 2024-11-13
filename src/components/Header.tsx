@@ -7,15 +7,16 @@ import supabase from '@/lib/supabaseClient';
 import SearchSection from './SearchSection';
 import type { Novel } from '@/types/database';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'react-hot-toast';
 
 interface UserProfile {
   username: string;
   current_streak: number;
   last_visit: string | null;
+  coins: number;
 }
 
 const Header = () => {
-  const [isForumHovered, setIsForumHovered] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
@@ -32,7 +33,7 @@ const Header = () => {
       
       const { data, error } = await supabase
         .from('profiles')
-        .select('username, current_streak, last_visit')
+        .select('username, current_streak, last_visit, coins')
         .eq('id', userId)
         .single();
       
@@ -254,6 +255,15 @@ const Header = () => {
     console.log('Search results:', results);
   };
 
+  const handleForumClick = () => {
+    toast('Forum coming soon!', {
+      icon: '🚧',
+      duration: 2000,
+      className: 'font-medium border-2 border-black',
+      position: 'top-right'
+    });
+  };
+
   return (
     <header className="w-full bg-white">
       <div className="max-w-5xl mx-auto px-4 mt-4 sm:mt-8 mb-6 sm:mb-10">
@@ -283,28 +293,32 @@ const Header = () => {
 
             {/* Desktop Navigation */}
             <nav className="hidden md:block">
-              <ul className="flex space-x-6">
+              <ul className="flex items-center space-x-6">
                 <li>
                   <span 
-                    onMouseEnter={() => setIsForumHovered(true)}
-                    onMouseLeave={() => setIsForumHovered(false)}
-                    className="text-gray-600 hover:text-gray-800 transition-colors cursor-pointer inline-block min-w-[100px]"
+                    onClick={handleForumClick}
+                    className="text-gray-600 hover:text-gray-800 transition-colors cursor-pointer py-1.5 inline-block"
                   >
-                    {isForumHovered ? 'Coming Soon' : 'Forum'}
+                    Forum
                   </span>
                 </li>
                 <li>
-                  <Link href="/sponsors" className="text-gray-600 hover:text-gray-800 transition-colors">
+                  <Link href="/sponsors" className="text-gray-600 hover:text-gray-800 transition-colors py-1.5 inline-block">
                     Sponsors
                   </Link>
                 </li>
                 <li>
                   <Link 
                     href="/shop" 
-                    className="bg-amber-100 text-amber-800 px-2 rounded-md hover:bg-amber-200 transition-colors flex items-center gap-1"
+                    className="bg-amber-100 text-amber-800 px-3 py-1.5 rounded-md hover:bg-amber-200 transition-colors flex items-center gap-2 h-[34px]"
                   >
                     <Icon icon="ph:coins" className="text-amber-600" />
                     <span>Coins</span>
+                    {userProfile && (
+                      <span className="rounded-md text-sm">
+                        {userProfile.coins || 0}
+                      </span>
+                    )}
                   </Link>
                 </li>
                 <li>
@@ -322,8 +336,11 @@ const Header = () => {
               </div>
               <ul className="py-2 space-y-2">
                 <li>
-                  <span className="block px-2 py-2 text-gray-600 hover:text-gray-800 transition-colors cursor-pointer">
-                    Forum (Coming Soon)
+                  <span 
+                    onClick={handleForumClick}
+                    className="block px-2 py-2 text-gray-600 hover:text-gray-800 transition-colors cursor-pointer"
+                  >
+                    Forum
                   </span>
                 </li>
                 <li>
@@ -338,11 +355,16 @@ const Header = () => {
                 <li>
                   <Link 
                     href="/coins" 
-                    className="block px-2 py-2 bg-amber-100 text-amber-800 hover:bg-amber-200 transition-colors flex items-center gap-1 mx-2 rounded-md"
+                    className="block px-3 py-1.5 bg-amber-100 text-amber-800 hover:bg-amber-200 transition-colors flex items-center gap-2 mx-2 rounded-md"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <Icon icon="ph:coins" className="text-amber-600" />
                     <span>Coins</span>
+                    {userProfile && (
+                      <span className="bg-amber-200 px-2 py-0.5 rounded-md text-sm">
+                        {userProfile.coins || 0}
+                      </span>
+                    )}
                   </Link>
                 </li>
                 <li>

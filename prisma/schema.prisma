@@ -67,6 +67,8 @@ model Profile {
   bookmarks          Bookmark[]
   readingHistory     ReadingHistory[]
   chapterComments    ChapterComment[]
+  coins              Int       @default(0)
+  transactions       CoinTransaction[]
 
   @@map("profiles")
 }
@@ -116,6 +118,18 @@ model ChapterComment {
   @@index([paragraphId])
   @@index([profileId])
   @@map("chapter_comments")
+}
+
+model CoinTransaction {
+  id          String    @id @default(uuid())
+  createdAt   DateTime  @default(now()) @map("created_at")
+  profileId   String    @map("profile_id")
+  amount      Int
+  type        String    // "PURCHASE", "REWARD", etc.
+  orderId     String?   @map("order_id") // PayPal order ID
+  profile     Profile   @relation(fields: [profileId], references: [id])
+
+  @@map("coin_transactions")
 }
 
 enum NovelStatus {
