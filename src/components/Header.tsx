@@ -18,24 +18,42 @@ const Header = () => {
   const initRef = useRef(false);
 
   const fetchUserProfile = async (userId: string) => {
+    const TIMEOUT_MS = 5000; // 5 seconds timeout
+    
     try {
-      console.log('[Profile] Fetching profile for user:', userId);
-      const { data: profile, error } = await supabase
+      console.log('[Profile] Starting profile fetch for user:', userId);
+      
+      // Create a promise that rejects after timeout
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Profile fetch timeout')), TIMEOUT_MS);
+      });
+
+      // Create the actual fetch promise
+      const fetchPromise = supabase
         .from('profiles')
         .select('username')
         .eq('id', userId)
         .maybeSingle();
-      
+
+      // Race between timeout and fetch
+      const result = await Promise.race([
+        fetchPromise,
+        timeoutPromise
+      ]);
+
+      // Type assertion to handle the result
+      const { data: profile, error } = result as Awaited<typeof fetchPromise>;
+
       if (error) {
         console.error('[Profile] Database Error:', error);
-        setUsername('User');
-        return;
+        throw error;
       }
       
       if (!profile?.username) {
         console.log('[Profile] No username found, creating default profile');
-        // Try to create a default profile if one doesn't exist
-        const { error: insertError } = await supabase
+        
+        // Add timeout for insert operation as well
+        const insertPromise = supabase
           .from('profiles')
           .insert([
             {
@@ -47,18 +65,36 @@ const Header = () => {
           ])
           .single();
 
+        const insertResult = await Promise.race([
+          insertPromise,
+          timeoutPromise
+        ]);
+
+        // Type assertion for insert result
+        const { error: insertError } = insertResult as Awaited<typeof insertPromise>;
+
         if (insertError) {
-          console.error('[Profile] Failed to create default profile:', insertError);
+          console.error('[Profile] Insert Error:', insertError);
+          if (insertError.code === '23505') { // Duplicate key error
+            console.log('[Profile] Profile already exists, using default username');
+          } else {
+            throw insertError;
+          }
         }
         
         setUsername('User');
         return;
       }
       
-      console.log('[Profile] Username found:', profile.username);
+      console.log('[Profile] Username successfully found:', profile.username);
       setUsername(profile.username);
     } catch (err) {
-      console.error('[Profile] Unexpected error:', err);
+      console.error('[Profile] Error details:', err);
+      // Check if error is a timeout
+      if (err instanceof Error && err.message === 'Profile fetch timeout') {
+        console.error('[Profile] Operation timed out');
+      }
+      // Set default username and continue
       setUsername('User');
     }
   };
@@ -73,20 +109,24 @@ const Header = () => {
       initRef.current = true;
 
       try {
+        console.log('[Init] Starting auth initialization');
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
           console.error('[Init] Session Error:', sessionError);
+          setIsLoading(false);
           return;
         }
 
-        if (!mounted) return;
+        if (!mounted) {
+          console.log('[Init] Component unmounted, stopping initialization');
+          return;
+        }
 
         if (session?.user) {
-          console.log('[Init] Session found:', session.user.id);
+          console.log('[Init] Session found, user ID:', session.user.id);
           setIsAuthenticated(true);
           
-          // Add retry logic for profile fetch
           const fetchProfileWithRetry = async () => {
             try {
               await fetchUserProfile(session.user.id);
@@ -94,21 +134,29 @@ const Header = () => {
               console.error(`[Init] Profile fetch attempt ${retryCount + 1} failed:`, error);
               if (retryCount < MAX_RETRIES) {
                 retryCount++;
-                setTimeout(fetchProfileWithRetry, 1000 * retryCount); // Exponential backoff
+                const delay = Math.min(1000 * Math.pow(2, retryCount), 10000); // Max 10s delay
+                console.log(`[Init] Retrying in ${delay}ms`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+                return fetchProfileWithRetry();
+              } else {
+                console.error('[Init] Max retries reached, using default username');
+                setUsername('User');
               }
             }
           };
           
           await fetchProfileWithRetry();
         } else {
-          console.log('[Init] No session');
+          console.log('[Init] No session found');
           setIsAuthenticated(false);
           setUsername(null);
         }
-        setIsLoading(false);
       } catch (error) {
-        console.error('[Init] Error:', error);
-        setIsLoading(false);
+        console.error('[Init] Unexpected error:', error);
+      } finally {
+        if (mounted) {
+          setIsLoading(false);
+        }
       }
     };
 
