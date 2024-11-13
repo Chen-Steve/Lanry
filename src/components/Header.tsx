@@ -6,7 +6,13 @@ import { Icon } from '@iconify/react';
 import supabase from '@/lib/supabaseClient';
 import SearchSection from './SearchSection';
 import type { Novel } from '@/types/database';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
+interface UserProfile {
+  username: string;
+  current_streak: number;
+  last_visit: string | null;
+}
 
 const Header = () => {
   const [isForumHovered, setIsForumHovered] = useState(false);
@@ -16,32 +22,79 @@ const Header = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
+  const queryClient = useQueryClient();
 
-  const { data: username } = useQuery({
+  // Query for user profile including streak data
+  const { data: userProfile } = useQuery<UserProfile | null>({
     queryKey: ['profile', userId],
     queryFn: async () => {
       if (!userId) return null;
       
-      const cachedUsername = localStorage.getItem('cached_username');
-      if (cachedUsername) return cachedUsername;
-
       const { data, error } = await supabase
         .from('profiles')
-        .select('username')
+        .select('username, current_streak, last_visit')
         .eq('id', userId)
         .single();
       
       if (error) throw error;
-      
-      if (data?.username) {
-        localStorage.setItem('cached_username', data.username);
-        return data.username;
-      }
-      return null;
+      return data;
     },
     enabled: !!userId,
     staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
   });
+
+  // Mutation for updating streak
+  const updateStreakMutation = useMutation({
+    mutationFn: async () => {
+      if (!userId) throw new Error('No user ID');
+
+      const today = new Date();
+      const lastVisit = userProfile?.last_visit ? new Date(userProfile.last_visit) : null;
+      
+      let newStreak = 1; // Default for first visit or broken streak
+      
+      if (lastVisit) {
+        const diffDays = Math.floor((today.getTime() - lastVisit.getTime()) / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 0) {
+          return null; // Same day visit, no update needed
+        } else if (diffDays === 1) {
+          // Consecutive day
+          newStreak = (userProfile?.current_streak || 0) + 1;
+        }
+        // If diffDays > 1, streak resets to 1
+      }
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({
+          current_streak: newStreak,
+          last_visit: today.toISOString(),
+          updated_at: today.toISOString()
+        })
+        .eq('id', userId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      if (data) {
+        queryClient.setQueryData(['profile', userId], data);
+      }
+    },
+    onError: (error) => {
+      console.error('Error updating streak:', error);
+    }
+  });
+
+  // Update streak when component mounts and user is authenticated
+  useEffect(() => {
+    if (userId && userProfile) {
+      updateStreakMutation.mutate();
+    }
+  }, [userId, userProfile, updateStreakMutation]);
 
   useEffect(() => {
     let mounted = true;
@@ -67,7 +120,6 @@ const Header = () => {
       if (!mounted) return;
 
       if (event === 'SIGNED_OUT') {
-        localStorage.removeItem('cached_username');
         setUserId(null);
         setIsAuthenticated(false);
       } else if (session?.user) {
@@ -155,7 +207,7 @@ const Header = () => {
             onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
             className="text-gray-600 hover:text-gray-800 transition-colors"
           >
-            {username || 'Error loading profile'}
+            {userProfile?.username || 'Error loading profile'}
           </button>
           {isProfileDropdownOpen && (
             <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 border border-gray-200">
@@ -163,8 +215,15 @@ const Header = () => {
                 href="/user-dashboard"
                 className="block px-4 py-2 text-sm text-gray-700 border-b border-gray-200 hover:bg-gray-100"
               >
-                {username || 'Error loading profile'}
+                {userProfile?.username || 'Error loading profile'}
               </Link>
+              <div className="px-4 py-2 text-sm text-gray-600 border-b border-gray-200 flex items-center gap-2">
+                <Icon icon="mdi:fire" className={`${userProfile?.current_streak ? 'text-orange-500' : 'text-gray-400'}`} />
+                <span>
+                  {userProfile?.current_streak || 0} day
+                  {(userProfile?.current_streak || 0) !== 1 ? 's' : ''} streak
+                </span>
+              </div>
               <button
                 type="button"
                 onClick={handleSignOut}
@@ -177,6 +236,7 @@ const Header = () => {
         </div>
       );
     }
+
     return (
       <Link href="/auth" className="text-gray-600 hover:text-gray-800 transition-colors">
         Sign In
@@ -248,9 +308,7 @@ const Header = () => {
               </div>
               <ul className="py-2 space-y-2">
                 <li>
-                  <span 
-                    className="block px-2 py-2 text-gray-600 hover:text-gray-800 transition-colors cursor-pointer"
-                  >
+                  <span className="block px-2 py-2 text-gray-600 hover:text-gray-800 transition-colors cursor-pointer">
                     Forum (Coming Soon)
                   </span>
                 </li>
@@ -279,8 +337,15 @@ const Header = () => {
                             className="block px-4 py-2 text-sm text-gray-700 border-b border-gray-200 hover:bg-gray-100"
                             onClick={() => setIsMenuOpen(false)}
                           >
-                            {username}
+                            {userProfile?.username}
                           </Link>
+                          <div className="px-4 py-2 text-sm text-gray-600 border-b border-gray-200 flex items-center gap-2">
+                            <Icon icon="mdi:fire" className={`${userProfile?.current_streak ? 'text-orange-500' : 'text-gray-400'}`} />
+                            <span>
+                              {userProfile?.current_streak || 0} day
+                              {(userProfile?.current_streak || 0) !== 1 ? 's' : ''} streak
+                            </span>
+                          </div>
                           <button
                             type="button"
                             onClick={handleSignOut}

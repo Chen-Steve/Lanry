@@ -47,4 +47,6 @@ export interface UserProfile {
   username: string;
   created_at: string;
   updated_at: string;
+  current_streak: number;
+  last_visit: string | null;
 } 
