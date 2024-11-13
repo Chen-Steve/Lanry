@@ -23,7 +23,7 @@ const NovelCard = ({ novel, isPriority = false }: { novel: Novel; isPriority?: b
         )}
       </div>
       <div className="flex-grow overflow-hidden h-44">
-        <h3 className="text-lg font-semibold mb-1 truncate">{novel.title}</h3>
+        <h3 className="text-lg font-semibold mb-1 truncate text-black">{novel.title}</h3>
         <p className="text-sm text-gray-600 mb-2">by {novel.author}</p>
         <p className="text-sm text-gray-500 line-clamp-5 leading-relaxed">{novel.description}</p>
       </div>

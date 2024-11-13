@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 
 const Footer = () => {
   return (
-    <footer className="bg-white border-t mt-auto">
+    <footer className="bg-white border-t mt-16">
       <div className="px-4 py-6 sm:py-8 max-w-5xl mx-auto">
         <div className="space-y-8 sm:grid sm:grid-cols-2 lg:grid-cols-4 sm:gap-8 sm:space-y-0">
           {/* Brand Section */}
