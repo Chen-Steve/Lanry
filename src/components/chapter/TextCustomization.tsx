@@ -51,7 +51,7 @@ export default function TextCustomization({
       {isOpen && (
         <div className="absolute right-0 mt-2 w-64 bg-white border rounded-lg shadow-lg p-4 z-50">
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-black mb-2">
               Font Family
             </label>
             <div className="space-y-2">
@@ -62,7 +62,7 @@ export default function TextCustomization({
                   className={`w-full text-left px-3 py-2 rounded-md ${
                     currentFont === font.value
                       ? 'bg-blue-50 text-blue-700'
-                      : 'hover:bg-gray-50'
+                      : 'text-black hover:bg-gray-50'
                   }`}
                   style={{ fontFamily: font.value }}
                 >
@@ -73,23 +73,23 @@ export default function TextCustomization({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-black mb-2">
               Font Size
             </label>
             <div className="flex items-center gap-4">
               <button
                 title="Decrease font size"
                 onClick={() => onSizeChange(currentSize - 1)}
-                className="p-1 rounded-md hover:bg-gray-100"
+                className="p-1 rounded-md hover:bg-gray-100 text-black"
                 disabled={currentSize <= 12}
               >
                 <Icon icon="mdi:minus" />
               </button>
-              <span className="text-sm">{currentSize}px</span>
+              <span className="text-sm text-black">{currentSize}px</span>
               <button
                 title="Increase font size"
                 onClick={() => onSizeChange(currentSize + 1)}
-                className="p-1 rounded-md hover:bg-gray-100"
+                className="p-1 rounded-md hover:bg-gray-100 text-black"
                 disabled={currentSize >= 24}
               >
                 <Icon icon="mdi:plus" />

@@ -4,7 +4,7 @@ import Image from 'next/image';
 const SponsorsPage = () => {
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">Our Sponsors</h1>
+      <h1 className="text-3xl font-bold mb-6 text-black">Our Sponsors</h1>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Sponsor card with logo */}
@@ -18,16 +18,16 @@ const SponsorsPage = () => {
               priority
             />
           </div>
-          <h2 className="text-2xl font-semibold mb-2">KARD</h2>
-          <p className="text-gray-600 mb-4">
+          <h2 className="text-2xl font-semibold mb-2 text-black">KARD</h2>
+          <p className="text-black mb-4">
             A flashcard study platform/Free Quizlet Alternative.
           </p>
         </div>
 
         {/* Become a Sponsor card */}
         <div className="border rounded-lg p-6 shadow-sm">
-          <h2 className="text-xl font-semibold mb-2">Become a Sponsor</h2>
-          <p className="text-gray-600 mb-4">
+          <h2 className="text-xl font-semibold mb-2 text-black">Become a Sponsor</h2>
+          <p className="text-black mb-4">
             Support our platform and reach our growing community of readers.
           </p>
           <a 

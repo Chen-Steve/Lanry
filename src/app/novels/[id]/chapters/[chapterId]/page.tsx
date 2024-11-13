@@ -196,7 +196,7 @@ function ChapterNavigation({
       <div className="relative w-full">
         <button
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-          className="w-full px-4 py-3 border rounded-lg flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors"
+          className="w-full px-4 py-3 border rounded-lg flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors text-black"
         >
           <span>Chapter {currentChapter}</span>
           <Icon icon="mdi:chevron-down" />
@@ -208,7 +208,7 @@ function ChapterNavigation({
               <button
                 key={num}
                 onClick={() => handleChapterSelect(num)}
-                className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${
+                className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors text-black ${
                   num === currentChapter ? 'bg-blue-50' : ''
                 }`}
               >
@@ -226,7 +226,7 @@ function ChapterNavigation({
           {navigation.prevChapter ? (
             <Link
               href={`/novels/${novelId}/chapters/c${navigation.prevChapter.chapter_number}`}
-              className="flex items-center justify-center w-full px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-900 transition-colors"
+              className="flex items-center justify-center w-full px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg text-black transition-colors"
             >
               <div className="flex items-center gap-2">
                 <Icon icon="mdi:chevron-left" className="text-xl" />
@@ -235,7 +235,7 @@ function ChapterNavigation({
               </div>
             </Link>
           ) : (
-            <div className="hidden sm:block px-4 py-2 text-gray-500">No previous chapter</div>
+            <div className="hidden sm:block px-4 py-2 text-black">No previous chapter</div>
           )}
         </div>
 
@@ -244,7 +244,7 @@ function ChapterNavigation({
           {navigation.nextChapter ? (
             <Link
               href={`/novels/${novelId}/chapters/c${navigation.nextChapter.chapter_number}`}
-              className="flex items-center justify-center w-full px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-900 transition-colors"
+              className="flex items-center justify-center w-full px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg text-black transition-colors"
             >
               <div className="flex items-center gap-2">
                 <span className="hidden sm:inline">Next</span>
@@ -253,7 +253,7 @@ function ChapterNavigation({
               </div>
             </Link>
           ) : (
-            <div className="hidden sm:block px-4 py-2 text-gray-500">No next chapter</div>
+            <div className="hidden sm:block px-4 py-2 text-black">No next chapter</div>
           )}
         </div>
       </div>
@@ -371,7 +371,7 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
       <div className="max-w-4xl mx-auto px-4 py-8">
         <Link 
           href={`/novels/${novelId}`}
-          className="text-gray-600 hover:text-gray-900 flex items-center gap-1 text-sm md:text-base mb-8"
+          className="text-black hover:text-gray-700 flex items-center gap-1 text-sm md:text-base mb-8"
         >
           <Icon icon="mdi:arrow-left" />
           <span>Back to Novel</span>
@@ -405,15 +405,15 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
       <div className="mb-6 md:mb-8">
         <Link 
           href={`/novels/${novelId}`}
-          className="text-gray-600 hover:text-gray-900 flex items-center gap-1 text-sm md:text-base"
+          className="text-black hover:text-gray-700 flex items-center gap-1 text-sm md:text-base"
         >
           <Icon icon="mdi:arrow-left" />
           <span>Back to Novel</span>
         </Link>
         <div className="flex justify-between items-center mt-3">
           <div>
-            <h1 className="text-xl md:text-2xl font-bold">{chapter.novel.title}</h1>
-            <p className="text-sm md:text-base text-gray-600">by {chapter.novel.author}</p>
+            <h1 className="text-xl md:text-2xl font-bold text-black">{chapter.novel.title}</h1>
+            <p className="text-sm md:text-base text-black">by {chapter.novel.author}</p>
           </div>
           <TextCustomization
             currentFont={fontFamily}
@@ -442,17 +442,17 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
       <div className="mb-6 md:mb-8">
         <div className="mb-4 flex justify-between items-center">
           <div>
-            <h2 className="text-lg md:text-xl font-semibold">
+            <h2 className="text-lg md:text-xl font-semibold text-black">
               Chapter {chapter.chapter_number}: {chapter.title}
             </h2>
-            <p className="text-xs md:text-sm text-gray-500">
+            <p className="text-xs md:text-sm text-black">
               Published {formatDate(chapter.created_at)}
             </p>
           </div>
         </div>
         
         <div 
-          className="prose prose-sm md:prose-base max-w-none"
+          className="prose prose-sm md:prose-base max-w-none text-black"
           style={{ 
             fontFamily: fontFamily,
             fontSize: `${fontSize}px`

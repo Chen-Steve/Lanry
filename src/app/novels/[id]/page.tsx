@@ -234,7 +234,7 @@ export default function NovelPage({ params }: { params: { id: string } }) {
         <div className="flex-grow">
           <div className="flex justify-between items-start mb-4">
             <div>
-              <h1 className="text-3xl font-bold mb-2">{novel.title}</h1>
+              <h1 className="text-3xl font-bold mb-2 text-black">{novel.title}</h1>
               <p className="text-lg text-gray-600">by {novel.author}</p>
             </div>
           </div>
@@ -242,7 +242,7 @@ export default function NovelPage({ params }: { params: { id: string } }) {
           {/* Synopsis with Stats */}
           <div className="prose max-w-none mb-8">
             <div className="flex items-center gap-6 mb-2">
-              <h2 className="text-xl font-semibold m-0">Synopsis</h2>
+              <h2 className="text-xl font-semibold m-0 text-black">Synopsis</h2>
               <div className="flex items-center gap-4 text-sm text-gray-600">
                 <div className="flex items-center gap-1">
                   <Icon icon="mdi:book-open-page-variant" className="text-lg" />
@@ -254,33 +254,29 @@ export default function NovelPage({ params }: { params: { id: string } }) {
                 </div>
               </div>
             </div>
-            <p className="text-gray-700 whitespace-pre-line">{novel.description}</p>
+            <p className="text-black whitespace-pre-line">{novel.description}</p>
           </div>
 
           {/* Additional Info */}
           <div className="grid grid-cols-2 gap-4 text-sm mb-8">
             <div>
               <span className="text-gray-600">Status:</span>
-              <span className="ml-2 font-medium">{novel.status}</span>
+              <span className="ml-2 font-medium text-black">{novel.status}</span>
             </div>
             <div>
               <span className="text-gray-600">Released:</span>
-              <span className="ml-2 font-medium">
-                {formatDate(novel.created_at)}
-              </span>
+              <span className="ml-2 font-medium text-black">{formatDate(novel.created_at)}</span>
             </div>
             <div>
               <span className="text-gray-600">Updated:</span>
-              <span className="ml-2 font-medium">
-                {formatDate(novel.updated_at)}
-              </span>
+              <span className="ml-2 font-medium text-black">{formatDate(novel.updated_at)}</span>
             </div>
           </div>
 
           {/* All Chapters */}
           <div className="mt-12 relative">
             {/* Quick Jump Navigation */}
-            <div className="fixed right-4 top-1/2 transform -translate-y-1/2 space-y-2">
+            <div className="hidden md:fixed md:right-4 md:top-1/2 md:transform md:-translate-y-1/2 md:space-y-2">
               {Array.from({ length: Math.ceil(novel.chapters.length / 150) }).map((_, index) => (
                 <button
                   key={index}
@@ -288,7 +284,7 @@ export default function NovelPage({ params }: { params: { id: string } }) {
                     const element = document.getElementById(`chapter-section-${index}`);
                     element?.scrollIntoView({ behavior: 'smooth' });
                   }}
-                  className="w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-sm"
+                  className="w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-sm text-black"
                   title={`Chapters ${index * 150 + 1}-${Math.min((index + 1) * 150, novel.chapters.length)}`}
                 >
                   {index + 1}
@@ -309,7 +305,7 @@ export default function NovelPage({ params }: { params: { id: string } }) {
                   id={`chapter-section-${sectionIndex}`}
                   className="mb-8"
                 >
-                  <h3 className="text-lg font-semibold mb-4">
+                  <h3 className="text-lg font-semibold mb-4 text-black">
                     Chapters {sectionIndex * 150 + 1}-
                     {Math.min((sectionIndex + 1) * 150, novel.chapters.length)}
                   </h3>
@@ -326,34 +322,25 @@ export default function NovelPage({ params }: { params: { id: string } }) {
                       return (
                         <div
                           key={chapter.id}
-                          className={`flex items-center justify-between border-b border-gray-100 py-2 px-4 ${
-                            isPublished ? 'hover:bg-gray-50' : 'bg-gray-50 opacity-75'
-                          } transition-colors rounded-lg`}
+                          className={`flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-gray-100 py-3 px-4 ${
+                            isPublished ? 'hover:bg-gray-50' : 'bg-gray-50/50'
+                          } transition-colors rounded-lg gap-2`}
                         >
-                          <div className="flex-grow flex items-center">
-                            {!isPublished && (
-                              <div className="flex items-center gap-1 mr-3">
-                                <Icon icon="material-symbols:lock" className="text-gray-600 text-lg" />
-                                <span className="text-sm font-medium">Advanced</span>
+                          <div className="flex-grow flex flex-col sm:flex-row sm:items-center w-full gap-2">
+                            {!isPublished && chapter.publish_at ? (
+                              <div className="flex items-center gap-2 sm:mr-3 bg-purple-50 text-purple-800 px-2 py-1 rounded-md text-sm w-fit">
+                                <Icon icon="material-symbols:lock" className="text-lg" />
+                                <span className="font-medium">Available {formatDate(chapter.publish_at)}</span>
                               </div>
-                            )}
-                            
-                            {isPublished ? (
-                              <Link
-                                href={`/novels/${novel.slug}/chapters/c${chapter.chapter_number}`}
-                                className="flex-grow flex items-center hover:text-blue-600"
-                              >
-                                {chapterContent}
-                              </Link>
                             ) : (
-                              <div className="flex-grow flex items-center text-gray-600">
-                                {chapterContent}
-                                {chapter.publish_at && (
-                                  <span className="ml-auto inline-flex items-center px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded-full">
-                                    Available {formatDate(chapter.publish_at)}
-                                  </span>
-                                )}
-                              </div>
+                              <Link 
+                                href={`/novels/${novel.slug}/chapters/c${chapter.chapter_number}`}
+                                className="flex-grow flex flex-col sm:flex-row sm:items-center text-gray-600 gap-1 hover:text-gray-900"
+                              >
+                                <div className="flex items-center gap-2">
+                                  {chapterContent}
+                                </div>
+                              </Link>
                             )}
                           </div>
                         </div>
