@@ -142,18 +142,19 @@ export function useComments(chapterNumber: number) {
     if (!userId) return;
 
     try {
-      // Generate UUID on client side
       const commentId = crypto.randomUUID();
+      const now = new Date().toISOString(); // Get current timestamp
 
-      // Create the comment
       const { data, error } = await supabase
         .from('chapter_comments')
-        .insert([{  // Note: Wrap in array
+        .insert([{
           id: commentId,
           chapter_number: chapterNumber,
           paragraph_id: paragraphId,
           content,
           profile_id: userId,
+          created_at: now,
+          updated_at: now
         }])
         .select(`
           *,
