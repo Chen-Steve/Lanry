@@ -343,7 +343,19 @@ export default function NovelPage({ params }: { params: { id: string } }) {
                           <div className="flex-grow flex flex-col w-full gap-2">
                             {!isPublished && chapter.publish_at ? (
                               <>
-                                <div className="text-gray-600">
+                                <div 
+                                  className="text-gray-600 cursor-pointer"
+                                  onClick={() => toast.success('Buy with coins - Coming Soon!', {
+                                    duration: 3000,
+                                    position: 'bottom-center',
+                                    style: {
+                                      background: '#8B5CF6', // Purple color
+                                      color: 'white',
+                                      padding: '12px 24px',
+                                    },
+                                    icon: <Icon icon="material-symbols:payments-outline" className="text-xl" />,
+                                  })}
+                                >
                                   {chapterContent}
                                 </div>
                                 <div className="flex items-center gap-2">

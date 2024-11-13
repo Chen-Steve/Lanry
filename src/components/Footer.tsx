@@ -86,8 +86,8 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link href="/translation-policy" className="text-xs sm:text-sm text-gray-600 hover:text-gray-800 transition-colors">
-                  Translation Policy
+                <Link href="/shop" className="text-xs sm:text-sm text-gray-600 hover:text-gray-800 transition-colors">
+                  Shop
                 </Link>
               </li>
             </ul>
@@ -129,6 +129,9 @@ const Footer = () => {
               </Link>
               <Link href="/terms" className="text-xs sm:text-sm text-gray-600 hover:text-gray-800 transition-colors">
                 Terms
+              </Link>
+              <Link href="/translation-policy" className="text-xs sm:text-sm text-gray-600 hover:text-gray-800 transition-colors">
+                Translation Policy
               </Link>
             </div>
           </div>

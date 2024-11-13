@@ -299,6 +299,15 @@ const Header = () => {
                   </Link>
                 </li>
                 <li>
+                  <Link 
+                    href="/shop" 
+                    className="bg-amber-100 text-amber-800 px-2 rounded-md hover:bg-amber-200 transition-colors flex items-center gap-1"
+                  >
+                    <Icon icon="ph:coins" className="text-amber-600" />
+                    <span>Coins</span>
+                  </Link>
+                </li>
+                <li>
                   {renderAuthLink()}
                 </li>
               </ul>
@@ -324,6 +333,16 @@ const Header = () => {
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Sponsors
+                  </Link>
+                </li>
+                <li>
+                  <Link 
+                    href="/coins" 
+                    className="block px-2 py-2 bg-amber-100 text-amber-800 hover:bg-amber-200 transition-colors flex items-center gap-1 mx-2 rounded-md"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <Icon icon="ph:coins" className="text-amber-600" />
+                    <span>Coins</span>
                   </Link>
                 </li>
                 <li>
