@@ -54,15 +54,20 @@ const Header = () => {
       let newStreak = 1; // Default for first visit or broken streak
       
       if (lastVisit) {
-        const diffDays = Math.floor((today.getTime() - lastVisit.getTime()) / (1000 * 60 * 60 * 24));
+        // Reset hours/minutes/seconds to compare calendar days only
+        const lastVisitDay = new Date(lastVisit.getFullYear(), lastVisit.getMonth(), lastVisit.getDate());
+        const todayDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        
+        const diffTime = todayDay.getTime() - lastVisitDay.getTime();
+        const diffDays = diffTime / (1000 * 60 * 60 * 24);
         
         if (diffDays === 0) {
-          return null; // Same day visit, no update needed
+          return null; // Same calendar day, no update needed
         } else if (diffDays === 1) {
-          // Consecutive day
+          // Consecutive calendar day
           newStreak = (userProfile?.current_streak || 0) + 1;
         }
-        // If diffDays > 1, streak resets to 1
+        // If diffDays > 1, streak resets to 1 (unchanged)
       }
 
       const { data, error } = await supabase
