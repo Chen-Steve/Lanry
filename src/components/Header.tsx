@@ -14,7 +14,6 @@ const Header = () => {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [username, setUsername] = useState<string | null>(null);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
-  const [profileFetched, setProfileFetched] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const initRef = useRef(false);
 
@@ -38,14 +37,13 @@ const Header = () => {
         if (session?.user) {
           console.log('[Init] Session found:', session.user.id);
           setIsAuthenticated(true);
-          setIsLoading(false);
           await fetchUserProfile(session.user.id);
         } else {
           console.log('[Init] No session');
           setIsAuthenticated(false);
           setUsername(null);
-          setIsLoading(false);
         }
+        setIsLoading(false);
       } catch (error) {
         console.error('[Init] Error:', error);
         setIsLoading(false);
@@ -62,14 +60,10 @@ const Header = () => {
       try {
         if (session?.user) {
           setIsAuthenticated(true);
-          if (!profileFetched || event === 'SIGNED_IN') {
-            await fetchUserProfile(session.user.id);
-            setProfileFetched(true);
-          }
+          await fetchUserProfile(session.user.id);
         } else {
           setIsAuthenticated(false);
           setUsername(null);
-          setProfileFetched(false);
         }
         setIsLoading(false);
       } catch (error) {
