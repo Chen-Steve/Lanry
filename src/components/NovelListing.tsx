@@ -4,7 +4,7 @@ import { Novel } from '@/types/database';
 import Link from 'next/link';
 import Image from 'next/image';
 
-const NovelCard = ({ novel }: { novel: Novel }) => (
+const NovelCard = ({ novel, isPriority = false }: { novel: Novel; isPriority?: boolean }) => (
   <Link href={`/novels/${novel.slug}`} className="block">
     <div className="flex flex-row gap-4">
       <div className="w-28 h-44 flex-shrink-0 relative">
@@ -13,7 +13,8 @@ const NovelCard = ({ novel }: { novel: Novel }) => (
             src={`/novel-covers/${novel.coverImageUrl}`}
             alt={`Cover for ${novel.title}`}
             fill
-            priority
+            priority={isPriority}
+            loading={isPriority ? 'eager' : 'lazy'}
             className="object-cover rounded"
             sizes="(max-width: 768px) 112px, 112px"
           />
@@ -33,10 +34,13 @@ const NovelCard = ({ novel }: { novel: Novel }) => (
 const NovelListing = ({ novels }: { novels: Novel[] }) => {
   return (
     <div className="max-w-5xl mx-auto px-4">
-      {/* Novel Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-        {novels.map((novel) => (
-          <NovelCard key={novel.id} novel={novel} />
+        {novels.map((novel, index) => (
+          <NovelCard 
+            key={novel.id} 
+            novel={novel}
+            isPriority={index < 3}
+          />
         ))}
       </div>
     </div>
