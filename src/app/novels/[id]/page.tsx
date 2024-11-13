@@ -39,11 +39,19 @@ export default function NovelPage({ params }: { params: { id: string } }) {
             novelTitle: data.title
           });
           
-          // Update view count in database
-          await supabase
+          // Update view count in database with error handling
+          const { error } = await supabase
             .from('novels')
             .update({ views: (data.views || 0) + 1 })
             .eq('id', id);
+
+          if (error) {
+            console.error('Error updating view count:', error);
+            return;
+          }
+
+          // Update local view count after successful database update
+          setViewCount((data.views || 0) + 1);
         }
       } catch (error) {
         console.error('Error:', error);
