@@ -14,49 +14,54 @@ const Header = () => {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [username, setUsername] = useState<string | null>(null);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
+  const [profileFetched, setProfileFetched] = useState(false);
 
   useEffect(() => {
     let mounted = true;
 
     const initAuth = async () => {
       try {
-        // Initial session check
         const { data: { session } } = await supabase.auth.getSession();
         
         if (!mounted) return;
 
         if (session?.user) {
-          console.log('Session found, user:', session.user.id); // Debug log
+          console.log('Session found, user:', session.user.id);
           setIsAuthenticated(true);
-          // Immediately fetch profile after confirming session
-          await fetchUserProfile(session.user.id);
+          if (!profileFetched) {
+            await fetchUserProfile(session.user.id);
+            setProfileFetched(true);
+          }
         } else {
-          console.log('No session found'); // Debug log
+          console.log('No session found');
           setIsAuthenticated(false);
           setUsername(null);
+          setProfileFetched(false);
         }
       } catch (error) {
         console.error('Error during auth initialization:', error);
       }
     };
 
-    // Run initial auth check
     initAuth();
     
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event); // Debug log
+      console.log('Auth state changed:', event);
       
       if (!mounted) return;
 
       if (session?.user) {
-        console.log('New session detected:', session.user.id); // Debug log
+        console.log('New session detected:', session.user.id);
         setIsAuthenticated(true);
-        await fetchUserProfile(session.user.id);
+        if (!profileFetched || event === 'SIGNED_IN') {
+          await fetchUserProfile(session.user.id);
+          setProfileFetched(true);
+        }
       } else {
-        console.log('Session ended'); // Debug log
+        console.log('Session ended');
         setIsAuthenticated(false);
         setUsername(null);
+        setProfileFetched(false);
       }
     });
 
