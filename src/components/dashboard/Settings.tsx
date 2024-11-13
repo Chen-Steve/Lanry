@@ -22,6 +22,8 @@ export default function Settings() {
   const [profile, setProfile] = useState<UserProfile>({
     id: '',
     username: '',
+    current_streak: 0,
+    last_visit: null,
     created_at: '',
     updated_at: ''
   });
