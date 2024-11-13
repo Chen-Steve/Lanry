@@ -174,12 +174,33 @@ export default function NovelPage({ params }: { params: { id: string } }) {
     notFound();
   }
 
-  // Rest of your JSX remains the same, just update the bookmark button:
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="flex flex-col md:flex-row gap-8">
-        {/* Left Column - Cover Image */}
-        <div className="w-full md:w-80 flex-shrink-0">
+        {/* Mobile Header Layout */}
+        <div className="md:hidden flex gap-4 mb-6">
+          <div className="relative w-1/3 aspect-[2/3] rounded-lg overflow-hidden shadow-lg">
+            {novel.coverImageUrl ? (
+              <Image
+                src={`/novel-covers/${novel.coverImageUrl}`}
+                alt={novel.title}
+                fill
+                priority
+                className="object-cover"
+                sizes="(max-width: 768px) 33vw, 320px"
+              />
+            ) : (
+              <div className="w-full h-full bg-gray-300" />
+            )}
+          </div>
+          <div className="flex-1 flex flex-col justify-center">
+            <h1 className="text-2xl font-bold mb-2 text-black">{novel.title}</h1>
+            <p className="text-base text-gray-600">by {novel.author}</p>
+          </div>
+        </div>
+
+        {/* Desktop Layout - Cover Image */}
+        <div className="hidden md:block w-80 flex-shrink-0">
           <div className="sticky top-8">
             <div className="relative w-full aspect-[2/3] rounded-lg overflow-hidden shadow-lg">
               {novel.coverImageUrl ? (
@@ -189,13 +210,13 @@ export default function NovelPage({ params }: { params: { id: string } }) {
                   fill
                   priority
                   className="object-cover"
-                  sizes="(max-width: 768px) 100vw, 320px"
+                  sizes="320px"
                 />
               ) : (
                 <div className="w-full h-full bg-gray-300" />
               )}
             </div>
-            {/* Added buttons below image */}
+            {/* Bookmark and Start Reading buttons */}
             <div className="flex flex-col gap-2 mt-4">
               <button 
                 onClick={handleBookmark}
@@ -232,13 +253,48 @@ export default function NovelPage({ params }: { params: { id: string } }) {
 
         {/* Right Column - Novel Information */}
         <div className="flex-grow">
-          <div className="flex justify-between items-start mb-4">
+          {/* Desktop Title (hidden on mobile) */}
+          <div className="hidden md:flex justify-between items-start mb-4">
             <div>
               <h1 className="text-3xl font-bold mb-2 text-black">{novel.title}</h1>
               <p className="text-lg text-gray-600">by {novel.author}</p>
             </div>
           </div>
           
+          {/* Mobile Buttons */}
+          <div className="md:hidden flex flex-col gap-2 mb-6">
+            {/* Move the buttons here for mobile */}
+            <button 
+              onClick={handleBookmark}
+              type="button"
+              disabled={isBookmarkLoading}
+              aria-label={isBookmarked ? "Remove Bookmark" : "Add Bookmark"} 
+              className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors w-full ${
+                !isAuthenticated 
+                  ? 'bg-gray-100 hover:bg-gray-200 text-gray-500'
+                  : isBookmarked 
+                    ? 'bg-amber-400 hover:bg-amber-500 text-amber-950'
+                    : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+              } ${isBookmarkLoading ? 'opacity-50' : ''}`}
+            >
+              <Icon 
+                icon={isBookmarked ? "mdi:bookmark" : "mdi:bookmark-outline"} 
+                className={`text-xl ${isBookmarkLoading ? 'animate-pulse' : ''}`}
+              />
+              <span>{isBookmarked ? 'Bookmarked' : 'Bookmark'}</span>
+            </button>
+            
+            {novel.chapters.length > 0 && (
+              <Link 
+                href={`/novels/${novel.slug}/chapters/c${novel.chapters[novel.chapters.length - 1].chapter_number}`}
+                className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600 transition-colors w-full"
+              >
+                <Icon icon="mdi:book-open-page-variant" className="text-xl" />
+                <span>Start Reading</span>
+              </Link>
+            )}
+          </div>
+
           {/* Synopsis with Stats */}
           <div className="prose max-w-none mb-8">
             <div className="flex items-center gap-6 mb-2">
@@ -322,16 +378,23 @@ export default function NovelPage({ params }: { params: { id: string } }) {
                       return (
                         <div
                           key={chapter.id}
-                          className={`flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-gray-100 py-3 px-4 ${
+                          className={`flex flex-col border-b border-gray-100 py-3 px-4 ${
                             isPublished ? 'hover:bg-gray-50' : 'bg-gray-50/50'
                           } transition-colors rounded-lg gap-2`}
                         >
-                          <div className="flex-grow flex flex-col sm:flex-row sm:items-center w-full gap-2">
+                          <div className="flex-grow flex flex-col w-full gap-2">
                             {!isPublished && chapter.publish_at ? (
-                              <div className="flex items-center gap-2 sm:mr-3 bg-purple-50 text-purple-800 px-2 py-1 rounded-md text-sm w-fit">
-                                <Icon icon="material-symbols:lock" className="text-lg" />
-                                <span className="font-medium">Available {formatDate(chapter.publish_at)}</span>
-                              </div>
+                              <>
+                                <div className="text-gray-600">
+                                  {chapterContent}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <div className="flex items-center gap-2 bg-purple-50 text-purple-800 px-2 py-1 rounded-md text-sm">
+                                    <Icon icon="material-symbols:lock" className="text-lg" />
+                                    <span className="font-medium">Available {formatDate(chapter.publish_at)}</span>
+                                  </div>
+                                </div>
+                              </>
                             ) : (
                               <Link 
                                 href={`/novels/${novel.slug}/chapters/c${chapter.chapter_number}`}
