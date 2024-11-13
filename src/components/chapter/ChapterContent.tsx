@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { formatDate } from '@/lib/utils';
 import CommentPopover from '@/components/chapter/CommentPopover';
 import { useComments } from '@/hooks/useComments';
+import { Icon } from '@iconify/react';
 
 interface ChapterContentProps {
   chapterNumber: number;
@@ -106,8 +107,14 @@ export default function ChapterContent({
                 <button
                   onClick={(e) => handleParagraphLongPress(e, paragraphId)}
                   className="text-gray-400 hover:text-blue-500"
+                  aria-label="Add comment"
                 >
-                  💬
+                  <Icon 
+                    icon="pepicons-print:text-bubbles" 
+                    className="w-6 h-6 [stroke-width:2px]"
+                    width={24}
+                    height={24}
+                  />
                 </button>
               </div>
             </div>
