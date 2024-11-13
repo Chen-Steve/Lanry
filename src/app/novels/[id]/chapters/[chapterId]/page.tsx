@@ -7,8 +7,9 @@ import { Icon } from '@iconify/react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { formatDate } from '@/lib/utils';
-import TextCustomization from '@/components/chapter/TextCustomization';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
+import ChapterHeader from '@/components/chapter/ChapterHeader';
+import ChapterContent from '@/components/chapter/ChapterContent';
 
 type ChapterWithNovel = Chapter & {
   novel: Novel;
@@ -401,28 +402,15 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-4 md:py-8">
-      {/* Navigation Header */}
-      <div className="mb-6 md:mb-8">
-        <Link 
-          href={`/novels/${novelId}`}
-          className="text-black hover:text-gray-700 flex items-center gap-1 text-sm md:text-base"
-        >
-          <Icon icon="mdi:arrow-left" />
-          <span>Back to Novel</span>
-        </Link>
-        <div className="flex justify-between items-center mt-3">
-          <div>
-            <h1 className="text-xl md:text-2xl font-bold text-black">{chapter.novel.title}</h1>
-            <p className="text-sm md:text-base text-black">by {chapter.novel.author}</p>
-          </div>
-          <TextCustomization
-            currentFont={fontFamily}
-            currentSize={fontSize}
-            onFontChange={setFontFamily}
-            onSizeChange={setFontSize}
-          />
-        </div>
-      </div>
+      <ChapterHeader
+        novelId={novelId}
+        novelTitle={chapter.novel.title}
+        author={chapter.novel.author}
+        fontFamily={fontFamily}
+        fontSize={fontSize}
+        onFontChange={setFontFamily}
+        onSizeChange={setFontSize}
+      />
 
       {/* Top Navigation */}
       <div className="mb-6">
@@ -438,33 +426,15 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
         />
       </div>
 
-      {/* Chapter Content */}
-      <div className="mb-6 md:mb-8">
-        <div className="mb-4 flex justify-between items-center">
-          <div>
-            <h2 className="text-lg md:text-xl font-semibold text-black">
-              Chapter {chapter.chapter_number}: {chapter.title}
-            </h2>
-            <p className="text-xs md:text-sm text-black">
-              Published {formatDate(chapter.created_at)}
-            </p>
-          </div>
-        </div>
-        
-        <div 
-          className="prose prose-sm md:prose-base max-w-none text-black"
-          style={{ 
-            fontFamily: fontFamily,
-            fontSize: `${fontSize}px`
-          }}
-        >
-          {chapter.content.split('\n').map((paragraph, index) => (
-            <p key={index} className="mb-4 leading-relaxed">
-              {paragraph}
-            </p>
-          ))}
-        </div>
-      </div>
+      {/* Replace the chapter content section with the new component */}
+      <ChapterContent
+        chapterNumber={chapter.chapter_number}
+        title={chapter.title}
+        createdAt={chapter.created_at}
+        content={chapter.content}
+        fontFamily={fontFamily}
+        fontSize={fontSize}
+      />
 
       {/* Bottom Navigation */}
       <div className="border-t pt-4">
@@ -480,7 +450,6 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
         />
       </div>
 
-      {/* Add the ScrollToTop button */}
       <ScrollToTopButton />
     </div>
   );
