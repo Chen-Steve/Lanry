@@ -10,32 +10,30 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     detectSessionInUrl: true,
     storage: typeof window !== 'undefined' ? window.localStorage : undefined,
-    // Add debug options
-    debug: process.env.NODE_ENV === 'development',
   }
 });
 
-// Add debug listener only once
-if (process.env.NODE_ENV !== 'production') {
-  let isListenerAttached = false;
+// Debug listener only in development
+// if (process.env.NODE_ENV !== 'production') {
+//   let isListenerAttached = false;
   
-  if (!isListenerAttached) {
-    supabase.auth.onAuthStateChange((event, session) => {
-      console.log('[Supabase Debug] Auth State Change:', {
-        event,
-        userId: session?.user?.id,
-        timestamp: new Date().toISOString(),
-      });
+//   if (!isListenerAttached) {
+//     supabase.auth.onAuthStateChange((event, session) => {
+//       console.log('[Supabase Debug] Auth State Change:', {
+//         event,
+//         userId: session?.user?.id,
+//         timestamp: new Date().toISOString(),
+//       });
 
-      // Handle specific auth events
-      if (event === 'SIGNED_OUT') {
-        console.log('User signed out');
-      } else if (event === 'SIGNED_IN') {
-        console.log('User signed in');
-      }
-    });
-    isListenerAttached = true;
-  }
-}
+//       // Handle specific auth events
+//       if (event === 'SIGNED_OUT') {
+//         console.log('User signed out');
+//       } else if (event === 'SIGNED_IN') {
+//         console.log('User signed in');
+//       }
+//     });
+//     isListenerAttached = true;
+//   }
+// }
 
 export default supabase;
