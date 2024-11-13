@@ -61,7 +61,15 @@ export default function CommentPopover({
   }, [onClose]);
 
   const calculatePosition = () => {
-    const x = Math.min(position.x, window.innerWidth - 320);
+    const isMobile = window.innerWidth < 768;
+    
+    let x;
+    if (isMobile) {
+      x = Math.max(10, (window.innerWidth - 320) / 2);
+    } else {
+      x = Math.min(position.x, window.innerWidth - 320);
+    }
+    
     const y = Math.min(position.y + 10, window.innerHeight - 400);
     return { x, y };
   };

@@ -68,6 +68,7 @@ All translations are either:
 1. Original works translated with permission
 2. Works in the public domain
 3. Works translated under fair use guidelines
+4. Fan translations
 
 ## License
 
