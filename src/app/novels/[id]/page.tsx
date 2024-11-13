@@ -25,6 +25,7 @@ export default function NovelPage({ params }: { params: { id: string } }) {
     const fetchNovelAndAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
+        // console.log('Auth state:', !!session?.user);
         setIsAuthenticated(!!session?.user);
         
         const data = await getNovel(id, session?.user?.id);
@@ -39,18 +40,18 @@ export default function NovelPage({ params }: { params: { id: string } }) {
             novelTitle: data.title
           });
           
-          // Update view count in database with error handling
-          const { error } = await supabase
-            .from('novels')
-            .update({ views: (data.views || 0) + 1 })
-            .eq('id', id);
+          // Update view count using RPC
+          const { error: rpcError } = await supabase
+            .rpc('increment_novel_views', { 
+              novel_id: id 
+            });
 
-          if (error) {
-            console.error('Error updating view count:', error);
+          if (rpcError) {
+            console.error('Error updating view count:', rpcError);
             return;
           }
 
-          // Update local view count after successful database update
+          // Update local view count after successful RPC call
           setViewCount((data.views || 0) + 1);
         }
       } catch (error) {
