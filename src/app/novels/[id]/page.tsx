@@ -130,9 +130,15 @@ export default function NovelPage({ params }: { params: { id: string } }) {
                 <Icon icon="mdi:book-open-page-variant" className="text-lg" />
                 <span>{novel.chapters.length} Chapters</span>
               </div>
-              <div className="flex items-center gap-1">
-                <Icon icon="mdi:bookmark" className="text-lg" />
-                <span>{novel.bookmarks} Bookmarks</span>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1">
+                  <Icon icon="mdi:bookmark" className="text-lg" />
+                  <span>{novel.bookmarks} Bookmarks</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Icon icon="mdi:eye" className="text-lg" />
+                  <span>{viewCount} Views</span>
+                </div>
               </div>
             </div>
           </div>
@@ -246,6 +252,10 @@ export default function NovelPage({ params }: { params: { id: string } }) {
                 <div className="flex items-center gap-1">
                   <Icon icon="mdi:bookmark" className="text-lg" />
                   <span>{novel.bookmarks} Bookmarks</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Icon icon="mdi:eye" className="text-lg" />
+                  <span>{viewCount} Views</span>
                 </div>
               </div>
             </div>
