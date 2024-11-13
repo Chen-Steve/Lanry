@@ -1,5 +1,4 @@
 import { createClient } from '@supabase/supabase-js';
-import { AuthChangeEvent } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -21,7 +20,7 @@ if (process.env.NODE_ENV !== 'production') {
   let isListenerAttached = false;
   
   if (!isListenerAttached) {
-    supabase.auth.onAuthStateChange((event: AuthChangeEvent, session) => {
+    supabase.auth.onAuthStateChange((event, session) => {
       console.log('[Supabase Debug] Auth State Change:', {
         event,
         userId: session?.user?.id,

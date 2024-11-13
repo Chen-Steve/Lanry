@@ -26,49 +26,55 @@ const Header = () => {
       initRef.current = true;
 
       try {
-        setIsLoading(true);
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
+        if (sessionError) {
+          console.error('[Init] Session Error:', sessionError);
+          return;
+        }
+
         if (!mounted) return;
 
         if (session?.user) {
           console.log('[Init] Session found:', session.user.id);
           setIsAuthenticated(true);
+          setIsLoading(false);
           await fetchUserProfile(session.user.id);
         } else {
           console.log('[Init] No session');
           setIsAuthenticated(false);
           setUsername(null);
+          setIsLoading(false);
         }
       } catch (error) {
         console.error('[Init] Error:', error);
-      } finally {
-        if (mounted) {
-          setIsLoading(false);
-          setProfileFetched(true);
-        }
+        setIsLoading(false);
       }
     };
 
     initAuth();
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (isLoading) return;
-      
-      console.log('[Auth Event]', event);
+      console.log('[Auth Event]', event, session?.user?.id);
       
       if (!mounted) return;
 
-      if (session?.user) {
-        setIsAuthenticated(true);
-        if (event === 'SIGNED_IN' && !profileFetched) {
-          await fetchUserProfile(session.user.id);
-          setProfileFetched(true);
+      try {
+        if (session?.user) {
+          setIsAuthenticated(true);
+          if (!profileFetched || event === 'SIGNED_IN') {
+            await fetchUserProfile(session.user.id);
+            setProfileFetched(true);
+          }
+        } else {
+          setIsAuthenticated(false);
+          setUsername(null);
+          setProfileFetched(false);
         }
-      } else {
-        setIsAuthenticated(false);
-        setUsername(null);
-        setProfileFetched(false);
+        setIsLoading(false);
+      } catch (error) {
+        console.error('[Auth Event] Error:', error);
+        setIsLoading(false);
       }
     });
 
@@ -101,13 +107,19 @@ const Header = () => {
         .eq('id', userId)
         .maybeSingle();
       
-      if (error) throw error;
-      
-      if (!profile?.username) {
+      if (error) {
+        console.error('[Profile] Database Error:', error);
         setUsername('User');
         return;
       }
       
+      if (!profile?.username) {
+        console.log('[Profile] No username found, using default');
+        setUsername('User');
+        return;
+      }
+      
+      console.log('[Profile] Username found:', profile.username);
       setUsername(profile.username);
     } catch (err) {
       console.error('[Profile] Error:', err);
@@ -157,6 +169,14 @@ const Header = () => {
   };
 
   const renderAuthLink = () => {
+    if (isLoading) {
+      return (
+        <div className="text-gray-400">
+          <Icon icon="eos-icons:loading" className="animate-spin" />
+        </div>
+      );
+    }
+
     if (isAuthenticated) {
       return (
         <div className="relative" ref={profileDropdownRef}>

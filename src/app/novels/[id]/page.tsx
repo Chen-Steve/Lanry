@@ -98,7 +98,7 @@ export default function NovelPage({ params }: { params: { id: string } }) {
 
   const handleBookmark = async () => {
     if (!isAuthenticated) {
-      toast.error('Please create an account to bookmar', {
+      toast.error('Please create an account to bookmark', {
         duration: 3000,
         position: 'bottom-center',
         style: {
@@ -128,39 +128,35 @@ export default function NovelPage({ params }: { params: { id: string } }) {
       }
 
       const actualNovelId = novelData.id;
-      const now = new Date().toISOString();
 
       if (isBookmarked) {
-        // Remove bookmark
+        // Remove bookmark - Simplified query
         const { error } = await supabase
           .from('bookmarks')
           .delete()
-          .match({
-            profile_id: user.id,
-            novel_id: actualNovelId
-          });
+          .eq('profile_id', user.id)
+          .eq('novel_id', actualNovelId);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Delete bookmark error:', error);
+          throw error;
+        }
         setIsBookmarked(false);
-        // Update the novel's bookmark count
         setNovel(prev => prev ? { ...prev, bookmarks: Math.max(0, prev.bookmarks - 1) } : null);
       } else {
-        // Add bookmark with timestamps
+        // Add bookmark - Simplified query
         const { error } = await supabase
           .from('bookmarks')
-          .upsert({
-            id: crypto.randomUUID(),
+          .insert({
             profile_id: user.id,
             novel_id: actualNovelId,
-            created_at: now,
-            updated_at: now
-          }, {
-            onConflict: 'profile_id,novel_id'
           });
 
-        if (error) throw error;
+        if (error) {
+          console.error('Insert bookmark error:', error);
+          throw error;
+        }
         setIsBookmarked(true);
-        // Update the novel's bookmark count
         setNovel(prev => prev ? { ...prev, bookmarks: prev.bookmarks + 1 } : null);
       }
     } catch (error) {

@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import supabase from '@/lib/supabaseClient';
 import { Icon } from '@iconify/react';
 import Link from 'next/link';
+import { useEffect } from 'react';
 
 interface Novel {
   id: string;
@@ -21,8 +22,8 @@ interface Bookmark {
 
 // Separate data fetching logic
 const fetchBookmarks = async () => {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('User not authenticated');
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.user) throw new Error('User not authenticated');
 
   const { data, error } = await supabase
     .from('bookmarks')
@@ -36,7 +37,7 @@ const fetchBookmarks = async () => {
         slug
       )
     `)
-    .eq('profile_id', user.id)
+    .eq('profile_id', session.user.id)
     .order('created_at', { ascending: false });
 
   if (error) throw error;
@@ -46,23 +47,34 @@ const fetchBookmarks = async () => {
 // Reusable bookmark card component
 const BookmarkCard = ({ bookmark, onRemove }: { bookmark: Bookmark; onRemove: (id: string) => void }) => {
   return (
-    <div className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-      <h3 className="font-medium mb-2">{bookmark.novel.title}</h3>
-      <div className="flex justify-between items-center">
-        <Link
-          href={`/novels/${bookmark.novel.slug || bookmark.novel.id}`}
-          className="text-blue-500 hover:text-blue-600 flex items-center gap-1"
-        >
-          <Icon icon="mdi:book-open-page-variant" width="20" />
-          <span>Read</span>
-        </Link>
-        <button
-          onClick={() => onRemove(bookmark.id)}
-          className="text-red-500 hover:text-red-600 flex items-center gap-1"
-        >
-          <Icon icon="mdi:bookmark-remove" width="20" />
-          <span>Remove</span>
-        </button>
+    <div className="border rounded-lg p-4 hover:shadow-md transition-all duration-200 bg-white relative group">
+      <div className="space-y-2">
+        <h3 className="font-semibold text-lg text-gray-800 line-clamp-1">
+          {bookmark.novel.title}
+        </h3>
+        <p className="text-sm text-gray-600 italic">
+          by {bookmark.novel.author}
+        </p>
+        <p className="text-sm text-gray-700 line-clamp-2 mb-4">
+          {bookmark.novel.description}
+        </p>
+        <div className="flex justify-between items-center pt-2 border-t">
+          <Link
+            href={`/novels/${bookmark.novel.slug || bookmark.novel.id}`}
+            className="text-blue-600 hover:text-blue-700 flex items-center gap-1.5 px-3 py-1.5 rounded-md hover:bg-blue-50 transition-colors"
+          >
+            <Icon icon="mdi:book-open-page-variant" width="18" />
+            <span className="text-sm font-medium">Read Now</span>
+          </Link>
+          <button
+            onClick={() => onRemove(bookmark.id)}
+            className="text-gray-500 hover:text-red-600 flex items-center gap-1.5 px-3 py-1.5 rounded-md hover:bg-red-50 transition-colors"
+            aria-label="Remove bookmark"
+          >
+            <Icon icon="mdi:bookmark-remove" width="18" />
+            <span className="text-sm font-medium">Remove</span>
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -85,6 +97,20 @@ const BookmarksSkeleton = () => (
 
 export default function Bookmarks() {
   const queryClient = useQueryClient();
+
+  // Add auth state listener
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN') {
+        // Refetch bookmarks when user signs in
+        queryClient.invalidateQueries({ queryKey: ['bookmarks'] });
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [queryClient]);
 
   // Query for fetching bookmarks
   const { data: bookmarks, isLoading, isError, error } = useQuery({
