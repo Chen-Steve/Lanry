@@ -90,9 +90,20 @@ const Header = () => {
   };
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    setIsProfileDropdownOpen(false);
-    setIsMenuOpen(false);
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Error signing out:', error);
+        return;
+      }
+      // Only clear states after successful sign out
+      setIsAuthenticated(false);
+      setUsername(null);
+      setIsProfileDropdownOpen(false);
+      setIsMenuOpen(false);
+    } catch (err) {
+      console.error('Unexpected error during sign out:', err);
+    }
   };
 
   const renderAuthLink = () => {
@@ -114,7 +125,11 @@ const Header = () => {
                 {username}
               </Link>
               <button
-                onClick={handleSignOut}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleSignOut();
+                }}
                 className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
               >
                 Sign Out
@@ -229,7 +244,11 @@ const Header = () => {
                             {username}
                           </Link>
                           <button
-                            onClick={handleSignOut}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleSignOut();
+                            }}
                             className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                           >
                             Sign Out
