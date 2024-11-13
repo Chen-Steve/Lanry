@@ -17,8 +17,56 @@ const Header = () => {
   const [isLoading, setIsLoading] = useState(true);
   const initRef = useRef(false);
 
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      console.log('[Profile] Fetching profile for user:', userId);
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('id', userId)
+        .maybeSingle();
+      
+      if (error) {
+        console.error('[Profile] Database Error:', error);
+        setUsername('User');
+        return;
+      }
+      
+      if (!profile?.username) {
+        console.log('[Profile] No username found, creating default profile');
+        // Try to create a default profile if one doesn't exist
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert([
+            {
+              id: userId,
+              username: 'User',
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            }
+          ])
+          .single();
+
+        if (insertError) {
+          console.error('[Profile] Failed to create default profile:', insertError);
+        }
+        
+        setUsername('User');
+        return;
+      }
+      
+      console.log('[Profile] Username found:', profile.username);
+      setUsername(profile.username);
+    } catch (err) {
+      console.error('[Profile] Unexpected error:', err);
+      setUsername('User');
+    }
+  };
+
   useEffect(() => {
     let mounted = true;
+    let retryCount = 0;
+    const MAX_RETRIES = 3;
 
     const initAuth = async () => {
       if (initRef.current) return;
@@ -37,7 +85,21 @@ const Header = () => {
         if (session?.user) {
           console.log('[Init] Session found:', session.user.id);
           setIsAuthenticated(true);
-          await fetchUserProfile(session.user.id);
+          
+          // Add retry logic for profile fetch
+          const fetchProfileWithRetry = async () => {
+            try {
+              await fetchUserProfile(session.user.id);
+            } catch (error) {
+              console.error(`[Init] Profile fetch attempt ${retryCount + 1} failed:`, error);
+              if (retryCount < MAX_RETRIES) {
+                retryCount++;
+                setTimeout(fetchProfileWithRetry, 1000 * retryCount); // Exponential backoff
+              }
+            }
+          };
+          
+          await fetchProfileWithRetry();
         } else {
           console.log('[Init] No session');
           setIsAuthenticated(false);
@@ -92,34 +154,6 @@ const Header = () => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isProfileDropdownOpen]);
-
-  const fetchUserProfile = async (userId: string) => {
-    try {
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('username')
-        .eq('id', userId)
-        .maybeSingle();
-      
-      if (error) {
-        console.error('[Profile] Database Error:', error);
-        setUsername('User');
-        return;
-      }
-      
-      if (!profile?.username) {
-        console.log('[Profile] No username found, using default');
-        setUsername('User');
-        return;
-      }
-      
-      console.log('[Profile] Username found:', profile.username);
-      setUsername(profile.username);
-    } catch (err) {
-      console.error('[Profile] Error:', err);
-      setUsername('User');
-    }
-  };
 
   const handleSignOut = async () => {
     console.log('Sign out initiated');
