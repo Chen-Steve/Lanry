@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { generateChapterSlug } from '@/lib/utils';
+import { Prisma } from '@prisma/client';
 
 export async function POST(
   request: Request,
@@ -8,7 +9,7 @@ export async function POST(
 ) {
   try {
     const body = await request.json();
-    const { chapterNumber, title, content } = body;
+    const { chapterNumber, title, content, publishAt } = body;
     const novelId = params.id;
 
     // Validate required fields
@@ -28,6 +29,7 @@ export async function POST(
         title: title?.trim() ?? '',
         content: content.trim(),
         slug,
+        publishAt: publishAt ? new Date(publishAt) : null,
         novel: {
           connect: { id: novelId }
         }
@@ -37,6 +39,16 @@ export async function POST(
     return NextResponse.json(chapter);
   } catch (error) {
     console.error('Error creating chapter:', error);
+    
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2002') {
+        return NextResponse.json(
+          { error: 'A chapter with this number already exists' },
+          { status: 400 }
+        );
+      }
+    }
+    
     return NextResponse.json(
       { error: 'Error creating chapter' },
       { status: 500 }
@@ -46,12 +58,12 @@ export async function POST(
 
 export async function GET(
   request: Request,
-  { params }: { params: { novelId: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
     const chapters = await prisma.chapter.findMany({
       where: {
-        novelId: params.novelId,
+        novelId: params.id,
       },
       orderBy: {
         chapterNumber: 'asc',
@@ -61,6 +73,9 @@ export async function GET(
     return NextResponse.json(chapters);
   } catch (error) {
     console.error('Error fetching chapters:', error);
-    return NextResponse.json({ error: 'Error fetching chapters' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Error fetching chapters' }, 
+      { status: 500 }
+    );
   }
 } 

@@ -29,6 +29,7 @@ async function getChapter(novelId: string, chapterId: string): Promise<ChapterWi
     }
 
     const actualNovelId = novel.id;
+    const now = new Date().toISOString();
 
     // Now fetch the chapter
     if (chapterId.startsWith('c')) {
@@ -50,6 +51,7 @@ async function getChapter(novelId: string, chapterId: string): Promise<ChapterWi
         `)
         .eq('novel_id', actualNovelId)
         .eq('chapter_number', chapterNumber)
+        .or(`publish_at.is.null,publish_at.lte.${now}`)
         .single();
 
       if (error) {
@@ -73,6 +75,7 @@ async function getChapter(novelId: string, chapterId: string): Promise<ChapterWi
       `)
       .or(`id.eq.${chapterId},slug.eq.${chapterId}`)
       .eq('novel_id', actualNovelId)
+      .or(`publish_at.is.null,publish_at.lte.${now}`)
       .single();
 
     if (error) {
@@ -89,7 +92,6 @@ async function getChapter(novelId: string, chapterId: string): Promise<ChapterWi
 
 async function getChapterNavigation(novelId: string, currentChapterNumber: number) {
   try {
-    // First get the novel's actual ID (similar to other functions)
     const { data: novel, error: novelError } = await supabase
       .from('novels')
       .select('id')
@@ -102,12 +104,14 @@ async function getChapterNavigation(novelId: string, currentChapterNumber: numbe
     }
 
     const actualNovelId = novel.id;
+    const now = new Date().toISOString();
 
-    // Now fetch chapters with the actual novel ID
+    // Now fetch chapters with the actual novel ID and respect publish dates
     const { data: chapters } = await supabase
       .from('chapters')
       .select('id, chapter_number, title')
       .eq('novel_id', actualNovelId)
+      .or(`publish_at.is.null,publish_at.lte.${now}`)
       .order('chapter_number');
 
     if (!chapters || chapters.length === 0) {
@@ -128,7 +132,6 @@ async function getChapterNavigation(novelId: string, currentChapterNumber: numbe
 
 async function getTotalChapters(novelId: string) {
   try {
-    // First get the novel's actual ID
     const { data: novel, error: novelError } = await supabase
       .from('novels')
       .select('id')
@@ -141,12 +144,14 @@ async function getTotalChapters(novelId: string) {
     }
 
     const actualNovelId = novel.id;
+    const now = new Date().toISOString();
 
-    // Now get the total chapters
+    // Now get the total published chapters
     const { data: chapters } = await supabase
       .from('chapters')
       .select('chapter_number')
       .eq('novel_id', actualNovelId)
+      .or(`publish_at.is.null,publish_at.lte.${now}`)
       .order('chapter_number', { ascending: false })
       .limit(1)
       .single();
@@ -300,6 +305,7 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
   const { id: novelId, chapterId } = params;
   const [chapter, setChapter] = useState<ChapterWithNovel | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [navigation, setNavigation] = useState<{
     prevChapter: { id: string; chapter_number: number; title: string } | null;
     nextChapter: { id: string; chapter_number: number; title: string } | null;
@@ -314,21 +320,39 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
 
   useEffect(() => {
     const fetchData = async () => {
-      const [chapterData, total] = await Promise.all([
-        getChapter(novelId, chapterId),
-        getTotalChapters(novelId)
-      ]);
-      
-      setChapter(chapterData);
-      setTotalChapters(total);
-      
-      if (chapterData) {
-        const nav = await getChapterNavigation(novelId, chapterData.chapter_number);
-        console.log('Navigation state:', nav);
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        const chapterData = await getChapter(novelId, chapterId);
+        
+        if (!chapterData) {
+          setError('Advanced Chapter');
+          return;
+        }
+
+        // Check if chapter is published
+        if (chapterData.publish_at && new Date(chapterData.publish_at) > new Date()) {
+          setError('This chapter is not yet available');
+          return;
+        }
+
+        setChapter(chapterData);
+        
+        // Fetch navigation and total chapters only if the chapter is accessible
+        const [nav, total] = await Promise.all([
+          getChapterNavigation(novelId, chapterData.chapter_number),
+          getTotalChapters(novelId)
+        ]);
+        
         setNavigation(nav);
+        setTotalChapters(total);
+      } catch (err) {
+        console.error('Error:', err);
+        setError('Failed to load chapter');
+      } finally {
+        setIsLoading(false);
       }
-      
-      setIsLoading(false);
     };
     
     fetchData();
@@ -340,6 +364,35 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
 
   if (isLoading) {
     return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <Link 
+          href={`/novels/${novelId}`}
+          className="text-gray-600 hover:text-gray-900 flex items-center gap-1 text-sm md:text-base mb-8"
+        >
+          <Icon icon="mdi:arrow-left" />
+          <span>Back to Novel</span>
+        </Link>
+        
+        <div className="text-center py-12">
+          <Icon 
+            icon="mdi:lock" 
+            className="mx-auto text-4xl text-gray-400 mb-4"
+          />
+          <h1 className="text-xl font-semibold text-gray-900 mb-2">
+            {error}
+          </h1>
+          {error === 'This chapter is not yet available' && chapter && (
+            <p className="text-gray-500">
+              This chapter will be available on {formatDate(chapter.publish_at!)}
+            </p>
+          )}
+        </div>
+      </div>
+    );
   }
 
   if (!chapter) {

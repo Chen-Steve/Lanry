@@ -43,6 +43,7 @@ model Chapter {
   title         String
   slug          String    @unique
   content       String    @db.Text
+  publishAt     DateTime? @map("publish_at")
   novel         Novel     @relation(fields: [novelId], references: [id], onDelete: Cascade)
   novelId       String    @map("novel_id")
 
@@ -50,6 +51,7 @@ model Chapter {
   @@index([novelId])
   @@index([chapterNumber])
   @@index([slug])
+  @@index([publishAt])
   @@map("chapters")
 }
 

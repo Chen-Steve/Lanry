@@ -12,6 +12,13 @@ type Chapter = {
   content: string;
   novelId: string;
   slug: string;
+  publishAt?: Date;
+};
+
+// Add a helper function to check if a chapter is published
+const isChapterPublished = (chapter: Chapter) => {
+  if (!chapter.publishAt) return true;
+  return new Date(chapter.publishAt) <= new Date();
 };
 
 export default function ChapterManagementForm() {
@@ -23,6 +30,7 @@ export default function ChapterManagementForm() {
     title: '',
     content: '',
     slug: '',
+    publishAt: '',
   });
   const [editingChapter, setEditingChapter] = useState<Chapter | null>(null);
 
@@ -67,17 +75,20 @@ export default function ChapterManagementForm() {
         ? `/api/novels/${selectedNovel}/chapters/${editingChapter.id}`
         : `/api/novels/${selectedNovel}/chapters`;
 
+      const requestBody = {
+        chapterNumber: parseInt(formData.chapterNumber),
+        title: formData.title.trim() || undefined,
+        content: formData.content,
+        slug: formData.slug.trim() || undefined,
+        publishAt: formData.publishAt ? new Date(formData.publishAt).toISOString() : undefined,
+      };
+
       const response = await fetch(url, {
         method: editingChapter ? 'PUT' : 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          chapterNumber: parseInt(formData.chapterNumber),
-          title: formData.title.trim() || undefined,
-          content: formData.content,
-          slug: formData.slug.trim() || undefined,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
@@ -86,7 +97,7 @@ export default function ChapterManagementForm() {
       }
 
       // Reset form and refresh chapters
-      setFormData({ chapterNumber: '', title: '', content: '', slug: '' });
+      setFormData({ chapterNumber: '', title: '', content: '', slug: '', publishAt: '' });
       setEditingChapter(null);
       fetchChapters(selectedNovel);
       alert(`Chapter ${editingChapter ? 'updated' : 'created'} successfully!`);
@@ -103,12 +114,13 @@ export default function ChapterManagementForm() {
       title: chapter.title,
       content: chapter.content,
       slug: chapter.slug,
+      publishAt: chapter.publishAt ? new Date(chapter.publishAt).toISOString().slice(0, 16) : '',
     });
   };
 
   const handleCancelEdit = () => {
     setEditingChapter(null);
-    setFormData({ chapterNumber: '', title: '', content: '', slug: '' });
+    setFormData({ chapterNumber: '', title: '', content: '', slug: '', publishAt: '' });
   };
 
   return (
@@ -150,10 +162,25 @@ export default function ChapterManagementForm() {
                           editingChapter?.id === chapter.id ? 'bg-blue-50' : ''
                         }`}
                       >
-                        <h4 className="font-medium">
-                          Chapter {chapter.chapterNumber}
-                          {chapter.title && `: ${chapter.title}`}
-                        </h4>
+                        <div className="flex justify-between items-start gap-2">
+                          <h4 className="font-medium">
+                            Chapter {chapter.chapterNumber}
+                            {chapter.title && `: ${chapter.title}`}
+                          </h4>
+                          {!isChapterPublished(chapter) && (
+                            <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded-full">
+                              Advanced
+                            </span>
+                          )}
+                        </div>
+                        {chapter.publishAt && (
+                          <p className="text-sm text-gray-500 mt-1">
+                            {isChapterPublished(chapter) 
+                              ? `Published on ${new Date(chapter.publishAt).toLocaleDateString()}`
+                              : `Scheduled for ${new Date(chapter.publishAt).toLocaleString()}`
+                            }
+                          </p>
+                        )}
                       </button>
                     ))}
                   </div>
@@ -225,6 +252,25 @@ export default function ChapterManagementForm() {
                     className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[200px] lg:min-h-[300px]"
                     required
                   />
+                </div>
+
+                {/* Schedule Publication */}
+                <div>
+                  <label className="block text-sm font-medium mb-2">Schedule Publication (optional)</label>
+                  <input
+                    title="Schedule publication date and time"
+                    type="datetime-local"
+                    value={formData.publishAt}
+                    onChange={(e) =>
+                      setFormData({ ...formData, publishAt: e.target.value })
+                    }
+                    className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  {formData.publishAt && (
+                    <p className="text-sm text-gray-500 mt-1">
+                      This chapter will be published on {new Date(formData.publishAt).toLocaleString()}
+                    </p>
+                  )}
                 </div>
               </div>
 

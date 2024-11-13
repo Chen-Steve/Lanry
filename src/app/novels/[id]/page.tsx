@@ -21,7 +21,8 @@ async function getNovel(id: string, userId?: string): Promise<Novel | null> {
           id,
           title,
           created_at,
-          chapter_number
+          chapter_number,
+          publish_at
         ),
         bookmarks!left (
           id,
@@ -295,43 +296,69 @@ export default function NovelPage({ params }: { params: { id: string } }) {
               ))}
             </div>
 
-            {/* Chapter Sections */}
+            {/* Chapter sections */}
             {Array.from({ length: Math.ceil(novel.chapters.length / 150) }).map((_, sectionIndex) => {
-              const sectionChapters = novel.chapters
-                .sort((a, b) => a.chapter_number - b.chapter_number)
-                .slice(sectionIndex * 150, (sectionIndex + 1) * 150);
+              const sectionChapters = novel.chapters.slice(
+                sectionIndex * 150,
+                (sectionIndex + 1) * 150
+              );
 
               return (
-                <div key={sectionIndex} id={`chapter-section-${sectionIndex}`} className="mb-16">
-                  <h2 className="text-xl font-semibold mb-4">
-                    Chapters {sectionIndex * 150 + 1}-{Math.min((sectionIndex + 1) * 150, novel.chapters.length)}
-                  </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {(() => {
-                      const chaptersPerColumn = Math.ceil(sectionChapters.length / 3);
+                <div
+                  key={sectionIndex}
+                  id={`chapter-section-${sectionIndex}`}
+                  className="mb-8"
+                >
+                  <h3 className="text-lg font-semibold mb-4">
+                    Chapters {sectionIndex * 150 + 1}-
+                    {Math.min((sectionIndex + 1) * 150, novel.chapters.length)}
+                  </h3>
+                  <div className="grid gap-2">
+                    {sectionChapters.map((chapter) => {
+                      const isPublished = !chapter.publish_at || new Date(chapter.publish_at) <= new Date();
+                      const chapterContent = (
+                        <>
+                          <span className="inline-block min-w-[3rem]">Ch. {chapter.chapter_number}</span>
+                          {chapter.title && <span className="ml-2">{chapter.title}</span>}
+                        </>
+                      );
                       
-                      return Array.from({ length: 3 }).map((_, columnIndex) => (
-                        <div key={columnIndex} className="space-y-2">
-                          {sectionChapters
-                            .slice(
-                              columnIndex * chaptersPerColumn,
-                              (columnIndex + 1) * chaptersPerColumn
-                            )
-                            .map((chapter) => (
+                      return (
+                        <div
+                          key={chapter.id}
+                          className={`flex items-center justify-between border-b border-gray-100 py-2 px-4 ${
+                            isPublished ? 'hover:bg-gray-50' : 'bg-gray-50 opacity-75'
+                          } transition-colors rounded-lg`}
+                        >
+                          <div className="flex-grow flex items-center">
+                            {!isPublished && (
+                              <div className="flex items-center gap-1 mr-3">
+                                <Icon icon="material-symbols:lock" className="text-gray-600 text-lg" />
+                                <span className="text-sm font-medium">Advanced</span>
+                              </div>
+                            )}
+                            
+                            {isPublished ? (
                               <Link
-                                key={chapter.id}
                                 href={`/novels/${novel.slug}/chapters/c${chapter.chapter_number}`}
-                                className="block p-3 rounded-lg hover:bg-gray-50 text-black border border-gray-200"
+                                className="flex-grow flex items-center hover:text-blue-600"
                               >
-                                <span className="font-medium">
-                                  Chapter {chapter.chapter_number}
-                                  {chapter.title && `: ${chapter.title}`}
-                                </span>
+                                {chapterContent}
                               </Link>
-                            ))}
+                            ) : (
+                              <div className="flex-grow flex items-center text-gray-600">
+                                {chapterContent}
+                                {chapter.publish_at && (
+                                  <span className="ml-auto inline-flex items-center px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded-full">
+                                    Available {formatDate(chapter.publish_at)}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      ));
-                    })()}
+                      );
+                    })}
                   </div>
                 </div>
               );

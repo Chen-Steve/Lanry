@@ -29,6 +29,7 @@ interface ChapterInput {
   chapterNumber: number;
   title?: string;
   content: string;
+  publishAt?: string;
 }
 
 // Updated input validation function
@@ -74,6 +75,7 @@ export async function PUT(
         title: body.title?.trim() ?? '',
         content: body.content.trim(),
         slug,
+        publishAt: body.publishAt ? new Date(body.publishAt) : null,
       },
     });
 
