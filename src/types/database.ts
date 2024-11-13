@@ -53,6 +53,23 @@ export interface UserProfile {
   last_visit: string | null;
 }
 
+export interface ChapterComment {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  chapter_number: number;
+  paragraph_id: string;
+  content: string;
+  profile_id: string;
+  profile: {
+    username: string;
+  };
+}
+
+export interface CommentsByParagraph {
+  [paragraphId: string]: ChapterComment[];
+}
+
 export type ChapterWithNovel = Chapter & {
   novel: Novel;
 }; 

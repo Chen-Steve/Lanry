@@ -1,6 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import { formatDate } from '@/lib/utils';
+import CommentPopover from '@/components/chapter/CommentPopover';
+import { useComments } from '@/hooks/useComments';
 
 interface ChapterContentProps {
   chapterNumber: number;
@@ -19,6 +22,34 @@ export default function ChapterContent({
   fontFamily,
   fontSize
 }: ChapterContentProps) {
+  const [selectedParagraphId, setSelectedParagraphId] = useState<string | null>(null);
+  const [commentPosition, setCommentPosition] = useState({ x: 0, y: 0 });
+  const { comments, addComment, isAuthenticated, isLoading } = useComments(chapterNumber);
+
+  const handleParagraphLongPress = (
+    event: React.TouchEvent<Element> | React.MouseEvent<Element>,
+    paragraphId: string
+  ) => {
+    event.preventDefault();
+    
+    // Calculate position for comment popover
+    const rect = (event.target as HTMLElement).getBoundingClientRect();
+    const clientX = 'touches' in event 
+      ? event.touches[0].clientX 
+      : (event as React.MouseEvent).clientX;
+
+    setCommentPosition({
+      x: clientX,
+      y: rect.bottom
+    });
+    
+    setSelectedParagraphId(paragraphId);
+  };
+
+  const handleCloseComment = () => {
+    setSelectedParagraphId(null);
+  };
+
   return (
     <div className="mb-6 md:mb-8">
       <div className="mb-4 flex justify-between items-center">
@@ -39,12 +70,62 @@ export default function ChapterContent({
           fontSize: `${fontSize}px`
         }}
       >
-        {content.split('\n').map((paragraph, index) => (
-          <p key={index} className="mb-4 leading-relaxed">
-            {paragraph}
-          </p>
-        ))}
+        {content.split('\n').map((paragraph, index) => {
+          const paragraphId = `p-${index}`;
+          const paragraphComments = comments[paragraphId] || [];
+          
+          return (
+            <div key={index} className="relative group">
+              <p 
+                id={paragraphId}
+                className="mb-4 leading-relaxed relative"
+                onContextMenu={(e) => handleParagraphLongPress(e, paragraphId)}
+                onTouchStart={(e) => {
+                  const timer = setTimeout(() => {
+                    handleParagraphLongPress(e, paragraphId);
+                  }, 500);
+                  
+                  const cleanup = () => {
+                    clearTimeout(timer);
+                    document.removeEventListener('touchend', cleanup);
+                  };
+                  
+                  document.addEventListener('touchend', cleanup);
+                }}
+              >
+                {paragraph}
+                {paragraphComments.length > 0 && (
+                  <span className="ml-2 text-sm text-blue-500">
+                    ({paragraphComments.length})
+                  </span>
+                )}
+              </p>
+              
+              {/* Comment indicator */}
+              <div className="absolute right-0 top-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button
+                  onClick={(e) => handleParagraphLongPress(e, paragraphId)}
+                  className="text-gray-400 hover:text-blue-500"
+                >
+                  💬
+                </button>
+              </div>
+            </div>
+          );
+        })}
       </div>
+
+      {selectedParagraphId && (
+        <CommentPopover
+          position={commentPosition}
+          paragraphId={selectedParagraphId}
+          comments={comments[selectedParagraphId] || []}
+          onClose={handleCloseComment}
+          onAddComment={(content) => addComment(selectedParagraphId, content)}
+          isAuthenticated={isAuthenticated}
+          isLoading={isLoading}
+        />
+      )}
     </div>
   );
 } 

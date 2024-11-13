@@ -66,6 +66,7 @@ model Profile {
   lastVisit          DateTime? @map("last_visit")
   bookmarks          Bookmark[]
   readingHistory     ReadingHistory[]
+  chapterComments    ChapterComment[]
 
   @@map("profiles")
 }
@@ -96,6 +97,22 @@ model ReadingHistory {
 
   @@unique([profileId, novelId])
   @@map("reading_history")
+}
+
+model ChapterComment {
+  id            String   @id @default(uuid())
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  chapterNumber Int      @map("chapter_number")
+  paragraphId   String   @map("paragraph_id")
+  content       String   @db.Text
+  profile       Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  profileId     String   @map("profile_id")
+
+  @@index([chapterNumber])
+  @@index([paragraphId])
+  @@index([profileId])
+  @@map("chapter_comments")
 }
 
 enum NovelStatus {
