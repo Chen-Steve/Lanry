@@ -185,7 +185,7 @@ export default function NovelPage({ params }: { params: { id: string } }) {
               
               {novel.chapters.length > 0 && (
                 <Link 
-                  href={`/novels/${novel.slug}/chapters/c${novel.chapters[novel.chapters.length - 1].chapter_number}`}
+                  href={`/novels/${novel.slug}/chapters/c${novel.chapters[0].chapter_number}`}
                   className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600 transition-colors w-full"
                 >
                   <Icon icon="mdi:book-open-page-variant" className="text-xl" />
@@ -231,7 +231,7 @@ export default function NovelPage({ params }: { params: { id: string } }) {
             
             {novel.chapters.length > 0 && (
               <Link 
-                href={`/novels/${novel.slug}/chapters/c${novel.chapters[novel.chapters.length - 1].chapter_number}`}
+                href={`/novels/${novel.slug}/chapters/c${novel.chapters[0].chapter_number}`}
                 className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600 transition-colors w-full"
               >
                 <Icon icon="mdi:book-open-page-variant" className="text-xl" />
@@ -267,10 +267,6 @@ export default function NovelPage({ params }: { params: { id: string } }) {
             <div>
               <span className="text-gray-600">Status:</span>
               <span className="ml-2 font-medium text-black">{novel.status}</span>
-            </div>
-            <div>
-              <span className="text-gray-600">Views:</span>
-              <span className="ml-2 font-medium text-black">{viewCount}</span>
             </div>
             <div>
               <span className="text-gray-600">Released:</span>
