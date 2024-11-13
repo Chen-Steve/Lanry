@@ -8,6 +8,7 @@ export interface Chapter {
   slug: string;
   publish_at?: string;
   novel?: Novel;
+  isUnlocked?: boolean;
 }
 
 export interface Novel {
@@ -24,6 +25,18 @@ export interface Novel {
   bookmarkCount: number;
   views: number;
   isBookmarked?: boolean;
+  chapterUnlocks?: ChapterUnlock[];
+}
+
+export interface ChapterUnlock {
+  id: string;
+  profile_id: string;
+  novel_id: string;
+  chapter_number: number;
+  cost: number;
+  created_at: string;
+  profile?: UserProfile;
+  novel?: Novel;
 }
 
 export interface Bookmark {
@@ -54,6 +67,7 @@ export interface UserProfile {
   last_visit: string | null;
   coins: number;
   transactions?: CoinTransaction[];
+  chapterUnlocks?: ChapterUnlock[];
 }
 
 export interface ChapterComment {

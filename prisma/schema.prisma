@@ -29,6 +29,7 @@ model Novel {
   chapters       Chapter[]
   bookmarks      Bookmark[]
   readingHistory ReadingHistory[]
+  chapterUnlocks ChapterUnlock[]
 
   @@index([title])
   @@index([author])
@@ -69,6 +70,7 @@ model Profile {
   chapterComments    ChapterComment[]
   coins              Int       @default(0)
   transactions       CoinTransaction[]
+  chapterUnlocks     ChapterUnlock[]
 
   @@map("profiles")
 }
@@ -130,6 +132,20 @@ model CoinTransaction {
   profile     Profile   @relation(fields: [profileId], references: [id])
 
   @@map("coin_transactions")
+}
+
+model ChapterUnlock {
+  id            String   @id @default(uuid())
+  profile_id    String
+  novel_id      String
+  chapter_number Int
+  cost         Int
+  created_at   DateTime @default(now())
+  profile      Profile  @relation(fields: [profile_id], references: [id])
+  novel        Novel    @relation(fields: [novel_id], references: [id])
+
+  @@unique([profile_id, novel_id, chapter_number])
+  @@map("chapter_unlocks")
 }
 
 enum NovelStatus {

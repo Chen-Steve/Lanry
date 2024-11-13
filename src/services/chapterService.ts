@@ -34,6 +34,22 @@ export async function getChapter(novelId: string, chapterId: string): Promise<Ch
         .single();
 
       if (error) return null;
+
+      if (chapter.publish_at && new Date(chapter.publish_at) > new Date()) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user) return null;
+
+        const { data: unlock } = await supabase
+          .from('chapter_unlocks')
+          .select('id')
+          .eq('profile_id', session.user.id)
+          .eq('novel_id', actualNovelId)
+          .eq('chapter_number', chapterNumber)
+          .single();
+
+        if (!unlock) return null; // Chapter not unlocked
+      }
+
       return chapter as ChapterWithNovel;
     }
 
@@ -46,6 +62,22 @@ export async function getChapter(novelId: string, chapterId: string): Promise<Ch
       .single();
 
     if (error) return null;
+
+    if (chapter.publish_at && new Date(chapter.publish_at) > new Date()) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return null;
+
+      const { data: unlock } = await supabase
+        .from('chapter_unlocks')
+        .select('id')
+        .eq('profile_id', session.user.id)
+        .eq('novel_id', actualNovelId)
+        .eq('chapter_number', chapter.chapter_number)
+        .single();
+
+      if (!unlock) return null; // Chapter not unlocked
+    }
+
     return chapter as ChapterWithNovel;
   } catch (error) {
     console.error('Error fetching chapter:', error);

@@ -335,7 +335,10 @@ export default function NovelPage({ params }: { params: { id: string } }) {
                     {sectionChapters.map((chapter) => (
                       <ChapterListItem
                         key={chapter.id}
-                        chapter={chapter}
+                        chapter={{
+                          ...chapter,
+                          novel_id: novel.id
+                        }}
                         novelSlug={novel.slug}
                         userProfile={userProfile}
                         isAuthenticated={isAuthenticated}
