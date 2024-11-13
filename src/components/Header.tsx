@@ -26,14 +26,17 @@ const Header = () => {
         if (!mounted) return;
 
         if (session?.user) {
-          console.log('Session found, user:', session.user.id);
+          console.log('[Refresh] Session found, user:', session.user.id);
           setIsAuthenticated(true);
-          if (!profileFetched) {
-            await fetchUserProfile(session.user.id);
-            setProfileFetched(true);
-          }
+          setTimeout(async () => {
+            if (mounted && !profileFetched) {
+              console.log('[Refresh] Fetching profile after delay');
+              await fetchUserProfile(session.user.id);
+              setProfileFetched(true);
+            }
+          }, 100);
         } else {
-          console.log('No session found');
+          console.log('[Refresh] No session found');
           setIsAuthenticated(false);
           setUsername(null);
           setProfileFetched(false);
@@ -46,19 +49,20 @@ const Header = () => {
     initAuth();
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event);
+      console.log('[Auth Event]', event);
       
       if (!mounted) return;
 
       if (session?.user) {
-        console.log('New session detected:', session.user.id);
+        console.log('[Auth Event] Session detected:', session.user.id);
         setIsAuthenticated(true);
-        if (!profileFetched || event === 'SIGNED_IN') {
+        if (event === 'SIGNED_IN') {
+          console.log('[Auth Event] New sign in, fetching profile');
           await fetchUserProfile(session.user.id);
           setProfileFetched(true);
         }
       } else {
-        console.log('Session ended');
+        console.log('[Auth Event] Session ended');
         setIsAuthenticated(false);
         setUsername(null);
         setProfileFetched(false);
@@ -69,7 +73,7 @@ const Header = () => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [profileFetched]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -87,7 +91,7 @@ const Header = () => {
   }, [isProfileDropdownOpen]);
 
   const fetchUserProfile = async (userId: string) => {
-    console.log('Fetching profile for user:', userId); // Debug log
+    console.log('[Profile] Starting fetch for user:', userId);
     
     try {
       const { data: profile, error } = await supabase
@@ -97,21 +101,21 @@ const Header = () => {
         .maybeSingle();
       
       if (error) {
-        console.error('Error fetching profile:', error);
+        console.error('[Profile] Error fetching:', error);
         setUsername('User');
         return;
       }
       
       if (!profile || !profile.username) {
-        console.log('No profile or username found, using fallback'); // Debug log
+        console.log('[Profile] No profile found, using fallback');
         setUsername('User');
         return;
       }
       
-      console.log('Profile fetched successfully:', profile.username); // Debug log
+      console.log('[Profile] Fetch successful:', profile.username);
       setUsername(profile.username);
     } catch (err) {
-      console.error('Unexpected error fetching profile:', err);
+      console.error('[Profile] Unexpected error:', err);
       setUsername('User');
     }
   };
