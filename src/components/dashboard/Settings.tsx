@@ -25,7 +25,8 @@ export default function Settings() {
     current_streak: 0,
     last_visit: null,
     created_at: '',
-    updated_at: ''
+    updated_at: '',
+    coins: 0
   });
 
   const queryClient = useQueryClient();
