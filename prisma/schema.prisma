@@ -44,12 +44,13 @@ model Chapter {
   updatedAt     DateTime  @updatedAt @map("updated_at")
   chapterNumber Int       @map("chapter_number")
   title         String
-  slug          String    @unique
+  slug          String    
   content       String    @db.Text
   publishAt     DateTime? @map("publish_at")
   novel         Novel     @relation(fields: [novelId], references: [id], onDelete: Cascade)
   novelId       String    @map("novel_id")
 
+  @@unique([novelId, slug])
   @@unique([novelId, chapterNumber])
   @@index([novelId])
   @@index([chapterNumber])
