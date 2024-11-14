@@ -31,11 +31,14 @@ model Novel {
   readingHistory ReadingHistory[]
   chapterUnlocks ChapterUnlock[]
   comments       ChapterComment[]
+  authorProfile  Profile?    @relation("NovelAuthor", fields: [authorProfileId], references: [id])
+  authorProfileId  String?     @map("author_profile_id")
 
   @@index([title])
   @@index([author])
   @@index([bookmarkCount])
   @@index([views])
+  @@index([authorProfileId])
   @@map("novels")
 }
 
@@ -67,12 +70,14 @@ model Profile {
   username           String?   @unique
   currentStreak      Int       @default(0) @map("current_streak")
   lastVisit          DateTime? @map("last_visit")
+  role               UserRole  @default(USER)
   bookmarks          Bookmark[]
   readingHistory     ReadingHistory[]
   chapterComments    ChapterComment[]
   coins              Int       @default(0)
   transactions       CoinTransaction[]
   chapterUnlocks     ChapterUnlock[]
+  authoredNovels     Novel[]   @relation("NovelAuthor")
 
   @@map("profiles")
 }
@@ -157,4 +162,11 @@ enum NovelStatus {
   ONGOING
   COMPLETED
   HIATUS
+}
+
+enum UserRole {
+  USER
+  AUTHOR
+  ADMIN
+  SUPER_ADMIN
 }
