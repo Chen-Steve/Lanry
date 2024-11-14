@@ -360,16 +360,18 @@ const Header = () => {
                 <li>
                   <Link 
                     href="/coins" 
-                    className="block px-3 py-1.5 bg-amber-100 text-amber-800 hover:bg-amber-200 transition-colors flex items-center gap-2 mx-2 rounded-md"
+                    className="block px-2 py-2 text-gray-600"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    <Icon icon="ph:coins" className="text-amber-600" />
-                    <span>Coins</span>
-                    {userProfile && (
-                      <span className="bg-amber-200 px-2 py-0.5 rounded-md text-sm">
-                        {userProfile.coins || 0}
-                      </span>
-                    )}
+                    <span className="inline-flex items-center gap-2 bg-amber-100 text-amber-800 hover:bg-amber-200 transition-colors px-3 py-1.5 rounded-md">
+                      <Icon icon="ph:coins" className="text-amber-600" />
+                      <span>Coins</span>
+                      {userProfile && (
+                        <span className="rounded-md text-sm">
+                          {userProfile.coins || 0}
+                        </span>
+                      )}
+                    </span>
                   </Link>
                 </li>
                 <li>
