@@ -63,24 +63,36 @@ export function ChapterListItem({
         .eq('id', chapter.novel_id)
         .single() as unknown as { data: NovelWithProfile, error: PostgrestError };
 
-      console.log('Novel and translator data:', novel);
-
       if (novelError || !novel?.author_profile_id) {
         console.error('Novel error:', novelError);
         throw new Error('Could not find translator information');
       }
 
-      const translatorInitialCoins = Array.isArray(novel.author_profile) 
-        ? novel.author_profile[0]?.coins || 0
-        : novel.author_profile?.coins || 0;
-
-      console.log('Translator initial coins:', translatorInitialCoins);
-
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
-      // First, update the user's coin balance
-      const { error: updateUserError } = await supabase
+      // Verify translator profile exists and get current coins
+      const { data: translatorProfile, error: verifyError } = await supabase
+        .from('profiles')
+        .select('coins')
+        .eq('id', novel.author_profile_id)
+        .single();
+
+      if (verifyError || !translatorProfile) {
+        console.error('Could not verify translator profile');
+        throw new Error('Translator profile not found');
+      }
+
+      const translatorCoinShare = 4; // Out of 5 coins
+
+      console.log('Initial translator profile:', translatorProfile);
+      console.log('Current translator coins:', translatorProfile.coins);
+      console.log('Amount to add:', translatorCoinShare);
+      console.log('New total should be:', translatorProfile.coins + translatorCoinShare);
+
+      // Start the transaction
+      // 1. Deduct coins from user
+      const { error: deductError } = await supabase
         .from('profiles')
         .update({ 
           coins: userProfile.coins - coinCost,
@@ -88,97 +100,58 @@ export function ChapterListItem({
         })
         .eq('id', user.id);
 
-      if (updateUserError) {
-        console.error('User update error:', updateUserError);
-        throw updateUserError;
+      if (deductError) {
+        console.error('Error deducting coins:', deductError);
+        throw new Error('Failed to deduct coins');
       }
 
-      console.log('Successfully deducted coins from user');
+      // Add coins to translator
+      const { data: updateResult, error: addError } = await supabase
+        .from('profiles')
+        .update({ 
+          coins: translatorProfile.coins + translatorCoinShare,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', novel.author_profile_id)
+        .eq('role', 'AUTHOR')
+        .select('coins');
 
-      // Then, update the translator's coin balance (they receive 4 coins)
-      const translatorCoinShare = 4; // Out of 5 coins
-      console.log('Attempting to update translator coins:', {
-        translator_id: novel.author_profile_id,
-        amount: translatorCoinShare
-      });
+      console.log('Update result:', updateResult);
       
-      if (typeof novel.author_profile_id !== 'string') {
-        throw new Error('Invalid translator profile ID');
+      if (addError) {
+        // Rollback the deduction if adding fails
+        await supabase
+          .from('profiles')
+          .update({ 
+            coins: userProfile.coins,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', user.id);
+        
+        console.error('Error adding coins to translator:', addError);
+        throw new Error('Failed to transfer coins');
       }
 
-      if (translatorInitialCoins === undefined) {
-        throw new Error('Could not determine translator\'s current coin balance');
+      if (!updateResult || updateResult.length === 0) {
+        console.error('Update failed - no rows updated');
+        throw new Error('Failed to update translator coins');
       }
 
-      console.log('Transaction details:', {
-        userId: user.id,
-        translatorId: novel.author_profile_id,
-        chapterNumber: chapter.chapter_number,
-        cost: coinCost,
-        translatorShare: translatorCoinShare
-      });
-
-      console.log('Current translator coins:', translatorInitialCoins);
-
-      // First verify the profile exists
-      const { data: verifyProfile, error: verifyError } = await supabase
+      // Verify the update worked
+      const { data: verifyUpdate, error: verifyUpdateError } = await supabase
         .from('profiles')
         .select('coins')
         .eq('id', novel.author_profile_id)
         .single();
-
-      if (verifyError) {
-        console.error('Error verifying translator profile:', verifyError);
-        throw new Error('Could not verify translator profile');
+      
+      if (verifyUpdateError) {
+        console.error('Verify error:', verifyUpdateError);
       }
 
-      if (!verifyProfile) {
-        console.error('Could not find translator profile');
-        throw new Error('Translator profile not found');
-      }
+      console.log('Verified translator coins after update:', verifyUpdate?.coins);
 
-      // Then do the update
-      const { data: translatorUpdate, error: translatorUpdateError } = await supabase
-        .from('profiles')
-        .update({ 
-          coins: translatorInitialCoins + translatorCoinShare 
-        })
-        .match({ id: novel.author_profile_id })
-        .select()
-        .maybeSingle();
-
-      if (translatorUpdateError) {
-        console.error('Error updating translator coins:', translatorUpdateError);
-        // Rollback user's coin deduction
-        await supabase
-          .from('profiles')
-          .update({ coins: userProfile.coins })
-          .eq('id', user.id);
-          
-        throw translatorUpdateError;
-      }
-
-      if (!translatorUpdate) {
-        console.error('Failed to update translator profile');
-        // Rollback user's coin deduction
-        await supabase
-          .from('profiles')
-          .update({ coins: userProfile.coins })
-          .eq('id', user.id);
-          
-        throw new Error('Failed to update translator profile');
-      }
-
-      console.log('Update successful:', {
-        profileId: novel.author_profile_id,
-        oldCoins: translatorInitialCoins,
-        newCoins: translatorUpdate.coins
-      });
-
-      // Generate a UUID for the chapter unlock
+      // 3. Create unlock record
       const unlockId = crypto.randomUUID();
-
-      // Create an unlock record
       const { error: unlockError } = await supabase
         .from('chapter_unlocks')
         .insert({
@@ -191,26 +164,26 @@ export function ChapterListItem({
         });
 
       if (unlockError) {
-        console.error('Unlock record error:', unlockError);
-        // Rollback both the user's and translator's coin updates if unlock creation fails
+        // Rollback both transactions if unlock fails
         await supabase
-          .rpc('increment_coins', { 
-            profile_id: user.id, 
-            amount: coinCost 
-          });
+          .from('profiles')
+          .update({ 
+            coins: userProfile.coins,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', user.id);
 
         await supabase
-          .rpc('increment_coins', { 
-            profile_id: novel.author_profile_id, 
-            amount: -translatorCoinShare 
-          });
+          .from('profiles')
+          .update({ 
+            coins: translatorProfile.coins,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', novel.author_profile_id);
           
         throw unlockError;
       }
 
-      console.log('Successfully completed unlock process');
-
-      // Show success message and redirect to chapter
       toast.success('Chapter unlocked successfully!');
       router.push(`/novels/${novelSlug}/chapters/c${chapter.chapter_number}`);
       router.refresh();
