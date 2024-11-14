@@ -102,34 +102,78 @@ export function ChapterListItem({
         amount: translatorCoinShare
       });
       
-      const translatorUpdate = await supabase.rpc('increment_coins', { 
-        profile_id: novel.author_profile_id, 
-        amount: translatorCoinShare 
+      if (typeof novel.author_profile_id !== 'string') {
+        throw new Error('Invalid translator profile ID');
+      }
+
+      if (translatorInitialCoins === undefined) {
+        throw new Error('Could not determine translator\'s current coin balance');
+      }
+
+      console.log('Transaction details:', {
+        userId: user.id,
+        translatorId: novel.author_profile_id,
+        chapterNumber: chapter.chapter_number,
+        cost: coinCost,
+        translatorShare: translatorCoinShare
       });
 
-      console.log('Translator update response:', translatorUpdate);
+      console.log('Current translator coins:', translatorInitialCoins);
 
-      // Verify the update worked by checking new balance
-      const { data: updatedTranslator } = await supabase
+      // First verify the profile exists
+      const { data: verifyProfile, error: verifyError } = await supabase
         .from('profiles')
         .select('coins')
         .eq('id', novel.author_profile_id)
         .single();
 
-      console.log('Translator final coins:', updatedTranslator?.coins);
-      console.log('Expected coins:', translatorInitialCoins + translatorCoinShare);
+      if (verifyError) {
+        console.error('Error verifying translator profile:', verifyError);
+        throw new Error('Could not verify translator profile');
+      }
 
-      if (translatorUpdate.error) {
-        console.error('Error updating translator coins:', translatorUpdate.error);
+      if (!verifyProfile) {
+        console.error('Could not find translator profile');
+        throw new Error('Translator profile not found');
+      }
+
+      // Then do the update
+      const { data: translatorUpdate, error: translatorUpdateError } = await supabase
+        .from('profiles')
+        .update({ 
+          coins: translatorInitialCoins + translatorCoinShare 
+        })
+        .match({ id: novel.author_profile_id })
+        .select()
+        .maybeSingle();
+
+      if (translatorUpdateError) {
+        console.error('Error updating translator coins:', translatorUpdateError);
         // Rollback user's coin deduction
         await supabase
-          .rpc('increment_coins', { 
-            profile_id: user.id, 
-            amount: coinCost 
-          });
+          .from('profiles')
+          .update({ coins: userProfile.coins })
+          .eq('id', user.id);
           
-        throw translatorUpdate.error;
+        throw translatorUpdateError;
       }
+
+      if (!translatorUpdate) {
+        console.error('Failed to update translator profile');
+        // Rollback user's coin deduction
+        await supabase
+          .from('profiles')
+          .update({ coins: userProfile.coins })
+          .eq('id', user.id);
+          
+        throw new Error('Failed to update translator profile');
+      }
+
+      console.log('Update successful:', {
+        profileId: novel.author_profile_id,
+        oldCoins: translatorInitialCoins,
+        newCoins: translatorUpdate.coins
+      });
 
       // Generate a UUID for the chapter unlock
       const unlockId = crypto.randomUUID();
