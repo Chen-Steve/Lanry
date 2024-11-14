@@ -52,15 +52,23 @@ export async function getChapter(novelId: string, chapterId: string): Promise<Ch
     // If user is authenticated, check for unlocks
     let isUnlocked = false;
     if (user) {
-      const { data: unlocks } = await supabase
-        .from('chapter_unlocks')
-        .select('profile_id')
-        .eq('novel_id', novel.id)
-        .eq('chapter_number', chapterNumber)
-        .eq('profile_id', user.id)
-        .single();
-      
-      isUnlocked = !!unlocks;
+      try {
+        const { data: unlocks, error: unlockError } = await supabase
+          .from('chapter_unlocks')
+          .select('profile_id')
+          .eq('novel_id', novel.id)
+          .eq('chapter_number', chapterNumber)
+          .eq('profile_id', user.id)
+          .maybeSingle();
+
+        if (!unlockError && unlocks) {
+          isUnlocked = true;
+        }
+      } catch (error) {
+        console.error('Error checking chapter unlock status:', error);
+        // Default to not unlocked if there's an error
+        isUnlocked = false;
+      }
     }
 
     const isPublished = !chapter.publish_at || new Date(chapter.publish_at) <= new Date();
