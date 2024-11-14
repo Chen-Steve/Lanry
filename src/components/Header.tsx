@@ -256,12 +256,17 @@ const Header = () => {
   };
 
   const handleForumClick = () => {
-    toast('Forum coming soon!', {
+    const toastId = toast('Forum coming soon!', {
       icon: '🚧',
       duration: 2000,
       className: 'font-medium border-2 border-black',
       position: 'top-right'
     });
+    
+    // Force dismiss after 2.5 seconds
+    setTimeout(() => {
+      toast.dismiss(toastId);
+    }, 2500);
   };
 
   return (
