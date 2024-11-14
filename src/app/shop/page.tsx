@@ -89,6 +89,15 @@ export default function ShopPage() {
     }
   };
 
+  const handlePurchaseClick = async (pkg: CoinPackage) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) {
+      toast.error('Please create an account to buy coins');
+      return;
+    }
+    setSelectedPackage(pkg);
+  };
+
   return (
     <PayPalScriptProvider options={{ 
       clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID!,
@@ -194,7 +203,7 @@ export default function ShopPage() {
               </p>
               
               <button
-                onClick={() => setSelectedPackage(pkg)}
+                onClick={() => handlePurchaseClick(pkg)}
                 className={`
                   w-full py-2 px-4 rounded-md font-medium
                   ${pkg.popular 
