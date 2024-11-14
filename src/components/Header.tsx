@@ -359,7 +359,7 @@ const Header = () => {
                 </li>
                 <li>
                   <Link 
-                    href="/coins" 
+                    href="/shop" 
                     className="block px-2 py-2 text-gray-600"
                     onClick={() => setIsMenuOpen(false)}
                   >
