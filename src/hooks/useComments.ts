@@ -19,7 +19,7 @@ interface DatabaseComment {
   };
 }
 
-export function useComments(chapterNumber: number) {
+export function useComments(novelId: string, chapterNumber: number) {
   const [comments, setComments] = useState<CommentsByParagraph>({});
   const [userId, setUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -67,14 +67,14 @@ export function useComments(chapterNumber: number) {
 
     const setupRealtimeSubscription = () => {
       channel = supabase
-        .channel(`chapter-${chapterNumber}-comments`)
+        .channel(`novel-${novelId}-chapter-${chapterNumber}-comments`)
         .on(
           'postgres_changes' as `postgres_changes`,
           {
             event: '*',
             schema: 'public',
             table: 'chapter_comments',
-            filter: `chapter_number=eq.${chapterNumber}`
+            filter: `novel_id=eq.${novelId},chapter_number=eq.${chapterNumber}`
           },
           (payload: RealtimePostgresChangesPayload<DatabaseComment>) => {
             if (payload.eventType === 'DELETE') return; // Skip delete events
@@ -108,6 +108,7 @@ export function useComments(chapterNumber: number) {
             username
           )
         `)
+        .eq('novel_id', novelId)
         .eq('chapter_number', chapterNumber)
         .order('created_at', { ascending: true });
 
@@ -136,26 +137,28 @@ export function useComments(chapterNumber: number) {
         supabase.removeChannel(channel);
       }
     };
-  }, [chapterNumber]);
+  }, [novelId, chapterNumber]);
 
   const addComment = async (paragraphId: string, content: string) => {
     if (!userId) return;
 
     try {
-      const commentId = crypto.randomUUID();
-      const now = new Date().toISOString(); // Get current timestamp
+      console.log('Adding comment with novelId:', novelId); // Debug log
+      
+      const newComment = {
+        id: crypto.randomUUID(),
+        novel_id: novelId,  // Make sure this is included
+        chapter_number: chapterNumber,
+        paragraph_id: paragraphId,
+        content: content,
+        profile_id: userId,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
 
       const { data, error } = await supabase
         .from('chapter_comments')
-        .insert([{
-          id: commentId,
-          chapter_number: chapterNumber,
-          paragraph_id: paragraphId,
-          content,
-          profile_id: userId,
-          created_at: now,
-          updated_at: now
-        }])
+        .insert(newComment)
         .select(`
           *,
           profile:profiles (
@@ -165,40 +168,31 @@ export function useComments(chapterNumber: number) {
         .single();
 
       if (error) {
-        console.error('Error adding comment:', error);
-        return;
+        console.error('Supabase error:', error);
+        console.log('Attempted to insert:', newComment); // Debug log
+        throw error;
       }
 
-      // Optimistically update local state with the new comment
-      const newComment: ChapterComment = {
-        id: commentId,  // Use the generated ID
-        content: data.content,
-        profile_id: data.profile_id,
-        created_at: data.created_at,
-        updated_at: data.updated_at,
-        chapter_number: data.chapter_number,
-        paragraph_id: data.paragraph_id,
-        profile: {
-          username: data.profile.username || 'Anonymous'
-        }
-      };
-
+      // Update local state
       setComments((prev) => ({
         ...prev,
         [paragraphId]: [
           ...(prev[paragraphId] || []),
-          newComment
+          {
+            ...data,
+            profile: {
+              username: data.profile?.username || 'Anonymous'
+            }
+          } as ChapterComment
         ]
       }));
     } catch (error) {
       console.error('Error adding comment:', error);
+      throw error;
     }
   };
 
-  return { 
-    comments, 
-    addComment,
-    isAuthenticated: !!userId,
-    isLoading 
-  };
+  const isAuthenticated = !!userId;
+
+  return { comments, addComment, isAuthenticated, isLoading };
 } 

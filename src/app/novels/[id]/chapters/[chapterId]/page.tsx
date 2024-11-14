@@ -335,6 +335,7 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
 
       {/* Replace the chapter content section with the new component */}
       <ChapterContent
+        novelId={chapter.novel.id}
         chapterNumber={chapter.chapter_number}
         title={chapter.title}
         createdAt={chapter.created_at}

@@ -7,6 +7,7 @@ import { useComments } from '@/hooks/useComments';
 import { Icon } from '@iconify/react';
 
 interface ChapterContentProps {
+  novelId: string;
   chapterNumber: number;
   title: string;
   createdAt: string;
@@ -16,6 +17,7 @@ interface ChapterContentProps {
 }
 
 export default function ChapterContent({
+  novelId,
   chapterNumber,
   title,
   createdAt,
@@ -25,7 +27,7 @@ export default function ChapterContent({
 }: ChapterContentProps) {
   const [selectedParagraphId, setSelectedParagraphId] = useState<string | null>(null);
   const [commentPosition, setCommentPosition] = useState({ x: 0, y: 0 });
-  const { comments, addComment, isAuthenticated, isLoading } = useComments(chapterNumber);
+  const { comments, addComment, isAuthenticated, isLoading } = useComments(novelId, chapterNumber);
 
   const handleParagraphLongPress = (
     event: React.TouchEvent<Element> | React.MouseEvent<Element>,
@@ -49,6 +51,10 @@ export default function ChapterContent({
 
   const handleCloseComment = () => {
     setSelectedParagraphId(null);
+  };
+
+  const handleAddComment = (paragraphId: string, content: string) => {
+    addComment(paragraphId, content);
   };
 
   return (
@@ -128,9 +134,10 @@ export default function ChapterContent({
           paragraphId={selectedParagraphId}
           comments={comments[selectedParagraphId] || []}
           onClose={handleCloseComment}
-          onAddComment={(content) => addComment(selectedParagraphId, content)}
+          onAddComment={(content) => handleAddComment(selectedParagraphId, content)}
           isAuthenticated={isAuthenticated}
           isLoading={isLoading}
+          novelId={novelId}
         />
       )}
     </div>

@@ -16,6 +16,7 @@ interface CommentPopoverProps {
   onAddComment: (content: string) => void;
   isAuthenticated: boolean;
   isLoading: boolean;
+  novelId: string;
 }
 
 export default function CommentPopover({
@@ -25,7 +26,7 @@ export default function CommentPopover({
   onClose,
   onAddComment,
   isAuthenticated,
-  isLoading
+  isLoading,
 }: CommentPopoverProps) {
   const [newComment, setNewComment] = useState('');
   const popoverRef = useRef<HTMLDivElement>(null);

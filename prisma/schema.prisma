@@ -30,6 +30,7 @@ model Novel {
   bookmarks      Bookmark[]
   readingHistory ReadingHistory[]
   chapterUnlocks ChapterUnlock[]
+  comments       ChapterComment[]
 
   @@index([title])
   @@index([author])
@@ -116,10 +117,13 @@ model ChapterComment {
   content       String   @db.Text
   profile       Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
   profileId     String   @map("profile_id")
+  novel_id      String
+  novel         Novel     @relation(fields: [novel_id], references: [id], onDelete: Cascade)
 
   @@index([chapterNumber])
   @@index([paragraphId])
   @@index([profileId])
+  @@index([novel_id])
   @@map("chapter_comments")
 }
 

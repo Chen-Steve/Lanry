@@ -74,6 +74,7 @@ export interface ChapterComment {
   id: string;
   created_at: string;
   updated_at: string;
+  novel_id: string;
   chapter_number: number;
   paragraph_id: string;
   content: string;

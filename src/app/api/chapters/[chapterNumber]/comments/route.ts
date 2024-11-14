@@ -49,19 +49,20 @@ export async function POST(
     }
 
     const chapterNumber = parseInt(params.chapterNumber);
-    const { paragraphId, content } = await request.json();
+    const { paragraphId, content, novelId } = await request.json();
 
     // Generate a UUID using globalThis.crypto
     const commentId = globalThis.crypto.randomUUID();
 
     const { data: comment, error } = await supabase
       .from('chapter_comments')
-      .insert([{  // Note: Wrap the object in an array
+      .insert([{
         id: commentId,
         chapter_number: chapterNumber,
         paragraph_id: paragraphId,
         content,
-        profile_id: session.user.id
+        profile_id: session.user.id,
+        novel_id: novelId
       }])
       .select(`
         *,
