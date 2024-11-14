@@ -121,7 +121,7 @@ export default function NovelPage({ params }: { params: { id: string } }) {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="max-w-5xl mx-auto px-4 py-8">
       <div className="flex flex-col md:flex-row gap-8">
         {/* Mobile Header Layout */}
         <div className="md:hidden flex gap-4 mb-6">

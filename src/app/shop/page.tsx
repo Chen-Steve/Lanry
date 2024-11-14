@@ -211,7 +211,7 @@ export default function ShopPage() {
 
         {/* How to Earn Section */}
         <div className="mt-16">
-          <h2 className="text-2xl font-bold mb-6">Other Ways to Earn Coins</h2>
+          <h2 className="text-2xl font-bold mb-6">Other Ways to Earn Coins (Coming Soon)</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="border border-gray-200 rounded-lg p-6">
               <Icon icon="pepicons-print:fire" className="text-3xl text-orange-500 mb-4" />
