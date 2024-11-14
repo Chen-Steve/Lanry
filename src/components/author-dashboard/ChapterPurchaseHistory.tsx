@@ -3,6 +3,19 @@ import supabase from '@/lib/supabaseClient';
 import { Icon } from '@iconify/react';
 import { formatDate } from '@/lib/utils';
 
+interface RawPurchaseRecord {
+  id: string;
+  created_at: string;
+  cost: number;
+  chapter_number: number;
+  profiles: {
+    username: string;
+  };
+  novels: {
+    title: string;
+  };
+}
+
 interface PurchaseRecord {
   id: string;
   created_at: string;
@@ -48,12 +61,10 @@ export default function ChapterPurchaseHistory() {
             created_at,
             cost,
             chapter_number,
-            profile:profiles!inner (
-              username
-            ),
-            novel:novels!inner (
-              title
-            )
+            profile_id,
+            novel_id,
+            profiles:profile_id(username),
+            novels:novel_id(title)
           `)
           .in('novel_id', novelIds)
           .order('created_at', { ascending: false });
@@ -61,16 +72,16 @@ export default function ChapterPurchaseHistory() {
         if (error) throw error;
 
         // Transform the data to match our interface
-        const transformedData = (data || []).map(item => ({
+        const transformedData = ((data as unknown) as RawPurchaseRecord[]).map(item => ({
           id: item.id,
           created_at: item.created_at,
           cost: item.cost,
           chapter_number: item.chapter_number,
           profile: {
-            username: item.profile?.[0]?.username || 'Unknown User'
+            username: item.profiles?.username || 'Unknown User'
           },
           novel: {
-            title: item.novel?.[0]?.title || 'Unknown Novel'
+            title: item.novels?.title || 'Unknown Novel'
           }
         }));
 
