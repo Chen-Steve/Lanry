@@ -26,6 +26,10 @@ export interface Novel {
   views: number;
   isBookmarked?: boolean;
   chapterUnlocks?: ChapterUnlock[];
+  translator_id?: string;
+  translator?: {
+    username: string;
+  };
 }
 
 export interface ChapterUnlock {

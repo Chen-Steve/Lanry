@@ -8,6 +8,9 @@ export async function getNovel(id: string, userId?: string): Promise<Novel | nul
       .from('novels')
       .select(`
         *,
+        translator:author_profile_id (
+          username
+        ),
         chapters (
           id,
           title,
@@ -42,6 +45,9 @@ export async function getNovel(id: string, userId?: string): Promise<Novel | nul
 
     return {
       ...data,
+      translator: data.translator ? {
+        username: data.translator.username
+      } : undefined,
       coverImageUrl: data.cover_image_url,
       bookmarkCount: data.bookmarks?.length ?? 0,
       isBookmarked: userId ? data.bookmarks?.some((b: { profile_id: string }) => b.profile_id === userId) ?? false : false,
@@ -82,8 +88,11 @@ export async function toggleBookmark(novelId: string, userId: string, isCurrentl
       const { error } = await supabase
         .from('bookmarks')
         .insert({
+          id: crypto.randomUUID(),
           profile_id: userId,
           novel_id: actualNovelId,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         });
 
       if (error) throw error;

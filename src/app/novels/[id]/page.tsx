@@ -141,7 +141,16 @@ export default function NovelPage({ params }: { params: { id: string } }) {
           </div>
           <div className="flex-1">
             <h1 className="text-xl font-bold mb-1 text-black">{novel.title}</h1>
-            <p className="text-sm text-gray-600 mb-2">by {novel.author}</p>
+            <div className="space-y-1">
+              <p className="text-lg text-gray-600">
+                Author: {novel.author}
+              </p>
+              {novel.translator && (
+                <p className="text-lg text-gray-600">
+                  Translator: {novel.translator.username}
+                </p>
+              )}
+            </div>
             <div className="flex flex-col gap-1 text-sm text-gray-600">
               <div className="flex items-center gap-1">
                 <Icon icon="mdi:book-open-page-variant" className="text-lg" />
@@ -219,7 +228,16 @@ export default function NovelPage({ params }: { params: { id: string } }) {
           <div className="hidden md:flex justify-between items-start mb-4">
             <div>
               <h1 className="text-3xl font-bold mb-2 text-black">{novel.title}</h1>
-              <p className="text-lg text-gray-600">by {novel.author}</p>
+              <div className="space-y-1">
+                <p className="text-lg text-gray-600">
+                  Author: {novel.author}
+                </p>
+                {novel.translator && (
+                  <p className="text-lg text-gray-600">
+                    Translator: {novel.translator.username}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
           

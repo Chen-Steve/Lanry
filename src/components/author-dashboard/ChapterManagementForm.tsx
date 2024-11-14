@@ -144,6 +144,7 @@ export default function ChapterManagementForm({ authorOnly = false }: ChapterMan
         const { error } = await supabase
           .from('chapters')
           .insert({
+            id: crypto.randomUUID(),
             novel_id: selectedNovel,
             chapter_number: parseInt(formData.chapterNumber),
             title: formData.title,

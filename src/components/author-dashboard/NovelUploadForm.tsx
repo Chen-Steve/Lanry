@@ -99,6 +99,7 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
         const { error } = await supabase
           .from('novels')
           .insert({
+            id: crypto.randomUUID(),
             ...formData,
             slug,
             author_profile_id: session.user.id,
