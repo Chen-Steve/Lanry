@@ -18,6 +18,7 @@ interface ChapterProgressBarProps {
   onSizeChange: (size: number) => void;
   currentFont: string;
   currentSize: number;
+  isCommentOpen: boolean;
 }
 
 export default function ChapterProgressBar({
@@ -28,7 +29,8 @@ export default function ChapterProgressBar({
   onFontChange,
   onSizeChange,
   currentFont,
-  currentSize
+  currentSize,
+  isCommentOpen,
 }: ChapterProgressBarProps) {
   const [scrollProgress, setScrollProgress] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
@@ -63,33 +65,31 @@ export default function ChapterProgressBar({
     if (!isMobile) return;
 
     const handleTouchStart = (e: TouchEvent) => {
-      // Store the initial touch position
+      if (isCommentOpen) return;
+      
       setTouchStartY(e.touches[0].clientY);
       setIsTouching(true);
     };
 
     const handleTouchEnd = (e: TouchEvent) => {
+      if (isCommentOpen) return;
+      
       if (!touchStartY) return;
 
-      // Calculate the distance moved
       const touchEndY = e.changedTouches[0].clientY;
       const touchDistance = Math.abs(touchEndY - touchStartY);
 
-      // If the touch was more of a tap (moved less than 10px) and not a scroll
       if (touchDistance < 10 && isTouching) {
-        // Ignore touch events that come from scrolling or from the progress bar itself
         if (
           !(e.target as HTMLElement).closest('[role="scrollbar"]') &&
           !(progressBarRef.current?.contains(e.target as Node))
         ) {
           if (isVisible) {
-            // If the bar is visible and we tap outside, hide it
             setIsVisible(false);
             if (hideTimeout) {
               clearTimeout(hideTimeout);
             }
           } else {
-            // Show the bar and set the timeout
             setIsVisible(true);
             const timeout = setTimeout(() => {
               setIsVisible(false);
@@ -99,7 +99,6 @@ export default function ChapterProgressBar({
         }
       }
 
-      // Reset touch tracking
       setTouchStartY(null);
       setIsTouching(false);
     };
@@ -114,7 +113,16 @@ export default function ChapterProgressBar({
         clearTimeout(hideTimeout);
       }
     };
-  }, [isMobile, hideTimeout, isVisible, touchStartY, isTouching]);
+  }, [isMobile, hideTimeout, isVisible, touchStartY, isTouching, isCommentOpen]);
+
+  useEffect(() => {
+    if (isCommentOpen && isVisible) {
+      setIsVisible(false);
+      if (hideTimeout) {
+        clearTimeout(hideTimeout);
+      }
+    }
+  }, [isCommentOpen]);
 
   if (!isMobile) return null;
 

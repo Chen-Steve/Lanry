@@ -204,6 +204,7 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
     'ui-sans-serif, system-ui, sans-serif'
   );
   const [fontSize, setFontSize] = useLocalStorage('chapter-font-size', 16);
+  const [isCommentOpen, setIsCommentOpen] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -340,7 +341,6 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
         />
       </div>
 
-      {/* Replace the chapter content section with the new component */}
       <ChapterContent
         novelId={chapter.novel.id}
         chapterNumber={chapter.chapter_number}
@@ -349,6 +349,7 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
         content={chapter.content}
         fontFamily={fontFamily}
         fontSize={fontSize}
+        onCommentStateChange={setIsCommentOpen}
       />
 
       {/* Bottom Navigation */}
@@ -375,6 +376,7 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
         currentChapter={chapter.chapter_number}
         totalChapters={totalChapters}
         navigation={navigation}
+        isCommentOpen={isCommentOpen}
       />
     </div>
   );

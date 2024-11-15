@@ -13,6 +13,7 @@ interface ChapterContentProps {
   content: string;
   fontFamily: string;
   fontSize: number;
+  onCommentStateChange: (isOpen: boolean) => void;
 }
 
 export default function ChapterContent({
@@ -22,7 +23,8 @@ export default function ChapterContent({
   createdAt,
   content,
   fontFamily,
-  fontSize
+  fontSize,
+  onCommentStateChange,
 }: ChapterContentProps) {
   const [selectedParagraphId, setSelectedParagraphId] = useState<string | null>(null);
   const [commentPosition, setCommentPosition] = useState({ x: 0, y: 0 });
@@ -30,6 +32,7 @@ export default function ChapterContent({
 
   const handleCloseComment = () => {
     setSelectedParagraphId(null);
+    onCommentStateChange(false);
   };
 
   const handleAddComment = async (paragraphId: string, content: string) => {
@@ -43,7 +46,6 @@ export default function ChapterContent({
   ) => {
     event.preventDefault();
     
-    // Calculate position for comment popover
     const rect = (event.target as HTMLElement).getBoundingClientRect();
     const clientX = 'touches' in event 
       ? event.touches[0].clientX 
@@ -55,6 +57,7 @@ export default function ChapterContent({
     });
     
     setSelectedParagraphId(paragraphId);
+    onCommentStateChange(true);
   };
 
   return (
