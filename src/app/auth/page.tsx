@@ -156,20 +156,19 @@ export default function AuthPage() {
 
   const handleDiscordSignIn = async () => {
     try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: 'discord',
         options: {
+          skipBrowserRedirect: false,
           redirectTo: `${window.location.origin}/auth/callback`,
           scopes: 'identify email guilds',
           queryParams: {
-            prompt: 'consent',
-            // Add additional Discord-specific scopes if needed
+            prompt: 'consent'
           }
         }
       });
 
       if (error) throw error;
-      if (data?.url) window.location.href = data.url;
       
     } catch (error) {
       console.error('Discord auth error:', error);
