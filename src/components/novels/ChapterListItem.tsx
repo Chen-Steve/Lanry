@@ -124,10 +124,10 @@ export function ChapterListItem({
       // Calculate 90% of the chapter coins
       const translatorCoinShare = Math.floor(chapter.coins * 0.9);
 
-      console.log('Initial translator profile:', translatorProfile);
-      console.log('Current translator coins:', translatorProfile.coins);
-      console.log('Amount to add:', translatorCoinShare);
-      console.log('New total should be:', translatorProfile.coins + translatorCoinShare);
+      // console.log('Initial translator profile:', translatorProfile);
+      // console.log('Current translator coins:', translatorProfile.coins);
+      // console.log('Amount to add:', translatorCoinShare);
+      // console.log('New total should be:', translatorProfile.coins + translatorCoinShare);
 
       // Start the transaction
       // 1. Deduct coins from user
@@ -177,17 +177,17 @@ export function ChapterListItem({
       }
 
       // Verify the update worked
-      const { data: verifyUpdate, error: verifyUpdateError } = await supabase
-        .from('profiles')
-        .select('coins')
-        .eq('id', novel.author_profile_id)
-        .single();
+      // const { data: verifyUpdate, error: verifyUpdateError } = await supabase
+      //   .from('profiles')
+      //   .select('coins')
+      //   .eq('id', novel.author_profile_id)
+      //   .single();
       
-      if (verifyUpdateError) {
-        console.error('Verify error:', verifyUpdateError);
-      }
+      // if (verifyUpdateError) {
+      //   console.error('Verify error:', verifyUpdateError);
+      // }
 
-      console.log('Verified translator coins after update:', verifyUpdate?.coins);
+      // console.log('Verified translator coins after update:', verifyUpdate?.coins);
 
       // 3. Create unlock record
       const unlockId = crypto.randomUUID();
