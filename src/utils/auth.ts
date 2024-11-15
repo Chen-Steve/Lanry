@@ -17,68 +17,42 @@ export async function handleDiscordSignup(user: User) {
       throw fetchError;
     }
 
-    // If profile exists, just return
+    // If profile exists, just update last visit
     if (existingProfile) {
-      // Update last visit
-      await supabase
+      const { error: updateError } = await supabase
         .from('profiles')
-        .update({ last_visit: new Date().toISOString() })
+        .update({ 
+          last_visit: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
         .eq('id', user.id);
+
+      if (updateError) throw updateError;
       return;
     }
 
-    // Get username from Discord metadata or generate one
-    const discordUsername = user.user_metadata?.full_name || 
-                          user.user_metadata?.name ||
-                          generateUsername();
-
-    const now = new Date().toISOString();
+    // Generate username for new profile
+    const generatedUsername = generateUsername();
     
-    // Create new profile with retry logic
-    let retryCount = 0;
-    const maxRetries = 3;
-
-    while (retryCount < maxRetries) {
-      try {
-        const { error: insertError } = await supabase
-          .from('profiles')
-          .insert([
-            {
-              id: user.id,
-              username: discordUsername,
-              created_at: now,
-              updated_at: now,
-              last_visit: now,
-              role: 'USER',
-              current_streak: 0,
-              coins: 0
-            }
-          ]);
-
-        if (!insertError) {
-          break; // Success, exit loop
+    // Create profile (matching the regular signup process)
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .insert([
+        {
+          id: user.id,
+          username: generatedUsername,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         }
+      ]);
 
-        // If username conflict, generate a new one and retry
-        if (insertError.code === '23505') { // Unique constraint violation
-          retryCount++;
-          continue;
-        }
-
-        throw insertError; // Other errors
-      } catch (error) {
-        console.error('Profile creation attempt failed:', error);
-        retryCount++;
-        if (retryCount === maxRetries) {
-          throw new Error('Failed to create user profile after multiple attempts');
-        }
-        // Wait briefly before retrying
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      }
+    if (profileError) {
+      console.error('Profile creation error:', profileError);
+      throw new Error('Failed to create user profile');
     }
 
   } catch (error) {
-    console.error('Discord signup error:', error);
+    console.error('Error in handleDiscordSignup:', error);
     throw error;
   }
 } 
