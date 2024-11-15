@@ -17,13 +17,15 @@ export async function handleDiscordSignup(user: User) {
       throw fetchError;
     }
 
+    const now = new Date().toISOString();
+
     // If profile exists, just update last visit
     if (existingProfile) {
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ 
-          last_visit: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          last_visit: now,
+          updated_at: now
         })
         .eq('id', user.id);
 
@@ -34,15 +36,18 @@ export async function handleDiscordSignup(user: User) {
     // Generate username for new profile
     const generatedUsername = generateUsername();
     
-    // Create profile (matching the regular signup process)
+    // Create profile with all fields that are being queried
     const { error: profileError } = await supabase
       .from('profiles')
       .insert([
         {
           id: user.id,
           username: generatedUsername,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          current_streak: 0,
+          last_visit: now,
+          coins: 0,
+          created_at: now,
+          updated_at: now
         }
       ]);
 
