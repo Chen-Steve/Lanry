@@ -11,12 +11,21 @@ export async function handleDiscordSignup(user: User) {
       .eq('id', user.id)
       .single();
 
-    if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 is "not found" error
+    // If there's an error other than "not found", throw it
+    if (fetchError && fetchError.code !== 'PGRST116') {
       console.error('Error fetching profile:', fetchError);
       throw fetchError;
     }
 
-    if (existingProfile) return;
+    // If profile exists, just return
+    if (existingProfile) {
+      // Update last visit
+      await supabase
+        .from('profiles')
+        .update({ last_visit: new Date().toISOString() })
+        .eq('id', user.id);
+      return;
+    }
 
     // Get username from Discord metadata or generate one
     const discordUsername = user.user_metadata?.full_name || 
@@ -25,36 +34,47 @@ export async function handleDiscordSignup(user: User) {
 
     const now = new Date().toISOString();
     
-    // Create new profile
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .insert([
-        {
-          id: user.id,
-          username: discordUsername,
-          created_at: now,
-          updated_at: now,
-          last_visit: now,
-          role: 'USER',
-          current_streak: 0,
-          coins: 0
+    // Create new profile with retry logic
+    let retryCount = 0;
+    const maxRetries = 3;
+
+    while (retryCount < maxRetries) {
+      try {
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert([
+            {
+              id: user.id,
+              username: discordUsername,
+              created_at: now,
+              updated_at: now,
+              last_visit: now,
+              role: 'USER',
+              current_streak: 0,
+              coins: 0
+            }
+          ]);
+
+        if (!insertError) {
+          break; // Success, exit loop
         }
-      ]);
 
-    if (profileError) {
-      console.error('Profile creation error:', profileError);
-      throw new Error('Failed to create user profile');
-    }
+        // If username conflict, generate a new one and retry
+        if (insertError.code === '23505') { // Unique constraint violation
+          retryCount++;
+          continue;
+        }
 
-    // Update last visit
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({ last_visit: now })
-      .eq('id', user.id);
-
-    if (updateError) {
-      console.error('Error updating last visit:', updateError);
-      // Non-critical error, don't throw
+        throw insertError; // Other errors
+      } catch (error) {
+        console.error('Profile creation attempt failed:', error);
+        retryCount++;
+        if (retryCount === maxRetries) {
+          throw new Error('Failed to create user profile after multiple attempts');
+        }
+        // Wait briefly before retrying
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
     }
 
   } catch (error) {
