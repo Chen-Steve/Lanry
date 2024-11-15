@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
 import { useSession } from 'next-auth/react';
@@ -9,7 +9,6 @@ import type { Novel } from '@/types/database';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
 import { signOut } from 'next-auth/react';
-import debounce from 'lodash/debounce';
 
 const Header = () => {
   const { data: session, status } = useSession();
@@ -17,23 +16,7 @@ const Header = () => {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
-  const [lastUpdate, setLastUpdate] = useState<number>(0);
-
-  // Query for user profile including streak data
-  const { data: userProfile } = useQuery({
-    queryKey: ['profile', session?.user?.id],
-    queryFn: async () => {
-      if (!session?.user?.id) return null;
-      
-      const response = await fetch(`/api/profile/${session.user.id}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch profile');
-      }
-      return response.json();
-    },
-    enabled: !!session?.user?.id,
-    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
-  });
+  const hasUpdatedStreak = useRef(false);
 
   // Mutation for updating streak
   const updateStreakMutation = useMutation({
@@ -58,41 +41,29 @@ const Header = () => {
     }
   });
 
-  // Debounce the streak update function
-  const updateStreak = useCallback(
-    debounce(async (userId: string) => {
-      try {
-        // Check if enough time has passed since last update (e.g., 5 seconds)
-        const now = Date.now();
-        if (now - lastUpdate < 5000) {
-          return; // Skip if too soon
-        }
-
-        const response = await fetch(`/api/profile/${userId}/streak`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to update streak');
-        }
-
-        setLastUpdate(now);
-      } catch (error) {
-        console.error('Error updating streak:', error);
-      }
-    }, 1000), // 1 second delay
-    [lastUpdate]
-  );
-
-  // Use the debounced function in your component
+  // Update useEffect to only run once per session
   useEffect(() => {
-    if (session?.user?.id) {
-      updateStreak(session.user.id);
+    if (session?.user?.id && !hasUpdatedStreak.current) {
+      hasUpdatedStreak.current = true;
+      updateStreakMutation.mutate();
     }
-  }, [session?.user?.id, updateStreak]);
+  }, [session?.user?.id, updateStreakMutation]);
+
+  // Query for user profile including streak data
+  const { data: userProfile } = useQuery({
+    queryKey: ['profile', session?.user?.id],
+    queryFn: async () => {
+      if (!session?.user?.id) return null;
+      
+      const response = await fetch(`/api/profile/${session.user.id}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch profile');
+      }
+      return response.json();
+    },
+    enabled: !!session?.user?.id,
+    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
+  });
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
