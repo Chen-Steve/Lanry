@@ -27,6 +27,14 @@ interface Chapter {
   updated_at: string;
 }
 
+const isAdvancedChapter = (chapter: Chapter): boolean => {
+  const now = new Date();
+  const publishDate = chapter.publish_at ? new Date(chapter.publish_at) : null;
+  
+  return (publishDate !== null && publishDate > now) && 
+         (chapter.coins !== undefined && chapter.coins > 0);
+};
+
 export default function ChapterManagementForm({ authorOnly = false }: ChapterManagementFormProps) {
   const [novels, setNovels] = useState<Novel[]>([]);
   const [selectedNovel, setSelectedNovel] = useState<string>('');
@@ -230,10 +238,15 @@ export default function ChapterManagementForm({ authorOnly = false }: ChapterMan
                 <div
                   key={chapter.id}
                   onClick={() => handleChapterClick(chapter)}
-                  className={`p-4 border rounded cursor-pointer ${
+                  className={`p-4 border rounded cursor-pointer relative ${
                     editingChapter?.id === chapter.id ? 'ring-2 ring-blue-500 bg-blue-50' : 'hover:bg-gray-50'
                   }`}
                 >
+                  {isAdvancedChapter(chapter) && (
+                    <span className="absolute top-2 right-2 text-xs font-semibold px-2 py-1 bg-purple-100 text-purple-700 rounded">
+                      Advanced
+                    </span>
+                  )}
                   <h4 className="font-medium">
                     Chapter {chapter.chapter_number}
                     {chapter.title && `: ${chapter.title}`}
@@ -293,7 +306,14 @@ export default function ChapterManagementForm({ authorOnly = false }: ChapterMan
                     type="datetime-local"
                     placeholder="Schedule Publication (Optional)"
                     value={formData.publishAt}
-                    onChange={(e) => setFormData({ ...formData, publishAt: e.target.value })}
+                    onChange={(e) => {
+                      const newPublishAt = e.target.value;
+                      setFormData({ 
+                        ...formData, 
+                        publishAt: newPublishAt,
+                        coins: newPublishAt ? formData.coins : '0'
+                      });
+                    }}
                     className="w-full p-3 border rounded-lg"
                   />
                 </div>
@@ -303,6 +323,7 @@ export default function ChapterManagementForm({ authorOnly = false }: ChapterMan
                     min="1"
                     placeholder="Set Cost"
                     value={formData.coins}
+                    disabled={!formData.publishAt}
                     onKeyDown={(e) => {
                       if (e.key === 'e' || e.key === 'E' || e.key === '+' || e.key === '-') {
                         e.preventDefault();
@@ -313,11 +334,13 @@ export default function ChapterManagementForm({ authorOnly = false }: ChapterMan
                       setFormData({ ...formData, coins: value });
                     }}
                     onBlur={(e) => {
-                      const value = parseInt(e.target.value) || 1;
-                      setFormData({ ...formData, coins: Math.max(1, value).toString() });
+                      if (formData.publishAt) {
+                        const value = parseInt(e.target.value) || 1;
+                        setFormData({ ...formData, coins: Math.max(1, value).toString() });
+                      }
                     }}
-                    className="w-full p-3 border rounded-lg"
-                    title="Set coins required to access this chapter"
+                    className="w-full p-3 border rounded-lg disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    title={formData.publishAt ? "Set coins required to access this chapter" : "Set publish date first to enable paid chapter"}
                   />
                 </div>
               </div>

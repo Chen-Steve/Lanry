@@ -147,7 +147,7 @@ export default function ChapterPurchaseHistory() {
                     Chapter
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Cost
+                    Earnings
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Date
@@ -167,7 +167,7 @@ export default function ChapterPurchaseHistory() {
                       Chapter {purchase.chapter_number}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {purchase.cost} coins
+                      {Math.floor(purchase.cost * 0.9)} coins
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {formatDate(purchase.created_at)}
