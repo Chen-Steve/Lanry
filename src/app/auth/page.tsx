@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import supabase from '@/lib/supabaseClient';
 import { Icon } from '@iconify/react';
 import { generateUsername } from '@/utils/username';
-import { signIn, useSession } from 'next-auth/react';
+import { signIn } from 'next-auth/react';
 
 type AuthMode = 'signin' | 'signup';
 type PasswordStrength = 'weak' | 'medium' | 'strong';
@@ -67,7 +67,6 @@ const PasswordStrengthIndicator = ({ password }: { password: string }) => {
 };
 
 export default function AuthPage() {
-  const { data: session } = useSession();
   const [mode, setMode] = useState<AuthMode>('signin');
   const [credentials, setCredentials] = useState({ 
     email: '', 
@@ -80,10 +79,26 @@ export default function AuthPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (session) {
-      router.push('/');
-    }
-  }, [session, router]);
+    const checkExistingSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        router.push('/');
+      }
+    };
+
+    checkExistingSession();
+
+    // Subscribe to auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        router.push('/');
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [router]);
 
   useEffect(() => {
     // Get error from URL if present
@@ -114,51 +129,34 @@ export default function AuthPage() {
 
     try {
       if (mode === 'signup') {
-        // First attempt signup
         const { data, error: signUpError } = await supabase.auth.signUp({
           email: credentials.email,
           password: credentials.password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/auth/callback`,
+            data: {
+              username: generateUsername(),
+            }
+          }
         });
 
-        if (signUpError) {
-          console.error('Signup error:', signUpError);
-          throw new Error(signUpError.message);
-        }
+        if (signUpError) throw signUpError;
         
-        // If signup successful and we have a user
         if (data.user) {
           const generatedUsername = generateUsername();
           
-          // Create profile
           const { error: profileError } = await supabase
             .from('profiles')
-            .insert([
-              {
-                id: data.user.id,
-                username: generatedUsername,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-              }
-            ]);
+            .insert([{
+              id: data.user.id,
+              username: generatedUsername,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            }]);
 
-          if (profileError) {
-            console.error('Profile creation error:', profileError);
-            throw new Error('Failed to create user profile');
-          }
+          if (profileError) throw profileError;
 
-          // Auto sign-in
-          const { error: signInError } = await supabase.auth.signInWithPassword({
-            email: credentials.email,
-            password: credentials.password,
-          });
-
-          if (signInError) {
-            console.error('Auto sign-in error:', signInError);
-            throw new Error('Account created but failed to sign in automatically');
-          }
-
-          router.push('/');
-          router.refresh();
+          // Auto sign-in will be handled by the auth state change listener
         }
       } else {
         const { error } = await supabase.auth.signInWithPassword({
@@ -167,8 +165,7 @@ export default function AuthPage() {
         });
 
         if (error) throw error;
-        router.push('/');
-        router.refresh();
+        // Redirect will be handled by the auth state change listener
       }
     } catch (error) {
       console.error('Auth error:', error);

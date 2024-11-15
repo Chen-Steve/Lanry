@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { Icon } from '@iconify/react';
 import { useSession } from 'next-auth/react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { useRouter } from 'next/navigation';
 import SearchSection from './SearchSection';
 import type { Novel } from '@/types/database';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -15,7 +14,6 @@ import { User } from '@supabase/supabase-js';
 
 const Header = () => {
   const supabase = createClientComponentClient();
-  const router = useRouter();
   const { data: session, status } = useSession();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
@@ -111,9 +109,14 @@ const Header = () => {
   // Modify handleSignOut to handle both auth systems
   const handleSignOut = async () => {
     try {
-      // Sign out from NextAuth
+      // Clear React Query cache first
+      queryClient.clear();
+
+      // Sign out from NextAuth with no automatic redirect
       if (session) {
-        await signOut({ callbackUrl: '/' });
+        await signOut({ 
+          redirect: false 
+        });
       }
       
       // Sign out from Supabase
@@ -121,12 +124,16 @@ const Header = () => {
         await supabase.auth.signOut();
       }
 
-      queryClient.clear();
-      router.push('/');
+      // Clear any stored tokens/data from localStorage
+      localStorage.clear();
+      sessionStorage.clear();
+      
+      // Force redirect to auth page after sign out
+      window.location.href = '/auth';
     } catch (err) {
       console.error('Unexpected error during sign out:', err);
-      queryClient.clear();
-      window.location.href = '/';
+      // Force redirect even on error
+      window.location.href = '/auth';
     }
   };
 
