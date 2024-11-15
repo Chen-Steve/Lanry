@@ -8,14 +8,17 @@ export async function GET(request: Request) {
   try {
     const requestUrl = new URL(request.url);
     const code = requestUrl.searchParams.get('code');
+    const next = requestUrl.searchParams.get('next') ?? '/';
 
     if (!code) {
       throw new Error('No code provided');
     }
 
     const cookieStore = cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
-    
+    const supabase = createRouteHandlerClient({ 
+      cookies: () => cookieStore,
+    });
+
     // Exchange the auth code for a session
     const { data: { session }, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
     
@@ -46,8 +49,10 @@ export async function GET(request: Request) {
         .insert({
           id: session.user.id,
           username: discordUsername,
+          avatar_url: session.user.user_metadata?.avatar_url,
+          discord_id: session.user.user_metadata?.provider_id,
           role: 'USER',
-          current_streak: 1,
+          current_streak: 0,
           coins: 0,
           last_visit: new Date().toISOString(),
           created_at: new Date().toISOString(),
@@ -57,12 +62,20 @@ export async function GET(request: Request) {
       if (insertError) throw insertError;
     }
 
-    // Successful authentication, redirect to home page
-    return NextResponse.redirect(new URL('/', requestUrl.origin));
+    // Handle redirect based on environment
+    const forwardedHost = request.headers.get('x-forwarded-host');
+    const isLocalEnv = process.env.NODE_ENV === 'development';
+    
+    if (isLocalEnv) {
+      return NextResponse.redirect(`${requestUrl.origin}${next}`);
+    } else if (forwardedHost) {
+      return NextResponse.redirect(`https://${forwardedHost}${next}`);
+    } else {
+      return NextResponse.redirect(`${requestUrl.origin}${next}`);
+    }
 
   } catch (error) {
     console.error('Auth callback error:', error);
-    // Redirect to auth page with error message
     return NextResponse.redirect(
       new URL(
         `/auth?error=${encodeURIComponent(error instanceof Error ? error.message : 'Authentication failed')}`,

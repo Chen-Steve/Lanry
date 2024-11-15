@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import supabase from '@/lib/supabaseClient';
 import { Icon } from '@iconify/react';
 import { generateUsername } from '@/utils/username';
+import { generateCodeVerifier, generateCodeChallenge } from '@/utils/pkce';
 
 type AuthMode = 'signin' | 'signup';
 type PasswordStrength = 'weak' | 'medium' | 'strong';
@@ -156,19 +157,26 @@ export default function AuthPage() {
 
   const handleDiscordSignIn = async () => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      // Generate PKCE values
+      const codeVerifier = generateCodeVerifier();
+      const codeChallenge = await generateCodeChallenge(codeVerifier);
+
+      // Store code verifier in session storage
+      sessionStorage.setItem('discord_code_verifier', codeVerifier);
+
+      await supabase.auth.signInWithOAuth({
         provider: 'discord',
         options: {
           skipBrowserRedirect: false,
           redirectTo: `${window.location.origin}/auth/callback`,
           scopes: 'identify email guilds',
           queryParams: {
-            prompt: 'consent'
+            prompt: 'consent',
+            code_challenge: codeChallenge,
+            code_challenge_method: 'S256'
           }
         }
       });
-
-      if (error) throw error;
       
     } catch (error) {
       console.error('Discord auth error:', error);
