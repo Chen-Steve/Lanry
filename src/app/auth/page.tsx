@@ -163,7 +163,8 @@ export default function AuthPage() {
           scopes: 'identify email guilds',
           queryParams: {
             prompt: 'consent'
-          }
+          },
+          skipBrowserRedirect: true
         }
       });
 
@@ -172,7 +173,7 @@ export default function AuthPage() {
         throw error;
       }
 
-      // If we have data but no error, redirect to the callback URL
+      // Manually redirect to the authorization URL
       if (data?.url) {
         window.location.href = data.url;
       }
