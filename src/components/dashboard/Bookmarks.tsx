@@ -20,6 +20,10 @@ interface Bookmark {
   novel: Novel;
 }
 
+interface BookmarksProps {
+  userId: string | undefined;
+}
+
 // Separate data fetching logic
 const fetchBookmarks = async () => {
   const { data: { session } } = await supabase.auth.getSession();
@@ -95,7 +99,7 @@ const BookmarksSkeleton = () => (
   </div>
 );
 
-export default function Bookmarks() {
+const Bookmarks = ({ userId }: BookmarksProps) => {
   const queryClient = useQueryClient();
 
   // Add auth state listener
@@ -186,4 +190,6 @@ export default function Bookmarks() {
       )}
     </div>
   );
-} 
+};
+
+export default Bookmarks; 

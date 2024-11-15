@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import supabase from '@/lib/supabaseClient';
 import { Icon } from '@iconify/react';
 import { generateUsername } from '@/utils/username';
-import { handleDiscordSignup } from '@/utils/auth';
+import { signIn, useSession } from 'next-auth/react';
 
 type AuthMode = 'signin' | 'signup';
 type PasswordStrength = 'weak' | 'medium' | 'strong';
@@ -67,6 +67,7 @@ const PasswordStrengthIndicator = ({ password }: { password: string }) => {
 };
 
 export default function AuthPage() {
+  const { data: session } = useSession();
   const [mode, setMode] = useState<AuthMode>('signin');
   const [credentials, setCredentials] = useState({ 
     email: '', 
@@ -79,25 +80,26 @@ export default function AuthPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session?.user) {
-        try {
-          if (session.user.app_metadata.provider === 'discord') {
-            await handleDiscordSignup(session.user);
-          }
-          router.push('/');
-          router.refresh();
-        } catch (error) {
-          console.error('Error handling auth:', error);
-          setError(error instanceof Error ? error.message : 'Authentication failed');
-        }
-      }
-    });
+    if (session) {
+      router.push('/');
+    }
+  }, [session, router]);
 
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [router]);
+  useEffect(() => {
+    // Get error from URL if present
+    const urlParams = new URLSearchParams(window.location.search);
+    const errorMessage = urlParams.get('error');
+    
+    if (errorMessage) {
+      switch (errorMessage) {
+        case 'AccessDenied':
+          setError('Failed to sign in with Discord. Please try again.');
+          break;
+        default:
+          setError(`Authentication error: ${errorMessage}`);
+      }
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -178,17 +180,10 @@ export default function AuthPage() {
 
   const handleDiscordSignIn = async () => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'discord',
-        options: {
-          redirectTo: `${window.location.origin}`,
-          queryParams: {
-            prompt: 'consent'
-          }
-        }
+      await signIn('discord', { 
+        callbackUrl: '/',
+        redirect: true 
       });
-
-      if (error) throw error;
     } catch (error) {
       console.error('Discord auth error:', error);
       setError(error instanceof Error ? error.message : 'Authentication failed');

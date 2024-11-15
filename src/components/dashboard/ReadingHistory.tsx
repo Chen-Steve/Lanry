@@ -28,7 +28,11 @@ const fetchReadingHistory = async () => {
   return data || [];
 };
 
-export default function ReadingHistorySection() {
+interface ReadingHistorySectionProps {
+  userId: string | undefined;
+}
+
+const ReadingHistorySection = ({ userId }: ReadingHistorySectionProps) => {
   // Use React Query for data fetching
   const { data: history, isLoading, error } = useQuery<ReadingHistory[]>({
     queryKey: ['readingHistory'],
@@ -94,4 +98,6 @@ export default function ReadingHistorySection() {
       )}
     </div>
   );
-} 
+};
+
+export default ReadingHistorySection; 

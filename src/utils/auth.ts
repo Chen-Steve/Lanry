@@ -1,43 +1,47 @@
-import { User } from '@supabase/supabase-js';
+import type { User as NextAuthUser } from 'next-auth';
 import { generateUsername } from './username';
-import supabase from '@/lib/supabaseClient';
+import { prisma } from '@/lib/prisma';
 
-export async function handleDiscordSignup(user: User) {
-  console.log('Discord signup user data:', {
-    supabaseId: user.id,
-    email: user.email,
-    discordData: user.user_metadata
-  });
-
+export async function handleDiscordSignup(user: NextAuthUser) {
   if (!user.id) {
-    throw new Error('No Supabase user ID provided');
+    console.error('[Server] No user ID provided');
+    throw new Error('No user ID provided');
   }
 
   try {
-    const { data: newProfile, error: profileError } = await supabase
-      .from('profiles')
-      .insert([
-        {
-          id: user.id,
-          username: generateUsername(),
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        }
-      ])
-      .select()
-      .single();
+    // Check if profile already exists
+    const existingProfile = await prisma.profile.findUnique({
+      where: { id: user.id }
+    });
 
-    if (profileError) {
-      console.error('Profile creation error:', {
-        error: profileError,
-        userId: user.id
-      });
-      throw profileError;
+    if (existingProfile) {
+      console.log('[Server] Profile already exists:', user.id);
+      return existingProfile;
     }
 
+    console.log('[Server] Attempting to create profile for:', {
+      id: user.id,
+      name: user.name,
+      email: user.email
+    });
+
+    // Create new profile using Discord username
+    const newProfile = await prisma.profile.create({
+      data: {
+        id: user.id,
+        username: user.name || generateUsername(), // Use Discord username or generate one
+        currentStreak: 0,
+        role: 'USER',
+        coins: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
+    });
+
+    console.log('[Server] Created new profile:', newProfile);
     return newProfile;
   } catch (error) {
-    console.error('Failed to create profile:', error);
+    console.error('[Server] Profile creation failed:', error);
     throw error;
   }
 } 

@@ -1,145 +1,98 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
-import supabase from '@/lib/supabaseClient';
+import { useSession } from 'next-auth/react';
 import SearchSection from './SearchSection';
 import type { Novel } from '@/types/database';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
-
-interface UserProfile {
-  username: string;
-  current_streak: number;
-  last_visit: string | null;
-  coins: number;
-}
+import { signOut } from 'next-auth/react';
+import debounce from 'lodash/debounce';
 
 const Header = () => {
+  const { data: session, status } = useSession();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
+  const [lastUpdate, setLastUpdate] = useState<number>(0);
 
   // Query for user profile including streak data
-  const { data: userProfile } = useQuery<UserProfile | null>({
-    queryKey: ['profile', userId],
+  const { data: userProfile } = useQuery({
+    queryKey: ['profile', session?.user?.id],
     queryFn: async () => {
-      if (!userId) return null;
+      if (!session?.user?.id) return null;
       
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('username, current_streak, last_visit, coins')
-        .eq('id', userId)
-        .single();
-      
-      if (error) throw error;
-      return data;
+      const response = await fetch(`/api/profile/${session.user.id}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch profile');
+      }
+      return response.json();
     },
-    enabled: !!userId,
+    enabled: !!session?.user?.id,
     staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
   });
 
   // Mutation for updating streak
   const updateStreakMutation = useMutation({
     mutationFn: async () => {
-      if (!userId) throw new Error('No user ID');
+      if (!session?.user?.id) throw new Error('No user ID');
 
-      const today = new Date();
-      const lastVisit = userProfile?.last_visit ? new Date(userProfile.last_visit) : null;
+      const response = await fetch(`/api/profile/${session.user.id}/streak`, {
+        method: 'POST'
+      });
       
-      let newStreak = 1; // Default for first visit or broken streak
-      
-      if (lastVisit) {
-        // Reset hours/minutes/seconds to compare calendar days only
-        const lastVisitDay = new Date(lastVisit.getFullYear(), lastVisit.getMonth(), lastVisit.getDate());
-        const todayDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-        
-        const diffTime = todayDay.getTime() - lastVisitDay.getTime();
-        const diffDays = diffTime / (1000 * 60 * 60 * 24);
-        
-        if (diffDays === 0) {
-          return null; // Same calendar day, no update needed
-        } else if (diffDays === 1) {
-          // Consecutive calendar day
-          newStreak = (userProfile?.current_streak || 0) + 1;
-        }
-        // If diffDays > 1, streak resets to 1 (unchanged)
+      if (!response.ok) {
+        throw new Error('Failed to update streak');
       }
-
-      const { data, error } = await supabase
-        .from('profiles')
-        .update({
-          current_streak: newStreak,
-          last_visit: today.toISOString(),
-          updated_at: today.toISOString()
-        })
-        .eq('id', userId)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
+      
+      return response.json();
     },
     onSuccess: (data) => {
-      if (data) {
-        queryClient.setQueryData(['profile', userId], data);
-      }
+      queryClient.setQueryData(['profile', session?.user?.id], data);
     },
     onError: (error) => {
       console.error('Error updating streak:', error);
     }
   });
 
-  // Update streak when component mounts and user is authenticated
-  useEffect(() => {
-    if (userId && userProfile) {
-      updateStreakMutation.mutate();
-    }
-  }, [userId, userProfile, updateStreakMutation]);
-
-  useEffect(() => {
-    let mounted = true;
-
-    const initAuth = async () => {
+  // Debounce the streak update function
+  const updateStreak = useCallback(
+    debounce(async (userId: string) => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (mounted && session?.user) {
-          setIsAuthenticated(true);
-          setUserId(session.user.id);
+        // Check if enough time has passed since last update (e.g., 5 seconds)
+        const now = Date.now();
+        if (now - lastUpdate < 5000) {
+          return; // Skip if too soon
         }
+
+        const response = await fetch(`/api/profile/${userId}/streak`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to update streak');
+        }
+
+        setLastUpdate(now);
       } catch (error) {
-        console.error('[Init] Error:', error);
-      } finally {
-        if (mounted) setIsLoading(false);
+        console.error('Error updating streak:', error);
       }
-    };
+    }, 1000), // 1 second delay
+    [lastUpdate]
+  );
 
-    initAuth();
-    
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!mounted) return;
-
-      if (event === 'SIGNED_OUT') {
-        setUserId(null);
-        setIsAuthenticated(false);
-      } else if (session?.user) {
-        setIsAuthenticated(true);
-        setUserId(session.user.id);
-      }
-      setIsLoading(false);
-    });
-
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, []);
+  // Use the debounced function in your component
+  useEffect(() => {
+    if (session?.user?.id) {
+      updateStreak(session.user.id);
+    }
+  }, [session?.user?.id, updateStreak]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -157,52 +110,18 @@ const Header = () => {
   }, [isProfileDropdownOpen]);
 
   const handleSignOut = async () => {
-    console.log('Sign out initiated');
     try {
-      // First, clear any stored session data
-      if (typeof window !== 'undefined') {
-        // Clear ALL Supabase-related items from localStorage
-        Object.keys(localStorage).forEach(key => {
-          if (key.startsWith('sb-')) {
-            localStorage.removeItem(key);
-          }
-        });
-      }
-
-      // Sign out from Supabase
-      await supabase.auth.signOut();
-      
-      // Clear states
-      setIsAuthenticated(false);
-      setUserId(null);
-      setIsProfileDropdownOpen(false);
-      setIsMenuOpen(false);
-
-      // Clear React Query cache
+      await signOut({ callbackUrl: '/' });
       queryClient.clear();
-
-      // Force a hard refresh but with a small delay to ensure cleanup is complete
-      setTimeout(() => {
-        window.location.href = '/';
-      }, 100);
-
     } catch (err) {
       console.error('Unexpected error during sign out:', err);
-      // Force cleanup anyway
-      if (typeof window !== 'undefined') {
-        Object.keys(localStorage).forEach(key => {
-          if (key.startsWith('sb-')) {
-            localStorage.removeItem(key);
-          }
-        });
-      }
       queryClient.clear();
       window.location.href = '/';
     }
   };
 
   const renderAuthLink = () => {
-    if (isLoading) {
+    if (status === 'loading') {
       return (
         <div className="text-gray-400">
           <Icon icon="eos-icons:loading" className="animate-spin" />
@@ -210,14 +129,14 @@ const Header = () => {
       );
     }
 
-    if (isAuthenticated) {
+    if (status === 'authenticated' && session?.user) {
       return (
         <div className="relative" ref={profileDropdownRef}>
           <button
             onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
             className="text-gray-600 hover:text-gray-800 transition-colors"
           >
-            {userProfile?.username || 'Error loading profile'}
+            {userProfile?.username || session.user.name || 'Loading...'}
           </button>
           {isProfileDropdownOpen && (
             <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 border border-gray-200">
@@ -225,13 +144,13 @@ const Header = () => {
                 href="/user-dashboard"
                 className="block px-4 py-2 text-sm text-gray-700 border-b border-gray-200 hover:bg-gray-100"
               >
-                {userProfile?.username || 'Error loading profile'}
+                {userProfile?.username || session.user.name}
               </Link>
               <div className="px-4 py-2 text-sm text-gray-600 border-b border-gray-200 flex items-center gap-2">
-                <Icon icon="mdi:fire" className={`${userProfile?.current_streak ? 'text-orange-500' : 'text-gray-400'}`} />
+                <Icon icon="mdi:fire" className={`${userProfile?.currentStreak ? 'text-orange-500' : 'text-gray-400'}`} />
                 <span>
-                  {userProfile?.current_streak || 0} day
-                  {(userProfile?.current_streak || 0) !== 1 ? 's' : ''} streak
+                  {userProfile?.currentStreak || 0} day
+                  {(userProfile?.currentStreak || 0) !== 1 ? 's' : ''} streak
                 </span>
               </div>
               <button
@@ -379,7 +298,7 @@ const Header = () => {
                   </Link>
                 </li>
                 <li>
-                  {isAuthenticated ? (
+                  {status === 'authenticated' && session?.user ? (
                     <div>
                       <button 
                         onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
@@ -397,10 +316,10 @@ const Header = () => {
                             {userProfile?.username}
                           </Link>
                           <div className="px-4 py-2 text-sm text-gray-600 border-b border-gray-200 flex items-center gap-2">
-                            <Icon icon="mdi:fire" className={`${userProfile?.current_streak ? 'text-orange-500' : 'text-gray-400'}`} />
+                            <Icon icon="mdi:fire" className={`${userProfile?.currentStreak ? 'text-orange-500' : 'text-gray-400'}`} />
                             <span>
-                              {userProfile?.current_streak || 0} day
-                              {(userProfile?.current_streak || 0) !== 1 ? 's' : ''} streak
+                              {userProfile?.currentStreak || 0} day
+                              {(userProfile?.currentStreak || 0) !== 1 ? 's' : ''} streak
                             </span>
                           </div>
                           <button

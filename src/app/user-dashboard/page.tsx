@@ -1,34 +1,187 @@
 'use client';
 
-import { useState, lazy, Suspense } from 'react';
+import { useState, lazy, Suspense, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import supabase from '@/lib/supabaseClient';
 import { Icon } from '@iconify/react';
+import { useSession, signOut as nextAuthSignOut } from 'next-auth/react';
+import { useQuery } from '@tanstack/react-query';
+import { ErrorBoundary } from 'react-error-boundary';
 
-// Lazy load components
-const ReadingHistorySection = lazy(() => import('@/components/dashboard/ReadingHistory'));
-const Bookmarks = lazy(() => import('@/components/dashboard/Bookmarks'));
-const Settings = lazy(() => import('@/components/dashboard/Settings'));
+// Lazy load components with proper error handling
+const ReadingHistorySection = lazy(() => 
+  import('@/components/dashboard/ReadingHistory').catch(() => {
+    console.error('Failed to load ReadingHistory component');
+    return { default: () => <div>Failed to load reading history</div> };
+  })
+);
+
+const Bookmarks = lazy(() => 
+  import('@/components/dashboard/Bookmarks').catch(() => {
+    console.error('Failed to load Bookmarks component');
+    return { default: () => <div>Failed to load bookmarks</div> };
+  })
+);
+
+const Settings = lazy(() => 
+  import('@/components/dashboard/Settings').catch(() => {
+    console.error('Failed to load Settings component');
+    return { default: () => <div>Failed to load settings</div> };
+  })
+);
 
 // Loading skeleton component
 const TabSkeleton = () => (
-  <div className="animate-pulse">
-    <div className="h-8 bg-gray-200 rounded-lg w-3/4 mb-4"></div>
-    <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
-    <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+  <div className="p-6">
+    <div className="animate-pulse space-y-4">
+      <div className="h-8 bg-gray-200 rounded-lg w-3/4"></div>
+      <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+      <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+    </div>
   </div>
 );
+
+// Error Fallback component
+const ErrorFallback = ({ error, resetErrorBoundary }: { 
+  error: Error; 
+  resetErrorBoundary: () => void;
+}) => {
+  return (
+    <div className="p-6 text-center">
+      <p className="text-red-500 mb-4">Something went wrong:</p>
+      <pre className="text-sm text-gray-500 mb-4">{error.message}</pre>
+      <button
+        onClick={resetErrorBoundary}
+        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+      >
+        Try again
+      </button>
+    </div>
+  );
+};
 
 type DashboardTab = 'reading' | 'bookmarks' | 'settings';
 
 export default function UserDashboard() {
   const [activeTab, setActiveTab] = useState<DashboardTab>('reading');
   const router = useRouter();
+  const { data: session, status } = useSession();
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
+
+  // Fetch user profile data with better error handling
+  const { data: profile, isLoading: isProfileLoading, error: profileError } = useQuery({
+    queryKey: ['profile', session?.user?.id || null],
+    queryFn: async () => {
+      try {
+        if (!session?.user?.id) {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) return null;
+
+          const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+
+          if (error) throw error;
+          return profile;
+        }
+
+        const response = await fetch(`/api/profile/${session.user.id}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch profile');
+        }
+        return response.json();
+      } catch (error) {
+        console.error('Profile fetch error:', error);
+        throw error;
+      }
+    },
+    enabled: status !== 'loading',
+    retry: 1, // Only retry once
+    staleTime: 30000, // Consider data fresh for 30 seconds
+  });
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        if (status === 'unauthenticated') {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) {
+            router.push('/auth');
+            return;
+          }
+        }
+      } catch (error) {
+        console.error('Auth check error:', error);
+        router.push('/auth');
+      } finally {
+        setIsAuthChecking(false);
+      }
+    };
+
+    checkAuth();
+  }, [status, router]);
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    router.push('/');
-    router.refresh();
+    try {
+      if (session) {
+        await nextAuthSignOut({ callbackUrl: '/' });
+      } else {
+        await supabase.auth.signOut();
+      }
+      router.push('/');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
+  // Show loading state while checking auth
+  if (isAuthChecking || status === 'loading' || isProfileLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <Icon icon="eos-icons:loading" className="w-8 h-8 animate-spin" />
+      </div>
+    );
+  }
+
+  // Show error state if profile fetch failed
+  if (profileError) {
+    return (
+      <div className="max-w-5xl mx-auto px-4 py-8 text-center">
+        <p className="text-red-500 mb-4">Failed to load profile</p>
+        <button
+          onClick={() => router.push('/auth')}
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          Return to Login
+        </button>
+      </div>
+    );
+  }
+
+  // If no profile is found, redirect to auth
+  if (!profile && !isProfileLoading) {
+    router.push('/auth');
+    return null;
+  }
+
+  const renderTabContent = () => {
+    return (
+      <ErrorBoundary
+        FallbackComponent={ErrorFallback}
+        onReset={() => {
+          // Reset the error boundary state
+          setActiveTab('reading');
+        }}
+      >
+        <Suspense fallback={<TabSkeleton />}>
+          {activeTab === 'reading' && <ReadingHistorySection userId={profile?.id} />}
+          {activeTab === 'bookmarks' && <Bookmarks userId={profile?.id} />}
+          {activeTab === 'settings' && <Settings profile={profile} />}
+        </Suspense>
+      </ErrorBoundary>
+    );
   };
 
   return (
@@ -37,6 +190,7 @@ export default function UserDashboard() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
           <div className="flex items-center gap-4 mb-4 sm:mb-0">
             <h1 className="text-2xl sm:text-3xl font-bold">Dashboard</h1>
+          
             <a
               href="https://forms.gle/dYXhMkxfTi3odiLc8"
               target="_blank"
@@ -97,11 +251,7 @@ export default function UserDashboard() {
 
       {/* Dashboard Content */}
       <div className="bg-white rounded-lg shadow">
-        <Suspense fallback={<TabSkeleton />}>
-          {activeTab === 'reading' && <ReadingHistorySection />}
-          {activeTab === 'bookmarks' && <Bookmarks />}
-          {activeTab === 'settings' && <Settings />}
-        </Suspense>
+        {renderTabContent()}
       </div>
     </div>
   );
