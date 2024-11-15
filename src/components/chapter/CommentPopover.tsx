@@ -91,6 +91,8 @@ export default function CommentPopover({
           top: `${popoverPosition.y}px`
         }}
         data-paragraph-id={paragraphId}
+        onClick={(e) => e.stopPropagation()}
+        onTouchEnd={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-4">
           <div>

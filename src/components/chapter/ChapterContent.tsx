@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { formatDate } from '@/lib/utils';
 import CommentPopover from '@/components/chapter/CommentPopover';
 import { useComments } from '@/hooks/useComments';
-import { Icon } from '@iconify/react';
 
 interface ChapterContentProps {
   novelId: string;
@@ -29,6 +28,15 @@ export default function ChapterContent({
   const [commentPosition, setCommentPosition] = useState({ x: 0, y: 0 });
   const { comments, addComment, isAuthenticated, isLoading } = useComments(novelId, chapterNumber);
 
+  const handleCloseComment = () => {
+    setSelectedParagraphId(null);
+  };
+
+  const handleAddComment = async (paragraphId: string, content: string) => {
+    await addComment(paragraphId, content);
+    setSelectedParagraphId(null);
+  };
+
   const handleParagraphLongPress = (
     event: React.TouchEvent<Element> | React.MouseEvent<Element>,
     paragraphId: string
@@ -47,14 +55,6 @@ export default function ChapterContent({
     });
     
     setSelectedParagraphId(paragraphId);
-  };
-
-  const handleCloseComment = () => {
-    setSelectedParagraphId(null);
-  };
-
-  const handleAddComment = (paragraphId: string, content: string) => {
-    addComment(paragraphId, content);
   };
 
   return (
@@ -82,7 +82,7 @@ export default function ChapterContent({
           const paragraphComments = comments[paragraphId] || [];
           
           return (
-            <div key={index} className="relative group">
+            <div key={index} className="relative">
               <p 
                 id={paragraphId}
                 className="mb-4 leading-relaxed relative"
@@ -95,9 +95,11 @@ export default function ChapterContent({
                   const cleanup = () => {
                     clearTimeout(timer);
                     document.removeEventListener('touchend', cleanup);
+                    document.removeEventListener('touchmove', cleanup);
                   };
                   
                   document.addEventListener('touchend', cleanup);
+                  document.addEventListener('touchmove', cleanup);
                 }}
               >
                 {paragraph}
@@ -107,22 +109,6 @@ export default function ChapterContent({
                   </span>
                 )}
               </p>
-              
-              {/* Comment indicator */}
-              <div className="absolute right-0 top-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button
-                  onClick={(e) => handleParagraphLongPress(e, paragraphId)}
-                  className="text-gray-400 hover:text-blue-500"
-                  aria-label="Add comment"
-                >
-                  <Icon 
-                    icon="pepicons-print:text-bubbles" 
-                    className="w-6 h-6 [stroke-width:2px]"
-                    width={24}
-                    height={24}
-                  />
-                </button>
-              </div>
             </div>
           );
         })}

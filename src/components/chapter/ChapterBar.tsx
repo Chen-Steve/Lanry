@@ -35,6 +35,8 @@ export default function ChapterProgressBar({
   const isMobile = useMediaQuery('(max-width: 768px)');
   const [hideTimeout, setHideTimeout] = useState<NodeJS.Timeout | null>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
+  const [touchStartY, setTouchStartY] = useState<number | null>(null);
+  const [isTouching, setIsTouching] = useState(false);
 
   // Calculate base progress (progress from completed chapters)
   const baseProgress = ((currentChapter - 1) / totalChapters) * 100;
@@ -61,41 +63,58 @@ export default function ChapterProgressBar({
     if (!isMobile) return;
 
     const handleTouchStart = (e: TouchEvent) => {
-      // Check if the touch is outside the progress bar
-      if (progressBarRef.current && !progressBarRef.current.contains(e.target as Node)) {
-        if (isVisible) {
-          // If the bar is visible and we tap outside, hide it
-          setIsVisible(false);
-          if (hideTimeout) {
-            clearTimeout(hideTimeout);
+      // Store the initial touch position
+      setTouchStartY(e.touches[0].clientY);
+      setIsTouching(true);
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (!touchStartY) return;
+
+      // Calculate the distance moved
+      const touchEndY = e.changedTouches[0].clientY;
+      const touchDistance = Math.abs(touchEndY - touchStartY);
+
+      // If the touch was more of a tap (moved less than 10px) and not a scroll
+      if (touchDistance < 10 && isTouching) {
+        // Ignore touch events that come from scrolling or from the progress bar itself
+        if (
+          !(e.target as HTMLElement).closest('[role="scrollbar"]') &&
+          !(progressBarRef.current?.contains(e.target as Node))
+        ) {
+          if (isVisible) {
+            // If the bar is visible and we tap outside, hide it
+            setIsVisible(false);
+            if (hideTimeout) {
+              clearTimeout(hideTimeout);
+            }
+          } else {
+            // Show the bar and set the timeout
+            setIsVisible(true);
+            const timeout = setTimeout(() => {
+              setIsVisible(false);
+            }, 3000);
+            setHideTimeout(timeout);
           }
-          return;
         }
       }
 
-      // Show the bar and reset the timeout
-      if (hideTimeout) {
-        clearTimeout(hideTimeout);
-      }
-
-      setIsVisible(true);
-
-      const timeout = setTimeout(() => {
-        setIsVisible(false);
-      }, 3000);
-
-      setHideTimeout(timeout);
+      // Reset touch tracking
+      setTouchStartY(null);
+      setIsTouching(false);
     };
 
     document.addEventListener('touchstart', handleTouchStart);
+    document.addEventListener('touchend', handleTouchEnd);
 
     return () => {
       document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchend', handleTouchEnd);
       if (hideTimeout) {
         clearTimeout(hideTimeout);
       }
     };
-  }, [isMobile, hideTimeout, isVisible]);
+  }, [isMobile, hideTimeout, isVisible, touchStartY, isTouching]);
 
   if (!isMobile) return null;
 
