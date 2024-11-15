@@ -162,27 +162,25 @@ export default function AuthPage() {
       const codeChallenge = await generateCodeChallenge(codeVerifier);
       
       // Generate random state
-      const state = generateCodeVerifier().slice(0, 16);
+      const state = crypto.randomUUID();
 
-      // Store code verifier and state in cookies
-      document.cookie = `discord_code_verifier=${codeVerifier}; path=/; secure; samesite=lax`;
-      document.cookie = `discord_oauth_state=${state}; path=/; secure; samesite=lax`;
+      // Store code verifier and state in cookies with proper attributes
+      document.cookie = `discord_code_verifier=${codeVerifier}; path=/; secure; samesite=lax; max-age=3600`;
+      document.cookie = `discord_oauth_state=${state}; path=/; secure; samesite=lax; max-age=3600`;
 
-      await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: 'discord',
         options: {
-          skipBrowserRedirect: false,
           redirectTo: `${window.location.origin}/auth/callback`,
-          scopes: 'identify email guilds',
           queryParams: {
-            prompt: 'consent',
             code_challenge: codeChallenge,
             code_challenge_method: 'S256',
             state: state
           }
         }
       });
-      
+
+      if (error) throw error;
     } catch (error) {
       console.error('Discord auth error:', error);
       setError(error instanceof Error ? error.message : 'Authentication failed');
