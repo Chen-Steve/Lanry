@@ -199,9 +199,8 @@ export default function ChapterManagementForm({ authorOnly = false }: ChapterMan
   return (
     <div className="max-w-5xl mx-auto px-4">
       <div className="mb-6">
-        <label className="block text-sm font-medium mb-2">Select Novel</label>
         <select
-          aria-label="Select Novel"
+          title="Select a novel"
           value={selectedNovel}
           onChange={(e) => setSelectedNovel(e.target.value)}
           className="w-full p-3 border rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -248,33 +247,32 @@ export default function ChapterManagementForm({ authorOnly = false }: ChapterMan
                 {editingChapter ? 'Edit Chapter' : 'Add New Chapter'}
               </h3>
 
-              <div>
-                <label className="block text-sm font-medium mb-2">Chapter Number</label>
-                <input
-                  aria-label="Chapter Number"
-                  type="number"
-                  value={formData.chapterNumber}
-                  onChange={(e) => setFormData({ ...formData, chapterNumber: e.target.value })}
-                  className="w-full p-3 border rounded-lg"
-                  required
-                />
+              <div className="flex gap-4">
+                <div className="w-1/3">
+                  <input
+                    type="number"
+                    placeholder="Chapter Number"
+                    value={formData.chapterNumber}
+                    onChange={(e) => setFormData({ ...formData, chapterNumber: e.target.value })}
+                    className="w-full p-3 border rounded-lg"
+                    required
+                  />
+                </div>
+
+                <div className="w-2/3">
+                  <input
+                    type="text"
+                    placeholder="Title (Optional)"
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    className="w-full p-3 border rounded-lg"
+                  />
+                </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">Title (Optional)</label>
-                <input
-                  aria-label="Title"
-                  type="text"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full p-3 border rounded-lg"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">Content</label>
                 <textarea
-                  aria-label="Content"
+                  placeholder="Content"
                   value={formData.content}
                   onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                   className="w-full p-3 border rounded-lg min-h-[300px]"
@@ -283,12 +281,9 @@ export default function ChapterManagementForm({ authorOnly = false }: ChapterMan
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">
-                  Schedule Publication (Optional)
-                </label>
                 <input
-                  aria-label="Schedule Publication"
-                    type="datetime-local"
+                  type="datetime-local"
+                  placeholder="Schedule Publication (Optional)"
                   value={formData.publishAt}
                   onChange={(e) => setFormData({ ...formData, publishAt: e.target.value })}
                   className="w-full p-3 border rounded-lg"

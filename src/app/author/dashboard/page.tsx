@@ -58,7 +58,9 @@ export default function AuthorDashboard() {
       {/* Left Sidebar */}
       <div className="w-64 bg-white border-r border-gray-200 fixed h-full">
         <div className="p-6">
-          <h1 className="text-xl font-bold mb-6">Author Dashboard</h1>
+          <a href="https://lanry.vercel.app/" className="text-2xl font-bold mb-6 block text-center">
+            Lanry
+          </a>
           <nav className="flex flex-col gap-2">
             <button
               onClick={() => setActiveTab('novels')}
@@ -96,7 +98,7 @@ export default function AuthorDashboard() {
             >
               <span className="flex items-center gap-2">
                 <Icon icon="mdi:currency-usd" />
-                Purchase History
+                Earnings History
               </span>
             </button>
           </nav>
