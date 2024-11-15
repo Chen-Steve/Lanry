@@ -16,7 +16,8 @@ export async function getNovel(id: string, userId?: string): Promise<Novel | nul
           title,
           created_at,
           chapter_number,
-          publish_at
+          publish_at,
+          coins
         ),
         bookmarks!left (
           id,

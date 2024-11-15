@@ -51,6 +51,7 @@ model Chapter {
   slug          String    
   content       String    @db.Text
   publishAt     DateTime? @map("publish_at")
+  coins         Int       @default(1)
   novel         Novel     @relation(fields: [novelId], references: [id], onDelete: Cascade)
   novelId       String    @map("novel_id")
 

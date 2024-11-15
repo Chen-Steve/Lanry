@@ -36,13 +36,18 @@ export function ChapterListItem({
   novelSlug, 
   userProfile, 
   isAuthenticated,
-  coinCost = 5
 }: ChapterListItemProps) {
   const [isUnlocking, setIsUnlocking] = useState(false);
   const router = useRouter();
 
+  console.log('Chapter data:', {
+    chapterNumber: chapter.chapter_number,
+    coins: chapter.coins,
+    isPublished: !chapter.publish_at || new Date(chapter.publish_at) <= new Date(),
+    publishAt: chapter.publish_at
+  });
+
   const isPublished = !chapter.publish_at || new Date(chapter.publish_at) <= new Date();
-  const isUnlocked = chapter.isUnlocked;
   
   const unlockChapter = async () => {
     try {
@@ -95,7 +100,7 @@ export function ChapterListItem({
       const { error: deductError } = await supabase
         .from('profiles')
         .update({ 
-          coins: userProfile.coins - coinCost,
+          coins: userProfile.coins - chapter.coins,
           updated_at: new Date().toISOString()
         })
         .eq('id', user.id);
@@ -159,7 +164,7 @@ export function ChapterListItem({
           profile_id: user.id,
           novel_id: chapter.novel_id,
           chapter_number: chapter.chapter_number,
-          cost: coinCost,
+          cost: chapter.coins,
           created_at: new Date().toISOString()
         });
 
@@ -197,8 +202,20 @@ export function ChapterListItem({
   };
 
   const handleLockedChapterClick = () => {
+    // If it's a published chapter, just show login message
+    if (isPublished) {
+      if (!isAuthenticated) {
+        toast.error('Please create an account to read chapters', {
+          duration: 3000,
+          position: 'bottom-center',
+        });
+      }
+      return;
+    }
+
+    // For unpublished chapters, handle coin payment
     if (!isAuthenticated) {
-      toast.error('Please create an account to unlock chapters', {
+      toast.error('Please create an account to unlock advance chapters', {
         duration: 3000,
         position: 'bottom-center',
       });
@@ -207,8 +224,8 @@ export function ChapterListItem({
 
     if (!userProfile) return;
 
-    if (userProfile.coins < coinCost) {
-      toast.error(`Not enough coins. You need ${coinCost} coins to unlock this chapter`, {
+    if (userProfile.coins < chapter.coins) {
+      toast.error(`Not enough coins. You need ${chapter.coins} coins to unlock this chapter`, {
         duration: 3000,
         position: 'bottom-center',
         style: {
@@ -227,7 +244,7 @@ export function ChapterListItem({
     toast((t) => (
       <div className="flex flex-col gap-2">
         <div className="font-medium">
-          Unlock Chapter {chapter.chapter_number} for {coinCost} coins?
+          Unlock Chapter {chapter.chapter_number} for {chapter.coins} coins?
         </div>
         <div className="flex gap-2">
           <button
@@ -272,7 +289,16 @@ export function ChapterListItem({
       isPublished ? 'hover:bg-gray-50' : 'bg-gray-50/50'
     } transition-colors rounded-lg gap-2`}>
       <div className="flex-grow flex flex-col w-full gap-2">
-        {!isPublished && !isUnlocked ? (
+        {isPublished ? (
+          // Published chapters - simple link
+          <Link 
+            href={`/novels/${novelSlug}/chapters/c${chapter.chapter_number}`}
+            className="flex-grow flex flex-col sm:flex-row sm:items-center text-gray-600 gap-1 hover:text-gray-900"
+          >
+            {chapterContent}
+          </Link>
+        ) : (
+          // Unpublished chapters - show lock and coins
           <>
             <div 
               className="text-gray-600 cursor-pointer"
@@ -284,7 +310,7 @@ export function ChapterListItem({
               <div className="flex items-center gap-2 bg-purple-50 text-purple-800 px-2 py-1 rounded-md text-sm">
                 <Icon icon="material-symbols:lock" className="text-lg" />
                 <span className="font-medium">
-                  {formatDate(chapter.publish_at || new Date())} • {coinCost} coins
+                  {formatDate(chapter.publish_at || new Date())} • {chapter.coins} coins
                   {userProfile && (
                     <span className="ml-2">
                       ({userProfile.coins} coins available)
@@ -294,20 +320,6 @@ export function ChapterListItem({
               </div>
             </div>
           </>
-        ) : (
-          <Link 
-            href={`/novels/${novelSlug}/chapters/c${chapter.chapter_number}`}
-            className="flex-grow flex flex-col sm:flex-row sm:items-center text-gray-600 gap-1 hover:text-gray-900"
-          >
-            <div className="flex items-center gap-2">
-              {chapterContent}
-              {isUnlocked && (
-                <span className="text-green-600 text-sm">
-                  (Unlocked)
-                </span>
-              )}
-            </div>
-          </Link>
         )}
       </div>
     </div>

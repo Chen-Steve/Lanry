@@ -34,6 +34,12 @@ export async function getChapter(novelId: string, chapterId: string): Promise<Ch
       .from('chapters')
       .select(`
         *,
+        id,
+        title,
+        content,
+        chapter_number,
+        publish_at,
+        coins,
         novel:novels!inner (
           id,
           title,
@@ -98,7 +104,7 @@ export async function getChapterNavigation(novelId: string, currentChapterNumber
     // Get all chapters
     const { data: chapters } = await supabase
       .from('chapters')
-      .select('id, chapter_number, title, publish_at')
+      .select('id, chapter_number, title, publish_at, coins')
       .eq('novel_id', novel.id)
       .order('chapter_number');
 
@@ -152,7 +158,7 @@ export async function getTotalChapters(novelId: string): Promise<number> {
     // Get all chapters
     const { data: chapters } = await supabase
       .from('chapters')
-      .select('chapter_number, publish_at')
+      .select('chapter_number, publish_at, coins')
       .eq('novel_id', novel.id)
       .order('chapter_number', { ascending: false });
 

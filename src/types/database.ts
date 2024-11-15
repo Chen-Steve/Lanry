@@ -7,6 +7,7 @@ export interface Chapter {
   chapter_number: number;
   slug: string;
   publish_at?: string;
+  coins: number;
   novel?: Novel;
   isUnlocked?: boolean;
 }
