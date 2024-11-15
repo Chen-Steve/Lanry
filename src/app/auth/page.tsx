@@ -167,7 +167,10 @@ export default function AuthPage() {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Discord auth error details:', error);
+        throw error;
+      }
     } catch (error) {
       console.error('Discord auth error:', error);
       setError(error instanceof Error ? error.message : 'Authentication failed');
