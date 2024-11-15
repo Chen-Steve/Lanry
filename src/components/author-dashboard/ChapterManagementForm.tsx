@@ -22,6 +22,7 @@ interface Chapter {
   novel_id: string;
   slug: string;
   publish_at?: string;
+  coins?: number;
   created_at: string;
   updated_at: string;
 }
@@ -36,6 +37,7 @@ export default function ChapterManagementForm({ authorOnly = false }: ChapterMan
     content: '',
     slug: '',
     publishAt: '',
+    coins: '0',
   });
   const [editingChapter, setEditingChapter] = useState<Chapter | null>(null);
 
@@ -134,6 +136,7 @@ export default function ChapterManagementForm({ authorOnly = false }: ChapterMan
             content: formData.content,
             slug,
             publish_at: formData.publishAt ? new Date(formData.publishAt).toISOString() : null,
+            coins: parseInt(formData.coins) || 0,
             updated_at: new Date().toISOString()
           })
           .eq('id', editingChapter.id)
@@ -150,6 +153,7 @@ export default function ChapterManagementForm({ authorOnly = false }: ChapterMan
             title: formData.title,
             content: formData.content,
             slug,
+            coins: parseInt(formData.coins) || 0,
             publish_at: formData.publishAt ? new Date(formData.publishAt).toISOString() : null,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
@@ -164,6 +168,7 @@ export default function ChapterManagementForm({ authorOnly = false }: ChapterMan
         content: '',
         slug: '',
         publishAt: '',
+        coins: '0',
       });
       setEditingChapter(null);
       fetchChapters(selectedNovel);
@@ -182,6 +187,7 @@ export default function ChapterManagementForm({ authorOnly = false }: ChapterMan
       content: chapter.content,
       slug: chapter.slug,
       publishAt: chapter.publish_at ? new Date(chapter.publish_at).toISOString().slice(0, 16) : '',
+      coins: chapter.coins?.toString() || '0',
     });
   };
 
@@ -193,6 +199,7 @@ export default function ChapterManagementForm({ authorOnly = false }: ChapterMan
       content: '',
       slug: '',
       publishAt: '',
+      coins: '0',
     });
   };
 
@@ -280,14 +287,39 @@ export default function ChapterManagementForm({ authorOnly = false }: ChapterMan
                 />
               </div>
 
-              <div>
-                <input
-                  type="datetime-local"
-                  placeholder="Schedule Publication (Optional)"
-                  value={formData.publishAt}
-                  onChange={(e) => setFormData({ ...formData, publishAt: e.target.value })}
-                  className="w-full p-3 border rounded-lg"
-                />
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <input
+                    type="datetime-local"
+                    placeholder="Schedule Publication (Optional)"
+                    value={formData.publishAt}
+                    onChange={(e) => setFormData({ ...formData, publishAt: e.target.value })}
+                    className="w-full p-3 border rounded-lg"
+                  />
+                </div>
+                <div className="w-1/3">
+                  <input
+                    type="number"
+                    min="1"
+                    placeholder="Set Cost"
+                    value={formData.coins}
+                    onKeyDown={(e) => {
+                      if (e.key === 'e' || e.key === 'E' || e.key === '+' || e.key === '-') {
+                        e.preventDefault();
+                      }
+                    }}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/[eE]/g, '');
+                      setFormData({ ...formData, coins: value });
+                    }}
+                    onBlur={(e) => {
+                      const value = parseInt(e.target.value) || 1;
+                      setFormData({ ...formData, coins: Math.max(1, value).toString() });
+                    }}
+                    className="w-full p-3 border rounded-lg"
+                    title="Set coins required to access this chapter"
+                  />
+                </div>
               </div>
 
               <div className="flex gap-4">
