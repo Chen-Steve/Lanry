@@ -156,7 +156,7 @@ export default function AuthPage() {
 
   const handleDiscordSignIn = async () => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'discord',
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
@@ -170,6 +170,11 @@ export default function AuthPage() {
       if (error) {
         console.error('Discord auth error details:', error);
         throw error;
+      }
+
+      // If we have data but no error, redirect to the callback URL
+      if (data?.url) {
+        window.location.href = data.url;
       }
     } catch (error) {
       console.error('Discord auth error:', error);
