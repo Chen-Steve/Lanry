@@ -23,6 +23,10 @@ export default function ChapterHeader({
   onFontChange,
   onSizeChange
 }: ChapterHeaderProps) {
+  const handleTextCustomizationClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+
   return (
     <div className="mb-6 md:mb-8">
       <Link 
@@ -37,12 +41,14 @@ export default function ChapterHeader({
           <h1 className="text-xl md:text-2xl font-bold text-black">{novelTitle}</h1>
           <p className="text-sm md:text-base text-black">by {author}</p>
         </div>
-        <TextCustomization
-          currentFont={fontFamily}
-          currentSize={fontSize}
-          onFontChange={onFontChange}
-          onSizeChange={onSizeChange}
-        />
+        <div onClick={handleTextCustomizationClick}>
+          <TextCustomization
+            currentFont={fontFamily}
+            currentSize={fontSize}
+            onFontChange={onFontChange}
+            onSizeChange={onSizeChange}
+          />
+        </div>
       </div>
     </div>
   );
