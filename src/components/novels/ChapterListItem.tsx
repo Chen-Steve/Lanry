@@ -3,7 +3,7 @@ import { Icon } from '@iconify/react';
 import Link from 'next/link';
 import { formatDate } from '@/lib/utils';
 import { toast } from 'react-hot-toast';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import supabase from '@/lib/supabaseClient';
 
@@ -38,14 +38,32 @@ export function ChapterListItem({
   isAuthenticated,
 }: ChapterListItemProps) {
   const [isUnlocking, setIsUnlocking] = useState(false);
+  const [isUnlocked, setIsUnlocked] = useState(false);
   const router = useRouter();
 
-  console.log('Chapter data:', {
-    chapterNumber: chapter.chapter_number,
-    coins: chapter.coins,
-    isPublished: !chapter.publish_at || new Date(chapter.publish_at) <= new Date(),
-    publishAt: chapter.publish_at
-  });
+  useEffect(() => {
+    const checkUnlockStatus = async () => {
+      if (!userProfile || !chapter.novel_id) return;
+      
+      const { data: existingUnlock, error } = await supabase
+        .from('chapter_unlocks')
+        .select('id')
+        .match({
+          profile_id: userProfile.id,
+          novel_id: chapter.novel_id,
+          chapter_number: chapter.chapter_number
+        })
+        .single();
+
+      if (error && error.code === '406') {
+        console.log('Chapter not unlocked yet');
+      }
+
+      setIsUnlocked(!!existingUnlock);
+    };
+
+    checkUnlockStatus();
+  }, [userProfile, chapter.novel_id, chapter.chapter_number]);
 
   const isPublished = !chapter.publish_at || new Date(chapter.publish_at) <= new Date();
   
@@ -54,6 +72,25 @@ export function ChapterListItem({
       if (!userProfile) return;
       if (!chapter.novel_id) {
         throw new Error('Novel ID is missing from chapter data');
+      }
+
+      // Check if chapter is already unlocked
+      const { data: existingUnlock } = await supabase
+        .from('chapter_unlocks')
+        .select('id')
+        .match({
+          profile_id: userProfile.id,
+          novel_id: chapter.novel_id,
+          chapter_number: chapter.chapter_number
+        })
+        .single();
+
+      if (existingUnlock) {
+        // Chapter is already unlocked, just redirect
+        toast.success('Chapter already unlocked!');
+        router.push(`/novels/${novelSlug}/chapters/c${chapter.chapter_number}`);
+        router.refresh();
+        return;
       }
 
       // Get the translator's profile ID and current coins
@@ -201,19 +238,7 @@ export function ChapterListItem({
     }
   };
 
-  const handleLockedChapterClick = () => {
-    // If it's a published chapter, just show login message
-    if (isPublished) {
-      if (!isAuthenticated) {
-        toast.error('Please create an account to read chapters', {
-          duration: 3000,
-          position: 'bottom-center',
-        });
-      }
-      return;
-    }
-
-    // For unpublished chapters, handle coin payment
+  const handleLockedChapterClick = async () => {
     if (!isAuthenticated) {
       toast.error('Please create an account to unlock advance chapters', {
         duration: 3000,
@@ -224,17 +249,19 @@ export function ChapterListItem({
 
     if (!userProfile) return;
 
-    if (userProfile.coins < chapter.coins) {
-      toast.error(`Not enough coins. You need ${chapter.coins} coins to unlock this chapter`, {
-        duration: 3000,
-        position: 'bottom-center',
-        style: {
-          background: '#EF4444',
-          color: 'white',
-          padding: '12px 24px',
-        },
-        icon: <Icon icon="material-symbols:payments-outline" className="text-xl" />,
-      });
+    // Check if chapter is already unlocked
+    const { data: existingUnlock } = await supabase
+      .from('chapter_unlocks')
+      .select('id')
+      .match({
+        profile_id: userProfile.id,
+        novel_id: chapter.novel_id,
+        chapter_number: chapter.chapter_number
+      })
+      .single();
+
+    if (existingUnlock) {
+      router.push(`/novels/${novelSlug}/chapters/c${chapter.chapter_number}`);
       return;
     }
 
@@ -278,50 +305,47 @@ export function ChapterListItem({
   };
 
   const chapterContent = (
-    <>
-      <span className="inline-block min-w-[3rem]">Ch. {chapter.chapter_number}</span>
-      {chapter.title && <span className="ml-2">{chapter.title}</span>}
-    </>
+    <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2">
+        <span className="inline-block min-w-[3rem]">Ch. {chapter.chapter_number}</span>
+        {chapter.title && <span className="ml-2">{chapter.title}</span>}
+      </div>
+      {!isPublished && (
+        <div className="flex items-center gap-2 bg-purple-50 text-purple-800 px-2 py-1 rounded-md text-sm ml-auto">
+          {isUnlocked ? (
+            <span className="text-green-600">Unlocked</span>
+          ) : (
+            <>
+              <Icon icon="material-symbols:lock" className="text-lg" />
+              <span className="font-medium">
+                {formatDate(chapter.publish_at || new Date())} • {chapter.coins} coins
+              </span>
+            </>
+          )}
+        </div>
+      )}
+    </div>
   );
 
   return (
     <div className={`flex flex-col border-b border-gray-100 py-3 px-4 ${
       isPublished ? 'hover:bg-gray-50' : 'bg-gray-50/50'
-    } transition-colors rounded-lg gap-2`}>
-      <div className="flex-grow flex flex-col w-full gap-2">
-        {isPublished ? (
-          // Published chapters - simple link
-          <Link 
-            href={`/novels/${novelSlug}/chapters/c${chapter.chapter_number}`}
-            className="flex-grow flex flex-col sm:flex-row sm:items-center text-gray-600 gap-1 hover:text-gray-900"
-          >
-            {chapterContent}
-          </Link>
-        ) : (
-          // Unpublished chapters - show lock and coins
-          <>
-            <div 
-              className="text-gray-600 cursor-pointer"
-              onClick={handleLockedChapterClick}
-            >
-              {chapterContent}
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2 bg-purple-50 text-purple-800 px-2 py-1 rounded-md text-sm">
-                <Icon icon="material-symbols:lock" className="text-lg" />
-                <span className="font-medium">
-                  {formatDate(chapter.publish_at || new Date())} • {chapter.coins} coins
-                  {userProfile && (
-                    <span className="ml-2">
-                      ({userProfile.coins} coins available)
-                    </span>
-                  )}
-                </span>
-              </div>
-            </div>
-          </>
-        )}
-      </div>
+    } transition-colors rounded-lg`}>
+      {isPublished ? (
+        <Link 
+          href={`/novels/${novelSlug}/chapters/c${chapter.chapter_number}`}
+          className="flex-grow flex flex-col sm:flex-row sm:items-center text-gray-600 gap-1 hover:text-gray-900"
+        >
+          {chapterContent}
+        </Link>
+      ) : (
+        <div 
+          className="text-gray-600 cursor-pointer"
+          onClick={handleLockedChapterClick}
+        >
+          {chapterContent}
+        </div>
+      )}
     </div>
   );
 } 
