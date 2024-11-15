@@ -168,12 +168,11 @@ export default function AuthPage() {
         provider: 'discord',
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
-          scopes: 'identify email',
           queryParams: {
             code_challenge: codeChallenge,
             code_challenge_method: 'S256',
             state: state,
-            prompt: 'consent'
+            scope: 'identify email'
           }
         }
       });
