@@ -1,18 +1,15 @@
-export function formatDate(date: Date | string): string {
-  // If date is a string, convert it to Date object
-  const dateObject = typeof date === 'string' ? new Date(date) : date;
+export function formatDate(date: string | Date) {
+  const d = new Date(date);
   
-  // Check if date is valid
-  if (isNaN(dateObject.getTime())) {
-    console.error('Invalid date:', date);
-    return 'Invalid date';
-  }
-
-  return new Intl.DateTimeFormat('en-US', {
+  // Format: "January 1, 2024 at 14:00"
+  return d.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
-  }).format(dateObject);
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true // This will show AM/PM format. Set to false for 24-hour format
+  }).replace(',', ' at');
 }
 
 export function generateChapterSlug(chapterNumber: number): string {

@@ -49,12 +49,11 @@ function ChapterNavigation({
           >
             <div className="flex items-center gap-1">
               <Icon icon="mdi:chevron-left" className="text-lg" />
-              <span className="hidden sm:inline">Ch.{navigation.prevChapter.chapter_number}</span>
-              <span className="sm:hidden">Previous</span>
+              <span>Ch.{navigation.prevChapter.chapter_number}</span>
             </div>
           </Link>
         ) : (
-          <div className="hidden sm:block px-3 py-2 text-gray-400 text-sm">Ch.1</div>
+          <div className="px-3 py-2 text-gray-400 text-sm">Ch.1</div>
         )}
       </div>
 
@@ -93,13 +92,12 @@ function ChapterNavigation({
             className="inline-flex items-center px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-black transition-colors text-sm whitespace-nowrap"
           >
             <div className="flex items-center gap-1">
-              <span className="hidden sm:inline">Ch.{navigation.nextChapter.chapter_number}</span>
-              <span className="sm:hidden">Next</span>
+              <span>Ch.{navigation.nextChapter.chapter_number}</span>
               <Icon icon="mdi:chevron-right" className="text-lg" />
             </div>
           </Link>
         ) : (
-          <div className="hidden sm:block px-3 py-2 text-gray-400 text-sm text-right">Ch.{totalChapters}</div>
+          <div className="px-3 py-2 text-gray-400 text-sm text-right">Ch.{totalChapters}</div>
         )}
       </div>
     </div>
@@ -245,7 +243,22 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
     };
     
     fetchData();
-  }, [novelId, chapterId]);
+
+    // Add an interval to check publish status
+    if (chapter?.publish_at) {
+      const publishDate = new Date(chapter.publish_at);
+      const now = new Date();
+      
+      if (publishDate > now) {
+        const timeUntilPublish = publishDate.getTime() - now.getTime();
+        const timer = setTimeout(() => {
+          fetchData(); // Refresh data when publish time is reached
+        }, timeUntilPublish);
+        
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [novelId, chapterId, chapter?.publish_at]);
 
   useEffect(() => {
     if (chapter) {

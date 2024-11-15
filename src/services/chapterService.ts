@@ -49,8 +49,10 @@ export async function getChapter(novelId: string, chapterId: string): Promise<Ch
       return null;
     }
 
-    // If user is authenticated, check for unlocks
+    const isPublished = !chapter.publish_at || new Date(chapter.publish_at) <= new Date();
     let isUnlocked = false;
+
+    // If user is authenticated, check for unlocks
     if (user) {
       try {
         const { data: unlocks, error: unlockError } = await supabase
@@ -66,12 +68,9 @@ export async function getChapter(novelId: string, chapterId: string): Promise<Ch
         }
       } catch (error) {
         console.error('Error checking chapter unlock status:', error);
-        // Default to not unlocked if there's an error
         isUnlocked = false;
       }
     }
-
-    const isPublished = !chapter.publish_at || new Date(chapter.publish_at) <= new Date();
 
     return {
       ...chapter,
