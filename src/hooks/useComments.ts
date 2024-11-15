@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import supabase from '@/lib/supabaseClient';
 import type { ChapterComment, CommentsByParagraph } from '@/types/database';
 import { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
+import { useSession } from 'next-auth/react';
 
 // Type for our comment data
 interface DatabaseComment {
@@ -23,6 +24,7 @@ export function useComments(novelId: string, chapterNumber: number) {
   const [comments, setComments] = useState<CommentsByParagraph>({});
   const [userId, setUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { data: session } = useSession();
 
   // Auth setup
   useEffect(() => {
@@ -30,10 +32,16 @@ export function useComments(novelId: string, chapterNumber: number) {
 
     const initAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session: supabaseSession } } = await supabase.auth.getSession();
         
-        if (mounted && session?.user) {
-          setUserId(session.user.id);
+        if (mounted) {
+          if (session?.user?.id) {
+            setUserId(session.user.id);
+          } else if (supabaseSession?.user) {
+            setUserId(supabaseSession.user.id);
+          } else {
+            setUserId(null);
+          }
         }
       } catch (error) {
         console.error('[Init] Error:', error);
@@ -59,7 +67,7 @@ export function useComments(novelId: string, chapterNumber: number) {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [session]);
 
   // Comments fetching and real-time updates
   useEffect(() => {
@@ -140,18 +148,19 @@ export function useComments(novelId: string, chapterNumber: number) {
   }, [novelId, chapterNumber]);
 
   const addComment = async (paragraphId: string, content: string) => {
-    if (!userId) return;
+    const currentUserId = session?.user?.id || userId;
+    if (!currentUserId) return;
 
     try {
-      console.log('Adding comment with novelId:', novelId); // Debug log
+      console.log('Adding comment with novelId:', novelId);
       
       const newComment = {
         id: crypto.randomUUID(),
-        novel_id: novelId,  // Make sure this is included
+        novel_id: novelId,
         chapter_number: chapterNumber,
         paragraph_id: paragraphId,
         content: content,
-        profile_id: userId,
+        profile_id: currentUserId,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
@@ -169,7 +178,7 @@ export function useComments(novelId: string, chapterNumber: number) {
 
       if (error) {
         console.error('Supabase error:', error);
-        console.log('Attempted to insert:', newComment); // Debug log
+        console.log('Attempted to insert:', newComment);
         throw error;
       }
 
@@ -192,7 +201,7 @@ export function useComments(novelId: string, chapterNumber: number) {
     }
   };
 
-  const isAuthenticated = !!userId;
+  const isAuthenticated = !!userId || !!session?.user;
 
   return { comments, addComment, isAuthenticated, isLoading };
 } 
