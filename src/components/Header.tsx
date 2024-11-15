@@ -161,38 +161,42 @@ const Header = () => {
     try {
       // First, clear any stored session data
       if (typeof window !== 'undefined') {
-        window.localStorage.removeItem('supabase.auth.token');
-        window.localStorage.removeItem('supabase.auth.refreshToken');
+        // Clear ALL Supabase-related items from localStorage
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('sb-')) {
+            localStorage.removeItem(key);
+          }
+        });
       }
 
-      const signOutPromise = supabase.auth.signOut();
-      const timeoutPromise = new Promise<never>((_, reject) => 
-        setTimeout(() => reject(new Error('Sign out timeout')), 5000)
-      );
-
-      const result = await Promise.race([signOutPromise, timeoutPromise]);
+      // Sign out from Supabase
+      await supabase.auth.signOut();
       
-      console.log('Sign out API call completed');
-      
-      if ('error' in result && result.error) {
-        console.error('Error signing out:', result.error);
-        return;
-      }
-
       // Clear states
       setIsAuthenticated(false);
       setUserId(null);
       setIsProfileDropdownOpen(false);
       setIsMenuOpen(false);
 
-      // Force a hard refresh to clear any remaining state
-      window.location.href = '/';
+      // Clear React Query cache
+      queryClient.clear();
+
+      // Force a hard refresh but with a small delay to ensure cleanup is complete
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 100);
+
     } catch (err) {
       console.error('Unexpected error during sign out:', err);
-      // Force sign out on client side if server call fails
+      // Force cleanup anyway
       if (typeof window !== 'undefined') {
-        window.localStorage.clear(); // More aggressive clearing
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('sb-')) {
+            localStorage.removeItem(key);
+          }
+        });
       }
+      queryClient.clear();
       window.location.href = '/';
     }
   };
