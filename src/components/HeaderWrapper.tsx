@@ -5,9 +5,10 @@ import Header from './Header';
 
 const HeaderWrapper = () => {
   const pathname = usePathname();
+  const isAuthorDashboard = pathname?.startsWith('/author/dashboard');
   const isAdminRoute = pathname?.startsWith('/admin');
 
-  if (isAdminRoute) {
+  if (isAuthorDashboard || isAdminRoute) {
     return null;
   }
 

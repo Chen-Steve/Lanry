@@ -5,9 +5,10 @@ import Footer from './Footer';
 
 const FooterWrapper = () => {
   const pathname = usePathname();
+  const isAuthorDashboard = pathname?.startsWith('/author/dashboard');
   const isAdminRoute = pathname?.startsWith('/admin');
 
-  if (isAdminRoute) {
+  if (isAuthorDashboard || isAdminRoute) {
     return null;
   }
 

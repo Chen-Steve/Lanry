@@ -197,7 +197,7 @@ export default function ChapterManagementForm({ authorOnly = false }: ChapterMan
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6">
+    <div className="max-w-5xl mx-auto px-4">
       <div className="mb-6">
         <label className="block text-sm font-medium mb-2">Select Novel</label>
         <select

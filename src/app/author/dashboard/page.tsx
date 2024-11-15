@@ -43,7 +43,7 @@ export default function AuthorDashboard() {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-screen">
+      <div className="flex justify-center items-center min-h-screen">
         <Icon icon="mdi:loading" className="animate-spin text-3xl text-gray-500" />
       </div>
     );
@@ -54,14 +54,15 @@ export default function AuthorDashboard() {
   }
 
   return (
-    <div className="flex flex-col h-screen">
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
-        <div className="p-4 lg:p-6">
-          <h1 className="text-2xl font-bold mb-4">Author Dashboard</h1>
-          <nav className="flex flex-wrap gap-2">
+    <div className="flex min-h-screen bg-gray-50">
+      {/* Left Sidebar */}
+      <div className="w-64 bg-white border-r border-gray-200 fixed h-full">
+        <div className="p-6">
+          <h1 className="text-xl font-bold mb-6">Author Dashboard</h1>
+          <nav className="flex flex-col gap-2">
             <button
               onClick={() => setActiveTab('novels')}
-              className={`py-2 px-4 rounded-lg transition-colors ${
+              className={`w-full py-2 px-4 rounded-lg transition-colors text-left ${
                 activeTab === 'novels'
                   ? 'bg-blue-100 text-blue-700'
                   : 'text-gray-600 hover:bg-gray-100'
@@ -74,7 +75,7 @@ export default function AuthorDashboard() {
             </button>
             <button
               onClick={() => setActiveTab('chapters')}
-              className={`py-2 px-4 rounded-lg transition-colors ${
+              className={`w-full py-2 px-4 rounded-lg transition-colors text-left ${
                 activeTab === 'chapters'
                   ? 'bg-blue-100 text-blue-700'
                   : 'text-gray-600 hover:bg-gray-100'
@@ -87,7 +88,7 @@ export default function AuthorDashboard() {
             </button>
             <button
               onClick={() => setActiveTab('purchases')}
-              className={`py-2 px-4 rounded-lg transition-colors ${
+              className={`w-full py-2 px-4 rounded-lg transition-colors text-left ${
                 activeTab === 'purchases'
                   ? 'bg-blue-100 text-blue-700'
                   : 'text-gray-600 hover:bg-gray-100'
@@ -102,18 +103,17 @@ export default function AuthorDashboard() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto bg-gray-50">
-        <div className="max-w-7xl mx-auto p-4 lg:p-8">
-          {activeTab === 'novels' && (
-            <NovelUploadForm authorOnly={true} />
-          )}
-          {activeTab === 'chapters' && (
-            <ChapterManagementForm authorOnly={true} />
-          )}
-          {activeTab === 'purchases' && (
-            <ChapterPurchaseHistory />
-          )}
-        </div>
+      {/* Main Content */}
+      <div className="ml-64 flex-1 p-8">
+        {activeTab === 'novels' && (
+          <NovelUploadForm authorOnly={true} />
+        )}
+        {activeTab === 'chapters' && (
+          <ChapterManagementForm authorOnly={true} />
+        )}
+        {activeTab === 'purchases' && (
+          <ChapterPurchaseHistory />
+        )}
       </div>
     </div>
   );

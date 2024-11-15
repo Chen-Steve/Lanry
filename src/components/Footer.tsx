@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
-import toast from 'react-hot-toast';
 
 const Footer = () => {
   return (
@@ -42,23 +41,15 @@ const Footer = () => {
             <div className="space-y-2 flex flex-col items-start mt-4 sm:hidden">
               <h3 className="text-xs sm:text-sm font-semibold text-gray-800">Connect</h3>
               <div className="flex space-x-3">
-                {/* <a
-                  href="https://github.com/Chen-Steve/lanry"
+                <a
+                  href="https://discord.gg/4CyamqVt"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-gray-600 hover:text-gray-800 transition-colors"
-                  aria-label="GitHub"
-                >
-                  <Icon icon="mdi:github" className="text-xl sm:text-2xl" />
-                </a>
-                */}
-                <button
-                  onClick={() => toast.error('Discord server coming soon!')}
                   className="text-gray-600 hover:text-gray-800 transition-colors"
                   aria-label="Discord"
                 >
                   <Icon icon="mdi:discord" className="text-xl sm:text-2xl" />
-                </button>
+                </a>
               </div>
             </div>
           </div>
@@ -98,23 +89,15 @@ const Footer = () => {
           <div className="hidden sm:flex space-y-2 flex-col items-start">
             <h3 className="text-xs sm:text-sm font-semibold text-gray-800">Connect</h3>
             <div className="flex space-x-3">
-              {/* <a
-                href="https://github.com/Chen-Steve/lanry"
+              <a
+                href="https://discord.gg/4CyamqVt"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-600 hover:text-gray-800 transition-colors"
-                aria-label="GitHub"
-              >
-                <Icon icon="mdi:github" className="text-xl sm:text-2xl" />
-              </a>
-              */}
-              <button
-                onClick={() => toast.error('Discord server coming soon!')}
                 className="text-gray-600 hover:text-gray-800 transition-colors"
                 aria-label="Discord"
               >
                 <Icon icon="mdi:discord" className="text-xl sm:text-2xl" />
-              </button>
+              </a>
             </div>
           </div>
         </div>
