@@ -10,6 +10,7 @@ export interface Chapter {
   coins: number;
   novel?: Novel;
   isUnlocked?: boolean;
+  author_profile_id: string;
 }
 
 export interface Novel {
@@ -27,8 +28,10 @@ export interface Novel {
   views: number;
   isBookmarked?: boolean;
   chapterUnlocks?: ChapterUnlock[];
+  author_profile_id: string;
   translator_id?: string;
   translator?: {
+    id: string;
     username: string;
   };
 }
@@ -71,6 +74,7 @@ export interface UserProfile {
   current_streak: number;
   last_visit: string | null;
   coins: number;
+  role: 'USER' | 'ADMIN' | 'AUTHOR';
   transactions?: CoinTransaction[];
   chapterUnlocks?: ChapterUnlock[];
 }

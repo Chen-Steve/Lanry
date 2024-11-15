@@ -8,7 +8,8 @@ export async function getNovel(id: string, userId?: string): Promise<Novel | nul
       .from('novels')
       .select(`
         *,
-        translator:author_profile_id (
+        authorProfile:author_profile_id (
+          id,
           username
         ),
         chapters (
@@ -34,25 +35,20 @@ export async function getNovel(id: string, userId?: string): Promise<Novel | nul
 
     if (error || !data) return null;
 
-    // Process chapters to include unlock status
-    const chapters = (data.chapters || []).map((chapter: Chapter) => ({
-      ...chapter,
-      isUnlocked: userId ? 
-        data.chapter_unlocks?.some((unlock: ChapterUnlock) => 
-          unlock.chapter_number === chapter.chapter_number && 
-          unlock.profile_id === userId
-        ) : false
-    })).sort((a: Chapter, b: Chapter) => a.chapter_number - b.chapter_number);
-
     return {
       ...data,
-      translator: data.translator ? {
-        username: data.translator.username
-      } : undefined,
+      authorProfileId: data.author_profile_id,
       coverImageUrl: data.cover_image_url,
       bookmarkCount: data.bookmarks?.length ?? 0,
       isBookmarked: userId ? data.bookmarks?.some((b: { profile_id: string }) => b.profile_id === userId) ?? false : false,
-      chapters
+      chapters: (data.chapters || []).map((chapter: Chapter) => ({
+        ...chapter,
+        isUnlocked: userId ? 
+          data.chapter_unlocks?.some((unlock: ChapterUnlock) => 
+            unlock.chapter_number === chapter.chapter_number && 
+            unlock.profile_id === userId
+          ) : false
+      })).sort((a: Chapter, b: Chapter) => a.chapter_number - b.chapter_number)
     };
   } catch (error) {
     console.error('Detailed error in getNovel:', error);

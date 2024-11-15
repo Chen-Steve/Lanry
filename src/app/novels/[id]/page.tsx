@@ -77,6 +77,7 @@ export default function NovelPage({ params }: { params: { id: string } }) {
         
         const data = await getNovel(id, userId);
         if (data) {
+          console.log('Novel data:', data);
           setNovel(data);
           setIsBookmarked(data.isBookmarked || false);
           setViewCount(data.views || 0);
@@ -157,6 +158,8 @@ export default function NovelPage({ params }: { params: { id: string } }) {
   if (!novel) {
     notFound();
   }
+
+  console.log('Novel author ID:', novel.author_profile_id);
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
@@ -400,7 +403,7 @@ export default function NovelPage({ params }: { params: { id: string } }) {
                         novelSlug={novel.slug}
                         userProfile={userProfile}
                         isAuthenticated={isAuthenticated}
-                        coinCost={5}
+                        novelAuthorId={novel.author_profile_id}
                       />
                     ))}
                   </div>
