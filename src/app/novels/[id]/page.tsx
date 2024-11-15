@@ -276,9 +276,9 @@ export default function NovelPage({ params }: { params: { id: string } }) {
           </div>
 
           {/* Synopsis with Stats */}
-          <div className="prose max-w-none mb-8">
+          <div className="prose max-w-none mb-6">
             <div className="flex items-center gap-6 mb-2">
-              <h2 className="text-xl font-semibold m-0 text-black">Synopsis</h2>
+              <h2 className="text-lg font-semibold m-0 text-black">Synopsis</h2>
               <div className="hidden md:flex items-center gap-4 text-sm text-gray-600">
                 <div className="flex items-center gap-1">
                   <Icon icon="mdi:book-open-page-variant" className="text-lg" />
@@ -294,7 +294,9 @@ export default function NovelPage({ params }: { params: { id: string } }) {
                 </div>
               </div>
             </div>
-            <p className="text-black whitespace-pre-line">{novel.description}</p>
+            <p className="text-sm text-black whitespace-pre-line leading-relaxed">
+              {novel.description}
+            </p>
           </div>
 
           {/* Additional Info */}
