@@ -1,9 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { formatDate } from '@/lib/utils';
 import CommentPopover from '@/components/chapter/CommentPopover';
 import { useComments } from '@/hooks/useComments';
+import { Icon } from '@iconify/react';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 
 interface ChapterContentProps {
   novelId: string;
@@ -29,6 +31,7 @@ export default function ChapterContent({
   const [selectedParagraphId, setSelectedParagraphId] = useState<string | null>(null);
   const [commentPosition, setCommentPosition] = useState({ x: 0, y: 0 });
   const { comments, addComment, isAuthenticated, isLoading } = useComments(novelId, chapterNumber);
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
   const handleCloseComment = () => {
     setSelectedParagraphId(null);
@@ -60,6 +63,23 @@ export default function ChapterContent({
     onCommentStateChange(true);
   };
 
+  const handleCommentClick = useCallback((
+    event: React.MouseEvent<HTMLButtonElement>,
+    paragraphId: string
+  ) => {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const rect = (event.target as HTMLElement).getBoundingClientRect();
+    setCommentPosition({
+      x: event.clientX,
+      y: rect.bottom
+    });
+    
+    setSelectedParagraphId(paragraphId);
+    onCommentStateChange(true);
+  }, [onCommentStateChange]);
+
   return (
     <div className="mb-6 md:mb-8">
       <div className="mb-4 flex justify-between items-center">
@@ -85,12 +105,14 @@ export default function ChapterContent({
           const paragraphComments = comments[paragraphId] || [];
           
           return (
-            <div key={index} className="relative">
+            <div key={index} className="relative group">
               <p 
                 id={paragraphId}
                 className="mb-4 leading-relaxed relative"
-                onContextMenu={(e) => handleParagraphLongPress(e, paragraphId)}
+                onContextMenu={(e) => isMobile && handleParagraphLongPress(e, paragraphId)}
                 onTouchStart={(e) => {
+                  if (!isMobile) return;
+                  
                   const timer = setTimeout(() => {
                     handleParagraphLongPress(e, paragraphId);
                   }, 500);
@@ -106,6 +128,18 @@ export default function ChapterContent({
                 }}
               >
                 {paragraph}
+                {!isMobile && (
+                  <button
+                    onClick={(e) => handleCommentClick(e, paragraphId)}
+                    className="absolute left-[-30px] top-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                    aria-label="Add comment"
+                  >
+                    <Icon 
+                      icon="pepicons-print:text-bubbles" 
+                      className="w-5 h-5 text-gray-400 hover:text-blue-500 transition-colors"
+                    />
+                  </button>
+                )}
                 {paragraphComments.length > 0 && (
                   <span className="ml-2 text-sm text-blue-500">
                     ({paragraphComments.length})

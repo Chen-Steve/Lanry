@@ -64,15 +64,20 @@ export default function CommentPopover({
   const calculatePosition = () => {
     const isMobile = window.innerWidth < 768;
     
-    let x;
     if (isMobile) {
-      x = Math.max(10, (window.innerWidth - 320) / 2);
+      // For mobile, position in center with larger width
+      return {
+        x: 20, // 20px padding from edges
+        y: 80, // Give some space from top for header
+        width: window.innerWidth - 40, // Full width minus padding
+        height: window.innerHeight - 160 // Full height minus top and bottom space
+      };
     } else {
-      x = Math.min(position.x, window.innerWidth - 320);
+      // Desktop positioning remains the same
+      const x = Math.min(position.x, window.innerWidth - 320);
+      const y = Math.min(position.y + 10, window.innerHeight - 400);
+      return { x, y, width: 320, height: 'auto' };
     }
-    
-    const y = Math.min(position.y + 10, window.innerHeight - 400);
-    return { x, y };
   };
 
   const popoverPosition = calculatePosition();
@@ -85,10 +90,15 @@ export default function CommentPopover({
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -10 }}
         transition={{ duration: 0.2 }}
-        className="fixed z-50 bg-white rounded-lg shadow-xl border p-4 w-80 text-black"
+        className="fixed z-50 bg-white rounded-lg shadow-xl border p-4 text-black"
         style={{
           left: `${popoverPosition.x}px`,
-          top: `${popoverPosition.y}px`
+          top: `${popoverPosition.y}px`,
+          width: typeof popoverPosition.width === 'number' ? `${popoverPosition.width}px` : popoverPosition.width,
+          height: typeof popoverPosition.height === 'number' ? `${popoverPosition.height}px` : popoverPosition.height,
+          maxHeight: window.innerHeight - 160, // Ensure it doesn't overflow viewport
+          display: 'flex',
+          flexDirection: 'column'
         }}
         data-paragraph-id={paragraphId}
         onClick={(e) => e.stopPropagation()}
@@ -104,11 +114,11 @@ export default function CommentPopover({
             className="text-black hover:text-gray-800"
             aria-label="Close comments"
           >
-            <Icon icon="mdi:close" />
+            <Icon icon="mdi:close" className="text-xl" />
           </button>
         </div>
 
-        <div className="max-h-60 overflow-y-auto mb-4 scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400">
+        <div className="flex-1 overflow-y-auto mb-4 scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400">
           {comments.map((comment) => (
             <motion.div
               key={comment.id}
@@ -126,20 +136,20 @@ export default function CommentPopover({
             </motion.div>
           ))}
           {comments.length === 0 && (
-            <p className="text-sm text-black text-center">No comments yet</p>
+            <p className="text-sm text-black text-center py-4">No comments yet</p>
           )}
         </div>
 
         {isLoading ? (
-          <div className="text-center text-black">
-            <Icon icon="eos-icons:loading" className="animate-spin" />
+          <div className="text-center text-black py-4">
+            <Icon icon="eos-icons:loading" className="animate-spin text-2xl" />
           </div>
         ) : isAuthenticated ? (
           <motion.form
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             onSubmit={handleSubmit}
-            className="mt-3"
+            className="mt-auto" // Push to bottom
           >
             <textarea
               value={newComment}
@@ -151,14 +161,14 @@ export default function CommentPopover({
             <button
               type="submit"
               disabled={!newComment.trim()}
-              className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-lg text-sm disabled:opacity-50
+              className="mt-2 w-full py-3 bg-blue-500 text-white rounded-lg text-sm disabled:opacity-50
                        hover:bg-blue-600 transition-colors duration-200"
             >
               Post
             </button>
           </motion.form>
         ) : (
-          <p className="text-sm text-black text-center">
+          <p className="text-sm text-black text-center mt-auto py-4">
             <Link href="/auth" className="text-blue-500 hover:underline">
               Sign in
             </Link>{' '}
