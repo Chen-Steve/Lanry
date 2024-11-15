@@ -123,24 +123,7 @@ export default function Settings({ profile }: SettingsProps) {
           )}
         </div>
 
-        {/* Add other settings sections here */}
-        <div className="border-t pt-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Account Info</h3>
-          <div className="space-y-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-500">
-                Current Streak
-              </label>
-              <p className="mt-1">{profile?.currentStreak || 0} days</p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-500">
-                Coins
-              </label>
-              <p className="mt-1">{profile?.coins || 0}</p>
-            </div>
-          </div>
-        </div>
+       
       </div>
     </div>
   );

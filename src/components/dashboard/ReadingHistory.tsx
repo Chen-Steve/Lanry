@@ -5,10 +5,9 @@ import Link from 'next/link';
 import { formatDate } from '@/lib/utils';
 import { Icon } from '@iconify/react';
 
-// Separate data fetching logic
-const fetchReadingHistory = async () => {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Not authenticated');
+// Update the fetch function to handle undefined userId
+const fetchReadingHistory = async (userId: string | undefined) => {
+  if (!userId) throw new Error('Not authenticated');
 
   const { data, error } = await supabase
     .from('reading_history')
@@ -21,7 +20,7 @@ const fetchReadingHistory = async () => {
         author
       )
     `)
-    .eq('profile_id', user.id)
+    .eq('profile_id', userId)
     .order('last_read', { ascending: false });
 
   if (error) throw error;
@@ -33,11 +32,12 @@ interface ReadingHistorySectionProps {
 }
 
 const ReadingHistorySection = ({ userId }: ReadingHistorySectionProps) => {
-  // Use React Query for data fetching
+  // Update query to pass userId
   const { data: history, isLoading, error } = useQuery<ReadingHistory[]>({
-    queryKey: ['readingHistory'],
-    queryFn: fetchReadingHistory,
-    staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
+    queryKey: ['readingHistory', userId],
+    queryFn: () => fetchReadingHistory(userId),
+    staleTime: 1000 * 60 * 5,
+    enabled: !!userId, // Only run query when userId is available
   });
 
   if (isLoading) {

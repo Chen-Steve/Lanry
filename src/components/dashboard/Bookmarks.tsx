@@ -25,9 +25,8 @@ interface BookmarksProps {
 }
 
 // Separate data fetching logic
-const fetchBookmarks = async () => {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.user) throw new Error('User not authenticated');
+const fetchBookmarks = async (userId: string | undefined) => {
+  if (!userId) throw new Error('Not authenticated');
 
   const { data, error } = await supabase
     .from('bookmarks')
@@ -41,7 +40,7 @@ const fetchBookmarks = async () => {
         slug
       )
     `)
-    .eq('profile_id', session.user.id)
+    .eq('profile_id', userId)
     .order('created_at', { ascending: false });
 
   if (error) throw error;
@@ -118,19 +117,23 @@ const Bookmarks = ({ userId }: BookmarksProps) => {
 
   // Query for fetching bookmarks
   const { data: bookmarks, isLoading, isError, error } = useQuery({
-    queryKey: ['bookmarks'],
-    queryFn: fetchBookmarks,
+    queryKey: ['bookmarks', userId],
+    queryFn: () => fetchBookmarks(userId),
     staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
     retry: 2,
+    enabled: !!userId, // Only run query when userId is available
   });
 
   // Update the mutation with proper types
   const removeMutation = useMutation<void, Error, string>({
     mutationFn: async (bookmarkId: string) => {
+      if (!userId) throw new Error('Not authenticated');
+      
       const { error } = await supabase
         .from('bookmarks')
         .delete()
-        .eq('id', bookmarkId);
+        .eq('id', bookmarkId)
+        .eq('profile_id', userId);
       if (error) throw error;
     },
     onSuccess: (_data: void, bookmarkId: string) => {
