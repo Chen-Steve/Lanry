@@ -121,7 +121,8 @@ export function ChapterListItem({
         throw new Error('Translator profile not found');
       }
 
-      const translatorCoinShare = 4; // Out of 5 coins
+      // Calculate 90% of the chapter coins
+      const translatorCoinShare = Math.floor(chapter.coins * 0.9);
 
       console.log('Initial translator profile:', translatorProfile);
       console.log('Current translator coins:', translatorProfile.coins);
