@@ -45,7 +45,7 @@ export function ChapterListItem({
     const checkUnlockStatus = async () => {
       if (!userProfile || !chapter.novel_id) return;
       
-      const { data: existingUnlock, error } = await supabase
+      const { data: existingUnlock } = await supabase
         .from('chapter_unlocks')
         .select('id')
         .match({
@@ -53,11 +53,7 @@ export function ChapterListItem({
           novel_id: chapter.novel_id,
           chapter_number: chapter.chapter_number
         })
-        .single();
-
-      if (error && error.code === '406') {
-        console.log('Chapter not unlocked yet');
-      }
+        .maybeSingle();
 
       setIsUnlocked(!!existingUnlock);
     };
