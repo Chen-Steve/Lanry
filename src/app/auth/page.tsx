@@ -157,14 +157,10 @@ export default function AuthPage() {
 
   const handleDiscordSignIn = async () => {
     try {
-      // Generate PKCE values
       const codeVerifier = generateCodeVerifier();
       const codeChallenge = await generateCodeChallenge(codeVerifier);
-      
-      // Generate random state
       const state = crypto.randomUUID();
 
-      // Store code verifier and state in cookies with proper attributes
       document.cookie = `discord_code_verifier=${codeVerifier}; path=/; secure; samesite=lax; max-age=3600`;
       document.cookie = `discord_oauth_state=${state}; path=/; secure; samesite=lax; max-age=3600`;
 
@@ -172,10 +168,12 @@ export default function AuthPage() {
         provider: 'discord',
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
+          scopes: 'identify email',
           queryParams: {
             code_challenge: codeChallenge,
             code_challenge_method: 'S256',
-            state: state
+            state: state,
+            prompt: 'consent'
           }
         }
       });
