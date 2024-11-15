@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import supabase from '@/lib/supabaseClient';
 import { Icon } from '@iconify/react';
 import { generateUsername } from '@/utils/username';
-import { generateCodeVerifier, generateCodeChallenge } from '@/utils/pkce';
 
 type AuthMode = 'signin' | 'signup';
 type PasswordStrength = 'weak' | 'medium' | 'strong';
@@ -157,22 +156,12 @@ export default function AuthPage() {
 
   const handleDiscordSignIn = async () => {
     try {
-      const codeVerifier = generateCodeVerifier();
-      const codeChallenge = await generateCodeChallenge(codeVerifier);
-      const state = crypto.randomUUID();
-
-      document.cookie = `discord_code_verifier=${codeVerifier}; path=/; secure; samesite=lax; max-age=3600`;
-      document.cookie = `discord_oauth_state=${state}; path=/; secure; samesite=lax; max-age=3600`;
-
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'discord',
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
           queryParams: {
-            code_challenge: codeChallenge,
-            code_challenge_method: 'S256',
-            state: state,
-            scope: 'identify email'
+            prompt: 'consent'
           }
         }
       });
