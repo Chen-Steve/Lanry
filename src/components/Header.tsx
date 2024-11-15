@@ -4,19 +4,46 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
 import { useSession } from 'next-auth/react';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { useRouter } from 'next/navigation';
 import SearchSection from './SearchSection';
 import type { Novel } from '@/types/database';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
 import { signOut } from 'next-auth/react';
+import { User } from '@supabase/supabase-js';
 
 const Header = () => {
+  const supabase = createClientComponentClient();
+  const router = useRouter();
   const { data: session, status } = useSession();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const hasUpdatedStreak = useRef(false);
+
+  // Add state for Supabase user
+  const [supabaseUser, setSupabaseUser] = useState<User | null>(null);
+
+  // Effect to check Supabase authentication status
+  useEffect(() => {
+    const checkSupabaseAuth = async () => {
+      const { data: { session: supaSession } } = await supabase.auth.getSession();
+      if (supaSession) {
+        setSupabaseUser(supaSession.user);
+      }
+    };
+
+    checkSupabaseAuth();
+
+    // Subscribe to auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSupabaseUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [supabase]);
 
   // Mutation for updating streak
   const updateStreakMutation = useMutation({
@@ -51,18 +78,19 @@ const Header = () => {
 
   // Query for user profile including streak data
   const { data: userProfile } = useQuery({
-    queryKey: ['profile', session?.user?.id],
+    queryKey: ['profile', session?.user?.id || supabaseUser?.id],
     queryFn: async () => {
-      if (!session?.user?.id) return null;
+      const userId = session?.user?.id || supabaseUser?.id;
+      if (!userId) return null;
       
-      const response = await fetch(`/api/profile/${session.user.id}`);
+      const response = await fetch(`/api/profile/${userId}`);
       if (!response.ok) {
         throw new Error('Failed to fetch profile');
       }
       return response.json();
     },
-    enabled: !!session?.user?.id,
-    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
+    enabled: !!(session?.user?.id || supabaseUser?.id),
+    staleTime: 5 * 60 * 1000,
   });
 
   useEffect(() => {
@@ -80,10 +108,21 @@ const Header = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isProfileDropdownOpen]);
 
+  // Modify handleSignOut to handle both auth systems
   const handleSignOut = async () => {
     try {
-      await signOut({ callbackUrl: '/' });
+      // Sign out from NextAuth
+      if (session) {
+        await signOut({ callbackUrl: '/' });
+      }
+      
+      // Sign out from Supabase
+      if (supabaseUser) {
+        await supabase.auth.signOut();
+      }
+
       queryClient.clear();
+      router.push('/');
     } catch (err) {
       console.error('Unexpected error during sign out:', err);
       queryClient.clear();
@@ -91,6 +130,20 @@ const Header = () => {
     }
   };
 
+  // Add this helper function inside the component
+  const getUserDisplayName = (user: User | { id: string; email: string; name?: string | null | undefined; image?: string | null | undefined; } | null) => {
+    if (!user) return null;
+    
+    // Handle Supabase User
+    if ('user_metadata' in user) {
+      return user.user_metadata?.name || user.email;
+    }
+    
+    // Handle NextAuth User
+    return user.name || user.email;
+  };
+
+  // Modify renderAuthLink to handle both auth systems
   const renderAuthLink = () => {
     if (status === 'loading') {
       return (
@@ -100,14 +153,17 @@ const Header = () => {
       );
     }
 
-    if (status === 'authenticated' && session?.user) {
+    // Show authenticated state if either NextAuth or Supabase session exists
+    if ((status === 'authenticated' && session?.user) || supabaseUser) {
+      const user = session?.user || supabaseUser;
+      
       return (
         <div className="relative" ref={profileDropdownRef}>
           <button
             onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
             className="text-gray-600 hover:text-gray-800 transition-colors"
           >
-            {userProfile?.username || session.user.name || 'Loading...'}
+            {userProfile?.username || getUserDisplayName(user) || 'Loading...'}
           </button>
           {isProfileDropdownOpen && (
             <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 border border-gray-200">
@@ -115,7 +171,7 @@ const Header = () => {
                 href="/user-dashboard"
                 className="block px-4 py-2 text-sm text-gray-700 border-b border-gray-200 hover:bg-gray-100"
               >
-                {userProfile?.username || session.user.name}
+                {userProfile?.username || getUserDisplayName(user) || 'Profile'}
               </Link>
               <div className="px-4 py-2 text-sm text-gray-600 border-b border-gray-200 flex items-center gap-2">
                 <Icon icon="mdi:fire" className={`${userProfile?.currentStreak ? 'text-orange-500' : 'text-gray-400'}`} />

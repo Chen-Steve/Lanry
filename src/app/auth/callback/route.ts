@@ -1,6 +1,7 @@
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import type { UserProfile } from '@/types/database';
 
 export async function GET(request: Request) {
   try {
@@ -14,18 +15,33 @@ export async function GET(request: Request) {
       if (authError) throw authError;
       
       if (user) {
-        // First create the profile
-        const { error: insertError } = await supabase
+        // Check if profile already exists
+        const { data: existingProfile } = await supabase
           .from('profiles')
-          .insert({
+          .select('id')
+          .eq('id', user.id)
+          .single();
+
+        if (!existingProfile) {
+          // Create new profile using your UserProfile type
+          const newProfile: Partial<UserProfile> = {
             id: user.id,
             username: `user_${Math.random().toString(36).slice(2, 7)}`,
             created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          });
+            updated_at: new Date().toISOString(),
+            current_streak: 0,
+            last_visit: null,
+            coins: 0
+          };
 
-        if (insertError) {
-          console.error('Profile creation failed:', insertError);
+          const { error: insertError } = await supabase
+            .from('profiles')
+            .insert(newProfile)
+            .single();
+
+          if (insertError) {
+            console.error('Profile creation failed:', insertError);
+          }
         }
       }
     }
