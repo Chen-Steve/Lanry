@@ -15,6 +15,7 @@ export async function GET(request: Request) {
     
     // Verify state matches to prevent CSRF attacks
     if (!state || !storedState || state !== storedState) {
+      console.error('State verification failed:', { state, storedState });
       return NextResponse.redirect(
         `${requestUrl.origin}/auth?error=invalid_state`,
         { status: 301 }
@@ -26,11 +27,23 @@ export async function GET(request: Request) {
     if (code) {
       const { data: { user }, error: authError } = await supabase.auth.exchangeCodeForSession(code);
       
-      if (authError) throw authError;
+      if (authError) {
+        console.error('Auth exchange error:', authError);
+        throw authError;
+      }
       
       // If we have a user, handle the profile creation
       if (user) {
-        await handleDiscordSignup(user);
+        try {
+          await handleDiscordSignup(user);
+          console.log('Profile setup completed for user:', user.id);
+        } catch (profileError) {
+          console.error('Profile setup failed:', profileError);
+          // Continue with redirect even if profile setup fails
+          // This ensures the user isn't stuck in a redirect loop
+        }
+      } else {
+        console.error('No user data received from auth exchange');
       }
     }
 
