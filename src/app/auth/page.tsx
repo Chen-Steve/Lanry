@@ -160,9 +160,13 @@ export default function AuthPage() {
       // Generate PKCE values
       const codeVerifier = generateCodeVerifier();
       const codeChallenge = await generateCodeChallenge(codeVerifier);
+      
+      // Generate random state
+      const state = generateCodeVerifier().slice(0, 16);
 
-      // Store code verifier in session storage
-      sessionStorage.setItem('discord_code_verifier', codeVerifier);
+      // Store code verifier and state in cookies
+      document.cookie = `discord_code_verifier=${codeVerifier}; path=/; secure; samesite=lax`;
+      document.cookie = `discord_oauth_state=${state}; path=/; secure; samesite=lax`;
 
       await supabase.auth.signInWithOAuth({
         provider: 'discord',
@@ -173,7 +177,8 @@ export default function AuthPage() {
           queryParams: {
             prompt: 'consent',
             code_challenge: codeChallenge,
-            code_challenge_method: 'S256'
+            code_challenge_method: 'S256',
+            state: state
           }
         }
       });

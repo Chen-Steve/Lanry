@@ -8,13 +8,27 @@ export async function GET(request: Request) {
   try {
     const requestUrl = new URL(request.url);
     const code = requestUrl.searchParams.get('code');
+    const state = requestUrl.searchParams.get('state');
     const next = requestUrl.searchParams.get('next') ?? '/';
 
     if (!code) {
       throw new Error('No code provided');
     }
 
+    // Get stored state and code verifier from cookies
     const cookieStore = cookies();
+    const storedState = cookieStore.get('discord_oauth_state')?.value;
+    const codeVerifier = cookieStore.get('discord_code_verifier')?.value;
+
+    // Verify state matches to prevent CSRF attacks
+    if (state !== storedState) {
+      throw new Error('State mismatch');
+    }
+
+    if (!codeVerifier) {
+      throw new Error('No code verifier found');
+    }
+
     const supabase = createRouteHandlerClient({ 
       cookies: () => cookieStore,
     });
@@ -62,25 +76,23 @@ export async function GET(request: Request) {
       if (insertError) throw insertError;
     }
 
-    // Handle redirect based on environment
-    const forwardedHost = request.headers.get('x-forwarded-host');
-    const isLocalEnv = process.env.NODE_ENV === 'development';
-    
-    if (isLocalEnv) {
-      return NextResponse.redirect(`${requestUrl.origin}${next}`);
-    } else if (forwardedHost) {
-      return NextResponse.redirect(`https://${forwardedHost}${next}`);
-    } else {
-      return NextResponse.redirect(`${requestUrl.origin}${next}`);
-    }
+    // Use the 'next' parameter in the redirect
+    const response = NextResponse.redirect(new URL(next, requestUrl.origin));
+    response.cookies.delete('discord_oauth_state');
+    response.cookies.delete('discord_code_verifier');
+
+    return response;
 
   } catch (error) {
     console.error('Auth callback error:', error);
-    return NextResponse.redirect(
+    const response = NextResponse.redirect(
       new URL(
         `/auth?error=${encodeURIComponent(error instanceof Error ? error.message : 'Authentication failed')}`,
         request.url
       )
     );
+    response.cookies.delete('discord_oauth_state');
+    response.cookies.delete('discord_code_verifier');
+    return response;
   }
 } 
