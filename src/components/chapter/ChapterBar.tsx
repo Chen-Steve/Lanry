@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { Icon } from '@iconify/react';
 import Link from 'next/link';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
+import TextCustomization from './TextCustomization';
 
 interface ChapterProgressBarProps {
   novelId: string;
@@ -13,13 +14,21 @@ interface ChapterProgressBarProps {
     prevChapter: { chapter_number: number } | null;
     nextChapter: { chapter_number: number } | null;
   };
+  onFontChange: (font: string) => void;
+  onSizeChange: (size: number) => void;
+  currentFont: string;
+  currentSize: number;
 }
 
 export default function ChapterProgressBar({
   novelId,
   currentChapter,
   totalChapters,
-  navigation
+  navigation,
+  onFontChange,
+  onSizeChange,
+  currentFont,
+  currentSize
 }: ChapterProgressBarProps) {
   const [scrollProgress, setScrollProgress] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
@@ -93,12 +102,14 @@ export default function ChapterProgressBar({
   return (
     <div
       ref={progressBarRef}
-      className={`fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg transition-transform duration-300 py-4 rounded-t-md ${
-        isVisible ? 'translate-y-0' : 'translate-y-full'
+      className={`fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg transition-all duration-300 rounded-t-md ${
+        isVisible 
+          ? 'translate-y-0 py-6 min-h-[180px]'
+          : 'translate-y-full'
       }`}
     >
-      {/* Progress container */}
-      <div className="px-4 mb-4">
+      <div className="px-4 space-y-6">
+        {/* Progress Section */}
         <div className="bg-gray-50 rounded-md p-4">
           {/* Chapter info - centered */}
           <div className="mb-4 text-center">
@@ -156,11 +167,16 @@ export default function ChapterProgressBar({
             )}
           </div>
         </div>
-      </div>
 
-      {/* Empty space for future features */}
-      <div className="px-4 h-16">
-        {/* Future content will go here */}
+        {/* Text Customization Section */}
+        <div className="bg-gray-50 rounded-md p-4">
+          <TextCustomization
+            onFontChange={onFontChange}
+            onSizeChange={onSizeChange}
+            currentFont={currentFont}
+            currentSize={currentSize}
+          />
+        </div>
       </div>
     </div>
   );

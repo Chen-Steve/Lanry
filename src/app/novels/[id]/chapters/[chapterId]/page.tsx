@@ -11,7 +11,7 @@ import { useLocalStorage } from '@/hooks/useLocalStorage';
 import ChapterHeader from '@/components/chapter/ChapterHeader';
 import ChapterContent from '@/components/chapter/ChapterContent';
 import supabase from '@/lib/supabaseClient';
-import ChapterProgressBar from '@/components/chapter/ChapterProgressBar';
+import ChapterProgressBar from '@/components/chapter/ChapterBar';
 
 function ChapterNavigation({ 
   navigation, 
@@ -324,10 +324,6 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
         novelId={novelId}
         novelTitle={chapter.novel.title}
         author={chapter.novel.author}
-        fontFamily={fontFamily}
-        fontSize={fontSize}
-        onFontChange={setFontFamily}
-        onSizeChange={setFontSize}
       />
 
       {/* Top Navigation */}
@@ -372,6 +368,10 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
       <ScrollToTopButton />
       <ChapterProgressBar
         novelId={novelId}
+        onFontChange={setFontFamily}
+        onSizeChange={setFontSize}
+        currentFont={fontFamily}
+        currentSize={fontSize}
         currentChapter={chapter.chapter_number}
         totalChapters={totalChapters}
         navigation={navigation}

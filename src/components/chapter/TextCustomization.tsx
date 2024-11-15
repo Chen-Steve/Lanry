@@ -1,7 +1,6 @@
 'use client';
 
 import { Icon } from '@iconify/react';
-import { useState, useRef, useEffect } from 'react';
 
 interface TextCustomizationProps {
   onFontChange: (font: string) => void;
@@ -22,82 +21,46 @@ export default function TextCustomization({
   currentFont,
   currentSize,
 }: TextCustomizationProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
   return (
-    <div className="relative" ref={dropdownRef}>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="p-2 rounded-lg hover:bg-gray-100"
-        aria-label="Text settings"
-      >
-        <Icon icon="mdi:cog" className="text-xl text-gray-600 hover:text-gray-900" />
-      </button>
+    <div className="flex items-center justify-between">
+      {/* Font Family */}
+      <div className="flex items-center gap-3">
+        {fonts.map((font) => (
+          <button
+            key={font.name}
+            onClick={() => onFontChange(font.value)}
+            className={`px-3 py-1 rounded-md text-sm ${
+              currentFont === font.value
+                ? 'bg-blue-50 text-blue-700'
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+            style={{ fontFamily: font.value }}
+          >
+            {font.name}
+          </button>
+        ))}
+      </div>
 
-      {isOpen && (
-        <div className="absolute right-0 mt-2 w-64 bg-white border rounded-lg shadow-lg p-4 z-50">
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-black mb-2">
-              Font Family
-            </label>
-            <div className="space-y-2">
-              {fonts.map((font) => (
-                <button
-                  key={font.name}
-                  onClick={() => onFontChange(font.value)}
-                  className={`w-full text-left px-3 py-2 rounded-md ${
-                    currentFont === font.value
-                      ? 'bg-blue-50 text-blue-700'
-                      : 'text-black hover:bg-gray-50'
-                  }`}
-                  style={{ fontFamily: font.value }}
-                >
-                  {font.name}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-black mb-2">
-              Font Size
-            </label>
-            <div className="flex items-center gap-4">
-              <button
-                title="Decrease font size"
-                onClick={() => onSizeChange(currentSize - 1)}
-                className="p-1 rounded-md hover:bg-gray-100 text-black"
-                disabled={currentSize <= 12}
-              >
-                <Icon icon="mdi:minus" />
-              </button>
-              <span className="text-sm text-black">{currentSize}px</span>
-              <button
-                title="Increase font size"
-                onClick={() => onSizeChange(currentSize + 1)}
-                className="p-1 rounded-md hover:bg-gray-100 text-black"
-                disabled={currentSize >= 24}
-              >
-                <Icon icon="mdi:plus" />
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Font Size */}
+      <div className="flex items-center gap-2">
+        <button
+          title="Decrease Font Size"
+          onClick={() => onSizeChange(currentSize - 1)}
+          className="p-1 rounded-md hover:bg-gray-100 text-gray-600"
+          disabled={currentSize <= 12}
+        >
+          <Icon icon="mdi:minus" />
+        </button>
+        <span className="text-sm min-w-[3ch] text-center">{currentSize}</span>
+        <button
+          title="Increase Font Size"
+          onClick={() => onSizeChange(currentSize + 1)}
+          className="p-1 rounded-md hover:bg-gray-100 text-gray-600"
+          disabled={currentSize >= 24}
+        >
+          <Icon icon="mdi:plus" />
+        </button>
+      </div>
     </div>
   );
 } 
