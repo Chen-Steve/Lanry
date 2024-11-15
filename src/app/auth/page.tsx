@@ -162,21 +162,15 @@ export default function AuthPage() {
           redirectTo: `${window.location.origin}/auth/callback`,
           scopes: 'identify email guilds',
           queryParams: {
-            prompt: 'consent'
-          },
-          skipBrowserRedirect: true
+            prompt: 'consent',
+            // Add additional Discord-specific scopes if needed
+          }
         }
       });
 
-      if (error) {
-        console.error('Discord auth error details:', error);
-        throw error;
-      }
-
-      // Manually redirect to the authorization URL
-      if (data?.url) {
-        window.location.href = data.url;
-      }
+      if (error) throw error;
+      if (data?.url) window.location.href = data.url;
+      
     } catch (error) {
       console.error('Discord auth error:', error);
       setError(error instanceof Error ? error.message : 'Authentication failed');
