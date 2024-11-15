@@ -39,24 +39,42 @@ function ChapterNavigation({
     : 'bottom-full left-1/2 -translate-x-1/2 mb-2';
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex items-center justify-center gap-2">
+      {/* Previous Chapter */}
+      <div className="w-auto">
+        {navigation.prevChapter ? (
+          <Link
+            href={`/novels/${novelId}/chapters/c${navigation.prevChapter.chapter_number}`}
+            className="inline-flex items-center px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-black transition-colors text-sm whitespace-nowrap"
+          >
+            <div className="flex items-center gap-1">
+              <Icon icon="mdi:chevron-left" className="text-lg" />
+              <span className="hidden sm:inline">Ch.{navigation.prevChapter.chapter_number}</span>
+              <span className="sm:hidden">Previous</span>
+            </div>
+          </Link>
+        ) : (
+          <div className="hidden sm:block px-3 py-2 text-gray-400 text-sm">Ch.1</div>
+        )}
+      </div>
+
       {/* Chapter Selector */}
-      <div className="relative w-full">
+      <div className="relative w-[160px]">
         <button
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-          className="w-full px-4 py-3 border rounded-lg flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors text-black"
+          className="w-full px-3 py-2 border rounded-lg flex items-center justify-center gap-1 hover:bg-gray-50 transition-colors text-black text-sm"
         >
           <span>Chapter {currentChapter}</span>
-          <Icon icon="mdi:chevron-down" />
+          <Icon icon="mdi:chevron-down" className="text-lg" />
         </button>
 
         {isDropdownOpen && (
-          <div className={`absolute ${dropdownPosition} w-48 max-h-[60vh] overflow-y-auto bg-white border rounded-lg shadow-lg z-50 left-1/2 -translate-x-1/2`}>
+          <div className={`absolute ${dropdownPosition} w-44 max-h-[60vh] overflow-y-auto bg-white border rounded-lg shadow-lg z-50 left-1/2 -translate-x-1/2`}>
             {Array.from({ length: totalChapters }, (_, i) => i + 1).map((num) => (
               <button
                 key={num}
                 onClick={() => handleChapterSelect(num)}
-                className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors text-black ${
+                className={`w-full px-3 py-2 text-left hover:bg-gray-50 transition-colors text-black text-sm ${
                   num === currentChapter ? 'bg-blue-50' : ''
                 }`}
               >
@@ -67,43 +85,22 @@ function ChapterNavigation({
         )}
       </div>
 
-      {/* Navigation Buttons */}
-      <div className="flex justify-between items-center gap-3">
-        {/* Previous Chapter */}
-        <div className="flex-1 min-w-[120px]">
-          {navigation.prevChapter ? (
-            <Link
-              href={`/novels/${novelId}/chapters/c${navigation.prevChapter.chapter_number}`}
-              className="flex items-center justify-center w-full px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg text-black transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                <Icon icon="mdi:chevron-left" className="text-xl" />
-                <span className="hidden sm:inline">Previous</span>
-                <span>Ch.{navigation.prevChapter.chapter_number}</span>
-              </div>
-            </Link>
-          ) : (
-            <div className="hidden sm:block px-4 py-2 text-black">No previous chapter</div>
-          )}
-        </div>
-
-        {/* Next Chapter */}
-        <div className="flex-1 min-w-[120px]">
-          {navigation.nextChapter ? (
-            <Link
-              href={`/novels/${novelId}/chapters/c${navigation.nextChapter.chapter_number}`}
-              className="flex items-center justify-center w-full px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg text-black transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                <span className="hidden sm:inline">Next</span>
-                <span>Ch.{navigation.nextChapter.chapter_number}</span>
-                <Icon icon="mdi:chevron-right" className="text-xl" />
-              </div>
-            </Link>
-          ) : (
-            <div className="hidden sm:block px-4 py-2 text-black">No next chapter</div>
-          )}
-        </div>
+      {/* Next Chapter */}
+      <div className="w-auto">
+        {navigation.nextChapter ? (
+          <Link
+            href={`/novels/${novelId}/chapters/c${navigation.nextChapter.chapter_number}`}
+            className="inline-flex items-center px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-black transition-colors text-sm whitespace-nowrap"
+          >
+            <div className="flex items-center gap-1">
+              <span className="hidden sm:inline">Ch.{navigation.nextChapter.chapter_number}</span>
+              <span className="sm:hidden">Next</span>
+              <Icon icon="mdi:chevron-right" className="text-lg" />
+            </div>
+          </Link>
+        ) : (
+          <div className="hidden sm:block px-3 py-2 text-gray-400 text-sm text-right">Ch.{totalChapters}</div>
+        )}
       </div>
     </div>
   );
