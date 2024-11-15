@@ -275,7 +275,7 @@ const Header = () => {
 
   return (
     <header className="w-full bg-white">
-      <div className="max-w-5xl mx-auto px-4 mt-4 sm:mt-8 mb-6 sm:mb-10">
+      <div className="max-w-5xl mx-auto px-4 mt-4 sm:mt-8 mb-2 sm:mb-10">
         <div className="bg-white border-b border-black rounded-md px-4 sm:px-6 py-3">
           <div className="flex items-center justify-between space-x-4">
             {/* Logo */}
