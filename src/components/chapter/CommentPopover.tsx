@@ -122,10 +122,10 @@ export default function CommentPopover({
           {comments.map((comment) => (
             <div key={comment.id} className="mb-4 last:mb-0">
               <div className="flex items-center gap-2">
-                <span className="font-medium">
+                <span className="text-sm">
                   {comment.profile?.username ?? 'Anonymous'}
                 </span>
-                <span className="text-sm text-gray-500">
+                <span className="text-xs text-gray-500">
                   {formatDate(comment.created_at)}
                 </span>
               </div>
