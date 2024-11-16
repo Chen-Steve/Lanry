@@ -12,6 +12,7 @@ import ChapterHeader from '@/components/chapter/ChapterHeader';
 import ChapterContent from '@/components/chapter/ChapterContent';
 import supabase from '@/lib/supabaseClient';
 import ChapterProgressBar from '@/components/chapter/ChapterBar';
+import ChapterSidebar from '@/components/chapter/ChapterSidebar';
 
 function ChapterNavigation({ 
   navigation, 
@@ -377,6 +378,13 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
         totalChapters={totalChapters}
         navigation={navigation}
         isCommentOpen={isCommentOpen}
+      />
+      
+      <ChapterSidebar
+        onFontChange={setFontFamily}
+        onSizeChange={setFontSize}
+        currentFont={fontFamily}
+        currentSize={fontSize}
       />
     </div>
   );
