@@ -55,9 +55,6 @@ export default function ShopPage() {
       {/* Header Section */}
       <div className="text-center mb-12">
         <h1 className="text-3xl font-bold mb-4 text-black">Coin Shop</h1>
-        <p className="text-black mb-4">
-          Purchase coins to unlock advanced chapteres, premium features and support your favorite novels
-        </p>
         <div className="bg-amber-50 p-4 rounded-lg inline-flex items-center gap-2">
           <Icon icon="pepicons-print:coin" className="text-amber-600 text-xl" />
           {isLoading ? (
@@ -79,18 +76,31 @@ export default function ShopPage() {
               Purchase {selectedPackage.coins} coins for ${selectedPackage.price.toFixed(2)}
             </p>
             
-            <a
-              href={`https://ko-fi.com/niasser/`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full py-2 px-4 rounded-md font-medium bg-[#FF5E5B] hover:bg-[#e54744] text-white text-center block flex items-center justify-center gap-2"
-            >
-              <Icon icon="simple-icons:kofi" className="text-xl" />
-              Support on Ko-fi
-            </a>
+            <div className="space-y-3">
+              <a
+                href={`https://ko-fi.com/niasser/`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-2 px-4 rounded-md font-medium bg-[#FF5E5B] hover:bg-[#e54744] text-white text-center flex items-center justify-center gap-2"
+              >
+                <Icon icon="simple-icons:kofi" className="text-xl" />
+                Support on Ko-fi
+              </a>
+
+              <a
+                href="https://www.paypal.com/biz/profile/lanrys"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-2 px-4 rounded-md font-medium bg-[#0070BA] hover:bg-[#005ea6] text-white text-center flex items-center justify-center gap-2"
+              >
+                <Icon icon="logos:paypal" className="text-xl" />
+                Pay with PayPal
+              </a>
+            </div>
 
             <div className="mt-4 text-sm text-gray-600">
               <p>Important: Please include your username in the message when making the payment!</p>
+              <p className="mt-2 italic">Note: Your coin balance will be updated within 1 hours after payment confirmation.</p>
             </div>
 
             <button
@@ -145,6 +155,14 @@ export default function ShopPage() {
             </button>
           </div>
         ))}
+      </div>
+
+      {/* Payment Methods Notice */}
+      <div className="mt-8 text-center text-sm text-gray-600">
+        <p>
+          We&apos;re working on integrating Stripe, PayPal, and Apple Pay for more convenient payment options.
+          Stay tuned!
+        </p>
       </div>
 
       {/* How to Earn Section */}
