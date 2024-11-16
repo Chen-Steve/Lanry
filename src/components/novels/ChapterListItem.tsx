@@ -63,96 +63,31 @@ export function ChapterListItem({
     checkUnlockStatus();
   }, [userProfile?.id, chapter.novel_id, chapter.chapter_number]);
 
-  const unlockChapter = async () => {
+  const unlockChapter = async (
+    novelId: string,
+    authorId: string,
+    chapterNumber: number,
+    userProfileId: string
+  ) => {
     try {
-      if (!userProfile) {
-        toast.error('Please log in to unlock chapters');
-        return;
-      }
-      if (!chapter.novel_id) {
-        toast.error('Novel information is missing');
-        return;
-      }
-      if (!novelAuthorId) {
-        toast.error('This novel does not have an assigned translator yet');
-        return;
-      }
-
-      // Add debug logging
-      console.log('Unlock attempt:', {
-        novelId: chapter.novel_id,
-        authorId: novelAuthorId,
-        chapterNumber: chapter.chapter_number,
-        userProfile: userProfile.id
-      });
-
-      // Check if user has enough coins
-      if (userProfile.coins < chapter.coins) {
-        toast.error('Not enough coins to unlock this chapter');
-        return;
-      }
-
-      // Calculate translator's share (90% of cost)
-      const translatorShare = Math.floor(chapter.coins * 0.9);
-
-      // Deduct coins from user
-      const { error: deductError } = await supabase
-        .from('profiles')
-        .update({ coins: userProfile.coins - chapter.coins })
-        .eq('id', userProfile.id);
-
-      if (deductError) throw deductError;
-
-      // First get translator's current coins - Fixed query
-      const { data: translatorData, error: translatorFetchError } = await supabase
-        .from('profiles')
-        .select('coins')
-        .eq('id', novelAuthorId.trim()) // Add trim() to remove any potential whitespace
-        .single();
-
-      if (translatorFetchError) {
-        console.log('Failed to fetch translator data:', translatorFetchError);
-        console.log('Translator ID used:', novelAuthorId);
-        throw new Error(`Failed to fetch translator data: ${translatorFetchError.message}`);
-      }
-
-      if (!translatorData) {
-        throw new Error(`Translator profile not found for ID: ${novelAuthorId}`);
-      }
-
-      // Then update translator's coins
-      const { error: translatorUpdateError } = await supabase
-        .from('profiles')
-        .update({ coins: translatorData.coins + translatorShare })
-        .eq('id', novelAuthorId);
-
-      if (translatorUpdateError) {
-        console.log('Translator update error:', translatorUpdateError);
-        throw translatorUpdateError;
-      }
-
-      // Create unlock record
       const { error: unlockError } = await supabase
         .from('chapter_unlocks')
         .insert({
           id: crypto.randomUUID(),
-          profile_id: userProfile.id,
-          novel_id: chapter.novel_id,
-          chapter_number: chapter.chapter_number,
+          profile_id: userProfileId,
+          novel_id: novelId,
+          chapter_number: chapterNumber,
           cost: chapter.coins
         });
 
-      if (unlockError) throw unlockError;
+      if (unlockError) {
+        throw new Error(`Failed to unlock chapter: ${unlockError.message}`);
+      }
 
-      toast.success('Chapter unlocked successfully!');
-      router.push(`/novels/${novelSlug}/chapters/c${chapter.chapter_number}`);
-      router.refresh();
-
+      return true;
     } catch (error) {
-      console.error('Error unlocking chapter:', error);
-      toast.error('Failed to unlock chapter. Please try again.');
-    } finally {
-      setIsUnlocking(false);
+      console.error('Unlock error:', error);
+      throw error;
     }
   };
 
@@ -214,7 +149,7 @@ export function ChapterListItem({
               <button
                 onClick={async () => {
                   toast.dismiss(t.id);
-                  await unlockChapter();
+                  await unlockChapter(chapter.novel_id, novelAuthorId, chapter.chapter_number, userProfile.id);
                 }}
                 className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors"
               >
