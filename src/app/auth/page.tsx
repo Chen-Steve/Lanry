@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import supabase from '@/lib/supabaseClient';
 import { Icon } from '@iconify/react';
 import { generateUsername } from '@/utils/username';
-import { signIn } from 'next-auth/react';
 
 type AuthMode = 'signin' | 'signup';
 type PasswordStrength = 'weak' | 'medium' | 'strong';
@@ -175,18 +174,6 @@ export default function AuthPage() {
     }
   };
 
-  const handleDiscordSignIn = async () => {
-    try {
-      await signIn('discord', { 
-        callbackUrl: '/',
-        redirect: true 
-      });
-    } catch (error) {
-      console.error('Discord auth error:', error);
-      setError(error instanceof Error ? error.message : 'Authentication failed');
-    }
-  };
-
   return (
     <div className="min-h-screen flex items-start sm:items-center justify-center px-4 mt-20 sm:mt-0 sm:px-6 sm:py-12 lg:px-8">
       <form onSubmit={handleSubmit} className="w-full max-w-md space-y-4 sm:space-y-8 mt-2 sm:mt-0">
@@ -201,15 +188,6 @@ export default function AuthPage() {
         )}
 
         <div className="mb-6">
-          <button
-            type="button"
-            onClick={handleDiscordSignIn}
-            className="w-full flex items-center justify-center gap-2 bg-[#5865F2] text-white py-3 px-4 rounded-lg hover:bg-[#4752C4] transition-colors"
-          >
-            <Icon icon="mdi:discord" className="text-xl" />
-            <span>{mode === 'signin' ? 'Sign in' : 'Sign up'} with Discord</span>
-          </button>
-          
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-gray-300"></div>
