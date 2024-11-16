@@ -15,6 +15,12 @@ const SPRITE_CONFIG = {
     frameWidth: 32,
     frameHeight: 32,
     frames: 4,
+  },
+  idle_lick: {
+    src: '/idle_lick.png',
+    frameWidth: 32,
+    frameHeight: 32,
+    frames: 4,
   }
 };
 
@@ -30,6 +36,7 @@ const CatFollower = () => {
   const [isMoving, setIsMoving] = useState(false);
   const [spritePosition, setSpritePosition] = useState(0);
   const [shouldFollow, setShouldFollow] = useState(false);
+  const [currentIdleSprite, setCurrentIdleSprite] = useState<'idle' | 'idle_lick'>('idle');
 
   const getNearestEdgePoint = useCallback((x: number, y: number) => {
     const width = window.innerWidth;
@@ -103,7 +110,7 @@ const CatFollower = () => {
 
   // Sprite animation
   useEffect(() => {
-    const currentSprite = isMoving ? SPRITE_CONFIG.walk : SPRITE_CONFIG.idle;
+    const currentSprite = isMoving ? SPRITE_CONFIG.walk : SPRITE_CONFIG[currentIdleSprite];
     const animationSpeed = isMoving ? 150 : 300;
 
     const interval = setInterval(() => {
@@ -112,6 +119,22 @@ const CatFollower = () => {
       );
     }, animationSpeed);
     
+    return () => clearInterval(interval);
+  }, [isMoving, currentIdleSprite]);
+
+  // Add new effect for switching idle animations
+  useEffect(() => {
+    if (isMoving) {
+      setCurrentIdleSprite('idle');
+      return;
+    }
+
+    const switchIdleAnimation = () => {
+      const shouldLick = Math.random() < 0.3; // 30% chance to switch to licking
+      setCurrentIdleSprite(shouldLick ? 'idle_lick' : 'idle');
+    };
+
+    const interval = setInterval(switchIdleAnimation, 3000); // Check every 3 seconds
     return () => clearInterval(interval);
   }, [isMoving]);
 
@@ -123,12 +146,12 @@ const CatFollower = () => {
         top: catPosition.y - (SPRITE_CONFIG.walk.frameHeight * SPRITE_CONFIG.scale) / 2,
         width: SPRITE_CONFIG.walk.frameWidth * SPRITE_CONFIG.scale + 'px',
         height: SPRITE_CONFIG.walk.frameHeight * SPRITE_CONFIG.scale + 'px',
-        backgroundImage: `url(${isMoving ? SPRITE_CONFIG.walk.src : SPRITE_CONFIG.idle.src})`,
+        backgroundImage: `url(${isMoving ? SPRITE_CONFIG.walk.src : SPRITE_CONFIG[currentIdleSprite].src})`,
         backgroundPosition: `-${spritePosition * SPRITE_CONFIG.scale}px 0`,
-        backgroundSize: `${(isMoving ? SPRITE_CONFIG.walk : SPRITE_CONFIG.idle).frameWidth * 
-          (isMoving ? SPRITE_CONFIG.walk : SPRITE_CONFIG.idle).frames * 
+        backgroundSize: `${(isMoving ? SPRITE_CONFIG.walk : SPRITE_CONFIG[currentIdleSprite]).frameWidth * 
+          (isMoving ? SPRITE_CONFIG.walk : SPRITE_CONFIG[currentIdleSprite]).frames * 
           SPRITE_CONFIG.scale}px ${
-          (isMoving ? SPRITE_CONFIG.walk : SPRITE_CONFIG.idle).frameHeight * 
+          (isMoving ? SPRITE_CONFIG.walk : SPRITE_CONFIG[currentIdleSprite]).frameHeight * 
           SPRITE_CONFIG.scale}px`,
         imageRendering: 'pixelated',
         pointerEvents: 'none',
