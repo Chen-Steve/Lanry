@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import supabase from '@/lib/supabaseClient';
 import { Icon } from '@iconify/react';
@@ -53,9 +53,9 @@ const PasswordStrengthIndicator = ({ password }: { password: string }) => {
         />
       </div>
       <p className={`text-xs mt-1 ${
-        strength === 'weak' ? 'text-black' : 
-        strength === 'medium' ? 'text-black' : 
-        'text-black'
+        strength === 'weak' ? 'text-red-500' : 
+        strength === 'medium' ? 'text-yellow-600' : 
+        'text-green-600'
       }`}>
         {strength === 'weak' && 'Weak - Add numbers, special characters, and mix cases'}
         {strength === 'medium' && 'Medium - Add more complexity for a stronger password'}
@@ -74,46 +74,8 @@ export default function AuthPage() {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
-
-  useEffect(() => {
-    const checkExistingSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        router.push('/');
-      }
-    };
-
-    checkExistingSession();
-
-    // Subscribe to auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' && session) {
-        router.push('/');
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [router]);
-
-  useEffect(() => {
-    // Get error from URL if present
-    const urlParams = new URLSearchParams(window.location.search);
-    const errorMessage = urlParams.get('error');
-    
-    if (errorMessage) {
-      switch (errorMessage) {
-        case 'AccessDenied':
-          setError('Failed to sign in with Discord. Please try again.');
-          break;
-        default:
-          setError(`Authentication error: ${errorMessage}`);
-      }
-    }
-  }, []);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -128,34 +90,51 @@ export default function AuthPage() {
 
     try {
       if (mode === 'signup') {
+        // First attempt signup
         const { data, error: signUpError } = await supabase.auth.signUp({
           email: credentials.email,
           password: credentials.password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/auth/callback`,
-            data: {
-              username: generateUsername(),
-            }
-          }
         });
 
-        if (signUpError) throw signUpError;
+        if (signUpError) {
+          console.error('Signup error:', signUpError);
+          throw new Error(signUpError.message);
+        }
         
+        // If signup successful and we have a user
         if (data.user) {
           const generatedUsername = generateUsername();
           
+          // Create profile
           const { error: profileError } = await supabase
             .from('profiles')
-            .insert([{
-              id: data.user.id,
-              username: generatedUsername,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            }]);
+            .insert([
+              {
+                id: data.user.id,
+                username: generatedUsername,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+              }
+            ]);
 
-          if (profileError) throw profileError;
+          if (profileError) {
+            console.error('Profile creation error:', profileError);
+            throw new Error('Failed to create user profile');
+          }
 
-          // Auto sign-in will be handled by the auth state change listener
+          // Auto sign-in
+          const { error: signInError } = await supabase.auth.signInWithPassword({
+            email: credentials.email,
+            password: credentials.password,
+          });
+
+          if (signInError) {
+            console.error('Auto sign-in error:', signInError);
+            throw new Error('Account created but failed to sign in automatically');
+          }
+
+          router.push('/');
+          router.refresh();
         }
       } else {
         const { error } = await supabase.auth.signInWithPassword({
@@ -164,7 +143,8 @@ export default function AuthPage() {
         });
 
         if (error) throw error;
-        // Redirect will be handled by the auth state change listener
+        router.push('/');
+        router.refresh();
       }
     } catch (error) {
       console.error('Auth error:', error);
@@ -175,52 +155,52 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-start sm:items-center justify-center px-4 mt-20 sm:mt-0 sm:px-6 sm:py-12 lg:px-8">
-      <form onSubmit={handleSubmit} className="w-full max-w-md space-y-4 sm:space-y-8 mt-2 sm:mt-0">
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 sm:mb-6 text-center text-black">
+    <div className="min-h-screen flex items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
+      <form onSubmit={handleSubmit} className="w-full max-w-md space-y-8">
+        <h1 className="text-3xl font-bold mb-6 text-center">
           {mode === 'signin' ? 'Sign In' : 'Create Account'}
         </h1>
 
         {error && (
-          <div className="bg-red-50 text-black p-3 sm:p-4 rounded-md text-xs sm:text-sm">
+          <div className="bg-red-50 text-red-500 p-4 rounded-md text-sm">
             {error}
           </div>
         )}
 
-        <div className="space-y-4 sm:space-y-6">
+        <div className="space-y-6">
           <div>
-            <label className="block text-xs sm:text-sm font-medium mb-1 sm:mb-2 text-black">Email</label>
+            <label className="block text-sm font-medium mb-2">Email</label>
             <input
               title="Email"
               type="email"
               value={credentials.email}
               onChange={(e) => setCredentials({ ...credentials, email: e.target.value })}
-              className="w-full p-2 sm:p-3 border rounded-lg focus:ring-2 focus:ring-black focus:border-black text-sm sm:text-base"
+              className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-black focus:border-black"
               required
             />
           </div>
 
           <div>
-            <label className="block text-xs sm:text-sm font-medium mb-1 sm:mb-2 text-black">Password</label>
+            <label className="block text-sm font-medium mb-2">Password</label>
             <div className="relative">
               <input
                 title="Password"
                 type={showPassword ? 'text' : 'password'}
                 value={credentials.password}
                 onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
-                className="w-full p-2 sm:p-3 border rounded-lg focus:ring-2 focus:ring-black focus:border-black text-sm sm:text-base"
+                className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-black focus:border-black"
                 required
                 minLength={6}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 text-black hover:text-gray-700"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
                 <Icon 
                   icon={showPassword ? 'mdi:eye-off' : 'mdi:eye'} 
-                  className="text-lg sm:text-xl"
+                  className="text-xl"
                   aria-hidden="true"
                 />
               </button>
@@ -232,32 +212,32 @@ export default function AuthPage() {
 
           {mode === 'signup' && (
             <div>
-              <label className="block text-xs sm:text-sm font-medium mb-1 sm:mb-2 text-black">Confirm Password</label>
+              <label className="block text-sm font-medium mb-2">Confirm Password</label>
               <div className="relative">
                 <input
                   title="Confirm Password"
                   type={showPassword ? 'text' : 'password'}
                   value={credentials.confirmPassword}
                   onChange={(e) => setCredentials({ ...credentials, confirmPassword: e.target.value })}
-                  className="w-full p-2 sm:p-3 border rounded-lg focus:ring-2 focus:ring-black focus:border-black text-sm sm:text-base"
+                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-black focus:border-black"
                   required
                   minLength={6}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 text-black hover:text-gray-700"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   <Icon 
                     icon={showPassword ? 'mdi:eye-off' : 'mdi:eye'} 
-                    className="text-lg sm:text-xl"
+                    className="text-xl"
                     aria-hidden="true"
                   />
                 </button>
               </div>
               {credentials.confirmPassword && credentials.password !== credentials.confirmPassword && (
-                <p className="text-black text-xs mt-1">Passwords do not match</p>
+                <p className="text-red-500 text-xs mt-1">Passwords do not match</p>
               )}
             </div>
           )}
@@ -266,16 +246,16 @@ export default function AuthPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full p-3 sm:p-4 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base font-medium"
+          className="w-full p-4 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed text-base font-medium"
         >
           {loading ? 'Loading...' : mode === 'signin' ? 'Sign In' : 'Sign Up'}
         </button>
 
-        <div className="mt-4 sm:mt-6 text-center">
+        <div className="mt-6 text-center">
           <button
             type="button"
             onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}
-            className="text-black hover:text-gray-600 text-sm sm:text-base py-1 sm:py-2"
+            className="text-black hover:text-gray-600 text-base py-2"
           >
             {mode === 'signin' 
               ? "Don't have an account? Sign up" 
