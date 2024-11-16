@@ -12,7 +12,6 @@ import ChapterHeader from '@/components/chapter/ChapterHeader';
 import ChapterContent from '@/components/chapter/ChapterContent';
 import supabase from '@/lib/supabaseClient';
 import ChapterProgressBar from '@/components/chapter/ChapterBar';
-import { useSession } from "next-auth/react";
 
 function ChapterNavigation({ 
   navigation, 
@@ -146,7 +145,6 @@ function ScrollToTopButton() {
   );
 }
 
-// Add this function near the top of the file
 const updateReadingHistory = async (
   novelId: string, 
   chapterNumber: number
@@ -155,7 +153,6 @@ const updateReadingHistory = async (
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    // First, get the actual novel ID if we're using a slug
     const { data: novel, error: novelError } = await supabase
       .from('novels')
       .select('id')
@@ -191,7 +188,6 @@ const updateReadingHistory = async (
 
 export default function ChapterPage({ params }: { params: { id: string; chapterId: string } }) {
   const { id: novelId, chapterId } = params;
-  const { data: session } = useSession();
   const [chapter, setChapter] = useState<ChapterWithNovel | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -214,9 +210,9 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
         setIsLoading(true);
         setError(null);
         
-        // Get user ID from either auth system
-        const { data: { session: supabaseSession } } = await supabase.auth.getSession();
-        const userId = supabaseSession?.user?.id || session?.user?.id;
+        // Get user ID from Supabase only
+        const { data: { user } } = await supabase.auth.getUser();
+        const userId = user?.id;
         
         const chapterData = await getChapter(novelId, chapterId, userId);
         
@@ -225,7 +221,6 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
           return;
         }
 
-        // Check if chapter is locked
         if (chapterData.isLocked) {
           setError('This chapter is not yet available');
           setChapter(chapterData);
@@ -234,7 +229,6 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
 
         setChapter(chapterData);
         
-        // Fetch navigation and total chapters only if the chapter is accessible
         const [nav, total] = await Promise.all([
           getChapterNavigation(novelId, chapterData.chapter_number, userId),
           getTotalChapters(novelId)
@@ -252,7 +246,6 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
     
     fetchData();
 
-    // Add an interval to check publish status
     if (chapter?.publish_at) {
       const publishDate = new Date(chapter.publish_at);
       const now = new Date();
@@ -266,23 +259,20 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
         return () => clearTimeout(timer);
       }
     }
-  }, [novelId, chapterId, session, chapter?.publish_at]);
+  }, [novelId, chapterId, chapter?.publish_at]);
 
   useEffect(() => {
     if (chapter) {
-      // Get user ID from either auth system
       const getUserIdAndUpdateHistory = async () => {
-        const { data: { session: supabaseSession } } = await supabase.auth.getSession();
-        const userId = supabaseSession?.user?.id || session?.user?.id;
-        
-        if (userId) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
           updateReadingHistory(novelId, chapter.chapter_number);
         }
       };
 
       getUserIdAndUpdateHistory();
     }
-  }, [novelId, chapter, session]);
+  }, [novelId, chapter]);
 
   const handleChapterSelect = (chapterNum: number) => {
     window.location.href = `/novels/${novelId}/chapters/c${chapterNum}`;

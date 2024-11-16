@@ -4,7 +4,6 @@ import { useState, lazy, Suspense, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import supabase from '@/lib/supabaseClient';
 import { Icon } from '@iconify/react';
-import { useSession, signOut as nextAuthSignOut } from 'next-auth/react';
 import { useQuery } from '@tanstack/react-query';
 import { ErrorBoundary } from 'react-error-boundary';
 
@@ -65,52 +64,35 @@ type DashboardTab = 'reading' | 'bookmarks' | 'settings';
 export default function UserDashboard() {
   const [activeTab, setActiveTab] = useState<DashboardTab>('reading');
   const router = useRouter();
-  const { data: session, status } = useSession();
   const [isAuthChecking, setIsAuthChecking] = useState(true);
 
-  // Fetch user profile data with better error handling
+  // Fetch user profile data
   const { data: profile, isLoading: isProfileLoading, error: profileError } = useQuery({
-    queryKey: ['profile', session?.user?.id || null],
+    queryKey: ['profile'],
     queryFn: async () => {
-      try {
-        if (!session?.user?.id) {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (!user) return null;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
 
-          const { data: profile, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', user.id)
-            .single();
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
 
-          if (error) throw error;
-          return profile;
-        }
-
-        const response = await fetch(`/api/profile/${session.user.id}`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch profile');
-        }
-        return response.json();
-      } catch (error) {
-        console.error('Profile fetch error:', error);
-        throw error;
-      }
+      if (error) throw error;
+      return profile;
     },
-    enabled: status !== 'loading',
-    retry: 1, // Only retry once
-    staleTime: 30000, // Consider data fresh for 30 seconds
+    retry: 1,
+    staleTime: 30000,
   });
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        if (status === 'unauthenticated') {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (!user) {
-            router.push('/auth');
-            return;
-          }
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          router.push('/auth');
+          return;
         }
       } catch (error) {
         console.error('Auth check error:', error);
@@ -121,15 +103,21 @@ export default function UserDashboard() {
     };
 
     checkAuth();
-  }, [status, router]);
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!session) {
+        router.push('/auth');
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [router]);
 
   const handleSignOut = async () => {
     try {
-      if (session) {
-        await nextAuthSignOut({ callbackUrl: '/' });
-      } else {
-        await supabase.auth.signOut();
-      }
+      await supabase.auth.signOut();
       router.push('/');
     } catch (error) {
       console.error('Error signing out:', error);
@@ -137,7 +125,7 @@ export default function UserDashboard() {
   };
 
   // Show loading state while checking auth
-  if (isAuthChecking || status === 'loading' || isProfileLoading) {
+  if (isAuthChecking || isProfileLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <Icon icon="eos-icons:loading" className="w-8 h-8 animate-spin" />
@@ -171,7 +159,6 @@ export default function UserDashboard() {
       <ErrorBoundary
         FallbackComponent={ErrorFallback}
         onReset={() => {
-          // Reset the error boundary state
           setActiveTab('reading');
         }}
       >

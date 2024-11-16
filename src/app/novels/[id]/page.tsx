@@ -12,11 +12,9 @@ import Link from 'next/link';
 import { getNovel, toggleBookmark } from '@/services/novelService';
 import { track } from '@vercel/analytics';
 import { ChapterListItem } from '@/components/novels/ChapterListItem';
-import { useSession } from "next-auth/react";
 
 export default function NovelPage({ params }: { params: { id: string } }) {
   const { id } = params;
-  const { data: session, status } = useSession();
   const [novel, setNovel] = useState<Novel | null>(null);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -28,21 +26,14 @@ export default function NovelPage({ params }: { params: { id: string } }) {
   useEffect(() => {
     const fetchNovelAndAuth = async () => {
       try {
-        const { data: { session: supabaseSession } } = await supabase.auth.getSession();
-        const isSupabaseAuth = !!supabaseSession?.user;
-        const isNextAuth = status === "authenticated" && !!session;
+        const { data: { session } } = await supabase.auth.getSession();
+        setIsAuthenticated(!!session?.user);
         
-        setIsAuthenticated(isSupabaseAuth || isNextAuth);
-        
-        if (isSupabaseAuth || isNextAuth) {
-          const userId = isSupabaseAuth 
-            ? supabaseSession.user.id 
-            : session?.user?.id;
-
+        if (session?.user) {
           let { data: profile } = await supabase
             .from('profiles')
             .select('*')
-            .eq('id', userId)
+            .eq('id', session.user.id)
             .single();
           
           if (!profile) {
@@ -50,13 +41,9 @@ export default function NovelPage({ params }: { params: { id: string } }) {
               .from('profiles')
               .insert([
                 {
-                  id: userId,
-                  username: isSupabaseAuth 
-                    ? supabaseSession.user.user_metadata?.full_name 
-                    : session?.user?.name,
-                  avatar_url: isSupabaseAuth 
-                    ? supabaseSession.user.user_metadata?.avatar_url 
-                    : session?.user?.image,
+                  id: session.user.id,
+                  username: session.user.user_metadata?.full_name,
+                  avatar_url: session.user.user_metadata?.avatar_url,
                   updated_at: new Date().toISOString(),
                 }
               ])
@@ -71,11 +58,7 @@ export default function NovelPage({ params }: { params: { id: string } }) {
           setUserProfile(profile);
         }
         
-        const userId = isSupabaseAuth 
-          ? supabaseSession.user.id 
-          : session?.user?.id;
-        
-        const data = await getNovel(id, userId);
+        const data = await getNovel(id, session?.user?.id);
         if (data) {
           console.log('Novel data:', data);
           setNovel(data);
@@ -107,13 +90,13 @@ export default function NovelPage({ params }: { params: { id: string } }) {
     fetchNovelAndAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsAuthenticated(status === "authenticated" || !!session);
+      setIsAuthenticated(!!session);
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [id, session, status]);
+  }, [id]);
 
   const handleBookmark = async () => {
     if (!isAuthenticated) {
@@ -132,12 +115,10 @@ export default function NovelPage({ params }: { params: { id: string } }) {
 
     setIsBookmarkLoading(true);
     try {
-      const { data: { user: supabaseUser } } = await supabase.auth.getUser();
-      const userId = supabaseUser?.id || session?.user?.id;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-      if (!userId) return;
-
-      const newBookmarkState = await toggleBookmark(id, userId, isBookmarked);
+      const newBookmarkState = await toggleBookmark(id, user.id, isBookmarked);
       setIsBookmarked(newBookmarkState);
       setNovel(prev => prev ? {
         ...prev,

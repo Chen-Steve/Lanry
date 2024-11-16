@@ -1,12 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Icon } from '@iconify/react';
-import supabase from '@/lib/supabaseClient';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
 import { OnApproveData, OnApproveActions } from '@paypal/paypal-js';
 import { toast } from 'react-hot-toast';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 interface CoinPackage {
   id: number;
@@ -23,66 +23,83 @@ const coinPackages: CoinPackage[] = [
 ];
 
 export default function ShopPage() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<CoinPackage | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const supabase = createClientComponentClient();
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const fetchAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        setIsAuthenticated(!!session?.user);
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    };
+
+    fetchAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [supabase]);
 
   // Query user's current coin balance
   const { data: userCoins, isLoading, isError, error } = useQuery({
     queryKey: ['userCoins'],
     queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) return null;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
 
       const { data, error } = await supabase
         .from('profiles')
         .select('coins')
-        .eq('id', session.user.id)
+        .eq('id', user.id)
         .single();
 
       if (error) throw error;
       return data.coins;
     },
+    enabled: isAuthenticated,
   });
 
-  const queryClient = useQueryClient();
-
-  const handlePaypalApprove = async (
-    data: OnApproveData,
-    pkg: CoinPackage
-  ) => {
+  const handlePaypalApprove = async (data: OnApproveData, pkg: CoinPackage) => {
     setIsProcessing(true);
     try {
-      // First verify the payment was successful
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) return;
+      const { data: { user } } = await supabase.auth.getUser();
 
-      // Record the transaction
+      if (!user) {
+        toast.error('Please log in to purchase coins');
+        return;
+      }
+
       const response = await fetch('/api/coins/transaction', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
         body: JSON.stringify({
-          orderId: data.orderID,
           coins: pkg.coins,
-          amount: pkg.price
-        }),
+          userId: user.id,
+          authType: 'supabase'
+        })
       });
 
       if (!response.ok) {
-        throw new Error('Failed to process transaction');
+        throw new Error('Failed to add coins');
       }
 
-      // Invalidate the coins query to refresh the balance
       queryClient.invalidateQueries({ queryKey: ['userCoins'] });
-      
-      // Close the modal
+      toast.success('Purchase successful! Coins added to your account.');
       setSelectedPackage(null);
-
-      // Show success message
-      toast.success(`Successfully purchased ${pkg.coins} coins!`);
+      
     } catch (error) {
-      console.error('Error processing payment:', error);
+      console.error('Error:', error);
       toast.error('Failed to process payment. Please try again.');
     } finally {
       setIsProcessing(false);
@@ -90,11 +107,19 @@ export default function ShopPage() {
   };
 
   const handlePurchaseClick = async (pkg: CoinPackage) => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) {
-      toast.error('Please create an account to buy coins');
+    if (!isAuthenticated) {
+      toast.error('Please log in to purchase coins', {
+        duration: 3000,
+        position: 'bottom-center',
+        style: {
+          background: '#F87171',
+          color: 'white',
+          padding: '12px 24px',
+        },
+      });
       return;
     }
+
     setSelectedPackage(pkg);
   };
 

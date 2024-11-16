@@ -3,18 +3,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
-import { useSession } from 'next-auth/react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import SearchSection from './SearchSection';
 import type { Novel } from '@/types/database';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
-import { signOut } from 'next-auth/react';
 import { User } from '@supabase/supabase-js';
 
 const Header = () => {
   const supabase = createClientComponentClient();
-  const { data: session, status } = useSession();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
@@ -46,9 +43,9 @@ const Header = () => {
   // Mutation for updating streak
   const updateStreakMutation = useMutation({
     mutationFn: async () => {
-      if (!session?.user?.id) throw new Error('No user ID');
+      if (!supabaseUser?.id) throw new Error('No user ID');
 
-      const response = await fetch(`/api/profile/${session.user.id}/streak`, {
+      const response = await fetch(`/api/profile/${supabaseUser.id}/streak`, {
         method: 'POST'
       });
       
@@ -59,7 +56,7 @@ const Header = () => {
       return response.json();
     },
     onSuccess: (data) => {
-      queryClient.setQueryData(['profile', session?.user?.id], data);
+      queryClient.setQueryData(['profile', supabaseUser?.id], data);
     },
     onError: (error) => {
       console.error('Error updating streak:', error);
@@ -68,26 +65,25 @@ const Header = () => {
 
   // Update useEffect to only run once per session
   useEffect(() => {
-    if (session?.user?.id && !hasUpdatedStreak.current) {
+    if (supabaseUser?.id && !hasUpdatedStreak.current) {
       hasUpdatedStreak.current = true;
       updateStreakMutation.mutate();
     }
-  }, [session?.user?.id, updateStreakMutation]);
+  }, [supabaseUser?.id, updateStreakMutation]);
 
   // Query for user profile including streak data
   const { data: userProfile } = useQuery({
-    queryKey: ['profile', session?.user?.id || supabaseUser?.id],
+    queryKey: ['profile', supabaseUser?.id],
     queryFn: async () => {
-      const userId = session?.user?.id || supabaseUser?.id;
-      if (!userId) return null;
+      if (!supabaseUser?.id) return null;
       
-      const response = await fetch(`/api/profile/${userId}`);
+      const response = await fetch(`/api/profile/${supabaseUser.id}`);
       if (!response.ok) {
         throw new Error('Failed to fetch profile');
       }
       return response.json();
     },
-    enabled: !!(session?.user?.id || supabaseUser?.id),
+    enabled: !!supabaseUser?.id,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -109,101 +105,69 @@ const Header = () => {
   // Modify handleSignOut to handle both auth systems
   const handleSignOut = async () => {
     try {
-      // Clear React Query cache first
       queryClient.clear();
-
-      // Sign out from NextAuth with no automatic redirect
-      if (session) {
-        await signOut({ 
-          redirect: false 
-        });
-      }
       
-      // Sign out from Supabase
-      if (supabaseUser) {
-        await supabase.auth.signOut();
-      }
+      await supabase.auth.signOut();
 
-      // Clear any stored tokens/data from localStorage
       localStorage.clear();
       sessionStorage.clear();
       
-      // Force redirect to auth page after sign out
       window.location.href = '/auth';
     } catch (err) {
       console.error('Unexpected error during sign out:', err);
-      // Force redirect even on error
       window.location.href = '/auth';
     }
   };
 
   // Add this helper function inside the component
-  const getUserDisplayName = (user: User | { id: string; email: string; name?: string | null | undefined; image?: string | null | undefined; } | null) => {
+  const getUserDisplayName = (user: User | null) => {
     if (!user) return null;
-    
-    // Handle Supabase User
-    if ('user_metadata' in user) {
-      return user.user_metadata?.name || user.email;
-    }
-    
-    // Handle NextAuth User
-    return user.name || user.email;
+    return user.user_metadata?.name || user.email;
   };
 
   // Modify renderAuthLink to handle both auth systems
   const renderAuthLink = () => {
-    if (status === 'loading') {
+    if (!supabaseUser) {
       return (
-        <div className="text-gray-400">
-          <Icon icon="eos-icons:loading" className="animate-spin" />
-        </div>
-      );
-    }
-
-    // Show authenticated state if either NextAuth or Supabase session exists
-    if ((status === 'authenticated' && session?.user) || supabaseUser) {
-      const user = session?.user || supabaseUser;
-      
-      return (
-        <div className="relative" ref={profileDropdownRef}>
-          <button
-            onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
-            className="text-gray-600 hover:text-gray-800 transition-colors"
-          >
-            {userProfile?.username || getUserDisplayName(user) || 'Loading...'}
-          </button>
-          {isProfileDropdownOpen && (
-            <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 border border-gray-200">
-              <Link
-                href="/user-dashboard"
-                className="block px-4 py-2 text-sm text-gray-700 border-b border-gray-200 hover:bg-gray-100"
-              >
-                {userProfile?.username || getUserDisplayName(user) || 'Profile'}
-              </Link>
-              <div className="px-4 py-2 text-sm text-gray-600 border-b border-gray-200 flex items-center gap-2">
-                <Icon icon="mdi:fire" className={`${userProfile?.currentStreak ? 'text-orange-500' : 'text-gray-400'}`} />
-                <span>
-                  {userProfile?.currentStreak || 0} day
-                  {(userProfile?.currentStreak || 0) !== 1 ? 's' : ''} streak
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={handleSignOut}
-                className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-              >
-                Sign Out
-              </button>
-            </div>
-          )}
-        </div>
+        <Link href="/auth" className="text-gray-600 hover:text-gray-800 transition-colors">
+          Sign In
+        </Link>
       );
     }
 
     return (
-      <Link href="/auth" className="text-gray-600 hover:text-gray-800 transition-colors">
-        Sign In
-      </Link>
+      <div className="relative" ref={profileDropdownRef}>
+        <button
+          onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+          className="text-gray-600 hover:text-gray-800 transition-colors"
+        >
+          {userProfile?.username || getUserDisplayName(supabaseUser) || 'Loading...'}
+        </button>
+        {isProfileDropdownOpen && (
+          <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 border border-gray-200">
+            <Link
+              href="/user-dashboard"
+              className="block px-4 py-2 text-sm text-gray-700 border-b border-gray-200 hover:bg-gray-100"
+            >
+              {userProfile?.username || getUserDisplayName(supabaseUser) || 'Profile'}
+            </Link>
+            <div className="px-4 py-2 text-sm text-gray-600 border-b border-gray-200 flex items-center gap-2">
+              <Icon icon="mdi:fire" className={`${userProfile?.currentStreak ? 'text-orange-500' : 'text-gray-400'}`} />
+              <span>
+                {userProfile?.currentStreak || 0} day
+                {(userProfile?.currentStreak || 0) !== 1 ? 's' : ''} streak
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={handleSignOut}
+              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+            >
+              Sign Out
+            </button>
+          </div>
+        )}
+      </div>
     );
   };
 
@@ -332,7 +296,7 @@ const Header = () => {
                   </Link>
                 </li>
                 <li>
-                  {status === 'authenticated' && session?.user ? (
+                  {supabaseUser ? (
                     <div>
                       <button 
                         onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
