@@ -140,7 +140,7 @@ export default function NovelPage({ params }: { params: { id: string } }) {
     notFound();
   }
 
-  console.log('Novel author ID:', novel.author_profile_id);
+  // console.log('Novel author ID:', novel.author_profile_id);
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">

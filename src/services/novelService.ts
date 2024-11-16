@@ -122,3 +122,31 @@ export async function toggleBookmark(novelId: string, userId: string, isCurrentl
     throw error;
   }
 }
+
+export async function getNovels(): Promise<Novel[]> {
+  try {
+    const { data, error } = await supabase
+      .from('novels')
+      .select(`
+        *,
+        translator:author_profile_id (
+          username
+        )
+      `)
+      .order('created_at', { ascending: false })
+      .throwOnError();
+
+    if (error || !data) return [];
+
+    return data.map(novel => ({
+      ...novel,
+      translator: novel.translator ? {
+        username: novel.translator.username
+      } : undefined,
+      coverImageUrl: novel.cover_image_url
+    }));
+  } catch (error) {
+    console.error('Error in getNovels:', error);
+    return [];
+  }
+}

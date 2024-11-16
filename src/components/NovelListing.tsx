@@ -3,37 +3,65 @@
 import { Novel } from '@/types/database';
 import Link from 'next/link';
 import Image from 'next/image';
+import { getNovels } from '@/services/novelService';
+import { useEffect, useState } from 'react';
 
-const NovelCard = ({ novel, isPriority = false }: { novel: Novel; isPriority?: boolean }) => (
-  <Link href={`/novels/${novel.slug}`} className="block">
-    <div className="flex flex-row gap-4">
-      <div className="w-28 h-44 flex-shrink-0 relative">
-        {novel.coverImageUrl ? (
-          <Image
-            src={`/novel-covers/${novel.coverImageUrl}`}
-            alt={`Cover for ${novel.title}`}
-            fill
-            priority={isPriority}
-            loading={isPriority ? 'eager' : 'lazy'}
-            className="object-cover rounded"
-            sizes="(max-width: 768px) 112px, 112px"
-          />
-        ) : (
-          <div className="w-full h-full bg-gray-300 rounded"></div>
-        )}
+const NovelCard = ({ novel, isPriority = false }: { novel: Novel; isPriority?: boolean }) => {
+  return (
+    <Link href={`/novels/${novel.slug}`} className="block">
+      <div className="flex flex-row gap-4">
+        <div className="w-28 h-44 flex-shrink-0 relative">
+          {novel.coverImageUrl ? (
+            <Image
+              src={`/novel-covers/${novel.coverImageUrl}`}
+              alt={`Cover for ${novel.title}`}
+              fill
+              priority={isPriority}
+              loading={isPriority ? 'eager' : 'lazy'}
+              className="object-cover rounded"
+              sizes="(max-width: 768px) 112px, 112px"
+            />
+          ) : (
+            <div className="w-full h-full bg-gray-300 rounded"></div>
+          )}
+        </div>
+        <div className="flex-grow overflow-hidden h-44 flex flex-col">
+          <h3 className="text-lg font-semibold truncate text-black">{novel.title}</h3>
+          {novel.translator?.username && (
+            <p className="text-sm text-gray-600">
+              By: {novel.translator.username}
+            </p>
+          )}
+          <p className="text-xs text-gray-500 line-clamp-6 mt-1 flex-grow">{novel.description}</p>
+        </div>
       </div>
-      <div className="flex-grow overflow-hidden h-44 flex flex-col">
-        <h3 className="text-lg font-semibold truncate text-black">{novel.title}</h3>
-        <p className="text-sm text-gray-600">
-          Author: {novel.author}
-        </p>
-        <p className="text-xs text-gray-500 line-clamp-6 mt-1 flex-grow">{novel.description}</p>
-      </div>
-    </div>
-  </Link>
-);
+    </Link>
+  );
+};
 
-const NovelListing = ({ novels }: { novels: Novel[] }) => {
+const NovelListing = () => {
+  const [novels, setNovels] = useState<Novel[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchNovels = async () => {
+      try {
+        const data = await getNovels();
+        setNovels(data);
+      } catch (error) {
+        console.error('Error fetching novels:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchNovels();
+  }, []);
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <div className="max-w-5xl mx-auto px-4 relative">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
