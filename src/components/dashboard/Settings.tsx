@@ -1,113 +1,109 @@
-import { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'react-hot-toast';
-import { useSupabase } from '../Providers';
+import { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import supabase from '@/lib/supabaseClient';
+import type { UserProfile } from '@/types/database';
 
-interface Profile {
-  id: string;
-  username: string | null;
-  current_streak: number;
-  last_visit: Date | null;
-  role: 'USER' | 'ADMIN';
-  coins: number;
-  created_at: Date;
-  updated_at: Date;
-}
+// Separate data fetching function
+const fetchProfile = async (): Promise<UserProfile> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
 
-interface SettingsProps {
-  profile: Profile | null | undefined;
-}
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', user.id)
+    .single();
 
-export default function Settings({ profile }: SettingsProps) {
-  const { supabase } = useSupabase();
-  const [isEditing, setIsEditing] = useState(false);
-  const [username, setUsername] = useState(profile?.username || '');
+  if (error) throw error;
+  return data;
+};
+
+export default function Settings() {
+  const [profile, setProfile] = useState<UserProfile>({
+    id: '',
+    username: '',
+    current_streak: 0,
+    last_visit: null,
+    created_at: '',
+    updated_at: '',
+    coins: 0,
+    role: 'USER'
+  });
+
   const queryClient = useQueryClient();
 
-  const updateProfileMutation = useMutation({
-    mutationFn: async (newUsername: string) => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .update({ username: newUsername })
-        .eq('id', profile?.id)
-        .select()
-        .single();
+  // Use React Query for fetching profile
+  const { isLoading, data } = useQuery({
+    queryKey: ['profile'],
+    queryFn: fetchProfile,
+  });
 
+  // Update profile when data changes
+  useEffect(() => {
+    if (data) {
+      setProfile(data);
+    }
+  }, [data]);
+
+  // Use mutation for saving settings
+  const mutation = useMutation({
+    mutationFn: async (updatedProfile: UserProfile) => {
+      const { error } = await supabase
+        .from('profiles')
+        .upsert({
+          ...updatedProfile,
+          updated_at: new Date().toISOString(),
+        });
       if (error) throw error;
-      return data;
     },
     onSuccess: () => {
-      toast.success('Profile updated successfully');
-      setIsEditing(false);
-      queryClient.invalidateQueries({
-        queryKey: ['profile', profile?.id]
-      });
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      alert('Settings saved successfully!');
     },
     onError: (error) => {
-      toast.error('Failed to update profile');
-      console.error('Error updating profile:', error);
+      console.error('Error saving settings:', error);
+      alert('Failed to save settings');
     },
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username.trim()) {
-      toast.error('Username cannot be empty');
-      return;
-    }
-    updateProfileMutation.mutate(username);
+    mutation.mutate(profile);
   };
+
+  if (isLoading) {
+    return (
+      <div className="p-6 text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">
       <h2 className="text-xl font-semibold mb-6">Account Settings</h2>
-      <div className="max-w-md space-y-6">
+      <form onSubmit={handleSubmit} className="max-w-md space-y-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="username" className="block text-sm font-medium text-gray-700">
             Username
           </label>
-          {isEditing ? (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter username"
-              />
-              <div className="flex gap-2">
-                <button
-                  type="submit"
-                  disabled={updateProfileMutation.isPending}
-                  className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50"
-                >
-                  {updateProfileMutation.isPending ? 'Saving...' : 'Save'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsEditing(false);
-                    setUsername(profile?.username || '');
-                  }}
-                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          ) : (
-            <div className="flex items-center justify-between">
-              <span className="text-gray-900">{profile?.username}</span>
-              <button
-                onClick={() => setIsEditing(true)}
-                className="text-blue-500 hover:text-blue-600"
-              >
-                Edit
-              </button>
-            </div>
-          )}
+          <input
+            type="text"
+            id="username"
+            value={profile.username}
+            onChange={(e) => setProfile({ ...profile, username: e.target.value })}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          />
         </div>
-      </div>
+
+        <button
+          type="submit"
+          disabled={mutation.isPending}
+          className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {mutation.isPending ? 'Saving...' : 'Save Settings'}
+        </button>
+      </form>
     </div>
   );
 } 
