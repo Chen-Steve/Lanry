@@ -84,6 +84,7 @@ export function ChapterListItem({
         throw new Error(`Failed to unlock chapter: ${unlockError.message}`);
       }
 
+      router.push(`/novels/${novelSlug}/chapters/c${chapterNumber}`);
       return true;
     } catch (error) {
       console.error('Unlock error:', error);
