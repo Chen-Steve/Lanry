@@ -145,6 +145,7 @@ function ScrollToTopButton() {
   );
 }
 
+// Add this function near the top of the file
 const updateReadingHistory = async (
   novelId: string, 
   chapterNumber: number
@@ -153,6 +154,7 @@ const updateReadingHistory = async (
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
+    // First, get the actual novel ID if we're using a slug
     const { data: novel, error: novelError } = await supabase
       .from('novels')
       .select('id')
@@ -210,27 +212,25 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
         setIsLoading(true);
         setError(null);
         
-        // Get user ID from Supabase only
-        const { data: { user } } = await supabase.auth.getUser();
-        const userId = user?.id;
-        
-        const chapterData = await getChapter(novelId, chapterId, userId);
+        const chapterData = await getChapter(novelId, chapterId);
         
         if (!chapterData) {
           setError('Chapter not found');
           return;
         }
 
+        // Check if chapter is locked
         if (chapterData.isLocked) {
           setError('This chapter is not yet available');
-          setChapter(chapterData);
+          setChapter(chapterData); // We still set the chapter to show publish date if available
           return;
         }
 
         setChapter(chapterData);
         
+        // Fetch navigation and total chapters only if the chapter is accessible
         const [nav, total] = await Promise.all([
-          getChapterNavigation(novelId, chapterData.chapter_number, userId),
+          getChapterNavigation(novelId, chapterData.chapter_number),
           getTotalChapters(novelId)
         ]);
         
@@ -246,6 +246,7 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
     
     fetchData();
 
+    // Add an interval to check publish status
     if (chapter?.publish_at) {
       const publishDate = new Date(chapter.publish_at);
       const now = new Date();
@@ -253,7 +254,7 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
       if (publishDate > now) {
         const timeUntilPublish = publishDate.getTime() - now.getTime();
         const timer = setTimeout(() => {
-          fetchData();
+          fetchData(); // Refresh data when publish time is reached
         }, timeUntilPublish);
         
         return () => clearTimeout(timer);
@@ -263,14 +264,7 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
 
   useEffect(() => {
     if (chapter) {
-      const getUserIdAndUpdateHistory = async () => {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          updateReadingHistory(novelId, chapter.chapter_number);
-        }
-      };
-
-      getUserIdAndUpdateHistory();
+      updateReadingHistory(novelId, chapter.chapter_number);
     }
   }, [novelId, chapter]);
 
