@@ -35,7 +35,7 @@ const NovelCard = ({ novel, isPriority = false }: { novel: Novel; isPriority?: b
 
 const NovelListing = ({ novels }: { novels: Novel[] }) => {
   return (
-    <div className="max-w-5xl mx-auto px-4">
+    <div className="max-w-5xl mx-auto px-4 relative">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {novels.map((novel, index) => (
           <NovelCard 
