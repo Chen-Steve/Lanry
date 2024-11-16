@@ -74,30 +74,48 @@ export async function toggleBookmark(novelId: string, userId: string, isCurrentl
       throw new Error('Novel not found');
     }
 
-    const actualNovelId = novelData.id;
-
     if (isCurrentlyBookmarked) {
+      // Delete bookmark
       const { error } = await supabase
         .from('bookmarks')
         .delete()
         .eq('profile_id', userId)
-        .eq('novel_id', actualNovelId);
+        .eq('novel_id', novelData.id);
 
       if (error) throw error;
-      return false; // Returns new bookmark state
+
+      // Update bookmark count
+      await supabase
+        .from('novels')
+        .update({ 
+          bookmark_count: `greatest(0, bookmark_count - 1)`
+        })
+        .eq('id', novelData.id);
+
+      return false;
     } else {
+      // Insert bookmark with UUID
       const { error } = await supabase
         .from('bookmarks')
         .insert({
           id: crypto.randomUUID(),
           profile_id: userId,
-          novel_id: actualNovelId,
+          novel_id: novelData.id,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         });
 
       if (error) throw error;
-      return true; // Returns new bookmark state
+
+      // Update bookmark count
+      await supabase
+        .from('novels')
+        .update({ 
+          bookmark_count: `bookmark_count + 1`
+        })
+        .eq('id', novelData.id);
+
+      return true;
     }
   } catch (error) {
     console.error('Error toggling bookmark:', error);
