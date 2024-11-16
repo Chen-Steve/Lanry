@@ -25,6 +25,9 @@ const Header = () => {
   const profileDropdownRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
 
+  // Add this state to track if we've already updated the streak today
+  const [streakUpdatedToday, setStreakUpdatedToday] = useState(false);
+
   // Query for user profile including streak data
   const { data: userProfile } = useQuery<UserProfile | null>({
     queryKey: ['profile', userId],
@@ -52,10 +55,9 @@ const Header = () => {
       const today = new Date();
       const lastVisit = userProfile?.last_visit ? new Date(userProfile.last_visit) : null;
       
-      let newStreak = 1; // Default for first visit or broken streak
+      let newStreak = 1;
       
       if (lastVisit) {
-        // Reset hours/minutes/seconds to compare calendar days only
         const lastVisitDay = new Date(lastVisit.getFullYear(), lastVisit.getMonth(), lastVisit.getDate());
         const todayDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
         
@@ -63,44 +65,89 @@ const Header = () => {
         const diffDays = diffTime / (1000 * 60 * 60 * 24);
         
         if (diffDays === 0) {
-          return null; // Same calendar day, no update needed
+          return null; // Same day, no update needed
         } else if (diffDays === 1) {
-          // Consecutive calendar day
           newStreak = (userProfile?.current_streak || 0) + 1;
         }
-        // If diffDays > 1, streak resets to 1 (unchanged)
       }
 
-      const { data, error } = await supabase
-        .from('profiles')
-        .update({
-          current_streak: newStreak,
-          last_visit: today.toISOString(),
-          updated_at: today.toISOString()
-        })
-        .eq('id', userId)
-        .select()
-        .single();
+      // Add retry logic with exponential backoff
+      const maxRetries = 3;
+      let retryCount = 0;
+      let lastError;
 
-      if (error) throw error;
-      return data;
+      while (retryCount < maxRetries) {
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .update({
+              current_streak: newStreak,
+              last_visit: today.toISOString(),
+              updated_at: today.toISOString()
+            })
+            .eq('id', userId)
+            .select()
+            .single();
+
+          if (error) throw error;
+          return data;
+        } catch (error) {
+          lastError = error;
+          retryCount++;
+          
+          if (retryCount < maxRetries) {
+            // Exponential backoff: 1s, 2s, 4s
+            await new Promise(resolve => 
+              setTimeout(resolve, Math.pow(2, retryCount - 1) * 1000)
+            );
+          }
+        }
+      }
+
+      throw lastError;
     },
     onSuccess: (data) => {
       if (data) {
         queryClient.setQueryData(['profile', userId], data);
+        toast.success('Streak updated successfully!');
       }
     },
     onError: (error) => {
       console.error('Error updating streak:', error);
-    }
+      toast.error('Failed to update streak. Please refresh the page.');
+    },
+    retry: false, // We handle retries manually in mutationFn
   });
 
-  // Update streak when component mounts and user is authenticated
+  // Update the useEffect for streak updates
   useEffect(() => {
-    if (userId && userProfile) {
-      updateStreakMutation.mutate();
+    if (userId && userProfile && !streakUpdatedToday) {
+      const lastVisit = userProfile.last_visit ? new Date(userProfile.last_visit) : null;
+      const today = new Date();
+      
+      if (lastVisit) {
+        const lastVisitDay = new Date(lastVisit.getFullYear(), lastVisit.getMonth(), lastVisit.getDate());
+        const todayDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const diffTime = todayDay.getTime() - lastVisitDay.getTime();
+        const diffDays = diffTime / (1000 * 60 * 60 * 24);
+        
+        // Only update if it's a different day
+        if (diffDays > 0) {
+          updateStreakMutation.mutate();
+          setStreakUpdatedToday(true);
+        }
+      } else {
+        // First visit ever
+        updateStreakMutation.mutate();
+        setStreakUpdatedToday(true);
+      }
     }
-  }, [userId, userProfile, updateStreakMutation]);
+  }, [userId, userProfile, streakUpdatedToday, updateStreakMutation]);
+
+  // Reset the flag when the user ID changes
+  useEffect(() => {
+    setStreakUpdatedToday(false);
+  }, [userId]);
 
   useEffect(() => {
     let mounted = true;
