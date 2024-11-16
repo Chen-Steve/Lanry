@@ -18,17 +18,12 @@ const fetchProfile = async (): Promise<UserProfile> => {
   return data;
 };
 
-export default function Settings() {
-  const [profile, setProfile] = useState<UserProfile>({
-    id: '',
-    username: '',
-    current_streak: 0,
-    last_visit: null,
-    created_at: '',
-    updated_at: '',
-    coins: 0,
-    role: 'USER'
-  });
+interface SettingsProps {
+  profile: UserProfile;
+}
+
+const Settings = ({ profile }: SettingsProps) => {
+  const [profileState, setProfileState] = useState<UserProfile>(profile);
 
   const queryClient = useQueryClient();
 
@@ -41,7 +36,7 @@ export default function Settings() {
   // Update profile when data changes
   useEffect(() => {
     if (data) {
-      setProfile(data);
+      setProfileState(data);
     }
   }, [data]);
 
@@ -68,7 +63,7 @@ export default function Settings() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    mutation.mutate(profile);
+    mutation.mutate(profileState);
   };
 
   if (isLoading) {
@@ -90,8 +85,8 @@ export default function Settings() {
           <input
             type="text"
             id="username"
-            value={profile.username}
-            onChange={(e) => setProfile({ ...profile, username: e.target.value })}
+            value={profileState.username}
+            onChange={(e) => setProfileState({ ...profileState, username: e.target.value })}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
           />
         </div>
@@ -106,4 +101,6 @@ export default function Settings() {
       </form>
     </div>
   );
-} 
+};
+
+export default Settings; 
