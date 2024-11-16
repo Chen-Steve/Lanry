@@ -1,18 +1,17 @@
 import { useState } from 'react';
-import { useSession } from 'next-auth/react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import supabase from '@/lib/supabaseClient';
 import { toast } from 'react-hot-toast';
+import { useSupabase } from '../Providers';
 
 interface Profile {
   id: string;
   username: string | null;
-  currentStreak: number;
-  lastVisit: Date | null;
+  current_streak: number;
+  last_visit: Date | null;
   role: 'USER' | 'ADMIN';
   coins: number;
-  createdAt: Date;
-  updatedAt: Date;
+  created_at: Date;
+  updated_at: Date;
 }
 
 interface SettingsProps {
@@ -20,36 +19,22 @@ interface SettingsProps {
 }
 
 export default function Settings({ profile }: SettingsProps) {
-  const { data: session } = useSession();
+  const { supabase } = useSupabase();
   const [isEditing, setIsEditing] = useState(false);
   const [username, setUsername] = useState(profile?.username || '');
   const queryClient = useQueryClient();
 
   const updateProfileMutation = useMutation({
     mutationFn: async (newUsername: string) => {
-      if (session) {
-        // NextAuth user
-        const response = await fetch(`/api/profile/${profile?.id}`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ username: newUsername }),
-        });
-        if (!response.ok) throw new Error('Failed to update profile');
-        return response.json();
-      } else {
-        // Supabase user
-        const { data, error } = await supabase
-          .from('profiles')
-          .update({ username: newUsername })
-          .eq('id', profile?.id)
-          .select()
-          .single();
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({ username: newUsername })
+        .eq('id', profile?.id)
+        .select()
+        .single();
 
-        if (error) throw error;
-        return data;
-      }
+      if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       toast.success('Profile updated successfully');
@@ -122,8 +107,6 @@ export default function Settings({ profile }: SettingsProps) {
             </div>
           )}
         </div>
-
-       
       </div>
     </div>
   );
