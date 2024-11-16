@@ -22,7 +22,6 @@ const LavaBlobs = () => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Set canvas size to match window size
     const resizeCanvas = () => {
       if (!canvas) return;
       canvas.width = window.innerWidth;
@@ -36,30 +35,29 @@ const LavaBlobs = () => {
     const INTERACTION_RADIUS = 30;
     const particles: Particle[] = [];
 
-    // Initialize particles
+    // Initialize particles with random velocities
     for (let i = 0; i < PARTICLE_COUNT; i++) {
+      const angle = Math.random() * 2 * Math.PI;
+      const speed = Math.random() * 200 + 50; // Adjust speed range as needed
       particles.push({
-        x: canvas.width / 2 + (Math.random() - 0.5) * 100,
-        y: canvas.height / 2 + (Math.random() - 0.5) * 100,
+        x: canvas.width / 2,
+        y: canvas.height / 2,
         oldX: 0,
         oldY: 0,
-        vx: 0,
-        vy: 0,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
       });
     }
 
     const dt = 0.016;
-    const gravity = 500;
 
     function update() {
       if (!canvas || !ctx) return;
 
-      // Apply forces and integrate positions
+      // Apply velocities and integrate positions
       particles.forEach((p) => {
         p.oldX = p.x;
         p.oldY = p.y;
-
-        p.vy += gravity * dt;
 
         p.x += p.vx * dt;
         p.y += p.vy * dt;
@@ -136,7 +134,7 @@ const LavaBlobs = () => {
         p.vy = (p.y - p.oldY) / dt;
       });
 
-      // Make the drawing more visible
+      // Draw particles
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = 'rgba(255, 100, 0, 0.6)';
       ctx.beginPath();
