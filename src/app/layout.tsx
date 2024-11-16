@@ -5,6 +5,7 @@ import FooterWrapper from '@/components/FooterWrapper';
 import Providers from '@/components/Providers';
 import AnalyticsProvider from '@/components/AnalyticsProvider';
 import { Toaster } from 'react-hot-toast';
+import CatFollower from '@/components/CatFollower';
 
 export const metadata: Metadata = {
   title: "Lanry",
@@ -35,6 +36,7 @@ export default function RootLayout({
           </div>
           <Toaster position="bottom-right" />
           <AnalyticsProvider />
+          <CatFollower />
         </Providers>
       </body>
     </html>
