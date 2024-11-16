@@ -70,6 +70,43 @@ export function ChapterListItem({
     userProfileId: string
   ) => {
     try {
+      // Check if user has enough coins
+      const { data: userProfile, error: userError } = await supabase
+        .from('profiles')
+        .select('coins')
+        .eq('id', userProfileId)
+        .single();
+
+      if (userError) throw new Error('Failed to fetch user profile');
+      if (!userProfile) throw new Error('User profile not found');
+      
+      const chapterCost = chapter.coins;
+      if (userProfile.coins < chapterCost) {
+        throw new Error('Insufficient coins');
+      }
+
+      // Calculate author's share (90%)
+      const authorShare = Math.floor(chapterCost * 0.9);
+
+      // Deduct coins from user
+      const { error: deductError } = await supabase
+        .from('profiles')
+        .update({ coins: userProfile.coins - chapterCost })
+        .eq('id', userProfileId);
+
+      if (deductError) throw new Error('Failed to deduct coins');
+
+      // Add coins to author - using a subquery to increment existing coins
+      const { error: addError } = await supabase
+        .from('profiles')
+        .update({ 
+          coins: `${authorShare}`
+        })
+        .eq('id', authorId);
+
+      if (addError) throw new Error('Failed to add coins to author');
+
+      // Create unlock record
       const { error: unlockError } = await supabase
         .from('chapter_unlocks')
         .insert({
@@ -77,17 +114,21 @@ export function ChapterListItem({
           profile_id: userProfileId,
           novel_id: novelId,
           chapter_number: chapterNumber,
-          cost: chapter.coins
+          cost: chapterCost
         });
 
-      if (unlockError) {
-        throw new Error(`Failed to unlock chapter: ${unlockError.message}`);
-      }
+      if (unlockError) throw new Error('Failed to create unlock record');
 
+      // After successful transaction, redirect to the chapter
       router.push(`/novels/${novelSlug}/chapters/c${chapterNumber}`);
       return true;
     } catch (error) {
       console.error('Unlock error:', error);
+      if (error instanceof Error && error.message === 'Insufficient coins') {
+        toast.error('You don\'t have enough coins to unlock this chapter');
+      } else {
+        toast.error('Failed to unlock chapter. Please try again.');
+      }
       throw error;
     }
   };
