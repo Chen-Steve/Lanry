@@ -6,6 +6,7 @@ import supabase from '@/lib/supabaseClient';
 import NovelUploadForm from '@/components/author-dashboard/NovelUploadForm';
 import ChapterManagementForm from '@/components/author-dashboard/ChapterManagementForm';
 import ChapterPurchaseHistory from '@/components/author-dashboard/ChapterPurchaseHistory';
+import NovelStatistics from '@/components/author-dashboard/NovelStatistics';
 import { Icon } from '@iconify/react';
 
 export default function AuthorDashboard() {
@@ -101,6 +102,19 @@ export default function AuthorDashboard() {
                 Earnings History
               </span>
             </button>
+            <button
+              onClick={() => setActiveTab('statistics')}
+              className={`w-full py-2 px-4 rounded-lg transition-colors text-left ${
+                activeTab === 'statistics'
+                  ? 'bg-blue-100 text-blue-700'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <Icon icon="mdi:chart-bar" />
+                Statistics
+              </span>
+            </button>
           </nav>
         </div>
       </div>
@@ -115,6 +129,9 @@ export default function AuthorDashboard() {
         )}
         {activeTab === 'purchases' && (
           <ChapterPurchaseHistory />
+        )}
+        {activeTab === 'statistics' && (
+          <NovelStatistics />
         )}
       </div>
     </div>
