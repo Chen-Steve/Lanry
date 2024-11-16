@@ -19,13 +19,14 @@ const NoticeBoard = () => {
         <div className="mb-4">
           <h3 className="text-xs font-semibold text-amber-800 uppercase mb-2 flex items-center gap-2">
             <span className="w-2 h-2 bg-green-500 rounded-full" />
-            TODO
+            Devlog
           </h3>
           <div className="text-sm text-gray-700">
-            notification system
+            todo: notification system
+            todo: login with discord, google
           </div>
           <div className="text-sm text-gray-700">
-            login with discord, google
+             todo: login with discord, google
           </div>
         </div>
 
