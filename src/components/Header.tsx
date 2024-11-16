@@ -1,62 +1,74 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import SearchSection from './SearchSection';
 import type { Novel } from '@/types/database';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
-import { User } from '@supabase/supabase-js';
+import { useSupabase } from './Providers';
 
 const Header = () => {
-  const supabase = createClientComponentClient();
+  const { supabase, user } = useSupabase();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const hasUpdatedStreak = useRef(false);
 
-  // Add state for Supabase user
-  const [supabaseUser, setSupabaseUser] = useState<User | null>(null);
-
-  // Effect to check Supabase authentication status
-  useEffect(() => {
-    const checkSupabaseAuth = async () => {
-      const { data: { session: supaSession } } = await supabase.auth.getSession();
-      if (supaSession) {
-        setSupabaseUser(supaSession.user);
-      }
-    };
-
-    checkSupabaseAuth();
-
-    // Subscribe to auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSupabaseUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, [supabase]);
-
   // Mutation for updating streak
   const updateStreakMutation = useMutation({
     mutationFn: async () => {
-      if (!supabaseUser?.id) throw new Error('No user ID');
+      if (!user?.id) throw new Error('No user ID');
 
-      const response = await fetch(`/api/profile/${supabaseUser.id}/streak`, {
-        method: 'POST'
-      });
+      const today = new Date().toISOString().split('T')[0];
       
-      if (!response.ok) {
-        throw new Error('Failed to update streak');
+      // First get current profile data
+      const { data: profile, error: fetchError } = await supabase
+        .from('profiles')
+        .select('current_streak, last_visit')
+        .eq('id', user.id)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Calculate if streak should be incremented or reset
+      const lastVisit = profile?.last_visit ? new Date(profile.last_visit) : null;
+      const currentStreak = profile?.current_streak || 0;
+      
+      let newStreak = currentStreak;
+      if (!lastVisit) {
+        newStreak = 1;
+      } else {
+        const daysSinceLastVisit = Math.floor(
+          (new Date().getTime() - lastVisit.getTime()) / (1000 * 60 * 60 * 24)
+        );
+        
+        if (daysSinceLastVisit <= 1) {
+          newStreak = currentStreak + 1;
+        } else {
+          newStreak = 1; // Reset streak
+        }
       }
-      
-      return response.json();
+
+      // Update profile with new streak
+      const { data, error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          current_streak: newStreak,
+          last_visit: today,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
+      return data;
     },
     onSuccess: (data) => {
-      queryClient.setQueryData(['profile', supabaseUser?.id], data);
+      queryClient.setQueryData(['profile', user?.id], data);
     },
     onError: (error) => {
       console.error('Error updating streak:', error);
@@ -64,30 +76,33 @@ const Header = () => {
   });
 
   // Update useEffect to only run once per session
-  useEffect(() => {
-    if (supabaseUser?.id && !hasUpdatedStreak.current) {
+  React.useEffect(() => {
+    if (user?.id && !hasUpdatedStreak.current) {
       hasUpdatedStreak.current = true;
       updateStreakMutation.mutate();
     }
-  }, [supabaseUser?.id, updateStreakMutation]);
+  }, [user?.id, updateStreakMutation]);
 
   // Query for user profile including streak data
   const { data: userProfile } = useQuery({
-    queryKey: ['profile', supabaseUser?.id],
+    queryKey: ['profile', user?.id],
     queryFn: async () => {
-      if (!supabaseUser?.id) return null;
+      if (!user?.id) return null;
       
-      const response = await fetch(`/api/profile/${supabaseUser.id}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch profile');
-      }
-      return response.json();
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (error) throw error;
+      return data;
     },
-    enabled: !!supabaseUser?.id,
+    enabled: !!user?.id,
     staleTime: 5 * 60 * 1000,
   });
 
-  useEffect(() => {
+  React.useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
         profileDropdownRef.current && 
@@ -102,16 +117,10 @@ const Header = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isProfileDropdownOpen]);
 
-  // Modify handleSignOut to handle both auth systems
   const handleSignOut = async () => {
     try {
       queryClient.clear();
-      
       await supabase.auth.signOut();
-
-      localStorage.clear();
-      sessionStorage.clear();
-      
       window.location.href = '/auth';
     } catch (err) {
       console.error('Unexpected error during sign out:', err);
@@ -119,15 +128,13 @@ const Header = () => {
     }
   };
 
-  // Add this helper function inside the component
-  const getUserDisplayName = (user: User | null) => {
+  const getUserDisplayName = () => {
     if (!user) return null;
     return user.user_metadata?.name || user.email;
   };
 
-  // Modify renderAuthLink to handle both auth systems
   const renderAuthLink = () => {
-    if (!supabaseUser) {
+    if (!user) {
       return (
         <Link href="/auth" className="text-gray-600 hover:text-gray-800 transition-colors">
           Sign In
@@ -141,7 +148,7 @@ const Header = () => {
           onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
           className="text-gray-600 hover:text-gray-800 transition-colors"
         >
-          {userProfile?.username || getUserDisplayName(supabaseUser) || 'Loading...'}
+          {userProfile?.username || getUserDisplayName() || 'Loading...'}
         </button>
         {isProfileDropdownOpen && (
           <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 border border-gray-200">
@@ -149,7 +156,7 @@ const Header = () => {
               href="/user-dashboard"
               className="block px-4 py-2 text-sm text-gray-700 border-b border-gray-200 hover:bg-gray-100"
             >
-              {userProfile?.username || getUserDisplayName(supabaseUser) || 'Profile'}
+              {userProfile?.username || getUserDisplayName() || 'Profile'}
             </Link>
             <div className="px-4 py-2 text-sm text-gray-600 border-b border-gray-200 flex items-center gap-2">
               <Icon icon="mdi:fire" className={`${userProfile?.currentStreak ? 'text-orange-500' : 'text-gray-400'}`} />
@@ -296,7 +303,7 @@ const Header = () => {
                   </Link>
                 </li>
                 <li>
-                  {supabaseUser ? (
+                  {user ? (
                     <div>
                       <button 
                         onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
