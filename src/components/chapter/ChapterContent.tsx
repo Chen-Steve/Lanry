@@ -155,7 +155,10 @@ export default function ChapterContent({
         <CommentPopover
           position={commentPosition}
           paragraphId={selectedParagraphId}
-          comments={comments[selectedParagraphId] || []}
+          comments={(comments[selectedParagraphId] || []).map(comment => ({
+            ...comment,
+            profile: comment.profile || { username: 'Anonymous' }
+          }))}
           onClose={handleCloseComment}
           onAddComment={(content) => handleAddComment(selectedParagraphId, content)}
           isAuthenticated={isAuthenticated}

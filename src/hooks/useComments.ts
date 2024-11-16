@@ -81,10 +81,10 @@ export function useComments(novelId: string, chapterNumber: number) {
             filter: `novel_id=eq.${novelId},chapter_number=eq.${chapterNumber}`
           },
           (payload: RealtimePostgresChangesPayload<DatabaseComment>) => {
-            if (payload.eventType === 'DELETE') return; // Skip delete events
+            if (payload.eventType === 'DELETE') return;
             
             const newComment = payload.new;
-            if (!newComment) return; // Skip if no new comment data
+            if (!newComment) return;
 
             setComments((prev) => ({
               ...prev,
@@ -93,7 +93,7 @@ export function useComments(novelId: string, chapterNumber: number) {
                 {
                   ...newComment,
                   profile: {
-                    username: newComment.profile?.username || 'Anonymous'
+                    username: newComment.profile?.username ?? 'Anonymous'
                   }
                 } as ChapterComment
               ]
@@ -121,12 +121,20 @@ export function useComments(novelId: string, chapterNumber: number) {
         return;
       }
 
-      // Group comments by paragraph
+      // Group comments by paragraph with profile handling
       const grouped = data.reduce((acc, comment) => {
         if (!acc[comment.paragraph_id]) {
           acc[comment.paragraph_id] = [];
         }
-        acc[comment.paragraph_id].push(comment as ChapterComment);
+        // Ensure each comment has a valid profile
+        const processedComment = {
+          ...comment,
+          profile: {
+            username: comment.profile?.username ?? 'Anonymous'
+          }
+        } as ChapterComment;
+        
+        acc[comment.paragraph_id].push(processedComment);
         return acc;
       }, {} as CommentsByParagraph);
 
@@ -147,8 +155,6 @@ export function useComments(novelId: string, chapterNumber: number) {
     if (!userId) return;
 
     try {
-      console.log('Adding comment with novelId:', novelId);
-      
       const newComment = {
         id: crypto.randomUUID(),
         novel_id: novelId,
@@ -177,7 +183,7 @@ export function useComments(novelId: string, chapterNumber: number) {
         throw error;
       }
 
-      // Update local state
+      // Update local state with profile handling
       setComments((prev) => ({
         ...prev,
         [paragraphId]: [
@@ -185,7 +191,7 @@ export function useComments(novelId: string, chapterNumber: number) {
           {
             ...data,
             profile: {
-              username: data.profile?.username || 'Anonymous'
+              username: data.profile?.username ?? 'Anonymous'
             }
           } as ChapterComment
         ]

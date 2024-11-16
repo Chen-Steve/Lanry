@@ -120,20 +120,17 @@ export default function CommentPopover({
 
         <div className="flex-1 overflow-y-auto mb-4 scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400">
           {comments.map((comment) => (
-            <motion.div
-              key={comment.id}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="mb-3 pb-3 border-b last:border-b-0"
-            >
-              <div className="flex justify-between items-start">
-                <span className="font-medium text-sm text-black">{comment.profile.username}</span>
-                <span className="text-xs text-black">
+            <div key={comment.id} className="mb-4 last:mb-0">
+              <div className="flex items-center gap-2">
+                <span className="font-medium">
+                  {comment.profile?.username ?? 'Anonymous'}
+                </span>
+                <span className="text-sm text-gray-500">
                   {formatDate(comment.created_at)}
                 </span>
               </div>
-              <p className="text-sm mt-1 text-black">{comment.content}</p>
-            </motion.div>
+              <p className="text-sm mt-1">{comment.content}</p>
+            </div>
           ))}
           {comments.length === 0 && (
             <p className="text-sm text-black text-center py-4">No comments yet</p>

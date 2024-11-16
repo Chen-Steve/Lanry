@@ -264,21 +264,21 @@ export function ChapterListItem({
   const isPublished = !chapter.publish_at || new Date(chapter.publish_at) <= new Date();
 
   const chapterContent = (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
       <div className="flex items-center gap-2">
-        <span className="inline-block min-w-[3rem]">Ch. {chapter.chapter_number}</span>
-        {chapter.title && <span className="ml-2">{chapter.title}</span>}
+        <span className="inline-block min-w-[3rem] text-sm sm:text-base">Ch. {chapter.chapter_number}</span>
+        {chapter.title && <span className="ml-2 text-sm sm:text-base truncate">{chapter.title}</span>}
       </div>
       {!isPublished && (
-        <div className="flex items-center gap-2 bg-purple-50 text-purple-800 px-2 py-1 rounded-md text-sm ml-auto">
+        <div className="flex items-center gap-2 bg-purple-50 text-purple-800 px-2 py-1 rounded-md text-xs sm:text-sm mt-1 sm:mt-0 sm:ml-auto">
           {isUnlocked ? (
             <span className="text-green-600">Unlocked</span>
           ) : (
             <>
               {isUnlocking ? (
-                <Icon icon="eos-icons:loading" className="text-lg animate-spin" />
+                <Icon icon="eos-icons:loading" className="text-black sm:text-lg animate-spin" />
               ) : (
-                <Icon icon="material-symbols:lock" className="text-lg" />
+                <Icon icon="material-symbols:lock" className="text-base sm:text-lg" />
               )}
               <span className="font-medium">
                 {formatDate(chapter.publish_at || new Date())} • {chapter.coins} coins
@@ -291,7 +291,7 @@ export function ChapterListItem({
   );
 
   return (
-    <div className={`flex flex-col border-b border-gray-100 py-3 px-4 ${
+    <div className={`flex flex-col border-b border-gray-100 py-2 sm:py-3 px-3 sm:px-4 ${
       isPublished ? 'hover:bg-gray-50' : 'bg-gray-50/50'
     } transition-colors rounded-lg`}>
       {isPublished ? (

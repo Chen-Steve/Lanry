@@ -52,11 +52,7 @@ const PasswordStrengthIndicator = ({ password }: { password: string }) => {
           className={`h-full ${strengthColors[strength]} ${strengthWidth[strength]} transition-all duration-300`}
         />
       </div>
-      <p className={`text-xs mt-1 ${
-        strength === 'weak' ? 'text-red-500' : 
-        strength === 'medium' ? 'text-yellow-600' : 
-        'text-green-600'
-      }`}>
+      <p className={`text-xs mt-1 text-black`}>
         {strength === 'weak' && 'Weak - Add numbers, special characters, and mix cases'}
         {strength === 'medium' && 'Medium - Add more complexity for a stronger password'}
         {strength === 'strong' && 'Strong password!'}
@@ -157,7 +153,7 @@ export default function AuthPage() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
       <form onSubmit={handleSubmit} className="w-full max-w-md space-y-8">
-        <h1 className="text-3xl font-bold mb-6 text-center">
+        <h1 className="text-3xl font-bold mb-6 text-center text-black">
           {mode === 'signin' ? 'Sign In' : 'Create Account'}
         </h1>
 
@@ -169,19 +165,18 @@ export default function AuthPage() {
 
         <div className="space-y-6">
           <div>
-            <label className="block text-sm font-medium mb-2">Email</label>
             <input
               title="Email"
               type="email"
               value={credentials.email}
               onChange={(e) => setCredentials({ ...credentials, email: e.target.value })}
               className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-black focus:border-black"
+              placeholder="Email"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Password</label>
             <div className="relative">
               <input
                 title="Password"
@@ -189,13 +184,14 @@ export default function AuthPage() {
                 value={credentials.password}
                 onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
                 className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-black focus:border-black"
+                placeholder="Password"
                 required
                 minLength={6}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-black hover:text-gray-700"
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
                 <Icon 
@@ -212,7 +208,6 @@ export default function AuthPage() {
 
           {mode === 'signup' && (
             <div>
-              <label className="block text-sm font-medium mb-2">Confirm Password</label>
               <div className="relative">
                 <input
                   title="Confirm Password"
@@ -220,13 +215,14 @@ export default function AuthPage() {
                   value={credentials.confirmPassword}
                   onChange={(e) => setCredentials({ ...credentials, confirmPassword: e.target.value })}
                   className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-black focus:border-black"
+                  placeholder="Confirm Password"
                   required
                   minLength={6}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-black hover:text-gray-700"
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   <Icon 
@@ -255,7 +251,7 @@ export default function AuthPage() {
           <button
             type="button"
             onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}
-            className="text-black hover:text-gray-600 text-base py-2"
+            className="text-black hover:text-gray-600 text-base py-2 font-medium"
           >
             {mode === 'signin' 
               ? "Don't have an account? Sign up" 
