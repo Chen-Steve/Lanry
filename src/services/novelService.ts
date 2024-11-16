@@ -65,7 +65,7 @@ export async function toggleBookmark(novelId: string, userId: string, isCurrentl
     const isNumericId = !isNaN(Number(novelId));
     const { data: novelData, error: novelError } = await supabase
       .from('novels')
-      .select('id')
+      .select('id, bookmark_count')
       .eq(isNumericId ? 'id' : 'slug', isNumericId ? Number(novelId) : novelId)
       .single();
 
@@ -88,7 +88,7 @@ export async function toggleBookmark(novelId: string, userId: string, isCurrentl
       await supabase
         .from('novels')
         .update({ 
-          bookmark_count: `greatest(0, bookmark_count - 1)`
+          bookmark_count: Math.max(0, (novelData.bookmark_count || 0) - 1)
         })
         .eq('id', novelData.id);
 
@@ -111,7 +111,7 @@ export async function toggleBookmark(novelId: string, userId: string, isCurrentl
       await supabase
         .from('novels')
         .update({ 
-          bookmark_count: `bookmark_count + 1`
+          bookmark_count: (novelData.bookmark_count || 0) + 1
         })
         .eq('id', novelData.id);
 
