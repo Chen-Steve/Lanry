@@ -6,7 +6,7 @@ type ChapterWithNovel = Chapter & {
   isLocked?: boolean;
 };
 
-export async function getChapter(novelId: string, chapterId: string, userId?: string): Promise<ChapterWithNovel | null> {
+export async function getChapter(novelId: string, chapterId: string): Promise<ChapterWithNovel | null> {
   try {
     const chapterNumber = parseInt(chapterId.replace('c', ''));
     if (isNaN(chapterNumber)) {
@@ -25,6 +25,9 @@ export async function getChapter(novelId: string, chapterId: string, userId?: st
       console.error('Novel not found:', novelError);
       return null;
     }
+
+    // Get the user first
+    const { data: { user } } = await supabase.auth.getUser();
 
     // First get the chapter
     const { data: chapter, error: chapterError } = await supabase
@@ -55,16 +58,15 @@ export async function getChapter(novelId: string, chapterId: string, userId?: st
     const isPublished = !chapter.publish_at || new Date(chapter.publish_at) <= new Date();
     let isUnlocked = false;
 
-    // If user is authenticated (from either system), check for unlocks
-    if (userId) {
+    // If user is authenticated, check for unlocks
+    if (user) {
       try {
-        const cleanUserId = userId.replace('discord:|', '').replace('auth0|', '');
         const { data: unlocks, error: unlockError } = await supabase
           .from('chapter_unlocks')
           .select('profile_id')
           .eq('novel_id', novel.id)
           .eq('chapter_number', chapterNumber)
-          .eq('profile_id', cleanUserId)
+          .eq('profile_id', user.id)
           .maybeSingle();
 
         if (!unlockError && unlocks) {
@@ -87,7 +89,7 @@ export async function getChapter(novelId: string, chapterId: string, userId?: st
   }
 }
 
-export async function getChapterNavigation(novelId: string, currentChapterNumber: number, userId?: string) {
+export async function getChapterNavigation(novelId: string, currentChapterNumber: number) {
   try {
     const { data: novel, error: novelError } = await supabase
       .from('novels')
@@ -96,6 +98,8 @@ export async function getChapterNavigation(novelId: string, currentChapterNumber
       .single();
 
     if (novelError || !novel) return { prevChapter: null, nextChapter: null };
+
+    const { data: { user } } = await supabase.auth.getUser();
 
     // Get all chapters
     const { data: chapters } = await supabase
@@ -108,15 +112,14 @@ export async function getChapterNavigation(novelId: string, currentChapterNumber
       return { prevChapter: null, nextChapter: null };
     }
 
-    // If user is authenticated (from either system), get their unlocks
+    // If user is authenticated, get their unlocks
     let userUnlocks: number[] = [];
-    if (userId) {
-      const cleanUserId = userId.replace('discord:|', '').replace('auth0|', '');
+    if (user) {
       const { data: unlocks } = await supabase
         .from('chapter_unlocks')
         .select('chapter_number')
         .eq('novel_id', novel.id)
-        .eq('profile_id', cleanUserId);
+        .eq('profile_id', user.id);
       
       userUnlocks = unlocks?.map(u => u.chapter_number) || [];
     }
@@ -184,51 +187,5 @@ export async function getTotalChapters(novelId: string): Promise<number> {
   } catch (error) {
     console.error('Error getting total chapters:', error);
     return 0;
-  }
-}
-
-// Update reading history function to handle both auth systems
-export async function updateReadingHistory(novelId: string, chapterNumber: number) {
-  try {
-    // Get user ID from either auth system
-    const { data: { session: supabaseSession } } = await supabase.auth.getSession();
-    const { data: { session: nextAuthSession } } = await supabase.auth.getSession(); // You'll need to implement getting NextAuth session
-
-    const userId = supabaseSession?.user?.id || nextAuthSession?.user?.id;
-    if (!userId) return;
-
-    const cleanUserId = userId.replace('discord:|', '').replace('auth0|', '');
-
-    // First, get the actual novel ID if we're using a slug
-    const { data: novel, error: novelError } = await supabase
-      .from('novels')
-      .select('id')
-      .or(`id.eq.${novelId},slug.eq.${novelId}`)
-      .single();
-
-    if (novelError || !novel) {
-      console.error('Error getting novel:', novelError);
-      return;
-    }
-
-    const now = new Date().toISOString();
-
-    const { error } = await supabase
-      .from('reading_history')
-      .upsert({
-        id: crypto.randomUUID(),
-        profile_id: cleanUserId,
-        novel_id: novel.id,
-        last_chapter: chapterNumber,
-        last_read: now,
-        created_at: now,
-        updated_at: now
-      }, {
-        onConflict: 'profile_id,novel_id'
-      });
-
-    if (error) throw error;
-  } catch (error) {
-    console.error('Error updating reading history:', error);
   }
 } 

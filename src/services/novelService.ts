@@ -8,8 +8,7 @@ export async function getNovel(id: string, userId?: string): Promise<Novel | nul
       .from('novels')
       .select(`
         *,
-        authorProfile:author_profile_id (
-          id,
+        translator:author_profile_id (
           username
         ),
         chapters (
@@ -35,20 +34,25 @@ export async function getNovel(id: string, userId?: string): Promise<Novel | nul
 
     if (error || !data) return null;
 
+    // Process chapters to include unlock status
+    const chapters = (data.chapters || []).map((chapter: Chapter) => ({
+      ...chapter,
+      isUnlocked: userId ? 
+        data.chapter_unlocks?.some((unlock: ChapterUnlock) => 
+          unlock.chapter_number === chapter.chapter_number && 
+          unlock.profile_id === userId
+        ) : false
+    })).sort((a: Chapter, b: Chapter) => a.chapter_number - b.chapter_number);
+
     return {
       ...data,
-      authorProfileId: data.author_profile_id,
+      translator: data.translator ? {
+        username: data.translator.username
+      } : undefined,
       coverImageUrl: data.cover_image_url,
       bookmarkCount: data.bookmarks?.length ?? 0,
       isBookmarked: userId ? data.bookmarks?.some((b: { profile_id: string }) => b.profile_id === userId) ?? false : false,
-      chapters: (data.chapters || []).map((chapter: Chapter) => ({
-        ...chapter,
-        isUnlocked: userId ? 
-          data.chapter_unlocks?.some((unlock: ChapterUnlock) => 
-            unlock.chapter_number === chapter.chapter_number && 
-            unlock.profile_id === userId
-          ) : false
-      })).sort((a: Chapter, b: Chapter) => a.chapter_number - b.chapter_number)
+      chapters
     };
   } catch (error) {
     console.error('Detailed error in getNovel:', error);
@@ -58,9 +62,6 @@ export async function getNovel(id: string, userId?: string): Promise<Novel | nul
 
 export async function toggleBookmark(novelId: string, userId: string, isCurrentlyBookmarked: boolean): Promise<boolean> {
   try {
-    // Ensure userId is properly formatted regardless of auth source
-    const cleanUserId = userId.replace('discord:|', '').replace('auth0|', '');
-
     const isNumericId = !isNaN(Number(novelId));
     const { data: novelData, error: novelError } = await supabase
       .from('novels')
@@ -69,6 +70,7 @@ export async function toggleBookmark(novelId: string, userId: string, isCurrentl
       .single();
 
     if (novelError || !novelData) {
+      console.error('Error getting novel:', novelError);
       throw new Error('Novel not found');
     }
 
@@ -78,24 +80,24 @@ export async function toggleBookmark(novelId: string, userId: string, isCurrentl
       const { error } = await supabase
         .from('bookmarks')
         .delete()
-        .eq('profile_id', cleanUserId)
+        .eq('profile_id', userId)
         .eq('novel_id', actualNovelId);
 
       if (error) throw error;
-      return false;
+      return false; // Returns new bookmark state
     } else {
       const { error } = await supabase
         .from('bookmarks')
         .insert({
           id: crypto.randomUUID(),
-          profile_id: cleanUserId,
+          profile_id: userId,
           novel_id: actualNovelId,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         });
 
       if (error) throw error;
-      return true;
+      return true; // Returns new bookmark state
     }
   } catch (error) {
     console.error('Error toggling bookmark:', error);
