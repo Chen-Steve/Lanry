@@ -198,9 +198,7 @@ export default function ShopPage() {
               <p className="text-2xl font-bold text-amber-600 mb-4">
                 ${pkg.price.toFixed(2)}
               </p>
-              <p className="text-black text-sm mb-4">
-                ${(pkg.price / pkg.coins * 100).toFixed(1)} cents per coin
-              </p>
+
               
               <button
                 onClick={() => handlePurchaseClick(pkg)}
