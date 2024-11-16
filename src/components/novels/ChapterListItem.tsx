@@ -81,12 +81,19 @@ export function ChapterListItem({
       if (!userProfile) throw new Error('User profile not found');
       
       const chapterCost = chapter.coins;
+      console.log('Transaction details:', {
+        chapterCost,
+        userInitialCoins: userProfile.coins,
+        authorId
+      });
+
       if (userProfile.coins < chapterCost) {
         throw new Error('Insufficient coins');
       }
 
       // Calculate author's share (90%)
       const authorShare = Math.floor(chapterCost * 0.9);
+      console.log('Author share:', authorShare);
 
       // Deduct coins from user
       const { error: deductError } = await supabase
@@ -94,17 +101,47 @@ export function ChapterListItem({
         .update({ coins: userProfile.coins - chapterCost })
         .eq('id', userProfileId);
 
-      if (deductError) throw new Error('Failed to deduct coins');
+      if (deductError) {
+        console.error('Deduct error:', deductError);
+        throw new Error('Failed to deduct coins');
+      }
 
-      // Add coins to author - using a subquery to increment existing coins
+      // Get author's current coins
+      const { data: authorProfile, error: authorError } = await supabase
+        .from('profiles')
+        .select('coins')
+        .eq('id', authorId)
+        .single();
+
+      if (authorError) {
+        console.error('Author fetch error:', authorError);
+        throw new Error('Failed to fetch author profile');
+      }
+      if (!authorProfile) throw new Error('Author profile not found');
+
+      console.log('Author current coins:', authorProfile.coins);
+
+      // Add 90% of coins to author
       const { error: addError } = await supabase
         .from('profiles')
         .update({ 
-          coins: `${authorShare}`
+          coins: authorProfile.coins + authorShare
         })
         .eq('id', authorId);
 
-      if (addError) throw new Error('Failed to add coins to author');
+      if (addError) {
+        console.error('Add coins error:', addError);
+        throw new Error('Failed to add coins to author');
+      }
+
+      // Optionally verify the new balance
+      const { data: verifyAuthor } = await supabase
+        .from('profiles')
+        .select('coins')
+        .eq('id', authorId)
+        .single();
+
+      console.log('Author new coins:', verifyAuthor?.coins);
 
       // Create unlock record
       const { error: unlockError } = await supabase
