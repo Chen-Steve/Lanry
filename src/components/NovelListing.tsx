@@ -31,12 +31,11 @@ const NovelCard = ({ novel, isPriority = false }: { novel: Novel; isPriority?: b
         const total = await getTotalChapters(novel.id);
         setTotalChapters(total);
 
-        // Existing latest chapter fetch
+        // Modified latest chapter fetch - removed publish_at condition
         const { data: latestChapterData, error } = await supabase
           .from('chapters')
           .select('chapter_number, title')
           .eq('novel_id', novel.id)
-          .lte('publish_at', new Date().toISOString())
           .order('chapter_number', { ascending: false })
           .limit(1)
           .maybeSingle();
