@@ -233,7 +233,7 @@ export default function ChapterManagementForm({ authorOnly = false }: ChapterMan
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-1">
             <h3 className="text-lg font-semibold mb-4">Chapters</h3>
-            <div className="space-y-2">
+            <div className="space-y-2 h-[calc(100vh-250px)] overflow-y-auto pr-2">
               {chapters.map((chapter) => (
                 <div
                   key={chapter.id}

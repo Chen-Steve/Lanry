@@ -16,6 +16,9 @@ export const metadata: Metadata = {
     description: 'read light novel',
     type: 'website',
   },
+  icons: {
+    icon: '/download.ico',
+  },
 };
 
 export default function RootLayout({
