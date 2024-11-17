@@ -7,6 +7,8 @@ import { getNovels } from '@/services/novelService';
 import { useEffect, useState } from 'react';
 import supabase from '@/lib/supabaseClient';
 import NoticeBoard from './NoticeBoard';
+import { Icon } from '@iconify/react';
+import { getTotalChapters } from '@/services/chapterService';
 
 interface LatestChapter {
   chapter_number: number;
@@ -20,24 +22,39 @@ const truncateText = (text: string, maxLength: number) => {
 
 const NovelCard = ({ novel, isPriority = false }: { novel: Novel; isPriority?: boolean }) => {
   const [latestChapter, setLatestChapter] = useState<LatestChapter | null>(null);
+  const [totalChapters, setTotalChapters] = useState(0);
 
   useEffect(() => {
-    const fetchLatestChapter = async () => {
-      const { data, error } = await supabase
-        .from('chapters')
-        .select('chapter_number, title')
-        .eq('novel_id', novel.id)
-        .lte('publish_at', new Date().toISOString()) // Only published chapters
-        .order('chapter_number', { ascending: false })
-        .limit(1)
-        .single();
+    const fetchData = async () => {
+      try {
+        // Fetch total chapters
+        const total = await getTotalChapters(novel.id);
+        setTotalChapters(total);
 
-      if (!error && data) {
-        setLatestChapter(data);
+        // Existing latest chapter fetch
+        const { data: latestChapterData, error } = await supabase
+          .from('chapters')
+          .select('chapter_number, title')
+          .eq('novel_id', novel.id)
+          .lte('publish_at', new Date().toISOString())
+          .order('chapter_number', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (error) {
+          console.error('Error fetching latest chapter:', error);
+          return;
+        }
+
+        if (latestChapterData) {
+          setLatestChapter(latestChapterData);
+        }
+      } catch (err) {
+        console.error('Failed to fetch chapter data:', err);
       }
     };
 
-    fetchLatestChapter();
+    fetchData();
   }, [novel.id]);
 
   return (
@@ -68,12 +85,18 @@ const NovelCard = ({ novel, isPriority = false }: { novel: Novel; isPriority?: b
           <p className="text-xs text-gray-500 line-clamp-3 mt-1 flex-grow">
             {truncateText(novel.description, 150)}
           </p>
-          {latestChapter && (
-            <p className="text-xs text-gray-600 mt-1 truncate">
-              Latest: Chapter {latestChapter.chapter_number}
-              {latestChapter.title && ` - ${truncateText(latestChapter.title, 30)}`}
-            </p>
-          )}
+          <div className="flex items-center gap-4 text-sm text-gray-600">
+            <div className="flex items-center gap-1">
+                <Icon icon="mdi:book-open-page-variant" className="text-lg" />
+                <span>{totalChapters} Chapters</span>
+            </div>
+            {latestChapter && (
+              <div className="flex items-center gap-1">
+                <Icon icon="mdi:clock-outline" className="text-lg" />
+                <span>Ch. {latestChapter.chapter_number}</span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </Link>
