@@ -6,6 +6,7 @@ import supabase from '@/lib/supabaseClient';
 import { Icon } from '@iconify/react';
 import { useQuery } from '@tanstack/react-query';
 import { ErrorBoundary } from 'react-error-boundary';
+import Badges from '@/components/dashboard/Badges';
 
 // Lazy load components with proper error handling
 const ReadingHistorySection = lazy(() => 
@@ -75,7 +76,7 @@ export default function UserDashboard() {
 
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('*, created_at')
         .eq('id', user.id)
         .single();
 
@@ -114,15 +115,6 @@ export default function UserDashboard() {
       subscription.unsubscribe();
     };
   }, [router]);
-
-  const handleSignOut = async () => {
-    try {
-      await supabase.auth.signOut();
-      router.push('/');
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
-  };
 
   // Show loading state while checking auth
   if (isAuthChecking || isProfileLoading) {
@@ -176,24 +168,26 @@ export default function UserDashboard() {
       <div className="bg-white border-b border-black rounded-md px-4 sm:px-6 py-3">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
           <div className="flex items-center gap-4 mb-4 sm:mb-0">
-            <h1 className="text-2xl sm:text-3xl font-bold">Dashboard</h1>
-          
-            <a
-              href="https://forms.gle/dYXhMkxfTi3odiLc8"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-500 hover:text-blue-600 transition-colors flex items-center gap-1"
-            >
-              <Icon icon="mdi:plus-circle" width="20" />
-              <span>Request a Novel</span>
-            </a>
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold mb-1">
+                {profile?.username || 'User'}
+              </h1>
+              <p className="text-sm text-gray-500">
+                Joined {new Date(profile?.created_at).toLocaleDateString()}
+              </p>
+              <Badges />
+            </div>
           </div>
-          <button
-            onClick={handleSignOut}
-            className="text-red-500 hover:text-red-600 transition-colors"
+          
+          <a
+            href="https://forms.gle/dYXhMkxfTi3odiLc8"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-500 hover:text-blue-600 transition-colors flex items-center gap-1"
           >
-            Sign Out
-          </button>
+            <Icon icon="mdi:plus-circle" width="20" />
+            <span>Request a Novel</span>
+          </a>
         </div>
       </div>
 
