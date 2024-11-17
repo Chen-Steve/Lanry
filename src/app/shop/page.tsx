@@ -86,16 +86,6 @@ export default function ShopPage() {
                 <Icon icon="simple-icons:kofi" className="text-xl" />
                 Support on Ko-fi
               </a>
-
-              <a
-                href="https://www.paypal.com/biz/profile/lanrys"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full py-2 px-4 rounded-md font-medium bg-[#0070BA] hover:bg-[#005ea6] text-white text-center flex items-center justify-center gap-2"
-              >
-                <Icon icon="logos:paypal" className="text-xl" />
-                Pay with PayPal
-              </a>
             </div>
 
             <div className="mt-4 text-sm text-gray-600">
