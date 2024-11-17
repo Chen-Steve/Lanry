@@ -10,7 +10,7 @@ import CatFollower from '@/components/CatFollower';
 export const metadata: Metadata = {
   title: "Lanry",
   description: "read light novel",
-  metadataBase: new URL('https://lanry.vercel.app'),
+  metadataBase: new URL('https://lanry.space'),
   openGraph: {
     title: 'Lanry',
     description: 'read light novel',
