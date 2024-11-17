@@ -9,6 +9,7 @@ interface UserProfile {
   current_streak: number;
   last_visit: string | null;
   coins: number;
+  avatar?: string;
 }
 
 interface UserProfileButtonProps {
@@ -45,14 +46,20 @@ const UserProfileButton = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isProfileDropdownOpen, setIsProfileDropdownOpen]);
 
+  const getInitial = (username: string) => {
+    return username.charAt(0).toUpperCase();
+  };
+
   if (isMobile) {
     return (
       <div>
         <button 
           onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
-          className="block w-full text-left px-2 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+          className="flex items-center w-full px-2 py-2 text-gray-600 hover:text-gray-800 transition-colors"
         >
-          Profile
+          <div className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center">
+            {userProfile?.username ? getInitial(userProfile.username) : '?'}
+          </div>
         </button>
         {isProfileDropdownOpen && (
           <div className="bg-gray-50 py-1">
@@ -87,9 +94,11 @@ const UserProfileButton = ({
     <div className="relative" ref={profileDropdownRef}>
       <button
         onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
-        className="text-gray-600 hover:text-gray-800 transition-colors"
+        className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors"
       >
-        {userProfile?.username || 'Error loading profile'}
+        <div className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center">
+          {userProfile?.username ? getInitial(userProfile.username) : '?'}
+        </div>
       </button>
       {isProfileDropdownOpen && (
         <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 border border-gray-200">
