@@ -164,11 +164,11 @@ export default function NovelPage({ params }: { params: { id: string } }) {
           <div className="flex-1">
             <h1 className="text-xl font-bold mb-1 text-black">{novel.title}</h1>
             <div className="space-y-1">
-              <p className="text-lg text-gray-600">
+              <p className="text-sm text-gray-600">
                 Author: {novel.author}
               </p>
               {novel.translator && (
-                <p className="text-lg text-gray-600">
+                <p className="text-sm text-gray-600">
                   Translator: {novel.translator.username}
                 </p>
               )}
@@ -251,11 +251,11 @@ export default function NovelPage({ params }: { params: { id: string } }) {
             <div>
               <h1 className="text-3xl font-bold mb-2 text-black">{novel.title}</h1>
               <div className="space-y-1">
-                <p className="text-lg text-gray-600">
+                <p className="text-sm text-gray-600">
                   Author: {novel.author}
                 </p>
                 {novel.translator && (
-                  <p className="text-lg text-gray-600">
+                  <p className="text-sm text-gray-600">
                     Translator: {novel.translator.username}
                   </p>
                 )}

@@ -295,11 +295,11 @@ const Header = () => {
               <div className="py-2">
                 <SearchSection onSearch={handleSearchResults} />
               </div>
-              <ul className="py-2 space-y-2">
+              <ul className="py-1 space-y-1">
                 <li>
                   <span 
                     onClick={handleForumClick}
-                    className="block px-2 py-2 text-gray-600 hover:text-gray-800 transition-colors cursor-pointer"
+                    className="block px-2 py-1.5 text-sm text-gray-600 hover:text-gray-800 transition-colors cursor-pointer"
                   >
                     Forum
                   </span>
@@ -307,7 +307,7 @@ const Header = () => {
                 <li>
                   <Link 
                     href="/sponsors" 
-                    className="block px-2 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                    className="block px-2 py-1.5 text-sm text-gray-600 hover:text-gray-800 transition-colors"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Sponsors
@@ -316,10 +316,10 @@ const Header = () => {
                 <li>
                   <Link 
                     href="/shop" 
-                    className="block px-2 py-2 text-gray-600"
+                    className="block px-2 py-1.5 text-sm text-gray-600"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    <span className="inline-flex items-center gap-2 bg-amber-100 text-amber-800 hover:bg-amber-200 transition-colors px-3 py-1.5 rounded-md">
+                    <span className="inline-flex items-center gap-2 bg-amber-100 text-amber-800 hover:bg-amber-200 transition-colors px-2 py-1 rounded-md">
                       <Icon icon="ph:coins" className="text-amber-600" />
                       <span>Coins</span>
                       {userProfile && (
@@ -331,7 +331,7 @@ const Header = () => {
                   </Link>
                 </li>
                 <li>
-                  {isAuthenticated && (
+                  {isAuthenticated ? (
                     <UserProfileButton
                       userProfile={userProfile}
                       isProfileDropdownOpen={isProfileDropdownOpen}
@@ -340,6 +340,14 @@ const Header = () => {
                       isMobile
                       onMenuClose={() => setIsMenuOpen(false)}
                     />
+                  ) : (
+                    <Link 
+                      href="/auth" 
+                      className="block px-2 py-1.5 text-sm text-gray-600 hover:text-gray-800 transition-colors"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Sign In
+                    </Link>
                   )}
                 </li>
               </ul>
