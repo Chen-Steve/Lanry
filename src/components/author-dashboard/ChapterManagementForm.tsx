@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import supabase from '@/lib/supabaseClient';
 import { generateChapterSlug } from '@/lib/utils';
+import { handleKeyDown, saveCaretPosition, restoreCaretPosition } from '@/lib/textEditor';
 
 interface ChapterManagementFormProps {
   authorOnly?: boolean;
@@ -48,6 +49,14 @@ export default function ChapterManagementForm({ authorOnly = false }: ChapterMan
     coins: '0',
   });
   const [editingChapter, setEditingChapter] = useState<Chapter | null>(null);
+
+  const editorRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (editorRef.current) {
+      editorRef.current.innerHTML = formData.content || '';
+    }
+  }, [formData.content]);
 
   useEffect(() => {
     fetchNovels();
@@ -199,6 +208,18 @@ export default function ChapterManagementForm({ authorOnly = false }: ChapterMan
     });
   };
 
+  const handleEditorChange = (e: React.FormEvent<HTMLDivElement>) => {
+    const element = e.currentTarget;
+    const position = saveCaretPosition(element);
+    const content = element.innerHTML;
+    
+    setFormData(prev => ({ ...prev, content }));
+    
+    requestAnimationFrame(() => {
+      restoreCaretPosition(element, position);
+    });
+  };
+
   const handleCancelEdit = () => {
     setEditingChapter(null);
     setFormData({
@@ -290,14 +311,20 @@ export default function ChapterManagementForm({ authorOnly = false }: ChapterMan
                 </div>
               </div>
 
-              <div>
-                <textarea
-                  placeholder="Content"
-                  value={formData.content}
-                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                  className="w-full p-3 border rounded-lg min-h-[300px]"
-                  required
+              <div className="space-y-2">
+                <div
+                  ref={editorRef}
+                  contentEditable
+                  suppressContentEditableWarning
+                  onKeyDown={handleKeyDown}
+                  onInput={handleEditorChange}
+                  className="w-full p-3 border rounded-lg min-h-[300px] focus:outline-none focus:ring-2 focus:ring-blue-500 empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400"
+                  data-placeholder="Content"
+                  dangerouslySetInnerHTML={{ __html: formData.content }}
                 />
+                <p className="text-sm text-gray-600">
+                  Use Ctrl+B for bold, Ctrl+I for italic, Ctrl+U for underline
+                </p>
               </div>
 
               <div className="flex gap-4">

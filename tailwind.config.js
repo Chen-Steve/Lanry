@@ -19,6 +19,20 @@ const config = {
             'u': {
               textDecoration: 'underline',
             },
+            '.chapter-content': {
+              'b, strong': {
+                fontWeight: '600',
+              },
+              'i, em': {
+                fontStyle: 'italic',
+              },
+              'u': {
+                textDecoration: 'underline',
+              },
+              'p': {
+                marginBottom: '1.5em',
+              },
+            },
           },
         },
       },

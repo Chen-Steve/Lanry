@@ -80,6 +80,8 @@ export default function ChapterContent({
     onCommentStateChange(true);
   }, [onCommentStateChange]);
 
+  const paragraphs = content.split('\n').filter(p => p.trim());
+
   return (
     <div className="mb-6 md:mb-8">
       <div className="mb-4 flex justify-between items-center">
@@ -94,19 +96,19 @@ export default function ChapterContent({
       </div>
       
       <div 
-        className="prose prose-sm md:prose-base max-w-none text-black"
+        className="prose prose-sm md:prose-base max-w-none text-black chapter-content"
         style={{ 
           fontFamily: fontFamily,
           fontSize: `${fontSize}px`
         }}
       >
-        {content.split('\n').map((paragraph, index) => {
+        {paragraphs.map((paragraph, index) => {
           const paragraphId = `p-${index}`;
           const paragraphComments = comments[paragraphId] || [];
           
           return (
             <div key={index} className="relative group">
-              <p 
+              <div 
                 id={paragraphId}
                 className="mb-4 leading-relaxed relative"
                 onContextMenu={(e) => isMobile && handleParagraphLongPress(e, paragraphId)}
@@ -126,26 +128,25 @@ export default function ChapterContent({
                   document.addEventListener('touchend', cleanup);
                   document.addEventListener('touchmove', cleanup);
                 }}
-              >
-                {paragraph}
-                {!isMobile && (
-                  <button
-                    onClick={(e) => handleCommentClick(e, paragraphId)}
-                    className="absolute left-[-30px] top-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                    aria-label="Add comment"
-                  >
-                    <Icon 
-                      icon="pepicons-print:text-bubbles" 
-                      className="w-5 h-5 text-gray-400 hover:text-blue-500 transition-colors"
-                    />
-                  </button>
-                )}
-                {paragraphComments.length > 0 && (
-                  <span className="ml-2 text-sm text-blue-500">
-                    ({paragraphComments.length})
-                  </span>
-                )}
-              </p>
+                dangerouslySetInnerHTML={{ __html: paragraph }}
+              />
+              {!isMobile && (
+                <button
+                  onClick={(e) => handleCommentClick(e, paragraphId)}
+                  className="absolute left-[-30px] top-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                  aria-label="Add comment"
+                >
+                  <Icon 
+                    icon="pepicons-print:text-bubbles" 
+                    className="w-5 h-5 text-gray-400 hover:text-blue-500 transition-colors"
+                  />
+                </button>
+              )}
+              {paragraphComments.length > 0 && (
+                <span className="ml-2 text-sm text-blue-500">
+                  ({paragraphComments.length})
+                </span>
+              )}
             </div>
           );
         })}
