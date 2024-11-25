@@ -5,15 +5,9 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { getNovels } from '@/services/novelService';
 import { useEffect, useState } from 'react';
-import supabase from '@/lib/supabaseClient';
 import NoticeBoard from './NoticeBoard';
 import { Icon } from '@iconify/react';
 import { getTotalChapters } from '@/services/chapterService';
-
-interface LatestChapter {
-  chapter_number: number;
-  title: string;
-}
 
 const truncateText = (text: string, maxLength: number) => {
   if (!text) return '';
@@ -21,33 +15,14 @@ const truncateText = (text: string, maxLength: number) => {
 };
 
 const NovelCard = ({ novel, isPriority = false }: { novel: Novel; isPriority?: boolean }) => {
-  const [latestChapter, setLatestChapter] = useState<LatestChapter | null>(null);
   const [totalChapters, setTotalChapters] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch total chapters
+        // Only fetch total chapters
         const total = await getTotalChapters(novel.id);
         setTotalChapters(total);
-
-        // Modified latest chapter fetch - removed publish_at condition
-        const { data: latestChapterData, error } = await supabase
-          .from('chapters')
-          .select('chapter_number, title')
-          .eq('novel_id', novel.id)
-          .order('chapter_number', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (error) {
-          console.error('Error fetching latest chapter:', error);
-          return;
-        }
-
-        if (latestChapterData) {
-          setLatestChapter(latestChapterData);
-        }
       } catch (err) {
         console.error('Failed to fetch chapter data:', err);
       }
@@ -74,27 +49,26 @@ const NovelCard = ({ novel, isPriority = false }: { novel: Novel; isPriority?: b
             <div className="w-full h-full bg-gray-300 rounded"></div>
           )}
         </div>
-        <div className="flex-grow overflow-hidden h-44 flex flex-col">
-          <h3 className="text-lg font-semibold truncate text-black">{novel.title}</h3>
-          {novel.translator?.username && (
-            <p className="text-sm text-gray-600">
-              By: {novel.translator.username}
-            </p>
-          )}
-          <p className="text-xs text-gray-500 line-clamp-3 mt-1 flex-grow">
-            {truncateText(novel.description, 150)}
-          </p>
-          <div className="flex items-center gap-4 text-sm text-gray-600">
-            <div className="flex items-center gap-1">
-                <Icon icon="mdi:book-open-page-variant" className="text-lg" />
-                <span>{totalChapters} Chapters</span>
-            </div>
-            {latestChapter && (
-              <div className="flex items-center gap-1">
-                <Icon icon="mdi:clock-outline" className="text-lg" />
-                <span>Ch. {latestChapter.chapter_number}</span>
-              </div>
+        <div className="flex-grow overflow-hidden flex flex-col h-44">
+          <div className="min-h-[3.5rem]">
+            <h3 className="text-lg font-semibold truncate text-black leading-tight">{novel.title}</h3>
+            {novel.translator?.username && (
+              <p className="text-sm text-gray-600 mt-1">
+                By: {novel.translator.username}
+              </p>
             )}
+          </div>
+          <div className="flex-grow overflow-hidden">
+            <div 
+              className="prose prose-sm prose-p:my-0 prose-headings:my-0 max-w-none text-xs text-gray-500"
+              dangerouslySetInnerHTML={{ __html: truncateText(novel.description || '', 300) }}
+            />
+          </div>
+          <div className="flex items-center gap-4 text-sm text-gray-600 mt-2">
+            <div className="flex items-center gap-1">
+              <Icon icon="mdi:book-open-page-variant" className="text-lg" />
+              <span>{totalChapters} Chapters</span>
+            </div>
           </div>
         </div>
       </div>
