@@ -101,17 +101,15 @@ const NovelListing = () => {
 
   return (
     <div className="max-w-5xl mx-auto px-4">
-      <div className="relative mb-6">
-        <NoticeBoard />
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          {novels.map((novel, index) => (
-            <NovelCard 
-              key={novel.id} 
-              novel={novel}
-              isPriority={index < 3}
-            />
-          ))}
-        </div>
+      <NoticeBoard />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        {novels.map((novel, index) => (
+          <NovelCard 
+            key={novel.id} 
+            novel={novel}
+            isPriority={index < 3}
+          />
+        ))}
       </div>
     </div>
   );
