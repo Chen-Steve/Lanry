@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { generateNovelSlug } from '@/lib/utils';
 import supabase from '@/lib/supabaseClient';
 
@@ -31,6 +31,14 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
     slug: '',
   });
 
+  const editorRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (editorRef.current) {
+      editorRef.current.innerHTML = formData.description || '';
+    }
+  }, [formData.description]);
+
   useEffect(() => {
     fetchNovels();
   }, []);
@@ -60,6 +68,11 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!formData.description.trim()) {
+      alert('Description is required');
+      return;
+    }
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -178,6 +191,87 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.ctrlKey) {
+      switch(e.key.toLowerCase()) {
+        case 'b':
+          e.preventDefault();
+          document.execCommand('bold', false);
+          break;
+        case 'i':
+          e.preventDefault();
+          document.execCommand('italic', false);
+          break;
+        case 'u':
+          e.preventDefault();
+          document.execCommand('underline', false);
+          break;
+      }
+    }
+  };
+
+  const saveCaretPosition = (element: HTMLElement) => {
+    const selection = window.getSelection();
+    if (selection && selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      const preCaretRange = range.cloneRange();
+      preCaretRange.selectNodeContents(element);
+      preCaretRange.setEnd(range.endContainer, range.endOffset);
+      return preCaretRange.toString().length;
+    }
+    return 0;
+  };
+
+  const restoreCaretPosition = (element: HTMLElement, position: number) => {
+    const range = document.createRange();
+    const selection = window.getSelection();
+    let charIndex = 0;
+    let done = false;
+
+    const nodeStack: Node[] = [element];
+    let node: Node | undefined;
+    let foundNode: Text | null = null;
+    let foundPosition = 0;
+
+    while (!done && (node = nodeStack.pop())) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        const textNode = node as Text;
+        const nextCharIndex = charIndex + textNode.length;
+        if (!foundNode && position >= charIndex && position <= nextCharIndex) {
+          foundNode = textNode;
+          foundPosition = position - charIndex;
+          done = true;
+        }
+        charIndex = nextCharIndex;
+      } else {
+        let i = node.childNodes.length;
+        while (i--) {
+          nodeStack.push(node.childNodes[i]);
+        }
+      }
+    }
+
+    if (foundNode) {
+      range.setStart(foundNode, foundPosition);
+      range.setEnd(foundNode, foundPosition);
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+    }
+  };
+
+  const handleEditorChange = (e: React.FormEvent<HTMLDivElement>) => {
+    const element = e.currentTarget;
+    const position = saveCaretPosition(element);
+    const content = element.innerHTML;
+    
+    setFormData(prev => ({ ...prev, description: content }));
+    
+    // Restore cursor position after React re-renders
+    requestAnimationFrame(() => {
+      restoreCaretPosition(element, position);
+    });
+  };
+
   return (
     <div className="max-w-5xl mx-auto px-4">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -232,15 +326,20 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
               />
             </div>
 
-            <div>
-              <textarea
-                placeholder="Description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full p-2 border rounded"
-                rows={4}
-                required
+            <div className="space-y-2">
+              <div
+                ref={editorRef}
+                contentEditable
+                suppressContentEditableWarning
+                onKeyDown={handleKeyDown}
+                onInput={handleEditorChange}
+                className="w-full p-2 border rounded min-h-[200px] focus:outline-none focus:ring-2 focus:ring-blue-500 empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400"
+                data-placeholder="Description"
+                dangerouslySetInnerHTML={{ __html: formData.description }}
               />
+              <p className="text-sm text-gray-600">
+                Use Ctrl+B for bold, Ctrl+I for italic, Ctrl+U for underline
+              </p>
             </div>
 
             <div>
