@@ -13,6 +13,39 @@ import { getNovel, toggleBookmark } from '@/services/novelService';
 import { track } from '@vercel/analytics';
 import { ChapterListItem } from '@/components/novels/ChapterListItem';
 
+interface SynopsisSectionProps {
+  description: string;
+  chaptersCount: number;
+  bookmarkCount: number;
+  viewCount: number;
+}
+
+const SynopsisSection = ({ description, chaptersCount, bookmarkCount, viewCount }: SynopsisSectionProps) => (
+  <div className="prose max-w-none mb-6">
+    <div className="flex items-center gap-6 mb-2">
+      <h2 className="text-lg font-semibold m-0 text-black">Synopsis</h2>
+      <div className="hidden md:flex items-center gap-4 text-sm text-gray-600">
+        <div className="flex items-center gap-1">
+          <Icon icon="mdi:book-open-page-variant" className="text-lg" />
+          <span>{chaptersCount} Chapters</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <Icon icon="mdi:bookmark" className="text-lg" />
+          <span>{bookmarkCount} Bookmarks</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <Icon icon="mdi:eye" className="text-lg" />
+          <span>{viewCount} Views</span>
+        </div>
+      </div>
+    </div>
+    <div 
+      className="text-sm text-black leading-relaxed"
+      dangerouslySetInnerHTML={{ __html: description }}
+    />
+  </div>
+);
+
 export default function NovelPage({ params }: { params: { id: string } }) {
   const { id } = params;
   const [novel, setNovel] = useState<Novel | null>(null);
@@ -297,29 +330,13 @@ export default function NovelPage({ params }: { params: { id: string } }) {
             )}
           </div>
 
-          {/* Synopsis with Stats */}
-          <div className="prose max-w-none mb-6">
-            <div className="flex items-center gap-6 mb-2">
-              <h2 className="text-lg font-semibold m-0 text-black">Synopsis</h2>
-              <div className="hidden md:flex items-center gap-4 text-sm text-gray-600">
-                <div className="flex items-center gap-1">
-                  <Icon icon="mdi:book-open-page-variant" className="text-lg" />
-                  <span>{novel.chapters.length} Chapters</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Icon icon="mdi:bookmark" className="text-lg" />
-                  <span>{novel.bookmarkCount} Bookmarks</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Icon icon="mdi:eye" className="text-lg" />
-                  <span>{viewCount} Views</span>
-                </div>
-              </div>
-            </div>
-            <p className="text-sm text-black whitespace-pre-line leading-relaxed">
-              {novel.description}
-            </p>
-          </div>
+          {/* Update the Synopsis section with proper props */}
+          <SynopsisSection 
+            description={novel.description}
+            chaptersCount={novel.chapters.length}
+            bookmarkCount={novel.bookmarkCount}
+            viewCount={viewCount}
+          />
 
           {/* Additional Info */}
           <div className="grid grid-cols-2 gap-4 text-sm mb-8">
