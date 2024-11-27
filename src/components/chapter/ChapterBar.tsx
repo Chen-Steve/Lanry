@@ -35,7 +35,6 @@ export default function ChapterProgressBar({
   const [scrollProgress, setScrollProgress] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
   const isMobile = useMediaQuery('(max-width: 768px)');
-  const [hideTimeout, setHideTimeout] = useState<NodeJS.Timeout | null>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
   const [touchStartY, setTouchStartY] = useState<number | null>(null);
   const [isTouching, setIsTouching] = useState(false);
@@ -84,18 +83,7 @@ export default function ChapterProgressBar({
           !(e.target as HTMLElement).closest('[role="scrollbar"]') &&
           !(progressBarRef.current?.contains(e.target as Node))
         ) {
-          if (isVisible) {
-            setIsVisible(false);
-            if (hideTimeout) {
-              clearTimeout(hideTimeout);
-            }
-          } else {
-            setIsVisible(true);
-            const timeout = setTimeout(() => {
-              setIsVisible(false);
-            }, 3000);
-            setHideTimeout(timeout);
-          }
+          setIsVisible(!isVisible);
         }
       }
 
@@ -109,18 +97,12 @@ export default function ChapterProgressBar({
     return () => {
       document.removeEventListener('touchstart', handleTouchStart);
       document.removeEventListener('touchend', handleTouchEnd);
-      if (hideTimeout) {
-        clearTimeout(hideTimeout);
-      }
     };
-  }, [isMobile, hideTimeout, isVisible, touchStartY, isTouching, isCommentOpen]);
+  }, [isMobile, isVisible, touchStartY, isTouching, isCommentOpen]);
 
   useEffect(() => {
     if (isCommentOpen && isVisible) {
       setIsVisible(false);
-      if (hideTimeout) {
-        clearTimeout(hideTimeout);
-      }
     }
   }, [isCommentOpen]);
 
