@@ -10,7 +10,7 @@ import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { getNovel, toggleBookmark } from '@/services/novelService';
 import { track } from '@vercel/analytics';
-import { ChapterListItem } from '@/components/novels/ChapterListItem';
+import { ChapterList } from '@/components/novels/ChapterList';
 import { SynopsisSection } from '@/components/novels/SynopsisSection';
 
 export default function NovelPage({ params }: { params: { id: string } }) {
@@ -145,57 +145,11 @@ export default function NovelPage({ params }: { params: { id: string } }) {
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
       <div className="flex flex-col md:flex-row gap-8">
-        {/* Mobile Header Layout */}
-        <div className="md:hidden flex gap-4 mb-6">
-          <div className="relative w-1/3 aspect-[2/3] rounded-lg overflow-hidden shadow-lg">
-            {novel.coverImageUrl ? (
-              <Image
-                src={`/novel-covers/${novel.coverImageUrl}`}
-                alt={novel.title}
-                fill
-                priority
-                className="object-cover"
-                sizes="(max-width: 768px) 33vw, 320px"
-              />
-            ) : (
-              <div className="w-full h-full bg-gray-300" />
-            )}
-          </div>
-          <div className="flex-1">
-            <h1 className="text-xl font-bold mb-1 text-black">{novel.title}</h1>
-            <div className="space-y-1">
-              <p className="text-sm text-gray-600">
-                Author: {novel.author}
-              </p>
-              {novel.translator && (
-                <p className="text-sm text-gray-600">
-                  Translator: {novel.translator.username}
-                </p>
-              )}
-            </div>
-            <div className="flex flex-col gap-1 text-sm text-gray-600">
-              <div className="flex items-center gap-1">
-                <Icon icon="mdi:book-open-page-variant" className="text-lg" />
-                <span>{novel.chapters.length} Chapters</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-1">
-                  <Icon icon="mdi:bookmark" className="text-lg" />
-                  <span>{novel.bookmarkCount} Bookmarks</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Icon icon="mdi:eye" className="text-lg" />
-                  <span>{viewCount} Views</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Desktop Layout - Cover Image */}
-        <div className="hidden md:block w-80 flex-shrink-0">
-          <div className="sticky top-8">
-            <div className="relative w-full aspect-[2/3] rounded-lg overflow-hidden shadow-lg">
+        {/* Cover Image */}
+        <div className="w-full md:w-80 md:flex-shrink-0">
+          <div className="md:sticky md:top-8">
+            {/* Cover Image Container */}
+            <div className="relative w-1/3 md:w-full aspect-[2/3] rounded-lg overflow-hidden shadow-lg float-left md:float-none mr-4 md:mr-0">
               {novel.coverImageUrl ? (
                 <Image
                   src={`/novel-covers/${novel.coverImageUrl}`}
@@ -203,54 +157,17 @@ export default function NovelPage({ params }: { params: { id: string } }) {
                   fill
                   priority
                   className="object-cover"
-                  sizes="320px"
+                  sizes="(max-width: 768px) 33vw, 320px"
                 />
               ) : (
                 <div className="w-full h-full bg-gray-300" />
               )}
             </div>
-            {/* Bookmark and Start Reading buttons */}
-            <div className="flex flex-col gap-2 mt-4">
-              <button 
-                onClick={handleBookmark}
-                type="button"
-                disabled={isBookmarkLoading}
-                aria-label={isBookmarked ? "Remove Bookmark" : "Add Bookmark"} 
-                className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors w-full ${
-                  !isAuthenticated 
-                    ? 'bg-gray-100 hover:bg-gray-200 text-gray-500'
-                    : isBookmarked 
-                      ? 'bg-amber-400 hover:bg-amber-500 text-amber-950'
-                      : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
-                } ${isBookmarkLoading ? 'opacity-50' : ''}`}
-              >
-                <Icon 
-                  icon={isBookmarked ? "mdi:bookmark" : "mdi:bookmark-outline"} 
-                  className={`text-xl ${isBookmarkLoading ? 'animate-pulse' : ''}`}
-                />
-                <span>{isBookmarked ? 'Bookmarked' : 'Bookmark'}</span>
-              </button>
-              
-              {novel.chapters.length > 0 && (
-                <Link 
-                  href={`/novels/${novel.slug}/chapters/c${novel.chapters[0].chapter_number}`}
-                  className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600 transition-colors w-full"
-                >
-                  <Icon icon="mdi:book-open-page-variant" className="text-xl" />
-                  <span>Start Reading</span>
-                </Link>
-              )}
-            </div>
-          </div>
-        </div>
 
-        {/* Right Column - Novel Information */}
-        <div className="flex-grow">
-          {/* Desktop Title (hidden on mobile) */}
-          <div className="hidden md:flex justify-between items-start mb-4">
-            <div>
-              <h1 className="text-3xl font-bold mb-2 text-black">{novel.title}</h1>
-              <div className="space-y-1">
+            {/* Title and Basic Info - Shows next to image on mobile, below on desktop */}
+            <div className="md:mt-6">
+              <h1 className="text-xl md:text-3xl font-bold mb-1 text-black">{novel.title}</h1>
+              <div className="space-y-1 mb-4">
                 <p className="text-sm text-gray-600">
                   Author: {novel.author}
                 </p>
@@ -260,44 +177,45 @@ export default function NovelPage({ params }: { params: { id: string } }) {
                   </p>
                 )}
               </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col gap-2 clear-both">
+                <button 
+                  onClick={handleBookmark}
+                  type="button"
+                  disabled={isBookmarkLoading}
+                  aria-label={isBookmarked ? "Remove Bookmark" : "Add Bookmark"} 
+                  className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors w-full ${
+                    !isAuthenticated 
+                      ? 'bg-gray-100 hover:bg-gray-200 text-gray-500'
+                      : isBookmarked 
+                        ? 'bg-amber-400 hover:bg-amber-500 text-amber-950'
+                        : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                  } ${isBookmarkLoading ? 'opacity-50' : ''}`}
+                >
+                  <Icon 
+                    icon={isBookmarked ? "pepicons-print:bookmark-filled" : "pepicons-print:bookmark"} 
+                    className={`text-xl ${isBookmarkLoading ? 'animate-pulse' : ''}`}
+                  />
+                  <span>{isBookmarked ? 'Bookmarked' : 'Bookmark'}</span>
+                </button>
+                
+                {novel.chapters.length > 0 && (
+                  <Link 
+                    href={`/novels/${novel.slug}/chapters/c${novel.chapters[0].chapter_number}`}
+                    className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600 transition-colors w-full"
+                  >
+                    <Icon icon="pepicons-print:book" className="text-xl" />
+                    <span>Start Reading</span>
+                  </Link>
+                )}
+              </div>
             </div>
           </div>
-          
-          {/* Mobile Buttons */}
-          <div className="md:hidden flex flex-col gap-2 mb-6">
-            {/* Move the buttons here for mobile */}
-            <button 
-              onClick={handleBookmark}
-              type="button"
-              disabled={isBookmarkLoading}
-              aria-label={isBookmarked ? "Remove Bookmark" : "Add Bookmark"} 
-              className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors w-full ${
-                !isAuthenticated 
-                  ? 'bg-gray-100 hover:bg-gray-200 text-gray-500'
-                  : isBookmarked 
-                    ? 'bg-amber-400 hover:bg-amber-500 text-amber-950'
-                    : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
-              } ${isBookmarkLoading ? 'opacity-50' : ''}`}
-            >
-              <Icon 
-                icon={isBookmarked ? "mdi:bookmark" : "mdi:bookmark-outline"} 
-                className={`text-xl ${isBookmarkLoading ? 'animate-pulse' : ''}`}
-              />
-              <span>{isBookmarked ? 'Bookmarked' : 'Bookmark'}</span>
-            </button>
-            
-            {novel.chapters.length > 0 && (
-              <Link 
-                href={`/novels/${novel.slug}/chapters/c${novel.chapters[0].chapter_number}`}
-                className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600 transition-colors w-full"
-              >
-                <Icon icon="mdi:book-open-page-variant" className="text-xl" />
-                <span>Start Reading</span>
-              </Link>
-            )}
-          </div>
+        </div>
 
-          {/* Update the Synopsis section with additional props */}
+        {/* Right Column - Novel Information */}
+        <div className="flex-grow">
           <SynopsisSection 
             description={novel.description}
             chaptersCount={novel.chapters.length}
@@ -308,61 +226,14 @@ export default function NovelPage({ params }: { params: { id: string } }) {
             updatedAt={novel.updated_at}
           />
 
-          {/* All Chapters */}
-          <div className="mt-12 relative">
-            {/* Quick Jump Navigation */}
-            <div className="hidden md:fixed md:right-4 md:top-1/2 md:transform md:-translate-y-1/2 md:space-y-2">
-              {Array.from({ length: Math.ceil(novel.chapters.length / 150) }).map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => {
-                    const element = document.getElementById(`chapter-section-${index}`);
-                    element?.scrollIntoView({ behavior: 'smooth' });
-                  }}
-                  className="w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-sm text-black"
-                  title={`Chapters ${index * 150 + 1}-${Math.min((index + 1) * 150, novel.chapters.length)}`}
-                >
-                  {index + 1}
-                </button>
-              ))}
-            </div>
-
-            {/* Chapter sections */}
-            {Array.from({ length: Math.ceil(novel.chapters.length / 150) }).map((_, sectionIndex) => {
-              const sectionChapters = novel.chapters.slice(
-                sectionIndex * 150,
-                (sectionIndex + 1) * 150
-              );
-
-              return (
-                <div
-                  key={sectionIndex}
-                  id={`chapter-section-${sectionIndex}`}
-                  className="mb-8"
-                >
-                  <h3 className="text-lg font-semibold mb-4 text-black">
-                    Chapters {sectionIndex * 150 + 1}-
-                    {Math.min((sectionIndex + 1) * 150, novel.chapters.length)}
-                  </h3>
-                  <div className="grid gap-2">
-                    {sectionChapters.map((chapter) => (
-                      <ChapterListItem
-                        key={chapter.id}
-                        chapter={{
-                          ...chapter,
-                          novel_id: novel.id
-                        }}
-                        novelSlug={novel.slug}
-                        userProfile={userProfile}
-                        isAuthenticated={isAuthenticated}
-                        novelAuthorId={novel.author_profile_id}
-                      />
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          <ChapterList
+            chapters={novel.chapters}
+            novelId={novel.id}
+            novelSlug={novel.slug}
+            userProfile={userProfile}
+            isAuthenticated={isAuthenticated}
+            novelAuthorId={novel.author_profile_id}
+          />
         </div>
       </div>
     </div>

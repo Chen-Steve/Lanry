@@ -276,9 +276,9 @@ export function ChapterListItem({
           ) : (
             <>
               {isUnlocking ? (
-                <Icon icon="eos-icons:loading" className="text-black sm:text-lg animate-spin" />
+                <Icon icon="pepicons-print:spinner" className="text-black sm:text-lg animate-spin" />
               ) : (
-                <Icon icon="material-symbols:lock" className="text-base sm:text-lg" />
+                <Icon icon="pepicons-print:lock" className="text-base sm:text-lg" />
               )}
               <span className="font-medium">
                 {formatDate(chapter.publish_at || new Date())} • {chapter.coins} coins
