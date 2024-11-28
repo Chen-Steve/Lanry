@@ -162,13 +162,6 @@ export default function NovelPage({ params }: { params: { id: string } }) {
             </div>
 
             <div className="md:mt-6">
-              <h1>{novel.title}</h1>
-              <div className="space-y-1 mb-4">
-                <p>Author: {novel.author}</p>
-                {novel.translator && (
-                  <p>Translator: {novel.translator.username}</p>
-                )}
-              </div>
 
               {/* Action Buttons */}
               <div className="flex flex-col gap-2 clear-both">
@@ -209,6 +202,7 @@ export default function NovelPage({ params }: { params: { id: string } }) {
         {/* Right Column - Novel Information */}
         <div className="flex-grow">
           <SynopsisSection 
+            title={novel.title}
             description={novel.description}
             chaptersCount={novel.chapters.length}
             bookmarkCount={novel.bookmarkCount}
@@ -216,6 +210,8 @@ export default function NovelPage({ params }: { params: { id: string } }) {
             status={novel.status}
             createdAt={novel.created_at}
             updatedAt={novel.updated_at}
+            author={novel.author}
+            translator={novel.translator}
           />
 
           <ChapterList
