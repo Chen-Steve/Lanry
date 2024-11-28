@@ -80,7 +80,9 @@ export default function ChapterContent({
     onCommentStateChange(true);
   }, [onCommentStateChange]);
 
-  const paragraphs = content.split('\n').filter(p => p.trim());
+  const paragraphs = content
+    .split('\n\n')
+    .filter(p => p.trim());
 
   return (
     <div className="mb-6 md:mb-8">
@@ -128,8 +130,9 @@ export default function ChapterContent({
                   document.addEventListener('touchend', cleanup);
                   document.addEventListener('touchmove', cleanup);
                 }}
-                dangerouslySetInnerHTML={{ __html: paragraph }}
-              />
+              >
+                {paragraph}
+              </div>
               {!isMobile && (
                 <button
                   onClick={(e) => handleCommentClick(e, paragraphId)}

@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { generateNovelSlug } from '@/lib/utils';
 import supabase from '@/lib/supabaseClient';
-import { handleKeyDown, saveCaretPosition, restoreCaretPosition } from '@/lib/textEditor';
 
 interface NovelUploadFormProps {
   authorOnly?: boolean;
@@ -31,14 +30,6 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
     status: 'ONGOING' as Novel['status'],
     slug: '',
   });
-
-  const editorRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (editorRef.current) {
-      editorRef.current.innerHTML = formData.description || '';
-    }
-  }, [formData.description]);
 
   useEffect(() => {
     fetchNovels();
@@ -75,6 +66,8 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
       return;
     }
 
+    const sanitizedDescription = formData.description.replace(/<[^>]*>/g, '');
+
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) {
@@ -96,11 +89,11 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
       const slug = generateNovelSlug(formData.title);
 
       if (editingNovel) {
-        // Update existing novel
         const { error } = await supabase
           .from('novels')
           .update({
             ...formData,
+            description: sanitizedDescription,
             slug,
             updated_at: new Date().toISOString()
           })
@@ -109,12 +102,12 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
 
         if (error) throw error;
       } else {
-        // Create new novel
         const { error } = await supabase
           .from('novels')
           .insert({
             id: crypto.randomUUID(),
             ...formData,
+            description: sanitizedDescription,
             slug,
             author_profile_id: session.user.id,
             created_at: new Date().toISOString(),
@@ -124,7 +117,6 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
         if (error) throw error;
       }
 
-      // Reset form and refresh novels
       setFormData({
         title: '',
         description: '',
@@ -192,24 +184,11 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
     }
   };
 
-  const handleEditorChange = (e: React.FormEvent<HTMLDivElement>) => {
-    const element = e.currentTarget;
-    const position = saveCaretPosition(element);
-    const content = element.innerHTML;
-    
-    setFormData(prev => ({ ...prev, description: content }));
-    
-    // Restore cursor position after React re-renders
-    requestAnimationFrame(() => {
-      restoreCaretPosition(element, position);
-    });
-  };
-
   return (
     <div className="max-w-5xl mx-auto px-4">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-1">
-          <h3 className="text-lg font-semibold mb-4">My Novels</h3>
+          <h3 className="mb-4">My Novels</h3>
           <div className="space-y-2">
             {novels.map((novel) => (
               <div
@@ -220,16 +199,18 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
               >
                 <div className="flex justify-between items-start">
                   <div onClick={() => handleNovelClick(novel)}>
-                    <h4 className="font-medium">{novel.title}</h4>
-                    <p className="text-sm text-gray-600">by {novel.author}</p>
-                    <span className="text-xs bg-gray-200 px-2 py-1 rounded">{novel.status}</span>
+                    <h4>{novel.title}</h4>
+                    <p>by {novel.author}</p>
+                    <span className="bg-gray-200 px-2 py-1 rounded mt-2 inline-block">
+                      {novel.status}
+                    </span>
                   </div>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       handleDelete(novel.id);
                     }}
-                    className="text-red-500 hover:text-red-700 p-1"
+                    className="hover:text-red-700 p-1"
                     title="Delete novel"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -244,7 +225,7 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
 
         <div className="md:col-span-2">
           <form onSubmit={handleSubmit} className="space-y-4">
-            <h3 className="text-lg font-semibold mb-4">
+            <h3 className="mb-4">
               {editingNovel ? 'Edit Novel' : 'Add New Novel'}
             </h3>
 
@@ -259,20 +240,14 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
               />
             </div>
 
-            <div className="space-y-2">
-              <div
-                ref={editorRef}
-                contentEditable
-                suppressContentEditableWarning
-                onKeyDown={handleKeyDown}
-                onInput={handleEditorChange}
-                className="w-full p-2 border rounded min-h-[200px] focus:outline-none focus:ring-2 focus:ring-blue-500 empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400"
-                data-placeholder="Description"
-                dangerouslySetInnerHTML={{ __html: formData.description }}
+            <div>
+              <textarea
+                placeholder="Description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                className="w-full p-2 border rounded min-h-[100px]"
+                required
               />
-              <p className="text-sm text-gray-600">
-                Use Ctrl+B for bold, Ctrl+I for italic, Ctrl+U for underline
-              </p>
             </div>
 
             <div>
@@ -303,7 +278,7 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
             <div className="flex gap-4">
               <button
                 type="submit"
-                className="flex-1 bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
+                className="flex-1 bg-blue-500 py-2 px-4 rounded hover:bg-blue-600"
               >
                 {editingNovel ? 'Update Novel' : 'Add Novel'}
               </button>
@@ -311,7 +286,7 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
                 <button
                   type="button"
                   onClick={handleCancelEdit}
-                  className="flex-1 bg-gray-500 text-white py-2 px-4 rounded hover:bg-gray-600"
+                  className="flex-1 bg-gray-500 py-2 px-4 rounded hover:bg-gray-600"
                 >
                   Cancel Edit
                 </button>

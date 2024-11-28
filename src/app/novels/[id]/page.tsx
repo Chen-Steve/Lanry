@@ -140,15 +140,12 @@ export default function NovelPage({ params }: { params: { id: string } }) {
     notFound();
   }
 
-  // console.log('Novel author ID:', novel.author_profile_id);
-
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
       <div className="flex flex-col md:flex-row gap-8">
         {/* Cover Image */}
         <div className="w-full md:w-80 md:flex-shrink-0">
           <div className="md:sticky md:top-8">
-            {/* Cover Image Container */}
             <div className="relative w-1/3 md:w-full aspect-[2/3] rounded-lg overflow-hidden shadow-lg float-left md:float-none mr-4 md:mr-0">
               {novel.coverImageUrl ? (
                 <Image
@@ -164,17 +161,12 @@ export default function NovelPage({ params }: { params: { id: string } }) {
               )}
             </div>
 
-            {/* Title and Basic Info - Shows next to image on mobile, below on desktop */}
             <div className="md:mt-6">
-              <h1 className="text-xl md:text-3xl font-bold mb-1 text-black">{novel.title}</h1>
+              <h1>{novel.title}</h1>
               <div className="space-y-1 mb-4">
-                <p className="text-sm text-gray-600">
-                  Author: {novel.author}
-                </p>
+                <p>Author: {novel.author}</p>
                 {novel.translator && (
-                  <p className="text-sm text-gray-600">
-                    Translator: {novel.translator.username}
-                  </p>
+                  <p>Translator: {novel.translator.username}</p>
                 )}
               </div>
 
@@ -187,10 +179,10 @@ export default function NovelPage({ params }: { params: { id: string } }) {
                   aria-label={isBookmarked ? "Remove Bookmark" : "Add Bookmark"} 
                   className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors w-full ${
                     !isAuthenticated 
-                      ? 'bg-gray-100 hover:bg-gray-200 text-gray-500'
+                      ? 'bg-gray-100 hover:bg-gray-200'
                       : isBookmarked 
-                        ? 'bg-amber-400 hover:bg-amber-500 text-amber-950'
-                        : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                        ? 'bg-amber-400 hover:bg-amber-500'
+                        : 'bg-gray-200 hover:bg-gray-300'
                   } ${isBookmarkLoading ? 'opacity-50' : ''}`}
                 >
                   <Icon 
@@ -203,7 +195,7 @@ export default function NovelPage({ params }: { params: { id: string } }) {
                 {novel.chapters.length > 0 && (
                   <Link 
                     href={`/novels/${novel.slug}/chapters/c${novel.chapters[0].chapter_number}`}
-                    className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600 transition-colors w-full"
+                    className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-green-500 hover:bg-green-600 transition-colors w-full"
                   >
                     <Icon icon="pepicons-print:book" className="text-xl" />
                     <span>Start Reading</span>
