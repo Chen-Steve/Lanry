@@ -211,20 +211,6 @@ const Header = () => {
     console.log('Search results:', results);
   };
 
-  const handleForumClick = () => {
-    const toastId = toast('Forum coming soon!', {
-      icon: '🚧',
-      duration: 2000,
-      className: 'font-medium border-2 border-black',
-      position: 'top-right'
-    });
-    
-    // Force dismiss after 2.5 seconds
-    setTimeout(() => {
-      toast.dismiss(toastId);
-    }, 2500);
-  };
-
   return (
     <header className="w-full bg-white">
       <div className="max-w-5xl mx-auto px-4 mt-4 sm:mt-8 mb-6 sm:mb-10">
@@ -256,12 +242,12 @@ const Header = () => {
             <nav className="hidden md:block">
               <ul className="flex items-center space-x-6">
                 <li>
-                  <span 
-                    onClick={handleForumClick}
+                  <Link 
+                    href="/forum"
                     className="text-gray-600 hover:text-gray-800 transition-colors cursor-pointer py-1.5 inline-block"
                   >
                     Forum
-                  </span>
+                  </Link>
                 </li>
                 <li>
                   <Link href="/sponsors" className="text-gray-600 hover:text-gray-800 transition-colors py-1.5 inline-block">
@@ -297,12 +283,12 @@ const Header = () => {
               </div>
               <ul className="py-1 space-y-1">
                 <li>
-                  <span 
-                    onClick={handleForumClick}
+                  <Link 
+                    href="/forum"
                     className="block px-2 py-1.5 text-sm text-gray-600 hover:text-gray-800 transition-colors cursor-pointer"
                   >
                     Forum
-                  </span>
+                  </Link>
                 </li>
                 <li>
                   <Link 

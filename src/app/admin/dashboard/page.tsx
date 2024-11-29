@@ -1,12 +1,57 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import supabase from '@/lib/supabaseClient';
 import NovelUploadForm from '@/components/admin-dashboard/NovelUploadForm';
 import ChapterManagementForm from '@/components/admin-dashboard/ChapterManagementForm';
 import RoleManagement from '@/components/admin-dashboard/RoleManagement';
+import { Icon } from '@iconify/react';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('novels');
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
+
+  useEffect(() => {
+    const checkAuthorization = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.user) {
+        router.push('/auth');
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', session.user.id)
+        .single();
+
+      if (!profile || !['ADMIN', 'SUPER_ADMIN'].includes(profile.role)) {
+        router.push('/');
+        return;
+      }
+
+      setIsAuthorized(true);
+      setIsLoading(false);
+    };
+
+    checkAuthorization();
+  }, [router]);
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <Icon icon="mdi:loading" className="animate-spin text-3xl text-gray-500" />
+      </div>
+    );
+  }
+
+  if (!isAuthorized) {
+    return null;
+  }
 
   return (
     <div className="flex flex-col h-screen">

@@ -109,4 +109,47 @@ export interface CoinTransaction {
   type: string;
   order_id?: string;
   profile?: UserProfile;
-} 
+}
+
+export interface ForumCategory {
+  id: string;
+  name: string;
+  description: string;
+  created_at: string;
+  thread_count: number;
+  latest_thread?: string;
+}
+
+export interface ForumThread {
+  id: string;
+  category_id: string;
+  title: string;
+  content: string;
+  author_id: string;
+  created_at: string;
+  updated_at: string;
+  is_pinned: boolean;
+  is_locked: boolean;
+  post_count: number;
+  last_post_at: string;
+  author: {
+    username: string;
+  };
+}
+
+export interface ForumPost {
+  id: string;
+  thread_id: string;
+  content: string;
+  author_id: string;
+  created_at: string;
+  updated_at: string;
+  author: {
+    username: string;
+  };
+}
+
+export type CategoryBasicInfo = {
+  id: string;
+  name: string;
+}; 

@@ -2,43 +2,30 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   try {
-    const { username, password } = await request.json();
+    const { email, password } = await request.json();
 
-    if (!username || !password) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      );
-    }
-
-    // Check against environment variables
-    if (
-      username !== process.env.ADMIN_EMAIL ||
-      password !== process.env.ADMIN_PASSWORD
-    ) {
-      return NextResponse.json(
-        { error: 'Invalid credentials' },
-        { status: 401 }
-      );
-    }
-
-    // Create a simple session object
-    const session = {
-      user: {
-        email: username,
-        role: 'admin'
-      },
-      expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-    };
-
-    return NextResponse.json({ 
-      success: true,
-      session 
+    // Add debug logging
+    console.log('Received credentials:', { email, password });
+    console.log('Expected credentials:', { 
+      adminEmail: process.env.ADMIN_EMAIL,
+      adminPassword: process.env.ADMIN_PASSWORD 
     });
+
+    const adminEmail = process.env.ADMIN_EMAIL;
+    const adminPassword = process.env.ADMIN_PASSWORD;
+
+    if (email === adminEmail && password === adminPassword) {
+      return NextResponse.json({ success: true });
+    }
+
+    return NextResponse.json(
+      { error: 'Invalid credentials' },
+      { status: 401 }
+    );
   } catch (error) {
     console.error('Auth error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Authentication failed' },
       { status: 500 }
     );
   }

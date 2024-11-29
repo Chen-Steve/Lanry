@@ -79,6 +79,8 @@ model Profile {
   transactions       CoinTransaction[]
   chapterUnlocks     ChapterUnlock[]
   authoredNovels     Novel[]   @relation("NovelAuthor")
+  forumThreads       ForumThread[]
+  forumPosts         ForumPost[]
 
   @@map("profiles")
 }
@@ -157,6 +159,54 @@ model ChapterUnlock {
 
   @@unique([profile_id, novel_id, chapter_number])
   @@map("chapter_unlocks")
+}
+
+model ForumCategory {
+  id          String        @id @default(uuid())
+  name        String
+  description String
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+  threads     ForumThread[]
+
+  @@map("forum_categories")
+}
+
+model ForumThread {
+  id          String        @id @default(uuid())
+  title       String
+  content     String        @db.Text
+  isPinned    Boolean       @default(false) @map("is_pinned")
+  isLocked    Boolean       @default(false) @map("is_locked")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+  category    ForumCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  categoryId  String        @map("category_id")
+  author      Profile       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId    String        @map("author_id")
+  posts       ForumPost[]
+
+  @@index([categoryId])
+  @@index([authorId])
+  @@index([createdAt])
+  @@index([isPinned])
+  @@map("forum_threads")
+}
+
+model ForumPost {
+  id          String      @id @default(uuid())
+  content     String      @db.Text
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+  thread      ForumThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  threadId    String      @map("thread_id")
+  author      Profile     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId    String      @map("author_id")
+
+  @@index([threadId])
+  @@index([authorId])
+  @@index([createdAt])
+  @@map("forum_posts")
 }
 
 enum NovelStatus {

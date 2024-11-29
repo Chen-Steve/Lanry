@@ -22,7 +22,7 @@ const NoticeBoard = () => {
       
       {isExpanded && (
         <p className="text-sm text-blue-700 mt-2">
-          removed
+          updates here..
         </p>
       )}
     </div>
