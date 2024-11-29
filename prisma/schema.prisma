@@ -162,12 +162,14 @@ model ChapterUnlock {
 }
 
 model ForumCategory {
-  id          String        @id @default(uuid())
-  name        String
-  description String
-  createdAt   DateTime      @default(now()) @map("created_at")
-  updatedAt   DateTime      @updatedAt @map("updated_at")
-  threads     ForumThread[]
+  id            String    @id @default(cuid())
+  name          String
+  description   String
+  thread_count  Int       @default(0)
+  latest_thread DateTime?
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+  threads       ForumThread[]
 
   @@map("forum_categories")
 }

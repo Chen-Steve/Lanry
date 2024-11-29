@@ -1,38 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ForumCategory } from '@/types/database';
-import { forumService } from '@/services/forumService';
+import { CategoryBasicInfo } from '@/types/database';
 import { Icon } from '@iconify/react';
 
-export default function ForumCategories() {
-  const [categories, setCategories] = useState<ForumCategory[]>([]);
-  const [loading, setLoading] = useState(true);
+type ForumCategoriesProps = {
+  categories: CategoryBasicInfo[];
+}
 
-  useEffect(() => {
-    const loadCategories = async () => {
-      try {
-        const data = await forumService.getCategories();
-        setCategories(data);
-      } catch (error) {
-        console.error('Error loading categories:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadCategories();
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center py-8">
-        <Icon icon="eos-icons:loading" className="w-8 h-8 animate-spin text-gray-500" />
-      </div>
-    );
-  }
-
+export default function ForumCategories({ categories }: ForumCategoriesProps) {
   if (categories.length === 0) {
     return (
       <div className="text-center py-8">

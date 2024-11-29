@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { forumService } from '@/services/forumService';
 import { useAuth } from '@/hooks/useAuth';
 
 interface CreateThreadButtonProps {
@@ -26,12 +25,25 @@ export default function CreateThreadButton({ categoryId }: CreateThreadButtonPro
 
     setIsSubmitting(true);
     try {
-      const thread = await forumService.createThread(
-        categoryId,
-        title,
-        content,
-        user.id
-      );
+      const response = await fetch('/api/forum/threads', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title,
+          content,
+          categoryId,
+        }),
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create thread');
+      }
+
+      const thread = await response.json();
       router.push(`/forum/thread/${thread.id}`);
       setIsModalOpen(false);
     } catch (error) {

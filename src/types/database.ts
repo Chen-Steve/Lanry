@@ -152,4 +152,7 @@ export interface ForumPost {
 export type CategoryBasicInfo = {
   id: string;
   name: string;
+  description: string;
+  thread_count: number;
+  latest_thread: string | null;
 }; 

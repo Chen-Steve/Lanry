@@ -3,6 +3,8 @@ import ForumCategories from '@/components/forum/ForumCategories';
 import CreatePostButton from '@/components/forum/CreatePostButton';
 import { prisma } from '@/lib/prisma';
 import type { CategoryBasicInfo } from '@/types/database';
+import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
 
 export const metadata: Metadata = {
   title: 'Lanry | Forum',
@@ -10,20 +12,46 @@ export const metadata: Metadata = {
 };
 
 export default async function ForumPage() {
+  const supabase = createServerComponentClient({ cookies });
+  const { data: { session } } = await supabase.auth.getSession();
+
   const categories: CategoryBasicInfo[] = await prisma.forumCategory.findMany({
     select: {
       id: true,
       name: true,
+      description: true,
+      thread_count: true,
+      latest_thread: true,
     },
-  });
+  }).then(cats => cats.map(cat => ({
+    ...cat,
+    latest_thread: cat.latest_thread?.toISOString() || null
+  })));
+
+  // Get the user's role from the database
+  let userRole = null;
+  if (session?.user) {
+    const dbUser = await prisma.profile.findUnique({  // Changed to 'profile'
+      where: { id: session.user.id },
+      select: { role: true }
+    });
+    userRole = dbUser?.role;
+  }
 
   return (
     <main className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Forum Categories</h1>
-        <CreatePostButton mode="thread" categories={categories} />
+        {session?.user && (
+          <CreatePostButton 
+            mode="thread" 
+            categories={categories} 
+            session={session.user}
+            userRole={userRole}
+          />
+        )}
       </div>
-      <ForumCategories />
+      <ForumCategories categories={categories} />
     </main>
   );
 }

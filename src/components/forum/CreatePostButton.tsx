@@ -11,11 +11,14 @@ import {
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { ForumPost, CategoryBasicInfo } from '@/types/database';
+import { User } from '@supabase/auth-helpers-nextjs';
 
 export interface CreatePostButtonProps {
   threadId?: string;
   mode: 'thread' | 'reply';
   categories?: CategoryBasicInfo[];
+  session: User | null;
+  userRole?: string | null;
   onPostCreated?: (newPost: ForumPost) => void;
 }
 
