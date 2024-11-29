@@ -31,7 +31,7 @@ export default async function ForumPage() {
   // Get the user's role from the database
   let userRole = null;
   if (session?.user) {
-    const dbUser = await prisma.profile.findUnique({  // Changed to 'profile'
+    const dbUser = await prisma.profile.findUnique({
       where: { id: session.user.id },
       select: { role: true }
     });

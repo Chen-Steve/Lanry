@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ForumThread } from '@/types/database';
-import { forumService } from '@/services/forumService';
 import { Icon } from '@iconify/react';
 
 interface ThreadListProps {
@@ -13,14 +12,23 @@ interface ThreadListProps {
 export default function ThreadList({ categoryId }: ThreadListProps) {
   const [threads, setThreads] = useState<ForumThread[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadThreads = async () => {
       try {
-        const data = await forumService.getThreadsByCategory(categoryId);
+        const response = await fetch(`/api/forum/threads/category/${categoryId}`);
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to fetch threads');
+        }
+        
         setThreads(data);
+        setError(null);
       } catch (error) {
         console.error('Error loading threads:', error);
+        setError(error instanceof Error ? error.message : 'Failed to load threads');
       } finally {
         setLoading(false);
       }
@@ -33,6 +41,15 @@ export default function ThreadList({ categoryId }: ThreadListProps) {
     return (
       <div className="flex justify-center items-center py-8">
         <Icon icon="eos-icons:loading" className="w-8 h-8 animate-spin text-gray-500" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-8 text-red-500">
+        <Icon icon="mdi:alert" className="w-16 h-16 mx-auto mb-4" />
+        <p>{error}</p>
       </div>
     );
   }
@@ -87,10 +104,10 @@ export default function ThreadList({ categoryId }: ThreadListProps) {
                   </span>
                 </div>
               </div>
-              {thread.last_post_at && (
+              {thread.updated_at && (
                 <div className="text-sm text-gray-500 text-right">
                   <div>Last Reply</div>
-                  <div>{new Date(thread.last_post_at).toLocaleDateString()}</div>
+                  <div>{new Date(thread.updated_at).toLocaleDateString()}</div>
                 </div>
               )}
             </div>
