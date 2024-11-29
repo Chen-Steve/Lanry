@@ -30,7 +30,9 @@ export default function CreateForumContent({
   categoryId,
   categories,
   onSuccess,
+  user
 }: CreateForumContentProps) {
+  console.log('CreateForumContent rendered:', { mode, categoryId, user });
   const [isOpen, setIsOpen] = useState(false);
   const [content, setContent] = useState('');
   const [title, setTitle] = useState('');
@@ -73,7 +75,7 @@ export default function CreateForumContent({
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button>
+        <Button className="bg-primary text-white hover:bg-primary/90">
           {mode === 'thread' ? 'Create Thread' : 'Reply'}
         </Button>
       </DialogTrigger>
