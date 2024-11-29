@@ -7,19 +7,25 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
   try {
-    const supabase = createRouteHandlerClient({ cookies });
+    const cookieStore = cookies();
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
     
-    // Check if user is authenticated
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) {
+    // Get the session from the request header
+    const authHeader = request.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new NextResponse(
+        JSON.stringify({ error: 'Missing or invalid authorization header' }),
+        { status: 401 }
+      );
+    }
+
+    const token = authHeader.split(' ')[1];
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+    if (authError || !user) {
       return new NextResponse(
         JSON.stringify({ error: 'Unauthorized' }),
-        { 
-          status: 401,
-          headers: {
-            'Content-Type': 'application/json',
-          }
-        }
+        { status: 401 }
       );
     }
 
@@ -29,12 +35,7 @@ export async function POST(request: Request) {
     if (!title || !content || !categoryId) {
       return new NextResponse(
         JSON.stringify({ error: 'Missing required fields' }),
-        { 
-          status: 400,
-          headers: {
-            'Content-Type': 'application/json',
-          }
-        }
+        { status: 400 }
       );
     }
 
@@ -43,7 +44,7 @@ export async function POST(request: Request) {
         title,
         content,
         categoryId,
-        authorId: session.user.id,
+        authorId: user.id,
       },
       include: {
         author: {

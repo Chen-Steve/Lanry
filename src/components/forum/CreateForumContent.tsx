@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
-  DialogContent, 
+  DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -12,21 +12,29 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { ForumPost, CategoryBasicInfo } from '@/types/database';
 import { User } from '@supabase/auth-helpers-nextjs';
+import { UserRole } from '@prisma/client';
 
-export interface CreatePostButtonProps {
-  threadId?: string;
+interface CreateForumContentProps {
   mode: 'thread' | 'reply';
+  threadId?: string;
+  categoryId?: string;
   categories?: CategoryBasicInfo[];
-  session: User | null;
-  userRole?: string | null;
-  onPostCreated?: (newPost: ForumPost) => void;
+  onSuccess?: (newContent: ForumPost) => void;
+  user?: User;
+  userRole?: UserRole | null;
 }
 
-export default function CreatePostButton({ threadId, mode, categories, onPostCreated }: CreatePostButtonProps) {
+export default function CreateForumContent({
+  mode,
+  threadId,
+  categoryId,
+  categories,
+  onSuccess,
+}: CreateForumContentProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [content, setContent] = useState('');
   const [title, setTitle] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState(categoryId || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -41,7 +49,7 @@ export default function CreatePostButton({ threadId, mode, categories, onPostCre
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(
-          mode === 'thread' 
+          mode === 'thread'
             ? { title, content, categoryId: selectedCategory }
             : { threadId, content }
         ),
@@ -49,13 +57,11 @@ export default function CreatePostButton({ threadId, mode, categories, onPostCre
 
       if (!response.ok) throw new Error(`Failed to create ${mode}`);
       
-      const newPost = await response.json();
-      onPostCreated?.(newPost);
-
-      // Reset form and close modal
+      const newContent = await response.json();
+      onSuccess?.(newContent);
+      
       setContent('');
       setTitle('');
-      setSelectedCategory('');
       setIsOpen(false);
     } catch (error) {
       console.error(`Error creating ${mode}:`, error);
@@ -68,10 +74,10 @@ export default function CreatePostButton({ threadId, mode, categories, onPostCre
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button>
-          {mode === 'thread' ? 'Create Thread' : 'Reply to Thread'}
+          {mode === 'thread' ? 'Create Thread' : 'Reply'}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>
             {mode === 'thread' ? 'Create New Thread' : 'Reply to Thread'}
@@ -81,7 +87,7 @@ export default function CreatePostButton({ threadId, mode, categories, onPostCre
           {mode === 'thread' && (
             <>
               <div className="space-y-2">
-                <label htmlFor="title" className="text-sm font-medium">Thread Title</label>
+                <label htmlFor="title">Thread Title</label>
                 <input
                   id="title"
                   value={title}
@@ -90,49 +96,43 @@ export default function CreatePostButton({ threadId, mode, categories, onPostCre
                   required
                 />
               </div>
-              <div className="space-y-2">
-                <label htmlFor="category" className="text-sm font-medium">Category</label>
-                <select
-                  id="category"
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="w-full p-2 border rounded-md"
-                  required
-                >
-                  <option value="">Select a category</option>
-                  {categories?.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {!categoryId && (
+                <div className="space-y-2">
+                  <label htmlFor="category">Category</label>
+                  <select
+                    id="category"
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    className="w-full p-2 border rounded-md"
+                    required
+                  >
+                    <option value="">Select a category</option>
+                    {categories?.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </>
           )}
           <div className="space-y-2">
-            <label htmlFor="content" className="text-sm font-medium">
-              Your Reply
-            </label>
+            <label htmlFor="content">Content</label>
             <Textarea
               id="content"
               value={content}
-              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setContent(e.target.value)}
-              placeholder="Write your reply here..."
+              onChange={(e) => setContent(e.target.value)}
               required
               rows={5}
             />
           </div>
-
           <div className="flex justify-end gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsOpen(false)}
-            >
+            <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Posting...' : 'Post Reply'}
+              {isSubmitting ? 'Submitting...' : 'Submit'}
             </Button>
           </div>
         </form>

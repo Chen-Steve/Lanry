@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import ForumCategories from '@/components/forum/ForumCategories';
-import CreatePostButton from '@/components/forum/CreatePostButton';
+import CreateForumContent from '@/components/forum/CreateForumContent';
 import { prisma } from '@/lib/prisma';
 import type { CategoryBasicInfo } from '@/types/database';
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
@@ -40,13 +40,13 @@ export default async function ForumPage() {
 
   return (
     <main className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Forum Categories</h1>
+      <div className="flex justify-between mb-6">
+        <h1 className="text-3xl font-bold text-center">Forum Categories</h1>
         {session?.user && (
-          <CreatePostButton 
+          <CreateForumContent 
             mode="thread" 
             categories={categories} 
-            session={session.user}
+            user={session.user}
             userRole={userRole}
           />
         )}
