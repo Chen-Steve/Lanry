@@ -65,7 +65,7 @@ export default function CategoryPage({ params }: { params: { id: string } }) {
   }, []);
 
   return (
-    <main className="container mx-auto px-4 py-8">
+    <main className="max-w-5xl mx-auto px-4 py-8">
       <div className="mb-8">
         <Link href="/forum" className="text-blue-600 hover:text-blue-800 mb-4 inline-flex items-center gap-1">
           <span>← Back to Categories</span>

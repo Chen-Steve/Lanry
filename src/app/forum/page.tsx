@@ -39,19 +39,21 @@ export default async function ForumPage() {
   }
 
   return (
-    <main className="container mx-auto px-4 py-8">
-      <div className="flex justify-between mb-6">
-        <h1 className="text-3xl font-bold text-center">Forum Categories</h1>
-        {session?.user && (
-          <CreateForumContent 
-            mode="thread" 
-            categories={categories} 
-            user={session.user}
-            userRole={userRole}
-          />
-        )}
+    <main className="w-full">
+      <div className="max-w-5xl mx-auto px-4 mt-4 sm:mt-8 mb-6 sm:mb-10">
+        <div className="flex justify-between mb-6">
+          <h1 className="text-3xl font-bold text-center">Forum Categories</h1>
+          {session?.user && (
+            <CreateForumContent 
+              mode="thread" 
+              categories={categories} 
+              user={session.user}
+              userRole={userRole}
+            />
+          )}
+        </div>
+        <ForumCategories categories={categories} />
       </div>
-      <ForumCategories categories={categories} />
     </main>
   );
 }
