@@ -48,7 +48,8 @@ export async function GET(
       last_post_at: thread.updatedAt.toISOString(),
       author: {
         username: thread.author.username || 'Unknown User'
-      }
+      },
+      score: thread.score
     });
   } catch (error) {
     console.error('Error fetching thread:', error);

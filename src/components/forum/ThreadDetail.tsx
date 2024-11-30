@@ -97,13 +97,13 @@ export default function ThreadDetail({ threadId }: ThreadDetailProps) {
         throw new Error(error.error || 'Failed to vote');
       }
       
-      const { score } = await response.json();
+      const data = await response.json();
       
       if (type === 'thread') {
-        setThread(prev => prev ? { ...prev, score } : null);
+        setThread(prev => prev ? { ...prev, score: data.score } : null);
       } else {
         setPosts(prev => prev.map(post => 
-          post.id === id ? { ...post, score } : post
+          post.id === id ? { ...post, score: data.score } : post
         ));
       }
     } catch (error: unknown) {
@@ -139,8 +139,10 @@ export default function ThreadDetail({ threadId }: ThreadDetailProps) {
           <Link href="/forum" className="hover:text-gray-700">Forum</Link>
           <Icon icon="mdi:chevron-right" className="w-4 h-4" />
           <Link href={`/forum/category/${thread.category_id}`} className="hover:text-gray-700">
-            r/{categoryName}
+            {categoryName}
           </Link>
+          <Icon icon="mdi:chevron-right" className="w-4 h-4" />
+          <span className="text-gray-700 truncate">{thread.title}</span>
         </div>
         <div className="bg-white rounded p-4 hover:border-gray-300 border border-gray-200">
           <div className="flex">

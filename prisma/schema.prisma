@@ -228,6 +228,8 @@ model ForumVote {
   post      ForumPost?  @relation(fields: [postId], references: [id], onDelete: Cascade)
   thread    ForumThread? @relation(fields: [threadId], references: [id], onDelete: Cascade)
 
+  @@unique([authorId, threadId])
+  @@unique([authorId, postId])
   @@index([postId])
   @@index([threadId])
   @@index([authorId])
