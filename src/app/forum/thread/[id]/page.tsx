@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function ThreadPage({ params }: { params: { id: string } }) {
   return (
-    <main className="container mx-auto px-4 py-8">
+    <main className="max-w-5xl mx-auto px-4 py-8">
       <ThreadDetail threadId={params.id} />
     </main>
   );

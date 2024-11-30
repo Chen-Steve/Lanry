@@ -114,12 +114,12 @@ export default function CategoryPage({ params }: { params: { id: string } }) {
         <div className="flex items-center gap-2 text-sm text-black mb-2">
           <Link href="/forum" className="hover:text-gray-700">Forum</Link>
           <Icon icon="mdi:chevron-right" className="w-4 h-4" />
+          <span className="font-medium">{category?.name || 'Loading...'}</span>
         </div>
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mt-4 gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-black">{category?.name || 'Loading...'}</h1>
             {category?.description && (
-              <p className="text-black mt-2">{category.description}</p>
+              <p className="text-black">{category.description}</p>
             )}
           </div>
           <div className="w-full sm:w-auto">

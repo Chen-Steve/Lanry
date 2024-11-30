@@ -132,10 +132,10 @@ export default function ThreadDetail({ threadId }: ThreadDetailProps) {
   }
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="max-w-5xl mx-auto">
       {/* Thread Header */}
       <div className="mb-4">
-        <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
+        <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
           <Link href="/forum" className="hover:text-gray-700">Forum</Link>
           <Icon icon="mdi:chevron-right" className="w-4 h-4" />
           <Link href={`/forum/category/${thread.category_id}`} className="hover:text-gray-700">
