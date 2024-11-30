@@ -26,7 +26,7 @@ export const forumService = {
       id: category.id,
       name: category.name,
       description: category.description,
-      created_at: category.createdAt.toISOString(),
+      created_at: category.created_at.toISOString(),
       thread_count: category._count.threads,
       latest_thread: category.threads[0]?.createdAt.toISOString()
     }));
@@ -149,20 +149,36 @@ export const forumService = {
   },
 
   async createThread(categoryId: string, title: string, content: string, authorId: string): Promise<ForumThread> {
-    const thread = await prisma.forumThread.create({
-      data: {
-        title,
-        content,
-        categoryId,
-        authorId
-      },
-      include: {
-        author: {
-          select: {
-            username: true
+    const thread = await prisma.$transaction(async (tx) => {
+      // Create the thread
+      const newThread = await tx.forumThread.create({
+        data: {
+          title,
+          content,
+          categoryId,
+          authorId
+        },
+        include: {
+          author: {
+            select: {
+              username: true
+            }
           }
         }
-      }
+      });
+
+      // Update the category's thread count and latest thread
+      await tx.forumCategory.update({
+        where: { id: categoryId },
+        data: {
+          thread_count: {
+            increment: 1
+          },
+          latest_thread: newThread.createdAt
+        }
+      });
+
+      return newThread;
     });
 
     return {
@@ -210,5 +226,39 @@ export const forumService = {
         username: post.author.username || 'Unknown User'
       }
     };
+  },
+
+  async deleteThread(threadId: string): Promise<void> {
+    const thread = await prisma.forumThread.findUnique({
+      where: { id: threadId },
+      select: { categoryId: true }
+    });
+
+    if (!thread) return;
+
+    await prisma.$transaction(async (tx) => {
+      // Delete the thread
+      await tx.forumThread.delete({
+        where: { id: threadId }
+      });
+
+      // Update the category's thread count
+      await tx.forumCategory.update({
+        where: { id: thread.categoryId },
+        data: {
+          thread_count: {
+            decrement: 1
+          },
+          // Update latest_thread to the most recent remaining thread's creation time
+          latest_thread: {
+            set: await tx.forumThread.findFirst({
+              where: { categoryId: thread.categoryId },
+              orderBy: { createdAt: 'desc' },
+              select: { createdAt: true }
+            }).then(t => t?.createdAt || null)
+          }
+        }
+      });
+    });
   }
 }; 
