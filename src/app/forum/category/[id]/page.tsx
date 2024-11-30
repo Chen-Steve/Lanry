@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import ThreadList from '@/components/forum/ThreadList';
-import CreateForumContent from '@/components/forum/CreateForumContent';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import supabase from '@/lib/supabaseClient';
@@ -64,6 +63,39 @@ export default function CategoryPage({ params }: { params: { id: string } }) {
     };
   }, []);
 
+  const handleCreateThread = async () => {
+    if (!user) {
+      alert('Please login to create a thread');
+      return;
+    }
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('No access token found');
+
+      const response = await fetch('/api/forum/threads', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          title: 'Test Thread',
+          content: 'Test Content',
+          categoryId: params.id
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to create thread');
+      
+      // Refresh the page to show the new thread
+      window.location.reload();
+    } catch (error) {
+      console.error('Error creating thread:', error);
+      alert('Failed to create thread');
+    }
+  };
+
   return (
     <main className="max-w-5xl mx-auto px-4 py-8">
       <div className="mb-8">
@@ -79,17 +111,18 @@ export default function CategoryPage({ params }: { params: { id: string } }) {
           </div>
           <div>
             {isLoading ? (
-              <Button variant="outline" disabled>
+              <Button disabled variant="outline">
                 Loading...
               </Button>
-            ) : isAuthenticated && user ? (
-              <CreateForumContent 
-                mode="thread" 
-                categoryId={params.id}
-                user={user}
-              />
+            ) : isAuthenticated ? (
+              <Button 
+                onClick={handleCreateThread}
+                className="bg-blue-600 text-white hover:bg-blue-700"
+              >
+                Create Thread
+              </Button>
             ) : (
-              <Link href="/auth" className="flex items-center">
+              <Link href="/auth">
                 <Button variant="default">
                   Login to Create Thread
                 </Button>

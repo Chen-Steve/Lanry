@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ForumThread, ForumPost } from '@/types/database';
-import { forumService } from '@/services/forumService';
 import { Icon } from '@iconify/react';
 import CreatePostButton from './CreatePostButton';
 
@@ -19,9 +18,16 @@ export default function ThreadDetail({ threadId }: ThreadDetailProps) {
   useEffect(() => {
     const loadThread = async () => {
       try {
-        const threadData = await forumService.getThread(threadId);
+        // Fetch thread details
+        const threadResponse = await fetch(`/api/forum/threads/${threadId}`);
+        if (!threadResponse.ok) throw new Error('Failed to fetch thread');
+        const threadData = await threadResponse.json();
         setThread(threadData);
-        const postsData = await forumService.getPosts(threadId);
+
+        // Fetch thread posts
+        const postsResponse = await fetch(`/api/forum/threads/${threadId}/posts`);
+        if (!postsResponse.ok) throw new Error('Failed to fetch posts');
+        const postsData = await postsResponse.json();
         setPosts(postsData);
       } catch (error) {
         console.error('Error loading thread:', error);
