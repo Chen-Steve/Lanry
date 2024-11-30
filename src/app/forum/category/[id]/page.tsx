@@ -109,34 +109,34 @@ export default function CategoryPage({ params }: { params: { id: string } }) {
   };
 
   return (
-    <main className="max-w-5xl mx-auto px-4 py-8">
-      <div className="mb-8">
-        <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
+    <main className="max-w-5xl mx-auto px-4 py-4 sm:py-8">
+      <div className="mb-4 sm:mb-8">
+        <div className="flex items-center gap-2 text-sm text-black mb-2">
           <Link href="/forum" className="hover:text-gray-700">Forum</Link>
           <Icon icon="mdi:chevron-right" className="w-4 h-4" />
         </div>
-        <div className="flex justify-between items-center mt-4">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mt-4 gap-4">
           <div>
-            <h1 className="text-3xl font-bold">{category?.name || 'Loading...'}</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-black">{category?.name || 'Loading...'}</h1>
             {category?.description && (
-              <p className="text-gray-600 mt-2">{category.description}</p>
+              <p className="text-black mt-2">{category.description}</p>
             )}
           </div>
-          <div>
+          <div className="w-full sm:w-auto">
             {isLoading ? (
-              <button disabled className="px-4 py-2 bg-gray-200 rounded-md">
+              <button disabled className="w-full sm:w-auto px-4 py-2 bg-gray-200 rounded-md">
                 Loading...
               </button>
             ) : isAuthenticated ? (
               <button
                 onClick={() => setIsOpen(true)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
               >
                 Create Thread
               </button>
             ) : (
-              <Link href="/auth">
-                <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+              <Link href="/auth" className="block w-full sm:w-auto">
+                <button className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
                   Login to Create Thread
                 </button>
               </Link>
@@ -148,12 +148,12 @@ export default function CategoryPage({ params }: { params: { id: string } }) {
       {/* Modal */}
       {isOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+          <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-md mx-4">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Create New Thread</h2>
+              <h2 className="text-lg sm:text-xl font-bold">Create New Thread</h2>
               <button
                 onClick={() => setIsOpen(false)}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-black hover:text-gray-700"
               >
                 ✕
               </button>

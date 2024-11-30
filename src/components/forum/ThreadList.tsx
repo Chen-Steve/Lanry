@@ -55,7 +55,7 @@ export default function ThreadList({ categoryId }: ThreadListProps) {
           <Link href={`/forum/thread/${thread.id}`}>
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <h2 className="text-xl font-semibold group-hover:text-blue-600 transition">
+                <h2 className="text-xl font-semibold text-black group-hover:text-blue-600 transition">
                   {thread.title}
                 </h2>
                 <p className="text-gray-600 mt-1 line-clamp-2">{thread.content}</p>

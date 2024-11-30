@@ -26,7 +26,6 @@ export default async function ForumPage() {
   return (
     <main className="w-full">
       <div className="max-w-5xl mx-auto px-4 mt-4 sm:mt-8 mb-6 sm:mb-10">
-        <h1 className="text-3xl font-bold text-center mb-6">Forum Categories</h1>
         <ForumCategories categories={categories} />
       </div>
     </main>
