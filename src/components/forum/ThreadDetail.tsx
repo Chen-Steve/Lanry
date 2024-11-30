@@ -77,7 +77,7 @@ export default function ThreadDetail({ threadId }: ThreadDetailProps) {
         </div>
         <div className="bg-white border rounded-lg p-6">
           <div className="flex items-start justify-between mb-4">
-            <h1 className="text-2xl font-bold">
+            <h1 className="text-2xl font-bold text-black">
               {thread.is_pinned && (
                 <span className="text-blue-500 mr-2" title="Pinned">
                   <Icon icon="mdi:pin" className="inline-block w-5 h-5" />
@@ -91,7 +91,7 @@ export default function ThreadDetail({ threadId }: ThreadDetailProps) {
               </span>
             )}
           </div>
-          <div className="prose max-w-none mb-4">{thread.content}</div>
+          <div className="prose max-w-none mb-4 text-black">{thread.content}</div>
           <div className="flex items-center justify-between text-sm text-gray-500">
             <div className="flex items-center gap-2">
               <Icon icon="mdi:account" className="w-4 h-4" />
