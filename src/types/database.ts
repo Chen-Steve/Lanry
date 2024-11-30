@@ -135,6 +135,7 @@ export interface ForumThread {
   author: {
     username: string;
   };
+  score: number;
 }
 
 export interface ForumPost {
@@ -147,6 +148,7 @@ export interface ForumPost {
   author: {
     username: string;
   };
+  score: number;
 }
 
 export type CategoryBasicInfo = {

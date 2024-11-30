@@ -75,7 +75,8 @@ export const forumService = {
       last_post_at: thread.posts[0]?.createdAt.toISOString() || thread.createdAt.toISOString(),
       author: {
         username: thread.author.username || 'Unknown User'
-      }
+      },
+      score: thread.score
     }));
   },
 
@@ -114,7 +115,8 @@ export const forumService = {
       last_post_at: thread.updatedAt.toISOString(),
       author: {
         username: thread.author.username || 'Unknown User'
-      }
+      },
+      score: thread.score
     };
   },
 
@@ -144,7 +146,8 @@ export const forumService = {
       updated_at: post.updatedAt.toISOString(),
       author: {
         username: post.author.username || 'Unknown User'
-      }
+      },
+      score: post.score
     }));
   },
 
@@ -195,7 +198,8 @@ export const forumService = {
       last_post_at: thread.createdAt.toISOString(),
       author: {
         username: thread.author.username || 'Unknown User'
-      }
+      },
+      score: thread.score
     };
   },
 
@@ -224,7 +228,8 @@ export const forumService = {
       updated_at: post.updatedAt.toISOString(),
       author: {
         username: post.author.username || 'Unknown User'
-      }
+      },
+      score: post.score
     };
   },
 

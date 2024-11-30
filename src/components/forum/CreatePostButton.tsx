@@ -96,7 +96,7 @@ export default function CreatePostButton({
               onChange={(e) => setContent(e.target.value)}
               required
               rows={5}
-              className="w-full rounded-md border border-gray-300 p-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-black"
+              className="w-full rounded-md border border-gray-300 p-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-black placeholder:text-gray-400"
             />
           </div>
           <div className="flex justify-end gap-2">

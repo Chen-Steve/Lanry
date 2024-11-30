@@ -5,9 +5,39 @@ import Link from 'next/link';
 import { ForumThread, ForumPost } from '@/types/database';
 import { Icon } from '@iconify/react';
 import CreatePostButton from './CreatePostButton';
+import { toast } from 'react-hot-toast';
+import supabase from '@/lib/supabaseClient';
 
 interface ThreadDetailProps {
   threadId: string;
+}
+
+interface VoteControlsProps {
+  score: number;
+  onUpvote: () => void;
+  onDownvote: () => void;
+}
+
+function VoteControls({ score = 0, onUpvote, onDownvote }: VoteControlsProps) {
+  return (
+    <div className="flex flex-col items-center mr-4">
+      <button 
+        onClick={onUpvote}
+        aria-label="Upvote" 
+        className="text-gray-400 hover:text-orange-500 transition-colors p-1"
+      >
+        <Icon icon="pepicons-print:arrow-up" className="w-5 h-5" />
+      </button>
+      <span className="text-sm font-medium my-1 text-gray-700">{score}</span>
+      <button 
+        onClick={onDownvote}
+        aria-label="Downvote" 
+        className="text-gray-400 hover:text-blue-500 transition-colors p-1"
+      >
+        <Icon icon="pepicons-print:arrow-down" className="w-5 h-5" />
+      </button>
+    </div>
+  );
 }
 
 export default function ThreadDetail({ threadId }: ThreadDetailProps) {
@@ -15,6 +45,7 @@ export default function ThreadDetail({ threadId }: ThreadDetailProps) {
   const [posts, setPosts] = useState<ForumPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [categoryName, setCategoryName] = useState<string>('');
+  const [isVoting, setIsVoting] = useState(false);
 
   useEffect(() => {
     const loadThread = async () => {
@@ -47,6 +78,42 @@ export default function ThreadDetail({ threadId }: ThreadDetailProps) {
     loadThread();
   }, [threadId]);
 
+  const handleVote = async (type: 'thread' | 'post', id: string, direction: 'up' | 'down') => {
+    if (isVoting) return;
+    
+    try {
+      setIsVoting(true);
+      const response = await fetch(`/api/forum/${type}s/${id}/vote`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+        },
+        body: JSON.stringify({ direction })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to vote');
+      }
+      
+      const { score } = await response.json();
+      
+      if (type === 'thread') {
+        setThread(prev => prev ? { ...prev, score } : null);
+      } else {
+        setPosts(prev => prev.map(post => 
+          post.id === id ? { ...post, score } : post
+        ));
+      }
+    } catch (error: unknown) {
+      console.error('Error voting:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to vote. Please try again.');
+    } finally {
+      setIsVoting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center py-8">
@@ -65,59 +132,65 @@ export default function ThreadDetail({ threadId }: ThreadDetailProps) {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-3xl mx-auto">
       {/* Thread Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
+      <div className="mb-4">
+        <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
           <Link href="/forum" className="hover:text-gray-700">Forum</Link>
           <Icon icon="mdi:chevron-right" className="w-4 h-4" />
           <Link href={`/forum/category/${thread.category_id}`} className="hover:text-gray-700">
-            Back to {categoryName}
+            r/{categoryName}
           </Link>
         </div>
-        <div className="bg-white border rounded-lg p-6">
-          <div className="flex items-start justify-between mb-4">
-            <h1 className="text-2xl font-bold text-black">
-              {thread.is_pinned && (
-                <span className="text-blue-500 mr-2" title="Pinned">
-                  <Icon icon="mdi:pin" className="inline-block w-5 h-5" />
-                </span>
-              )}
-              {thread.title}
-            </h1>
-            {thread.is_locked && (
-              <span className="text-red-500" title="Locked">
-                <Icon icon="mdi:lock" className="w-5 h-5" />
-              </span>
-            )}
-          </div>
-          <div className="prose max-w-none mb-4 text-black">{thread.content}</div>
-          <div className="flex items-center justify-between text-sm text-gray-500">
-            <div className="flex items-center gap-2">
-              <Icon icon="mdi:account" className="w-4 h-4" />
-              {thread.author.username}
-            </div>
-            <div className="flex items-center gap-2">
-              <Icon icon="mdi:clock-outline" className="w-4 h-4" />
-              {new Date(thread.created_at).toLocaleDateString()}
+        <div className="bg-white rounded p-4 hover:border-gray-300 border border-gray-200">
+          <div className="flex">
+            <VoteControls 
+              score={thread.score || 0}
+              onUpvote={() => handleVote('thread', thread.id, 'up')}
+              onDownvote={() => handleVote('thread', thread.id, 'down')}
+            />
+            <div className="flex-1">
+              <div className="flex items-start justify-between mb-2">
+                <h1 className="text-xl font-medium text-gray-900">
+                  {thread.is_pinned && (
+                    <span className="text-green-600 mr-2" title="Pinned">
+                      <Icon icon="mdi:pin" className="inline-block w-4 h-4" />
+                    </span>
+                  )}
+                  {thread.title}
+                </h1>
+                {thread.is_locked && (
+                  <span className="text-red-500" title="Locked">
+                    <Icon icon="mdi:lock" className="w-4 h-4" />
+                  </span>
+                )}
+              </div>
+              <div className="prose max-w-none mb-2 text-gray-900">{thread.content}</div>
+              <div className="text-xs text-gray-500">
+                Posted by u/{thread.author.username} • {new Date(thread.created_at).toLocaleDateString()}
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Posts */}
-      <div className="space-y-4 mb-8">
+      <div className="space-y-3">
         {posts.map((post) => (
-          <div key={post.id} className="bg-white border rounded-lg p-6">
-            <div className="prose max-w-none mb-4">{post.content}</div>
-            <div className="flex items-center justify-between text-sm text-gray-500">
-              <div className="flex items-center gap-2">
-                <Icon icon="mdi:account" className="w-4 h-4" />
-                {post.author.username}
-              </div>
-              <div className="flex items-center gap-2">
-                <Icon icon="mdi:clock-outline" className="w-4 h-4" />
-                {new Date(post.created_at).toLocaleDateString()}
+          <div key={post.id} className="bg-white rounded p-4 hover:border-gray-300 border border-gray-200">
+            <div className="flex">
+              <VoteControls 
+                score={post.score || 0}
+                onUpvote={() => handleVote('post', post.id, 'up')}
+                onDownvote={() => handleVote('post', post.id, 'down')}
+              />
+              <div className="flex-1">
+                <div className="prose max-w-none mb-2 text-gray-900">{post.content}</div>
+                <div className="text-xs text-gray-500">
+                  <span className="font-medium">u/{post.author.username}</span>
+                  {' • '}
+                  {new Date(post.created_at).toLocaleDateString()}
+                </div>
               </div>
             </div>
           </div>
@@ -126,7 +199,7 @@ export default function ThreadDetail({ threadId }: ThreadDetailProps) {
 
       {/* Reply Button */}
       {!thread.is_locked && (
-        <div className="flex justify-end">
+        <div className="flex justify-start mt-4">
           <CreatePostButton 
             mode="reply"
             threadId={threadId} 

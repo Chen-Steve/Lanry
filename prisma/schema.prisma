@@ -81,6 +81,7 @@ model Profile {
   authoredNovels     Novel[]   @relation("NovelAuthor")
   forumThreads       ForumThread[]
   forumPosts         ForumPost[]
+  forumVotes         ForumVote[]
 
   @@map("profiles")
 }
@@ -187,6 +188,8 @@ model ForumThread {
   author      Profile       @relation(fields: [authorId], references: [id], onDelete: Cascade)
   authorId    String        @map("author_id")
   posts       ForumPost[]
+  score       Int          @default(0)
+  votes       ForumVote[]
 
   @@index([categoryId])
   @@index([authorId])
@@ -204,11 +207,31 @@ model ForumPost {
   threadId    String      @map("thread_id")
   author      Profile     @relation(fields: [authorId], references: [id], onDelete: Cascade)
   authorId    String      @map("author_id")
+  score       Int          @default(0)
+  votes       ForumVote[]
 
   @@index([threadId])
   @@index([authorId])
   @@index([createdAt])
   @@map("forum_posts")
+}
+
+model ForumVote {
+  id        String      @id @default(cuid())
+  direction Int         // 1 for upvote, -1 for downvote
+  authorId  String      @map("author_id")
+  postId    String?     @map("post_id")
+  threadId  String?     @map("thread_id")
+  createdAt DateTime    @default(now()) @map("created_at")
+  updatedAt DateTime    @updatedAt @map("updated_at")
+  author    Profile     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  post      ForumPost?  @relation(fields: [postId], references: [id], onDelete: Cascade)
+  thread    ForumThread? @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+  @@index([threadId])
+  @@index([authorId])
+  @@map("forum_votes")
 }
 
 enum NovelStatus {
