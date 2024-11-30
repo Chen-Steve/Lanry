@@ -14,6 +14,7 @@ export default function ThreadDetail({ threadId }: ThreadDetailProps) {
   const [thread, setThread] = useState<ForumThread | null>(null);
   const [posts, setPosts] = useState<ForumPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [categoryName, setCategoryName] = useState<string>('');
 
   useEffect(() => {
     const loadThread = async () => {
@@ -23,6 +24,13 @@ export default function ThreadDetail({ threadId }: ThreadDetailProps) {
         if (!threadResponse.ok) throw new Error('Failed to fetch thread');
         const threadData = await threadResponse.json();
         setThread(threadData);
+
+        // Fetch category details
+        const categoryResponse = await fetch(`/api/forum/categories/${threadData.category_id}`);
+        if (categoryResponse.ok) {
+          const categoryData = await categoryResponse.json();
+          setCategoryName(categoryData.name);
+        }
 
         // Fetch thread posts
         const postsResponse = await fetch(`/api/forum/threads/${threadId}/posts`);
@@ -64,7 +72,7 @@ export default function ThreadDetail({ threadId }: ThreadDetailProps) {
           <Link href="/forum" className="hover:text-gray-700">Forum</Link>
           <Icon icon="mdi:chevron-right" className="w-4 h-4" />
           <Link href={`/forum/category/${thread.category_id}`} className="hover:text-gray-700">
-            Back to Category
+            Back to {categoryName}
           </Link>
         </div>
         <div className="bg-white border rounded-lg p-6">
