@@ -3,11 +3,9 @@
 import { Novel, UserProfile } from '@/types/database';
 import { Icon } from '@iconify/react';
 import { notFound } from 'next/navigation';
-import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import supabase from '@/lib/supabaseClient';
 import toast from 'react-hot-toast';
-import Link from 'next/link';
 import { getNovel, toggleBookmark } from '@/services/novelService';
 import { track } from '@vercel/analytics';
 import { ChapterList } from '@/components/novels/ChapterList';
@@ -142,88 +140,35 @@ export default function NovelPage({ params }: { params: { id: string } }) {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
-      <div className="flex flex-col md:flex-row gap-8">
-        {/* Cover Image */}
-        <div className="w-full md:w-80 md:flex-shrink-0">
-          <div className="md:sticky md:top-8">
-            <div className="relative w-1/3 md:w-full aspect-[2/3] rounded-lg overflow-hidden shadow-lg float-left md:float-none mr-4 md:mr-0">
-              {novel.coverImageUrl ? (
-                <Image
-                  src={`/novel-covers/${novel.coverImageUrl}`}
-                  alt={novel.title}
-                  fill
-                  priority
-                  className="object-cover"
-                  sizes="(max-width: 768px) 33vw, 320px"
-                />
-              ) : (
-                <div className="w-full h-full bg-gray-300" />
-              )}
-            </div>
+      <SynopsisSection 
+        title={novel.title}
+        description={novel.description}
+        chaptersCount={novel.chapters.length}
+        bookmarkCount={novel.bookmarkCount}
+        viewCount={viewCount}
+        status={novel.status}
+        createdAt={novel.created_at}
+        updatedAt={novel.updated_at}
+        author={novel.author}
+        translator={novel.translator}
+        novelSlug={novel.slug}
+        firstChapterNumber={novel.chapters[0]?.chapter_number}
+        isAuthenticated={isAuthenticated}
+        isBookmarked={isBookmarked}
+        isBookmarkLoading={isBookmarkLoading}
+        onBookmarkClick={handleBookmark}
+        showActionButtons={true}
+        coverImageUrl={novel.coverImageUrl}
+      />
 
-            <div className="md:mt-6">
-
-              {/* Action Buttons */}
-              <div className="flex flex-col gap-2 clear-both">
-                <button 
-                  onClick={handleBookmark}
-                  type="button"
-                  disabled={isBookmarkLoading}
-                  aria-label={isBookmarked ? "Remove Bookmark" : "Add Bookmark"} 
-                  className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors w-full ${
-                    !isAuthenticated 
-                      ? 'bg-gray-100 hover:bg-gray-200'
-                      : isBookmarked 
-                        ? 'bg-amber-400 hover:bg-amber-500'
-                        : 'bg-gray-200 hover:bg-gray-300'
-                  } ${isBookmarkLoading ? 'opacity-50' : ''}`}
-                >
-                  <Icon 
-                    icon={isBookmarked ? "pepicons-print:bookmark-filled" : "pepicons-print:bookmark"} 
-                    className={`text-xl ${isBookmarkLoading ? 'animate-pulse' : ''}`}
-                  />
-                  <span>{isBookmarked ? 'Bookmarked' : 'Bookmark'}</span>
-                </button>
-                
-                {novel.chapters.length > 0 && (
-                  <Link 
-                    href={`/novels/${novel.slug}/chapters/c${novel.chapters[0].chapter_number}`}
-                    className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-green-500 hover:bg-green-600 transition-colors w-full"
-                  >
-                    <Icon icon="pepicons-print:book" className="text-xl" />
-                    <span>Start Reading</span>
-                  </Link>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Column - Novel Information */}
-        <div className="flex-grow">
-          <SynopsisSection 
-            title={novel.title}
-            description={novel.description}
-            chaptersCount={novel.chapters.length}
-            bookmarkCount={novel.bookmarkCount}
-            viewCount={viewCount}
-            status={novel.status}
-            createdAt={novel.created_at}
-            updatedAt={novel.updated_at}
-            author={novel.author}
-            translator={novel.translator}
-          />
-
-          <ChapterList
-            chapters={novel.chapters}
-            novelId={novel.id}
-            novelSlug={novel.slug}
-            userProfile={userProfile}
-            isAuthenticated={isAuthenticated}
-            novelAuthorId={novel.author_profile_id}
-          />
-        </div>
-      </div>
+      <ChapterList
+        chapters={novel.chapters}
+        novelId={novel.id}
+        novelSlug={novel.slug}
+        userProfile={userProfile}
+        isAuthenticated={isAuthenticated}
+        novelAuthorId={novel.author_profile_id}
+      />
     </div>
   );
 } 
