@@ -150,6 +150,10 @@ export interface ForumPost {
     username: string;
   };
   score: number;
+  parent_post_id?: string | null;
+  parent_author?: {
+    username: string;
+  } | null;
 }
 
 export type CategoryBasicInfo = {

@@ -105,4 +105,69 @@ export async function POST(request: Request) {
       }
     );
   }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const cookieStore = cookies();
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    
+    // Get the session from the request header
+    const authHeader = request.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new NextResponse(
+        JSON.stringify({ error: 'Missing or invalid authorization header' }),
+        { status: 401 }
+      );
+    }
+
+    const token = authHeader.split(' ')[1];
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+    if (authError || !user) {
+      return new NextResponse(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401 }
+      );
+    }
+
+    const { postId } = await request.json();
+
+    // Get the post to verify ownership
+    const post = await prisma.forumPost.findUnique({
+      where: { id: postId },
+      select: { authorId: true }
+    });
+
+    if (!post) {
+      return new NextResponse(
+        JSON.stringify({ error: 'Post not found' }),
+        { status: 404 }
+      );
+    }
+
+    // Verify ownership
+    if (post.authorId !== user.id) {
+      return new NextResponse(
+        JSON.stringify({ error: 'Unauthorized to delete this post' }),
+        { status: 403 }
+      );
+    }
+
+    // Delete the post
+    await prisma.forumPost.delete({
+      where: { id: postId }
+    });
+
+    return new NextResponse(
+      JSON.stringify({ success: true }),
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error('Error deleting post:', error);
+    return new NextResponse(
+      JSON.stringify({ error: 'Failed to delete post' }),
+      { status: 500 }
+    );
+  }
 } 

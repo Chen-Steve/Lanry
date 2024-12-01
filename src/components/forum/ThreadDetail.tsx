@@ -7,6 +7,7 @@ import { Icon } from '@iconify/react';
 import CreatePostButton from './CreatePostButton';
 import { toast } from 'react-hot-toast';
 import supabase from '@/lib/supabaseClient';
+import { useUser } from '@/hooks/useUser';
 
 interface ThreadDetailProps {
   threadId: string;
@@ -40,12 +41,93 @@ function VoteControls({ score = 0, onUpvote, onDownvote }: VoteControlsProps) {
   );
 }
 
+function PostItem({ 
+  post, 
+  onVoteUp, 
+  onVoteDown, 
+  onReply, 
+  onDelete,
+  threadLocked, 
+  parentPost 
+}: {
+  post: ForumPost;
+  onVoteUp: () => void;
+  onVoteDown: () => void;
+  onReply: (post: ForumPost) => void;
+  onDelete: (postId: string) => void;
+  threadLocked: boolean;
+  parentPost?: ForumPost;
+}) {
+  const { user } = useUser();
+  const isAuthor = user?.id === post.author_id;
+
+  const handleDelete = async () => {
+    if (confirm('Are you sure you want to delete this post?')) {
+      onDelete(post.id);
+    }
+  };
+
+  return (
+    <div className="bg-white rounded p-4 hover:border-gray-300 border border-gray-200">
+      <div className="flex">
+        <VoteControls 
+          score={post.score || 0}
+          onUpvote={onVoteUp}
+          onDownvote={onVoteDown}
+        />
+        <div className="flex-1">
+          {parentPost && (
+            <div className="mb-3 pl-3 border-l-2 border-gray-200">
+              <div className="text-xs text-gray-500 mb-1">
+                <Icon icon="mdi:reply" className="w-3 h-3 inline mr-1" />
+                Replying to @{parentPost.author.username}
+              </div>
+              <div className="text-sm text-gray-600 line-clamp-2">
+                {parentPost.content}
+              </div>
+            </div>
+          )}
+          <div className="prose max-w-none mb-2 text-gray-900">{post.content}</div>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="text-xs text-gray-500">
+                <span className="font-medium">{post.author.username}</span>
+                {' • '}
+                {new Date(post.created_at).toLocaleDateString()}
+              </div>
+              {!threadLocked && (
+                <CreatePostButton 
+                  mode="reply"
+                  threadId={post.thread_id}
+                  parentPostId={post.id}
+                  replyToUsername={post.author.username}
+                  onPostCreated={onReply}
+                />
+              )}
+            </div>
+            {isAuthor && (
+              <button
+                onClick={handleDelete}
+                className="text-sm text-red-500 hover:text-red-700"
+                title="Delete post"
+              >
+                Delete
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ThreadDetail({ threadId }: ThreadDetailProps) {
   const [thread, setThread] = useState<ForumThread | null>(null);
   const [posts, setPosts] = useState<ForumPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [categoryName, setCategoryName] = useState<string>('');
   const [isVoting, setIsVoting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     const loadThread = async () => {
@@ -114,6 +196,48 @@ export default function ThreadDetail({ threadId }: ThreadDetailProps) {
     }
   };
 
+  const handleDeletePost = async (postId: string) => {
+    if (isDeleting) return;
+
+    try {
+      setIsDeleting(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error('You must be logged in to delete a post');
+      }
+
+      const response = await fetch('/api/forum/posts', {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ postId })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || `Failed to delete post (${response.status})`);
+      }
+
+      // Remove the deleted post
+      setPosts(prevPosts => prevPosts.filter(post => post.id !== postId));
+      toast.success('Post deleted successfully');
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to delete post');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Create a map of parent posts for quick lookup
+  const postsMap = posts.reduce((acc, post) => {
+    acc[post.id] = post;
+    return acc;
+  }, {} as Record<string, ForumPost>);
+
   if (loading) {
     return (
       <div className="flex justify-center items-center py-8">
@@ -175,46 +299,42 @@ export default function ThreadDetail({ threadId }: ThreadDetailProps) {
               </div>
               <div className="prose max-w-none mb-2 text-gray-900">{thread.content}</div>
               <div className="text-xs text-gray-500">
-                Posted by u/{thread.author.username} • {new Date(thread.created_at).toLocaleDateString()}
+                Posted by {thread.author.username} • {new Date(thread.created_at).toLocaleDateString()}
               </div>
             </div>
           </div>
         </div>
+        {!thread.is_locked && (
+          <div className="mt-4 ml-9">
+            <CreatePostButton 
+              mode="thread-reply"
+              threadId={threadId}
+              replyToUsername={thread.author.username}
+              onPostCreated={(newPost: ForumPost) => {
+                setPosts([...posts, newPost]);
+              }}
+            />
+          </div>
+        )}
       </div>
 
       {/* Posts */}
       <div className="space-y-3">
         {posts.map((post) => (
-          <div key={post.id} className="bg-white rounded p-4 hover:border-gray-300 border border-gray-200">
-            <div className="flex">
-              <VoteControls 
-                score={post.score || 0}
-                onUpvote={() => handleVote('post', post.id, 'up')}
-                onDownvote={() => handleVote('post', post.id, 'down')}
-              />
-              <div className="flex-1">
-                <div className="prose max-w-none mb-2 text-gray-900">{post.content}</div>
-                <div className="text-xs text-gray-500">
-                  <span className="font-medium">u/{post.author.username}</span>
-                  {' • '}
-                  {new Date(post.created_at).toLocaleDateString()}
-                </div>
-              </div>
-            </div>
-          </div>
+          <PostItem 
+            key={post.id}
+            post={post}
+            onVoteUp={() => handleVote('post', post.id, 'up')}
+            onVoteDown={() => handleVote('post', post.id, 'down')}
+            onReply={(newPost: ForumPost) => {
+              setPosts([...posts, newPost]);
+            }}
+            onDelete={handleDeletePost}
+            threadLocked={thread.is_locked}
+            parentPost={post.parent_post_id ? postsMap[post.parent_post_id] : undefined}
+          />
         ))}
       </div>
-
-      {/* Reply Button */}
-      {!thread.is_locked && (
-        <div className="flex justify-start mt-4">
-          <CreatePostButton 
-            mode="reply"
-            threadId={threadId} 
-            onPostCreated={(newPost: ForumPost) => setPosts([...posts, newPost])} 
-          />
-        </div>
-      )}
     </div>
   );
 } 

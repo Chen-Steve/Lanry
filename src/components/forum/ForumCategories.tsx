@@ -31,13 +31,13 @@ export default function ForumCategories({ categories }: ForumCategoriesProps) {
             <Link href={`/forum/category/${category.id}`}>
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <h2 className="text-xl text-black font-semibold group-hover:text-blue-600 transition">
+                  <h2 className="text-2xl text-black font-semibold group-hover:text-blue-600 transition flex items-center gap-2">
+                    <Icon icon="pepicons-print:text-bubbles" className="w-12 h-12" />
                     {category.name}
                   </h2>
                   <p className="text-black mt-1">{category.description}</p>
                   <div className="flex items-center gap-4 mt-2 text-sm text-black">
                     <span className="flex items-center gap-1">
-                      <Icon icon="mdi:message-outline" className="w-4 h-4" />
                       {category.thread_count} {category.thread_count === 1 ? 'thread' : 'threads'}
                     </span>
                     {category.latest_thread && (
