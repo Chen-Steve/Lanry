@@ -78,7 +78,7 @@ const ReadingHistorySection = ({ userId }: ReadingHistorySectionProps) => {
       {history.map((item) => (
         <article
           key={item.id}
-          className="-mx-4 sm:mx-0 flex gap-4 items-start min-w-0 px-4 sm:px-0"
+          className="-mx-4 sm:mx-0 flex gap-2 sm:gap-4 items-center min-w-0 px-4 sm:px-0 border-b border-gray-200 last:border-b-0"
         >
           <Link 
             href={`/novels/${item.novel.slug}`} 
@@ -89,24 +89,26 @@ const ReadingHistorySection = ({ userId }: ReadingHistorySectionProps) => {
               alt={item.novel.title}
               width={120}
               height={168}
-              className="object-cover shadow-sm w-[80px] h-[80px] sm:w-[120px] sm:h-[168px]"
+              className="object-cover shadow-sm w-[60px] h-[84px] sm:w-[120px] sm:h-[168px]"
             />
           </Link>
           <div className="flex-grow min-w-0">
             <Link 
               href={`/novels/${item.novel.slug}`}
-              className="text-black font-medium text-lg hover:text-blue-600 transition-colors block truncate"
+              className="text-black font-medium text-base sm:text-lg hover:text-blue-600 transition-colors block truncate"
             >
               {item.novel.title}
             </Link>
-            <p className="text-sm text-black mt-1 truncate">by {item.novel.author}</p>
-            <p className="text-sm text-gray-600 mt-2 truncate">
+            <p className="text-xs sm:text-sm text-black mt-0.5 sm:mt-1 truncate">
+              by {item.novel.author}
+            </p>
+            <p className="text-xs sm:text-sm text-gray-600 mt-1 sm:mt-2 truncate">
               Last read: {formatRelativeDate(item.last_read)}
             </p>
           </div>
           <Link
             href={`/novels/${item.novel.slug}/chapters/c${item.last_chapter}`}
-            className="flex flex-col items-center gap-0.5 bg-blue-500 hover:bg-blue-600 text-white py-1 px-2 sm:py-2 sm:px-4 rounded-md transition-colors active:bg-blue-700 touch-action-manipulation whitespace-nowrap flex-shrink-0 text-sm sm:text-base"
+            className="flex flex-col items-center gap-0.5 bg-blue-500 hover:bg-blue-600 text-white py-1 px-2 sm:py-2 sm:px-4 rounded-md transition-colors active:bg-blue-700 touch-action-manipulation whitespace-nowrap flex-shrink-0 text-xs sm:text-base"
           >
             <span>Continue</span>
             <span>Ch.{item.last_chapter}</span>
