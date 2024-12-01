@@ -176,16 +176,6 @@ export default function UserDashboard() {
               </p>
             </div>
           </div>
-          
-          <a
-            href="https://forms.gle/dYXhMkxfTi3odiLc8"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-500 hover:text-blue-600 transition-colors flex items-center gap-1"
-          >
-            <Icon icon="mdi:plus-circle" width="20" />
-            <span>Request a Novel</span>
-          </a>
         </div>
       </div>
 
@@ -194,42 +184,42 @@ export default function UserDashboard() {
         <nav className="-mb-px flex space-x-8">
           <button
             onClick={() => setActiveTab('reading')}
-            className={`py-4 px-1 border-b-2 font-medium flex items-center gap-2 ${
+            className={`py-4 px-1 border-b-2 font-medium ${
               activeTab === 'reading'
                 ? 'border-blue-500 text-blue-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
             title="Reading History"
           >
-            <Icon icon="mdi:book-open-page-variant" width="20" />
+            Recent
           </button>
           <button
             onClick={() => setActiveTab('bookmarks')}
-            className={`py-4 px-1 border-b-2 font-medium flex items-center gap-2 ${
+            className={`py-4 px-1 border-b-2 font-medium ${
               activeTab === 'bookmarks'
                 ? 'border-blue-500 text-blue-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
             title="Bookmarks"
           >
-            <Icon icon="mdi:bookmark" width="20" />
+            Bookmarks
           </button>
           <button
             onClick={() => setActiveTab('settings')}
-            className={`py-4 px-1 border-b-2 font-medium flex items-center gap-2 ${
+            className={`py-4 px-1 border-b-2 font-medium ${
               activeTab === 'settings'
                 ? 'border-blue-500 text-blue-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
             title="Settings"
           >
-            <Icon icon="mdi:cog" width="20" />
+            Settings
           </button>
         </nav>
       </div>
 
       {/* Dashboard Content */}
-      <div className="bg-white rounded-lg shadow">
+      <div>
         {renderTabContent()}
       </div>
     </div>
