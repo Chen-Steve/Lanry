@@ -6,24 +6,15 @@ export async function GET(
   request: Request,
   { params }: { params: { id: string } }
 ) {
-  try {
-    const supabase = createRouteHandlerClient({ cookies });
+  const supabase = createRouteHandlerClient({ cookies });
 
+  try {
     const { data: threads, error } = await supabase
       .from('forum_threads')
       .select(`
-        id,
-        title,
-        content,
-        created_at,
-        updated_at,
-        is_pinned,
-        is_locked,
-        author_id,
-        author:profiles (
-          username
-        ),
-        posts:forum_posts (count)
+        *,
+        author:author_id(id, username),
+        posts:forum_posts(count)
       `)
       .eq('category_id', params.id)
       .order('is_pinned', { ascending: false })
@@ -31,18 +22,27 @@ export async function GET(
 
     if (error) {
       console.error('Supabase error:', error);
-      return NextResponse.json(
-        { error: 'Failed to fetch threads' }, 
-        { status: 500 }
-      );
+      throw error;
     }
 
-    return NextResponse.json(threads || []);
-    
+    if (!threads) {
+      return NextResponse.json([]);
+    }
+
+    // Transform the data to include reply_count, with null check
+    const threadsWithCounts = threads.map(thread => ({
+      ...thread,
+      reply_count: thread.posts?.[0]?.count ?? 0
+    }));
+
+    return NextResponse.json(threadsWithCounts);
   } catch (error) {
-    console.error('Server error:', error);
+    console.error('Error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' }, 
+      { 
+        error: 'Internal Server Error',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      }, 
       { status: 500 }
     );
   }

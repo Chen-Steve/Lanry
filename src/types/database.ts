@@ -136,6 +136,7 @@ export interface ForumThread {
     username: string;
   };
   score: number;
+  reply_count?: number;
 }
 
 export interface ForumPost {

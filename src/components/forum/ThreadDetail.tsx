@@ -161,11 +161,17 @@ export default function ThreadDetail({ threadId }: ThreadDetailProps) {
                   )}
                   {thread.title}
                 </h1>
-                {thread.is_locked && (
-                  <span className="text-red-500" title="Locked">
-                    <Icon icon="mdi:lock" className="w-4 h-4" />
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-500" title="Replies">
+                    <Icon icon="mdi:comment-outline" className="inline-block w-4 h-4 mr-1" />
+                    {posts.length}
                   </span>
-                )}
+                  {thread.is_locked && (
+                    <span className="text-red-500" title="Locked">
+                      <Icon icon="mdi:lock" className="w-4 h-4" />
+                    </span>
+                  )}
+                </div>
               </div>
               <div className="prose max-w-none mb-2 text-gray-900">{thread.content}</div>
               <div className="text-xs text-gray-500">

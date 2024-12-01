@@ -69,8 +69,8 @@ export default function ThreadList({ categoryId }: ThreadListProps) {
                     {new Date(thread.created_at).toLocaleDateString()}
                   </span>
                   <span className="flex items-center gap-1">
-                    <Icon icon="mdi:message-outline" className="w-4 h-4" />
-                    {thread.post_count} {thread.post_count === 1 ? 'reply' : 'replies'}
+                    <Icon icon="mdi:comment-outline" className="w-4 h-4" />
+                    {thread.reply_count} {thread.reply_count === 1 ? 'reply' : 'replies'}
                   </span>
                 </div>
               </div>
