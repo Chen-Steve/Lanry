@@ -9,18 +9,12 @@ import NoticeBoard from './NoticeBoard';
 import { Icon } from '@iconify/react';
 import { getTotalChapters } from '@/services/chapterService';
 
-const truncateText = (text: string, maxLength: number) => {
-  if (!text) return '';
-  return text.length > maxLength ? text.slice(0, maxLength) + '...' : text;
-};
-
 const NovelCard = ({ novel, isPriority = false }: { novel: Novel; isPriority?: boolean }) => {
   const [totalChapters, setTotalChapters] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Only fetch total chapters
         const total = await getTotalChapters(novel.id);
         setTotalChapters(total);
       } catch (err) {
@@ -33,8 +27,8 @@ const NovelCard = ({ novel, isPriority = false }: { novel: Novel; isPriority?: b
 
   return (
     <Link href={`/novels/${novel.slug}`} className="block">
-      <div className="flex flex-row gap-4">
-        <div className="w-28 h-44 flex-shrink-0 relative">
+      <div className="flex flex-col items-center text-center p-2">
+        <div className="w-24 h-32 sm:w-32 sm:h-44 relative mb-2">
           {novel.coverImageUrl ? (
             <Image
               src={`/novel-covers/${novel.coverImageUrl}`}
@@ -43,32 +37,19 @@ const NovelCard = ({ novel, isPriority = false }: { novel: Novel; isPriority?: b
               priority={isPriority}
               loading={isPriority ? 'eager' : 'lazy'}
               className="object-cover rounded"
-              sizes="(max-width: 768px) 112px, 112px"
+              sizes="(max-width: 768px) 96px, 128px"
             />
           ) : (
             <div className="w-full h-full bg-gray-300 rounded"></div>
           )}
         </div>
-        <div className="flex-grow overflow-hidden flex flex-col h-44">
-          <div className="min-h-[3.5rem]">
-            <h3 className="text-lg font-semibold truncate text-black leading-tight">{novel.title}</h3>
-            {novel.translator?.username && (
-              <p className="text-sm text-gray-600 mt-1">
-                By: {novel.translator.username}
-              </p>
-            )}
-          </div>
-          <div className="flex-grow overflow-hidden">
-            <div 
-              className="prose prose-sm prose-p:my-0 prose-headings:my-0 max-w-none text-xs text-gray-500"
-              dangerouslySetInnerHTML={{ __html: truncateText(novel.description || '', 300) }}
-            />
-          </div>
-          <div className="flex items-center gap-4 text-sm text-gray-600 mt-2">
-            <div className="flex items-center gap-1">
-              <Icon icon="mdi:book-open-page-variant" className="text-lg" />
-              <span>{totalChapters} Chapters</span>
-            </div>
+        <div className="w-full">
+          <h3 className="text-sm sm:text-base font-semibold truncate text-black leading-tight">
+            {novel.title}
+          </h3>
+          <div className="flex items-center justify-center gap-1 text-xs text-gray-600 mt-1">
+            <Icon icon="mdi:book-open-page-variant" className="text-base" />
+            <span>{totalChapters} Chapters</span>
           </div>
         </div>
       </div>
@@ -100,9 +81,9 @@ const NovelListing = () => {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4">
+    <div className="max-w-5xl mx-auto px-2 sm:px-4">
       <NoticeBoard />
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+      <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-4">
         {novels.map((novel, index) => (
           <NovelCard 
             key={novel.id} 
