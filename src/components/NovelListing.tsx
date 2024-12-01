@@ -5,7 +5,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { getNovels } from '@/services/novelService';
 import { useEffect, useState } from 'react';
-import NoticeBoard from './NoticeBoard';
 import { Icon } from '@iconify/react';
 import { getTotalChapters } from '@/services/chapterService';
 
@@ -82,7 +81,6 @@ const NovelListing = () => {
 
   return (
     <div className="max-w-5xl mx-auto px-2 sm:px-4">
-      <NoticeBoard />
       <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-4">
         {novels.map((novel, index) => (
           <NovelCard 

@@ -6,6 +6,7 @@ import Providers from '@/components/Providers';
 import AnalyticsProvider from '@/components/AnalyticsProvider';
 import { Toaster } from 'react-hot-toast';
 import CatFollower from '@/components/CatFollower';
+import MobileNavigationWrapper from '@/components/MobileNavigationWrapper';
 
 export const metadata: Metadata = {
   title: "Lanry",
@@ -32,7 +33,7 @@ export default function RootLayout({
         <Providers>
           <div className="flex flex-col min-h-screen">
             <HeaderWrapper />
-            <main className="flex-grow">
+            <main className="flex-grow pb-16 md:pb-0">
               {children}
             </main>
             <FooterWrapper />
@@ -40,6 +41,7 @@ export default function RootLayout({
           <Toaster position="bottom-right" />
           <AnalyticsProvider />
           <CatFollower />
+          <MobileNavigationWrapper />
         </Providers>
       </body>
     </html>
