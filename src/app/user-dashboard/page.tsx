@@ -6,7 +6,6 @@ import supabase from '@/lib/supabaseClient';
 import { Icon } from '@iconify/react';
 import { useQuery } from '@tanstack/react-query';
 import { ErrorBoundary } from 'react-error-boundary';
-import Badges from '@/components/dashboard/Badges';
 
 // Lazy load components with proper error handling
 const ReadingHistorySection = lazy(() => 
@@ -169,13 +168,12 @@ export default function UserDashboard() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
           <div className="flex items-center gap-4 mb-4 sm:mb-0">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold mb-1">
+              <h1 className="text-2xl sm:text-3xl text-black font-bold mb-1">
                 {profile?.username || 'User'}
               </h1>
               <p className="text-sm text-gray-500">
                 Joined {new Date(profile?.created_at).toLocaleDateString()}
               </p>
-              <Badges />
             </div>
           </div>
           

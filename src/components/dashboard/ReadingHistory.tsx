@@ -4,6 +4,7 @@ import type { ReadingHistory } from '@/types/database';
 import Link from 'next/link';
 import { formatDate } from '@/lib/utils';
 import { Icon } from '@iconify/react';
+import Image from 'next/image';
 
 // Update the fetch function to handle undefined userId
 const fetchReadingHistory = async (userId: string | undefined) => {
@@ -17,14 +18,23 @@ const fetchReadingHistory = async (userId: string | undefined) => {
         id,
         title,
         slug,
-        author
+        author,
+        cover_image_url
       )
     `)
     .eq('profile_id', userId)
     .order('last_read', { ascending: false });
 
   if (error) throw error;
-  return data || [];
+  
+  // Map the data to match our Novel type
+  return (data || []).map(item => ({
+    ...item,
+    novel: {
+      ...item.novel,
+      coverImageUrl: item.novel.cover_image_url
+    }
+  }));
 };
 
 interface ReadingHistorySectionProps {
@@ -74,16 +84,27 @@ const ReadingHistorySection = ({ userId }: ReadingHistorySectionProps) => {
               key={item.id}
               className="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-4 gap-4"
             >
-              <div>
-                <h3 className="font-medium hover:text-blue-600">
-                  <Link href={`/novels/${item.novel.slug}`}>
-                    {item.novel.title}
-                  </Link>
-                </h3>
-                <p className="text-sm text-gray-500">by {item.novel.author}</p>
-                <p className="text-sm text-gray-500">
-                  Last read: Chapter {item.last_chapter} • {formatDate(item.last_read)}
-                </p>
+              <div className="flex gap-4">
+                <Link href={`/novels/${item.novel.slug}`} className="shrink-0">
+                  <Image
+                    src={`/novel-covers/${item.novel.coverImageUrl}` || '/images/default-cover.jpg'}
+                    alt={item.novel.title}
+                    width={80}
+                    height={112}
+                    className="object-cover rounded"
+                  />
+                </Link>
+                <div>
+                  <h3 className="font-medium hover:text-blue-600">
+                    <Link href={`/novels/${item.novel.slug}`}>
+                      {item.novel.title}
+                    </Link>
+                  </h3>
+                  <p className="text-sm text-gray-500">by {item.novel.author}</p>
+                  <p className="text-sm text-gray-500">
+                    Last read: Chapter {item.last_chapter} • {formatDate(item.last_read)}
+                  </p>
+                </div>
               </div>
               <Link
                 href={`/novels/${item.novel.slug}/chapters/c${item.last_chapter}`}

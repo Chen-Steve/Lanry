@@ -76,7 +76,7 @@ const Settings = ({ profile }: SettingsProps) => {
 
   return (
     <div className="p-6">
-      <h2 className="text-xl font-semibold mb-6">Account Settings</h2>
+      <h2 className="text-xl text-black font-semibold mb-6">Account Settings</h2>
       <form onSubmit={handleSubmit} className="max-w-md space-y-6">
         <div>
           <label htmlFor="username" className="block text-sm font-medium text-gray-700">
@@ -87,7 +87,7 @@ const Settings = ({ profile }: SettingsProps) => {
             id="username"
             value={profileState.username}
             onChange={(e) => setProfileState({ ...profileState, username: e.target.value })}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            className="text-black mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
           />
         </div>
 

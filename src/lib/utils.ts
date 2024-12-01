@@ -1,16 +1,17 @@
-export function formatDate(date: string | Date) {
+export const formatDate = (date: string | Date) => {
   const d = new Date(date);
-  
-  // Format: "January 1, 2024 at 14:00"
-  return d.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
+  const dateStr = d.toLocaleDateString('en-US', {
+    month: 'numeric',
     day: 'numeric',
-    hour: '2-digit',
+    year: 'numeric'
+  });
+  const timeStr = d.toLocaleTimeString('en-US', {
+    hour: 'numeric',
     minute: '2-digit',
-    hour12: true // This will show AM/PM format. Set to false for 24-hour format
-  }).replace(',', ' at');
-}
+    hour12: true
+  });
+  return `${dateStr} ${timeStr}`;
+};
 
 export function generateChapterSlug(chapterNumber: number): string {
   return `c${chapterNumber}`;

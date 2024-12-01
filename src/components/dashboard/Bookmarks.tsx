@@ -52,7 +52,7 @@ const BookmarkCard = ({ bookmark, onRemove }: { bookmark: Bookmark; onRemove: (i
   return (
     <div className="border rounded-lg p-4 hover:shadow-md transition-all duration-200 bg-white relative group">
       <div className="space-y-2">
-        <h3 className="font-semibold text-lg text-gray-800 line-clamp-1">
+        <h3 className="font-semibold text-lg text-black line-clamp-1">
           {bookmark.novel.title}
         </h3>
         <p className="text-sm text-gray-600 italic">
