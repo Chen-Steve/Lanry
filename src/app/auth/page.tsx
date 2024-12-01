@@ -5,61 +5,11 @@ import { useRouter } from 'next/navigation';
 import supabase from '@/lib/supabaseClient';
 import { Icon } from '@iconify/react';
 import { generateUsername } from '@/utils/username';
+import { LoadingSpinner } from '@/components/auth/LoadingSpinner';
+import { PasswordInput } from '@/components/auth/PasswordInput';
+import toast from 'react-hot-toast';
 
 type AuthMode = 'signin' | 'signup';
-type PasswordStrength = 'weak' | 'medium' | 'strong';
-
-const getPasswordStrength = (password: string): PasswordStrength => {
-  let score = 0;
-  
-  // Length check
-  if (password.length >= 8) score++;
-  if (password.length >= 12) score++;
-  
-  // Special character check
-  if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) score++;
-  
-  // Number check
-  if (/\d/.test(password)) score++;
-  
-  // Uppercase and lowercase check
-  if (/[a-z]/.test(password) && /[A-Z]/.test(password)) score++;
-
-  if (score <= 2) return 'weak';
-  if (score <= 4) return 'medium';
-  return 'strong';
-};
-
-const PasswordStrengthIndicator = ({ password }: { password: string }) => {
-  const strength = getPasswordStrength(password);
-  
-  const strengthColors = {
-    weak: 'bg-red-500',
-    medium: 'bg-yellow-500',
-    strong: 'bg-green-500'
-  };
-
-  const strengthWidth = {
-    weak: 'w-1/3',
-    medium: 'w-2/3',
-    strong: 'w-full'
-  };
-
-  return (
-    <div className="mt-2">
-      <div className="h-1 w-full bg-gray-200 rounded-full overflow-hidden">
-        <div 
-          className={`h-full ${strengthColors[strength]} ${strengthWidth[strength]} transition-all duration-300`}
-        />
-      </div>
-      <p className={`text-xs mt-1 text-black`}>
-        {strength === 'weak' && 'Weak - Add numbers, special characters, and mix cases'}
-        {strength === 'medium' && 'Medium - Add more complexity for a stronger password'}
-        {strength === 'strong' && 'Strong password!'}
-      </p>
-    </div>
-  );
-};
 
 export default function AuthPage() {
   const [mode, setMode] = useState<AuthMode>('signin');
@@ -72,11 +22,24 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
+  const [emailError, setEmailError] = useState('');
+
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setEmailError('Please enter a valid email address');
+      return false;
+    }
+    setEmailError('');
+    return true;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-
+    
+    if (!validateEmail(credentials.email)) return;
+    
     if (mode === 'signup' && credentials.password !== credentials.confirmPassword) {
       setError('Passwords do not match');
       return;
@@ -150,107 +113,118 @@ export default function AuthPage() {
     }
   };
 
+  const handleSocialLogin = async (provider: 'google' | 'discord') => {
+    toast.success(`${provider.charAt(0).toUpperCase() + provider.slice(1)} login coming soon!`, {
+      icon: <Icon icon="material-symbols:sentiment-very-satisfied" className="text-xl" />,
+      duration: 2000,
+    });
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
-      <form onSubmit={handleSubmit} className="w-full max-w-md space-y-8">
+      <div className="w-full max-w-md space-y-8">
         <h1 className="text-3xl font-bold mb-6 text-center text-black">
           {mode === 'signin' ? 'Sign In' : 'Create Account'}
         </h1>
 
         {error && (
-          <div className="bg-red-50 text-red-500 p-4 rounded-md text-sm">
+          <div className="bg-red-50 border border-red-200 text-red-600 p-4 rounded-md text-sm animate-fadeIn">
             {error}
           </div>
         )}
 
-        <div className="space-y-6">
+        <div className="space-y-4">
+          <button
+            type="button"
+            onClick={() => handleSocialLogin('google')}
+            className="text-black w-full p-3 border rounded-lg hover:bg-gray-50 flex items-center justify-center gap-2"
+          >
+            <Icon icon="logos:google-icon" className="text-xl" />
+            Continue with Google
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleSocialLogin('discord')}
+            className="text-black w-full p-3 border rounded-lg hover:bg-gray-50 flex items-center justify-center gap-2"
+          >
+            <Icon icon="logos:discord-icon" className="text-xl" />
+            Continue with Discord
+          </button>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">Or continue with email</span>
+            </div>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <input
               title="Email"
               type="email"
               value={credentials.email}
-              onChange={(e) => setCredentials({ ...credentials, email: e.target.value })}
-              className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-black focus:border-black"
+              onChange={(e) => {
+                setCredentials({ ...credentials, email: e.target.value });
+                validateEmail(e.target.value);
+              }}
+              className={`text-black w-full p-3 border rounded-lg focus:ring-2 focus:ring-black focus:border-black
+                ${emailError ? 'border-red-500' : ''}`}
               placeholder="Email"
               required
             />
-          </div>
-
-          <div>
-            <div className="relative">
-              <input
-                title="Password"
-                type={showPassword ? 'text' : 'password'}
-                value={credentials.password}
-                onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
-                className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-black focus:border-black"
-                placeholder="Password"
-                required
-                minLength={6}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-black hover:text-gray-700"
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-              >
-                <Icon 
-                  icon={showPassword ? 'mdi:eye-off' : 'mdi:eye'} 
-                  className="text-xl"
-                  aria-hidden="true"
-                />
-              </button>
-            </div>
-            {mode === 'signup' && (
-              <PasswordStrengthIndicator password={credentials.password} />
+            {emailError && (
+              <p className="text-red-500 text-xs mt-1">{emailError}</p>
             )}
           </div>
 
-          {mode === 'signup' && (
-            <div>
-              <div className="relative">
-                <input
-                  title="Confirm Password"
-                  type={showPassword ? 'text' : 'password'}
-                  value={credentials.confirmPassword}
-                  onChange={(e) => setCredentials({ ...credentials, confirmPassword: e.target.value })}
-                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-black focus:border-black"
-                  placeholder="Confirm Password"
-                  required
-                  minLength={6}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-black hover:text-gray-700"
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
-                >
-                  <Icon 
-                    icon={showPassword ? 'mdi:eye-off' : 'mdi:eye'} 
-                    className="text-xl"
-                    aria-hidden="true"
-                  />
-                </button>
-              </div>
-              {credentials.confirmPassword && credentials.password !== credentials.confirmPassword && (
-                <p className="text-red-500 text-xs mt-1">Passwords do not match</p>
-              )}
-            </div>
-          )}
-        </div>
+          <PasswordInput
+            value={credentials.password}
+            onChange={(value) => setCredentials({ ...credentials, password: value })}
+            showPassword={showPassword}
+            onTogglePassword={() => setShowPassword(!showPassword)}
+            showStrength={mode === 'signup'}
+          />
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full p-4 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed text-base font-medium"
-        >
-          {loading ? 'Loading...' : mode === 'signin' ? 'Sign In' : 'Sign Up'}
-        </button>
+          {mode === 'signup' && (
+            <PasswordInput
+              value={credentials.confirmPassword}
+              onChange={(value) => setCredentials({ ...credentials, confirmPassword: value })}
+              placeholder="Confirm Password"
+              showPassword={showPassword}
+              onTogglePassword={() => setShowPassword(!showPassword)}
+            />
+          )}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="text-black w-full p-4 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed text-base font-medium flex items-center justify-center gap-2"
+          >
+            {loading ? (
+              <>
+                <LoadingSpinner />
+                <span>Loading...</span>
+              </>
+            ) : (
+              mode === 'signin' ? 'Sign In' : 'Sign Up'
+            )}
+          </button>
+        </form>
 
         <div className="mt-6 text-center">
           <button
             type="button"
-            onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}
+            onClick={() => {
+              setMode(mode === 'signin' ? 'signup' : 'signin');
+              setError('');
+              setEmailError('');
+              setCredentials({ email: '', password: '', confirmPassword: '' });
+            }}
             className="text-black hover:text-gray-600 text-base py-2 font-medium"
           >
             {mode === 'signin' 
@@ -258,7 +232,7 @@ export default function AuthPage() {
               : 'Already have an account? Sign in'}
           </button>
         </div>
-      </form>
+      </div>
     </div>
   );
 }

@@ -6,42 +6,45 @@ export default function MobileNavigation() {
   const pathname = usePathname();
 
   const isActive = (path: string) => {
-    return pathname === path ? 'text-primary' : 'text-gray-500';
+    if (pathname === path) {
+      return 'text-gray-900 bg-gray-100 rounded-lg';
+    }
+    return 'text-gray-500';
   };
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 py-2 md:hidden">
       <div className="flex justify-around items-center">
-        <Link href="/" className="flex flex-col items-center">
+        <Link href="/" className={`flex flex-col items-center p-2 ${isActive('/')}`}>
           <Icon 
-            icon="material-symbols:home" 
-            className={`w-6 h-6 ${isActive('/')}`} 
+            icon="pepicons-print:house" 
+            className="w-6 h-6" 
           />
-          <span className={`text-xs ${isActive('/')}`}>Home</span>
+          <span className="text-xs">Home</span>
         </Link>
         
-        <Link href="/browse" className="flex flex-col items-center">
+        <Link href="/browse" className={`flex flex-col items-center p-2 ${isActive('/browse')}`}>
           <Icon 
-            icon="material-symbols:book" 
-            className={`w-6 h-6 ${isActive('/browse')}`} 
+            icon="pepicons-print:book" 
+            className="w-6 h-6" 
           />
-          <span className={`text-xs ${isActive('/browse')}`}>Browse</span>
+          <span className="text-xs">Browse</span>
         </Link>
         
-        <Link href="/forum" className="flex flex-col items-center">
+        <Link href="/forum" className={`flex flex-col items-center p-2 ${isActive('/forum')}`}>
           <Icon 
-            icon="material-symbols:forum" 
-            className={`w-6 h-6 ${isActive('/forum')}`} 
+            icon="pepicons-print:text-bubbles" 
+            className="w-6 h-6" 
           />
-          <span className={`text-xs ${isActive('/forum')}`}>Forum</span>
+          <span className="text-xs">Forum</span>
         </Link>
         
-        <Link href="/user-dashboard" className="flex flex-col items-center">
+        <Link href="/user-dashboard" className={`flex flex-col items-center p-2 ${isActive('/user-dashboard')}`}>
           <Icon 
-            icon="material-symbols:person" 
-            className={`w-6 h-6 ${isActive('/user-dashboard')}`} 
+            icon="pepicons-print:person" 
+            className="w-6 h-6" 
           />
-          <span className={`text-xs ${isActive('/user-dashboard')}`}>Profile</span>
+          <span className="text-xs">Profile</span>
         </Link>
       </div>
     </nav>
