@@ -3,13 +3,14 @@ import supabase from '@/lib/supabaseClient';
 import { Icon } from '@iconify/react';
 import Link from 'next/link';
 import { useEffect } from 'react';
+import Image from 'next/image';
 
 interface Novel {
   id: string;
   title: string;
   author: string;
-  description: string;
   slug: string | null;
+  cover_image_url: string;
 }
 
 interface Bookmark {
@@ -36,8 +37,8 @@ const fetchBookmarks = async (userId: string | undefined) => {
         id,
         title,
         author,
-        description,
-        slug
+        slug,
+        cover_image_url
       )
     `)
     .eq('profile_id', userId)
@@ -47,57 +48,6 @@ const fetchBookmarks = async (userId: string | undefined) => {
   return data;
 };
 
-// Reusable bookmark card component
-const BookmarkCard = ({ bookmark, onRemove }: { bookmark: Bookmark; onRemove: (id: string) => void }) => {
-  return (
-    <div className="border rounded-lg p-4 hover:shadow-md transition-all duration-200 bg-white relative group">
-      <div className="space-y-2">
-        <h3 className="font-semibold text-lg text-black line-clamp-1">
-          {bookmark.novel.title}
-        </h3>
-        <p className="text-sm text-gray-600 italic">
-          by {bookmark.novel.author}
-        </p>
-        <p className="text-sm text-gray-700 line-clamp-2 mb-4">
-          {bookmark.novel.description}
-        </p>
-        <div className="flex justify-between items-center pt-2 border-t">
-          <Link
-            href={`/novels/${bookmark.novel.slug || bookmark.novel.id}`}
-            className="text-blue-600 hover:text-blue-700 flex items-center gap-1.5 px-3 py-1.5 rounded-md hover:bg-blue-50 transition-colors"
-          >
-            <Icon icon="mdi:book-open-page-variant" width="18" />
-            <span className="text-sm font-medium">Read Now</span>
-          </Link>
-          <button
-            onClick={() => onRemove(bookmark.id)}
-            className="text-gray-500 hover:text-red-600 flex items-center gap-1.5 px-3 py-1.5 rounded-md hover:bg-red-50 transition-colors"
-            aria-label="Remove bookmark"
-          >
-            <Icon icon="mdi:bookmark-remove" width="18" />
-            <span className="text-sm font-medium">Remove</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Loading skeleton
-const BookmarksSkeleton = () => (
-  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-    {[...Array(6)].map((_, i) => (
-      <div key={i} className="border rounded-lg p-4 animate-pulse">
-        <div className="h-6 bg-gray-200 rounded w-3/4 mb-4"></div>
-        <div className="flex justify-between">
-          <div className="h-8 bg-gray-200 rounded w-16"></div>
-          <div className="h-8 bg-gray-200 rounded w-16"></div>
-        </div>
-      </div>
-    ))}
-  </div>
-);
-
 const Bookmarks = ({ userId }: BookmarksProps) => {
   const queryClient = useQueryClient();
 
@@ -105,7 +55,6 @@ const Bookmarks = ({ userId }: BookmarksProps) => {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_IN') {
-        // Refetch bookmarks when user signs in
         queryClient.invalidateQueries({ queryKey: ['bookmarks'] });
       }
     });
@@ -115,16 +64,14 @@ const Bookmarks = ({ userId }: BookmarksProps) => {
     };
   }, [queryClient]);
 
-  // Query for fetching bookmarks
-  const { data: bookmarks, isLoading, isError, error } = useQuery({
+  const { data: bookmarks, isLoading, error } = useQuery({
     queryKey: ['bookmarks', userId],
     queryFn: () => fetchBookmarks(userId),
-    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
+    staleTime: 5 * 60 * 1000,
     retry: 2,
-    enabled: !!userId, // Only run query when userId is available
+    enabled: !!userId,
   });
 
-  // Update the mutation with proper types
   const removeMutation = useMutation<void, Error, string>({
     mutationFn: async (bookmarkId: string) => {
       if (!userId) throw new Error('Not authenticated');
@@ -147,51 +94,77 @@ const Bookmarks = ({ userId }: BookmarksProps) => {
   });
 
   if (isLoading) {
+    return <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto" />;
+  }
+
+  if (error) {
     return (
-      <div className="p-6">
-        <h2 className="text-xl font-semibold mb-4">My Bookmarks</h2>
-        <BookmarksSkeleton />
-      </div>
+      <>
+        <Icon icon="mdi:alert" className="w-12 h-12 mx-auto mb-2" />
+        <p className="text-center text-red-500">Error loading bookmarks</p>
+      </>
     );
   }
 
-  if (isError) {
+  if (!bookmarks || bookmarks.length === 0) {
     return (
-      <div className="p-6 text-center text-red-500">
-        <Icon icon="mdi:alert" className="w-12 h-12 mx-auto mb-2" />
-        <p>Error loading bookmarks: {(error as Error).message}</p>
-        <button 
-          onClick={() => queryClient.invalidateQueries({ queryKey: ['bookmarks'] })}
-          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-        >
-          Retry
-        </button>
-      </div>
+      <>
+        <Icon icon="mdi:bookmark-outline" className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+        <p className="text-center text-gray-500 text-lg">
+          No bookmarks yet. Start bookmarking your favorite novels!
+        </p>
+      </>
     );
   }
 
   return (
-    <div className="p-6">
-      <h2 className="text-xl font-semibold mb-4">My Bookmarks</h2>
-      {(!bookmarks || bookmarks.length === 0) ? (
-        <div className="text-center py-8">
-          <Icon icon="mdi:bookmark-outline" className="w-12 h-12 mx-auto mb-2 text-gray-400" />
-          <p className="text-gray-500">
-            No bookmarks yet. Start bookmarking your favorite novels!
-          </p>
-        </div>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {bookmarks.map((bookmark: Bookmark) => (
-            <BookmarkCard
-              key={bookmark.id}
-              bookmark={bookmark}
-              onRemove={(id) => removeMutation.mutate(id)}
+    <>
+      {bookmarks.map((bookmark) => (
+        <article
+          key={bookmark.id}
+          className="-mx-4 sm:mx-0 flex gap-2 sm:gap-4 items-center min-w-0 px-4 sm:px-0 border-b border-gray-200 last:border-b-0"
+        >
+          <Link 
+            href={`/novels/${bookmark.novel.slug}`} 
+            className="hover:opacity-80 transition-opacity flex-shrink-0"
+          >
+            <Image
+              src={`/novel-covers/${bookmark.novel.cover_image_url}` || '/images/default-cover.jpg'}
+              alt={bookmark.novel.title}
+              width={120}
+              height={120}
+              className="object-cover shadow-sm w-[60px] h-[60px] sm:w-[120px] sm:h-[120px]"
             />
-          ))}
-        </div>
-      )}
-    </div>
+          </Link>
+          <div className="flex-grow min-w-0">
+            <Link 
+              href={`/novels/${bookmark.novel.slug}`}
+              className="text-black font-medium text-base sm:text-lg hover:text-blue-600 transition-colors block truncate"
+            >
+              {bookmark.novel.title}
+            </Link>
+            <p className="text-xs sm:text-sm text-black mt-0.5 sm:mt-1 truncate">
+              by {bookmark.novel.author}
+            </p>
+          </div>
+          <div className="flex gap-2 flex-shrink-0">
+            <Link
+              href={`/novels/${bookmark.novel.slug}`}
+              className="flex items-center gap-1.5 text-black px-3 py-1.5 border border-black rounded-md touch-action-manipulation whitespace-nowrap text-xs sm:text-base transition-colors hover:bg-gray-100"
+            >
+              <span>Read</span>
+            </Link>
+            <button
+              onClick={() => removeMutation.mutate(bookmark.id)}
+              className="flex items-center gap-1.5 text-red-600 px-3 py-1.5 border border-red-600 rounded-md touch-action-manipulation whitespace-nowrap text-xs sm:text-base transition-colors hover:bg-red-50"
+              aria-label="Remove bookmark"
+            >
+              <span>Remove</span>
+            </button>
+          </div>
+        </article>
+      ))}
+    </>
   );
 };
 

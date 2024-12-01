@@ -370,14 +370,15 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
       <ScrollToTopButton />
       <ChapterProgressBar
         novelId={novelId}
+        currentChapter={chapter.chapter_number}
+        totalChapters={totalChapters}
+        navigation={navigation}
         onFontChange={setFontFamily}
         onSizeChange={setFontSize}
         currentFont={fontFamily}
         currentSize={fontSize}
-        currentChapter={chapter.chapter_number}
-        totalChapters={totalChapters}
-        navigation={navigation}
         isCommentOpen={isCommentOpen}
+        isDropdownOpen={isDropdownOpen}
       />
       
       <ChapterSidebar

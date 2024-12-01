@@ -88,8 +88,8 @@ const ReadingHistorySection = ({ userId }: ReadingHistorySectionProps) => {
               src={`/novel-covers/${item.novel.coverImageUrl}` || '/images/default-cover.jpg'}
               alt={item.novel.title}
               width={120}
-              height={168}
-              className="object-cover shadow-sm w-[60px] h-[84px] sm:w-[120px] sm:h-[168px]"
+              height={120}
+              className="object-cover shadow-sm w-[60px] h-[60px] sm:w-[120px] sm:h-[120px]"
             />
           </Link>
           <div className="flex-grow min-w-0">
@@ -108,7 +108,7 @@ const ReadingHistorySection = ({ userId }: ReadingHistorySectionProps) => {
           </div>
           <Link
             href={`/novels/${item.novel.slug}/chapters/c${item.last_chapter}`}
-            className="flex flex-col items-center gap-0.5 bg-blue-500 hover:bg-blue-600 text-white py-1 px-2 sm:py-2 sm:px-4 rounded-md transition-colors active:bg-blue-700 touch-action-manipulation whitespace-nowrap flex-shrink-0 text-xs sm:text-base"
+            className="flex flex-col items-center gap-0.5 text-black px-1 sm:px-2 border border-black rounded-md touch-action-manipulation whitespace-nowrap flex-shrink-0 text-xs sm:text-base transition-colors hover:bg-gray-100"
           >
             <span>Continue</span>
             <span>Ch.{item.last_chapter}</span>

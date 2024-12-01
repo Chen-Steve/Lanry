@@ -19,6 +19,7 @@ interface ChapterProgressBarProps {
   currentFont: string;
   currentSize: number;
   isCommentOpen: boolean;
+  isDropdownOpen: boolean;
 }
 
 export default function ChapterProgressBar({
@@ -31,6 +32,7 @@ export default function ChapterProgressBar({
   currentFont,
   currentSize,
   isCommentOpen,
+  isDropdownOpen,
 }: ChapterProgressBarProps) {
   const [scrollProgress, setScrollProgress] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
@@ -64,14 +66,14 @@ export default function ChapterProgressBar({
     if (!isMobile) return;
 
     const handleTouchStart = (e: TouchEvent) => {
-      if (isCommentOpen) return;
+      if (isCommentOpen || isDropdownOpen) return;
       
       setTouchStartY(e.touches[0].clientY);
       setIsTouching(true);
     };
 
     const handleTouchEnd = (e: TouchEvent) => {
-      if (isCommentOpen) return;
+      if (isCommentOpen || isDropdownOpen) return;
       
       if (!touchStartY) return;
 
@@ -98,13 +100,13 @@ export default function ChapterProgressBar({
       document.removeEventListener('touchstart', handleTouchStart);
       document.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [isMobile, isVisible, touchStartY, isTouching, isCommentOpen]);
+  }, [isMobile, isVisible, touchStartY, isTouching, isCommentOpen, isDropdownOpen]);
 
   useEffect(() => {
-    if (isCommentOpen && isVisible) {
+    if ((isCommentOpen || isDropdownOpen) && isVisible) {
       setIsVisible(false);
     }
-  }, [isCommentOpen]);
+  }, [isCommentOpen, isDropdownOpen]);
 
   if (!isMobile) return null;
 
