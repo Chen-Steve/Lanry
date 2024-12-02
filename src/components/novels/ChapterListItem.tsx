@@ -1,7 +1,6 @@
 import { Chapter, UserProfile } from '@/types/database';
 import { Icon } from '@iconify/react';
 import Link from 'next/link';
-import { formatDate } from '@/lib/utils';
 import { toast } from 'react-hot-toast';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -280,9 +279,7 @@ export function ChapterListItem({
               ) : (
                 <Icon icon="pepicons-print:lock" className="text-base sm:text-lg" />
               )}
-              <span className="font-medium">
-                {formatDate(chapter.publish_at || new Date())} • {chapter.coins} coins
-              </span>
+              <span className="font-medium">{chapter.coins} coins</span>
             </>
           )}
         </div>
