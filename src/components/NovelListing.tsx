@@ -47,7 +47,7 @@ const NovelCard = ({ novel, isPriority = false }: { novel: Novel; isPriority?: b
             {novel.title}
           </h3>
           <div className="flex items-center justify-center gap-1 text-xs text-gray-600 mt-1">
-            <Icon icon="mdi:book-open-page-variant" className="text-base" />
+            <Icon icon="pepicons-print:book" className="text-base" />
             <span>{totalChapters} Chapters</span>
           </div>
         </div>

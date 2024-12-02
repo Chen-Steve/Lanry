@@ -8,7 +8,6 @@ import supabase from '@/lib/supabaseClient';
 import toast from 'react-hot-toast';
 import { getNovel, toggleBookmark } from '@/services/novelService';
 import { track } from '@vercel/analytics';
-import { ChapterList } from '@/components/novels/ChapterList';
 import { SynopsisSection } from '@/components/novels/SynopsisSection';
 
 export default function NovelPage({ params }: { params: { id: string } }) {
@@ -113,18 +112,39 @@ export default function NovelPage({ params }: { params: { id: string } }) {
 
     setIsBookmarkLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError) {
+        throw new Error('Authentication error: ' + userError.message);
+      }
+      
+      if (!user) {
+        throw new Error('User not found');
+      }
 
       const newBookmarkState = await toggleBookmark(id, user.id, isBookmarked);
+      
+      if (newBookmarkState === undefined) {
+        throw new Error('Failed to toggle bookmark');
+      }
+      
       setIsBookmarked(newBookmarkState);
       setNovel(prev => prev ? {
         ...prev,
         bookmarkCount: prev.bookmarkCount + (newBookmarkState ? 1 : -1)
       } : null);
+      
+      toast.success(newBookmarkState ? 'Novel bookmarked' : 'Bookmark removed', {
+        duration: 2000,
+        position: 'bottom-center',
+      });
+
     } catch (error) {
       console.error('Error toggling bookmark:', error);
-      toast.error('Failed to update bookmark');
+      toast.error(error instanceof Error ? error.message : 'Failed to update bookmark', {
+        duration: 3000,
+        position: 'bottom-center',
+      });
     } finally {
       setIsBookmarkLoading(false);
     }
@@ -139,7 +159,7 @@ export default function NovelPage({ params }: { params: { id: string } }) {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8">
+    <div className="max-w-5xl mx-auto">
       <SynopsisSection 
         title={novel.title}
         description={novel.description}
@@ -159,14 +179,9 @@ export default function NovelPage({ params }: { params: { id: string } }) {
         onBookmarkClick={handleBookmark}
         showActionButtons={true}
         coverImageUrl={novel.coverImageUrl}
-      />
-
-      <ChapterList
         chapters={novel.chapters}
         novelId={novel.id}
-        novelSlug={novel.slug}
         userProfile={userProfile}
-        isAuthenticated={isAuthenticated}
         novelAuthorId={novel.author_profile_id}
       />
     </div>

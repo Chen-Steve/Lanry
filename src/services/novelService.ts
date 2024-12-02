@@ -1,5 +1,6 @@
 import { Novel, Chapter, ChapterUnlock } from '@/types/database';
 import supabase from '@/lib/supabaseClient';
+import { generateUUID } from '@/lib/utils';
 
 export async function getNovel(id: string, userId?: string): Promise<Novel | null> {
   try {
@@ -94,11 +95,11 @@ export async function toggleBookmark(novelId: string, userId: string, isCurrentl
 
       return false;
     } else {
-      // Insert bookmark with UUID
+      // Insert bookmark with UUID from our utility function
       const { error } = await supabase
         .from('bookmarks')
         .insert({
-          id: crypto.randomUUID(),
+          id: generateUUID(),
           profile_id: userId,
           novel_id: novelData.id,
           created_at: new Date().toISOString(),

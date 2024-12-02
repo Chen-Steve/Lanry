@@ -19,10 +19,10 @@ export const ChapterList = ({
   novelAuthorId
 }: ChapterListProps) => {
   return (
-    <div className="mt-12 relative">
+    <div className="max-w-5xl mx-auto px-4 py-6">
       {/* Quick Jump Navigation - Fixed on desktop, horizontal scroll on mobile */}
       <div className="flex md:flex-col overflow-x-auto md:overflow-visible p-2 md:p-0 mb-4 md:mb-0 gap-2 md:gap-2 
-                      md:fixed md:right-4 md:top-1/2 md:-translate-y-1/2">
+                      md:fixed md:right-4 lg:right-8 xl:right-12 md:top-1/2 md:-translate-y-1/2">
         {Array.from({ length: Math.ceil(chapters.length / 150) }).map((_, index) => (
           <button
             key={index}
@@ -40,40 +40,42 @@ export const ChapterList = ({
       </div>
 
       {/* Chapter sections */}
-      {Array.from({ length: Math.ceil(chapters.length / 150) }).map((_, sectionIndex) => {
-        const sectionChapters = chapters.slice(
-          sectionIndex * 150,
-          (sectionIndex + 1) * 150
-        );
+      <div className="space-y-8">
+        {Array.from({ length: Math.ceil(chapters.length / 150) }).map((_, sectionIndex) => {
+          const sectionChapters = chapters.slice(
+            sectionIndex * 150,
+            (sectionIndex + 1) * 150
+          );
 
-        return (
-          <div
-            key={sectionIndex}
-            id={`chapter-section-${sectionIndex}`}
-            className="mb-8"
-          >
-            <h3 className="text-lg font-semibold mb-4 text-black">
-              Chapters {sectionIndex * 150 + 1}-
-              {Math.min((sectionIndex + 1) * 150, chapters.length)}
-            </h3>
-            <div className="grid gap-2">
-              {sectionChapters.map((chapter) => (
-                <ChapterListItem
-                  key={chapter.id}
-                  chapter={{
-                    ...chapter,
-                    novel_id: novelId
-                  }}
-                  novelSlug={novelSlug}
-                  userProfile={userProfile}
-                  isAuthenticated={isAuthenticated}
-                  novelAuthorId={novelAuthorId}
-                />
-              ))}
+          return (
+            <div
+              key={sectionIndex}
+              id={`chapter-section-${sectionIndex}`}
+              className="bg-white rounded-xl shadow-sm border p-4"
+            >
+              <h3 className="text-lg font-semibold mb-4 text-gray-900">
+                Chapters {sectionIndex * 150 + 1}-
+                {Math.min((sectionIndex + 1) * 150, chapters.length)}
+              </h3>
+              <div className="grid gap-2">
+                {sectionChapters.map((chapter) => (
+                  <ChapterListItem
+                    key={chapter.id}
+                    chapter={{
+                      ...chapter,
+                      novel_id: novelId
+                    }}
+                    novelSlug={novelSlug}
+                    userProfile={userProfile}
+                    isAuthenticated={isAuthenticated}
+                    novelAuthorId={novelAuthorId}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }; 
