@@ -82,7 +82,12 @@ export const SynopsisSection = ({
       {/* Title and Quick Stats */}
       <div className="flex-1 text-center sm:text-left">
         <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 text-gray-900">{title}</h1>
-        <div className="text-sm text-gray-600 mb-3">by {author}</div>
+        <div className="text-sm text-gray-600 mb-3">
+          by {author}
+          {translator && (
+            <> • TL: <span className="text-gray-700">{translator.username}</span></>
+          )}
+        </div>
         
         {/* Quick Stats */}
         <div className="flex flex-wrap justify-center sm:justify-start gap-4 text-sm mb-4">
@@ -152,13 +157,10 @@ export const SynopsisSection = ({
 
         {/* Details Card */}
         <div className="bg-white rounded-xl shadow-sm border p-4">
-          <h2 className="font-semibold text-gray-900 mb-3">Novel Details</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+          <h2 className="font-semibold text-gray-900 mb-2">Novel Details</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
             <DetailItem label="Status" value={status} />
-            {translator && (
-              <DetailItem label="Translator" value={translator.username} />
-            )}
-            <DetailItem label="Released" value={formatDateMDY(createdAt)} />
+            <DetailItem label="Uploaded" value={formatDateMDY(createdAt)} />
             <DetailItem label="Updated" value={formatDateMDY(updatedAt)} />
           </div>
         </div>
