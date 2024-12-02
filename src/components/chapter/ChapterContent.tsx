@@ -112,7 +112,15 @@ export default function ChapterContent({
             <div key={index} className="relative group">
               <div 
                 id={paragraphId}
-                className="mb-4 leading-relaxed relative"
+                className={`mb-4 leading-relaxed relative ${isMobile ? 'touch-action-none' : ''}`}
+                style={isMobile ? {
+                  WebkitTouchCallout: 'none',
+                  WebkitUserSelect: 'none',
+                  MozUserSelect: 'none',
+                  msUserSelect: 'none',
+                  userSelect: 'none',
+                  WebkitTapHighlightColor: 'transparent'
+                } : undefined}
                 onContextMenu={(e) => isMobile && handleParagraphLongPress(e, paragraphId)}
                 onTouchStart={(e) => {
                   if (!isMobile) return;
