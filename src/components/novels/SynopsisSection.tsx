@@ -5,6 +5,7 @@ import { formatDateMDY } from '@/lib/utils';
 import { useState } from 'react';
 import { ChapterList } from './ChapterList';
 import { Chapter, UserProfile } from '@/types/database';
+import { NovelRecommendations } from './NovelRecommendations';
 
 interface SynopsisSectionProps {
   title: string;
@@ -55,7 +56,7 @@ export const SynopsisSection = ({
   userProfile,
   novelAuthorId,
 }: SynopsisSectionProps) => {
-  const [activeTab, setActiveTab] = useState<'synopsis' | 'chapters'>('synopsis');
+  const [activeTab, setActiveTab] = useState<'synopsis' | 'chapters' | 'recommendations'>('synopsis');
 
   return (
   <div className="max-w-5xl mx-auto px-4 py-4">
@@ -142,6 +143,19 @@ export const SynopsisSection = ({
           <div className="absolute bottom-0 left-0 w-full h-0.5 bg-green-600" />
         )}
       </button>
+      <button
+        onClick={() => setActiveTab('recommendations')}
+        className={`px-4 py-2 font-medium text-sm transition-colors relative ${
+          activeTab === 'recommendations'
+            ? 'text-green-600'
+            : 'text-gray-600 hover:text-gray-900'
+        }`}
+      >
+        Recommendations
+        {activeTab === 'recommendations' && (
+          <div className="absolute bottom-0 left-0 w-full h-0.5 bg-green-600" />
+        )}
+      </button>
     </div>
 
     {/* Tab Content */}
@@ -165,7 +179,7 @@ export const SynopsisSection = ({
           </div>
         </div>
       </>
-    ) : (
+    ) : activeTab === 'chapters' ? (
       <ChapterList
         chapters={chapters}
         novelId={novelId}
@@ -173,6 +187,10 @@ export const SynopsisSection = ({
         userProfile={userProfile}
         isAuthenticated={isAuthenticated}
         novelAuthorId={novelAuthorId}
+      />
+    ) : (
+      <NovelRecommendations 
+        novelId={novelId}
       />
     )}
   </div>
