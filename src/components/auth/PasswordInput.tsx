@@ -39,16 +39,31 @@ const PasswordStrengthIndicator = ({ password }: { password: string }) => {
   };
 
   return (
-    <div className="mt-2">
-      <div className="h-1 w-full bg-gray-200 rounded-full overflow-hidden">
+    <div className="mt-3 md:mt-2">
+      <div className="h-2 md:h-1 w-full bg-gray-200 rounded-full overflow-hidden">
         <div 
           className={`h-full ${strengthColors[strength]} ${strengthWidth[strength]} transition-all duration-300`}
         />
       </div>
-      <p className={`text-xs mt-1 text-black`}>
-        {strength === 'weak' && 'Weak - Add numbers, special characters, and mix cases'}
-        {strength === 'medium' && 'Medium - Add more complexity for a stronger password'}
-        {strength === 'strong' && 'Strong password!'}
+      <p className={`text-sm md:text-xs mt-2 text-black`}>
+        {strength === 'weak' && (
+          <span className="flex items-center gap-1">
+            <Icon icon="mdi:alert-circle" className="text-red-500" />
+            Add numbers, special characters, and mix cases
+          </span>
+        )}
+        {strength === 'medium' && (
+          <span className="flex items-center gap-1">
+            <Icon icon="mdi:shield-half-full" className="text-yellow-500" />
+            Add more complexity for a stronger password
+          </span>
+        )}
+        {strength === 'strong' && (
+          <span className="flex items-center gap-1">
+            <Icon icon="mdi:shield-check" className="text-green-500" />
+            Strong password!
+          </span>
+        )}
       </p>
     </div>
   );
@@ -71,14 +86,16 @@ export const PasswordInput = ({
   onTogglePassword,
   showStrength = false
 }: PasswordInputProps) => (
-  <div>
+  <div className="w-full">
     <div className="relative">
       <input
         title={placeholder}
         type={showPassword ? 'text' : 'password'}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="text-black w-full p-3 border rounded-lg focus:ring-2 focus:ring-black focus:border-black"
+        className="text-black w-full p-4 md:p-3 text-base md:text-sm border rounded-lg 
+          focus:ring-2 focus:ring-black focus:border-black
+          placeholder:text-gray-400"
         placeholder={placeholder}
         required
         minLength={6}
@@ -86,12 +103,15 @@ export const PasswordInput = ({
       <button
         type="button"
         onClick={onTogglePassword}
-        className="wabsolute right-3 top-1/2 -translate-y-1/2 text-black hover:text-gray-700"
+        className="absolute right-2 top-1/2 -translate-y-1/2 p-2 
+          text-gray-500 hover:text-black active:text-black
+          transition-colors duration-200
+          touch-manipulation"
         aria-label={showPassword ? 'Hide password' : 'Show password'}
       >
         <Icon 
           icon={showPassword ? 'mdi:eye-off' : 'mdi:eye'} 
-          className="text-xl"
+          className="text-2xl md:text-xl"
           aria-hidden="true"
         />
       </button>

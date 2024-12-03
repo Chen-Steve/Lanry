@@ -3,11 +3,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import supabase from '@/lib/supabaseClient';
-import { Icon } from '@iconify/react';
 import { generateUsername } from '@/utils/username';
 import { LoadingSpinner } from '@/components/auth/LoadingSpinner';
 import { PasswordInput } from '@/components/auth/PasswordInput';
-import toast from 'react-hot-toast';
 
 type AuthMode = 'signin' | 'signup';
 
@@ -113,56 +111,20 @@ export default function AuthPage() {
     }
   };
 
-  const handleSocialLogin = async (provider: 'google' | 'discord') => {
-    toast.success(`${provider.charAt(0).toUpperCase() + provider.slice(1)} login coming soon!`, {
-      icon: <Icon icon="material-symbols:sentiment-very-satisfied" className="text-xl" />,
-      duration: 2000,
-    });
-  };
-
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md space-y-8">
-        <h1 className="text-3xl font-bold mb-6 text-center text-black">
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="w-full max-w-[min(100%,24rem)] space-y-6">
+        <h1 className="text-2xl sm:text-3xl font-bold text-center text-black">
           {mode === 'signin' ? 'Sign In' : 'Create Account'}
         </h1>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-600 p-4 rounded-md text-sm animate-fadeIn">
+          <div className="bg-red-50 border border-red-200 text-red-600 p-3 rounded-md text-sm animate-fadeIn">
             {error}
           </div>
         )}
 
-        <div className="space-y-4">
-          <button
-            type="button"
-            onClick={() => handleSocialLogin('google')}
-            className="text-black w-full p-3 border rounded-lg hover:bg-gray-50 flex items-center justify-center gap-2"
-          >
-            <Icon icon="logos:google-icon" className="text-xl" />
-            Continue with Google
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleSocialLogin('discord')}
-            className="text-black w-full p-3 border rounded-lg hover:bg-gray-50 flex items-center justify-center gap-2"
-          >
-            <Icon icon="logos:discord-icon" className="text-xl" />
-            Continue with Discord
-          </button>
-
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">Or continue with email</span>
-            </div>
-          </div>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <input
               title="Email"
@@ -172,7 +134,7 @@ export default function AuthPage() {
                 setCredentials({ ...credentials, email: e.target.value });
                 validateEmail(e.target.value);
               }}
-              className={`text-black w-full p-3 border rounded-lg focus:ring-2 focus:ring-black focus:border-black
+              className={`text-black w-full p-4 border rounded-lg focus:ring-2 focus:ring-black focus:border-black text-base
                 ${emailError ? 'border-red-500' : ''}`}
               placeholder="Email"
               required
@@ -203,7 +165,9 @@ export default function AuthPage() {
           <button
             type="submit"
             disabled={loading}
-            className="text-black w-full p-4 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed text-base font-medium flex items-center justify-center gap-2"
+            className="w-full p-4 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 
+              disabled:cursor-not-allowed text-base font-medium flex items-center justify-center gap-2 
+              active:transform active:scale-[0.98] transition-transform"
           >
             {loading ? (
               <>
@@ -216,22 +180,20 @@ export default function AuthPage() {
           </button>
         </form>
 
-        <div className="mt-6 text-center">
-          <button
-            type="button"
-            onClick={() => {
-              setMode(mode === 'signin' ? 'signup' : 'signin');
-              setError('');
-              setEmailError('');
-              setCredentials({ email: '', password: '', confirmPassword: '' });
-            }}
-            className="text-black hover:text-gray-600 text-base py-2 font-medium"
-          >
-            {mode === 'signin' 
-              ? "Don't have an account? Sign up" 
-              : 'Already have an account? Sign in'}
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => {
+            setMode(mode === 'signin' ? 'signup' : 'signin');
+            setError('');
+            setEmailError('');
+            setCredentials({ email: '', password: '', confirmPassword: '' });
+          }}
+          className="w-full text-center text-black hover:text-gray-600 text-sm sm:text-base py-2 font-medium"
+        >
+          {mode === 'signin' 
+            ? "Don't have an account? Sign up" 
+            : 'Already have an account? Sign in'}
+        </button>
       </div>
     </div>
   );
