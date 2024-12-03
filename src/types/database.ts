@@ -135,7 +135,7 @@ export interface ForumThread {
   author: {
     username: string;
   };
-  score?: number;
+  score: number;
 }
 
 export interface ForumPost {

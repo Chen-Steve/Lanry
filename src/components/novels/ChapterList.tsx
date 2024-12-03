@@ -23,17 +23,18 @@ export const ChapterList = ({
       <div className="bg-white rounded-xl shadow-sm border p-4">
         <div className="grid gap-2">
           {chapters.map((chapter) => (
-            <ChapterListItem
-              key={chapter.id}
-              chapter={{
-                ...chapter,
-                novel_id: novelId
-              }}
-              novelSlug={novelSlug}
-              userProfile={userProfile}
-              isAuthenticated={isAuthenticated}
-              novelAuthorId={novelAuthorId}
-            />
+            <div key={chapter.id} className="max-w-full overflow-hidden">
+              <ChapterListItem
+                chapter={{
+                  ...chapter,
+                  novel_id: novelId
+                }}
+                novelSlug={novelSlug}
+                userProfile={userProfile}
+                isAuthenticated={isAuthenticated}
+                novelAuthorId={novelAuthorId}
+              />
+            </div>
           ))}
         </div>
       </div>

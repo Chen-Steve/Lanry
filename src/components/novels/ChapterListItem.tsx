@@ -266,7 +266,7 @@ export function ChapterListItem({
     <div className="flex flex-col sm:flex-row sm:items-center gap-2">
       <div className="flex items-center gap-2">
         <span className="inline-block min-w-[3rem] text-sm sm:text-base">Ch. {chapter.chapter_number}</span>
-        {chapter.title && <span className="ml-2 text-sm sm:text-base truncate">{chapter.title}</span>}
+        {chapter.title && <div className="truncate max-w-[calc(100%-2rem)]">{chapter.title}</div>}
       </div>
       {!isPublished && (
         <div className="flex items-center gap-2 bg-purple-50 text-purple-800 px-2 py-1 rounded-md text-xs sm:text-sm mt-1 sm:mt-0 sm:ml-auto">

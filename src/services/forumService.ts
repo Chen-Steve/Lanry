@@ -71,8 +71,8 @@ export const forumService = {
       updated_at: thread.updatedAt.toISOString(),
       is_pinned: thread.isPinned,
       is_locked: thread.isLocked,
-      post_count: thread._count.posts,
-      last_post_at: thread.posts[0]?.createdAt.toISOString() || thread.createdAt.toISOString(),
+      reply_count: thread._count.posts,
+      latest_activity: thread.posts[0]?.createdAt.toISOString() || thread.createdAt.toISOString(),
       author: {
         username: thread.author.username || 'Unknown User'
       },
@@ -111,8 +111,8 @@ export const forumService = {
       updated_at: thread.updatedAt.toISOString(),
       is_pinned: thread.isPinned,
       is_locked: thread.isLocked,
-      post_count: thread._count.posts,
-      last_post_at: thread.updatedAt.toISOString(),
+      reply_count: thread._count.posts,
+      latest_activity: thread.updatedAt.toISOString(),
       author: {
         username: thread.author.username || 'Unknown User'
       },
@@ -194,8 +194,8 @@ export const forumService = {
       updated_at: thread.updatedAt.toISOString(),
       is_pinned: thread.isPinned,
       is_locked: thread.isLocked,
-      post_count: 0,
-      last_post_at: thread.createdAt.toISOString(),
+      reply_count: 0,
+      latest_activity: thread.createdAt.toISOString(),
       author: {
         username: thread.author.username || 'Unknown User'
       },
