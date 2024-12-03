@@ -5,11 +5,11 @@ import { Icon } from '@iconify/react';
 import { useUser } from '@/hooks/useUser';
 import CreatePostButton from './CreatePostButton';
 import VoteControls from './VoteControls';
+import { formatForumDateTime } from '@/lib/utils';
 
 interface PostItemProps {
-  post: ForumPost;
+  post: ForumPost & { isLiked?: boolean };
   onVoteUp: () => void;
-  onVoteDown: () => void;
   onReply: (post: ForumPost) => void;
   onDelete: (postId: string) => void;
   threadLocked: boolean;
@@ -19,7 +19,6 @@ interface PostItemProps {
 export default function PostItem({ 
   post, 
   onVoteUp, 
-  onVoteDown, 
   onReply, 
   onDelete,
   threadLocked, 
@@ -39,8 +38,8 @@ export default function PostItem({
       <div className="flex">
         <VoteControls 
           score={post.score || 0}
+          isLiked={post.isLiked}
           onUpvote={onVoteUp}
-          onDownvote={onVoteDown}
         />
         <div className="flex-1">
           {parentPost && (
@@ -60,7 +59,7 @@ export default function PostItem({
               <div className="text-xs text-gray-500">
                 <span className="font-medium">{post.author.username}</span>
                 {' • '}
-                {new Date(post.created_at).toLocaleDateString()}
+                {formatForumDateTime(post.created_at)}
               </div>
               {!threadLocked && (
                 <CreatePostButton 

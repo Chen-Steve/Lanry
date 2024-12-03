@@ -1,11 +1,18 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
 
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
+    const cookieStore = cookies();
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    const { data: { session } } = await supabase.auth.getSession();
+    const userId = session?.user?.id;
+
     const posts = await prisma.forumPost.findMany({
       where: {
         threadId: params.id
@@ -18,7 +25,12 @@ export async function GET(
           select: {
             username: true
           }
-        }
+        },
+        votes: userId ? {
+          where: {
+            authorId: userId
+          }
+        } : false
       }
     });
 
@@ -31,7 +43,9 @@ export async function GET(
       updated_at: post.updatedAt.toISOString(),
       author: {
         username: post.author.username || 'Unknown User'
-      }
+      },
+      score: post.score,
+      isLiked: userId ? post.votes.length > 0 : false
     })));
   } catch (error) {
     console.error('Error fetching posts:', error);

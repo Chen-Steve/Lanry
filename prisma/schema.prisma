@@ -218,7 +218,6 @@ model ForumPost {
 
 model ForumVote {
   id        String      @id @default(cuid())
-  direction Int         // 1 for upvote, -1 for downvote
   authorId  String      @map("author_id")
   postId    String?     @map("post_id")
   threadId  String?     @map("thread_id")

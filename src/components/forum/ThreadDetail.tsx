@@ -9,14 +9,23 @@ import { toast } from 'react-hot-toast';
 import supabase from '@/lib/supabaseClient';
 import PostItem from './PostItem';
 import VoteControls from './VoteControls';
+import { formatForumDateTime } from '@/lib/utils';
 
 interface ThreadDetailProps {
   threadId: string;
 }
 
+interface ThreadWithLikes extends ForumThread {
+  isLiked?: boolean;
+}
+
+interface PostWithLikes extends ForumPost {
+  isLiked?: boolean;
+}
+
 export default function ThreadDetail({ threadId }: ThreadDetailProps) {
-  const [thread, setThread] = useState<ForumThread | null>(null);
-  const [posts, setPosts] = useState<ForumPost[]>([]);
+  const [thread, setThread] = useState<ThreadWithLikes | null>(null);
+  const [posts, setPosts] = useState<PostWithLikes[]>([]);
   const [loading, setLoading] = useState(true);
   const [categoryName, setCategoryName] = useState<string>('');
   const [isVoting, setIsVoting] = useState(false);
@@ -53,7 +62,7 @@ export default function ThreadDetail({ threadId }: ThreadDetailProps) {
     loadThread();
   }, [threadId]);
 
-  const handleVote = async (type: 'thread' | 'post', id: string, direction: 'up' | 'down') => {
+  const handleVote = async (type: 'thread' | 'post', id: string) => {
     if (isVoting) return;
     
     try {
@@ -63,8 +72,7 @@ export default function ThreadDetail({ threadId }: ThreadDetailProps) {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
-        },
-        body: JSON.stringify({ direction })
+        }
       });
 
       if (!response.ok) {
@@ -75,10 +83,10 @@ export default function ThreadDetail({ threadId }: ThreadDetailProps) {
       const data = await response.json();
       
       if (type === 'thread') {
-        setThread(prev => prev ? { ...prev, score: data.score } : null);
+        setThread(prev => prev ? { ...prev, score: data.score, isLiked: data.liked } : null);
       } else {
         setPosts(prev => prev.map(post => 
-          post.id === id ? { ...post, score: data.score } : post
+          post.id === id ? { ...post, score: data.score, isLiked: data.liked } : post
         ));
       }
     } catch (error: unknown) {
@@ -165,8 +173,8 @@ export default function ThreadDetail({ threadId }: ThreadDetailProps) {
           <div className="flex">
             <VoteControls 
               score={thread.score || 0}
-              onUpvote={() => handleVote('thread', thread.id, 'up')}
-              onDownvote={() => handleVote('thread', thread.id, 'down')}
+              isLiked={thread.isLiked}
+              onUpvote={() => handleVote('thread', thread.id)}
             />
             <div className="flex-1">
               <div className="flex items-start justify-between mb-2">
@@ -192,7 +200,7 @@ export default function ThreadDetail({ threadId }: ThreadDetailProps) {
               </div>
               <div className="prose max-w-none mb-2 text-gray-900">{thread.content}</div>
               <div className="text-xs text-gray-500">
-                Posted by {thread.author.username} • {new Date(thread.created_at).toLocaleDateString()}
+                Posted by {thread.author.username} • {formatForumDateTime(thread.created_at)}
               </div>
             </div>
           </div>
@@ -217,8 +225,7 @@ export default function ThreadDetail({ threadId }: ThreadDetailProps) {
           <PostItem 
             key={post.id}
             post={post}
-            onVoteUp={() => handleVote('post', post.id, 'up')}
-            onVoteDown={() => handleVote('post', post.id, 'down')}
+            onVoteUp={() => handleVote('post', post.id)}
             onReply={(newPost: ForumPost) => {
               setPosts([...posts, newPost]);
             }}

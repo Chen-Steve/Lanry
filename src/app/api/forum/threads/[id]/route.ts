@@ -9,6 +9,11 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    const cookieStore = cookies();
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    const { data: { session } } = await supabase.auth.getSession();
+    const userId = session?.user?.id;
+
     const thread = await prisma.forumThread.findUnique({
       where: {
         id: params.id
@@ -23,7 +28,12 @@ export async function GET(
           select: {
             posts: true
           }
-        }
+        },
+        votes: userId ? {
+          where: {
+            authorId: userId
+          }
+        } : false
       }
     });
 
@@ -49,7 +59,8 @@ export async function GET(
       author: {
         username: thread.author.username || 'Unknown User'
       },
-      score: thread.score
+      score: thread.score,
+      isLiked: userId ? thread.votes.length > 0 : false
     });
   } catch (error) {
     console.error('Error fetching thread:', error);

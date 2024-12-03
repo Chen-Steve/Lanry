@@ -4,6 +4,7 @@ import { Icon } from '@iconify/react';
 import { ForumThread } from '@/types/database';
 import supabase from '@/lib/supabaseClient';
 import { toast } from 'react-hot-toast';
+import { formatForumDateTime } from '@/lib/utils';
 
 interface ThreadListProps {
   categoryId: string;
@@ -112,19 +113,17 @@ export default function ThreadList({ categoryId, onThreadListRef }: ThreadListPr
                 </h2>
                 <div className="mt-1 text-sm text-gray-500">
                   <span className="flex items-center gap-1">
-                    <Icon icon="mdi:account" className="w-4 h-4" />
                     {thread.author.username}
                   </span>
                 </div>
                 <div className="flex items-center justify-between mt-2 text-sm text-gray-500">
                   <span className="flex items-center gap-1">
-                    <Icon icon="mdi:comment-outline" className="w-4 h-4" />
-                    Replies: {thread.reply_count}
+                    Replies: {thread.reply_count || 0}
                   </span>
                   <div className="flex items-center gap-4">
                     <span className="flex items-center gap-1">
                       <Icon icon="mdi:clock-outline" className="w-4 h-4" />
-                      {new Date(thread.created_at).toLocaleDateString()} {new Date(thread.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {formatForumDateTime(thread.latest_activity)}
                     </span>
                     {currentUser === thread.author_id && (
                       <button
@@ -147,4 +146,4 @@ export default function ThreadList({ categoryId, onThreadListRef }: ThreadListPr
       ))}
     </div>
   );
-} 
+}

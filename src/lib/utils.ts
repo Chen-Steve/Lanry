@@ -51,6 +51,36 @@ export const formatRelativeDate = (date: string | Date) => {
   }
 };
 
+export const formatRelativeTime = (date: string | Date) => {
+  const now = new Date();
+  const inputDate = new Date(date);
+  
+  // Reset time part for accurate day comparisons
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const inputDay = new Date(inputDate.getFullYear(), inputDate.getMonth(), inputDate.getDate());
+  
+  const diffTime = today.getTime() - inputDay.getTime();
+  const diffDays = diffTime / (1000 * 60 * 60 * 24);
+
+  const timeStr = inputDate.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  });
+
+  if (diffDays === 0) {
+    return `Today at ${timeStr}`;
+  } else if (diffDays === 1) {
+    return `Yesterday at ${timeStr}`;
+  } else {
+    return inputDate.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    }) + ` at ${timeStr}`;
+  }
+};
+
 export function generateChapterSlug(chapterNumber: number): string {
   return `c${chapterNumber}`;
 }
@@ -76,4 +106,34 @@ export function generateUUID(): string {
     const v = c === 'x' ? r : (r & 0x3 | 0x8);
     return v.toString(16);
   });
-} 
+}
+
+export const formatForumDateTime = (date: string | Date) => {
+  const now = new Date();
+  const inputDate = new Date(date);
+  
+  // Reset time part for accurate day comparisons
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const inputDay = new Date(inputDate.getFullYear(), inputDate.getMonth(), inputDate.getDate());
+  
+  const diffTime = today.getTime() - inputDay.getTime();
+  const diffDays = diffTime / (1000 * 60 * 60 * 24);
+
+  const timeStr = inputDate.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  });
+
+  if (diffDays === 0) {
+    return `Today at ${timeStr}`;
+  } else if (diffDays === 1) {
+    return `Yesterday at ${timeStr}`;
+  } else {
+    return inputDate.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    }) + ` at ${timeStr}`;
+  }
+}; 

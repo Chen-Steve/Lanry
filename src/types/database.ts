@@ -130,13 +130,12 @@ export interface ForumThread {
   updated_at: string;
   is_pinned: boolean;
   is_locked: boolean;
-  post_count: number;
-  last_post_at: string;
+  reply_count: number;
+  latest_activity: string;
   author: {
     username: string;
   };
-  score: number;
-  reply_count?: number;
+  score?: number;
 }
 
 export interface ForumPost {

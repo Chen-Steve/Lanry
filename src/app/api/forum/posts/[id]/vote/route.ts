@@ -29,47 +29,66 @@ export async function POST(
       );
     }
 
-    const { direction } = await request.json();
-    const voteValue = direction === 'up' ? 1 : -1;
-
-    // Check if user has already voted
-    const existingVotes = await prisma.forumVote.count({
+    // Check if user has already liked
+    const existingVote = await prisma.forumVote.findUnique({
       where: {
-        authorId: user.id,
-        postId: params.id
+        authorId_postId: {
+          authorId: user.id,
+          postId: params.id
+        }
       }
     });
 
-    if (existingVotes > 0) {
-      return NextResponse.json(
-        { error: 'You have already voted on this post' },
-        { status: 400 }
-      );
-    }
+    if (existingVote) {
+      // Remove like if it exists
+      await prisma.$transaction([
+        prisma.forumVote.delete({
+          where: { id: existingVote.id }
+        }),
+        prisma.forumPost.update({
+          where: { id: params.id },
+          data: {
+            score: { decrement: 1 }
+          }
+        })
+      ]);
 
-    // Create the vote and update the score
-    await prisma.$transaction([
-      prisma.forumVote.create({
-        data: {
-          authorId: user.id,
-          postId: params.id,
-          direction: voteValue
-        }
-      }),
-      prisma.forumPost.update({
+      const updatedPost = await prisma.forumPost.findUnique({
         where: { id: params.id },
-        data: {
-          score: { increment: voteValue }
-        }
-      })
-    ]);
+        select: { score: true }
+      });
 
-    const updatedPost = await prisma.forumPost.findUnique({
-      where: { id: params.id },
-      select: { score: true }
-    });
+      return NextResponse.json({ 
+        score: updatedPost?.score || 0,
+        liked: false
+      });
+    } else {
+      // Create new like
+      await prisma.$transaction([
+        prisma.forumVote.create({
+          data: {
+            authorId: user.id,
+            postId: params.id
+          }
+        }),
+        prisma.forumPost.update({
+          where: { id: params.id },
+          data: {
+            score: { increment: 1 }
+          }
+        })
+      ]);
 
-    return NextResponse.json({ score: updatedPost?.score || 0 });
+      const updatedPost = await prisma.forumPost.findUnique({
+        where: { id: params.id },
+        select: { score: true }
+      });
+
+      return NextResponse.json({ 
+        score: updatedPost?.score || 0,
+        liked: true
+      });
+    }
   } catch (error) {
     console.error('Error voting on post:', error);
     return NextResponse.json(

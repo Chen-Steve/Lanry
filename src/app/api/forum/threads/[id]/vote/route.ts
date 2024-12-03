@@ -29,9 +29,6 @@ export async function POST(
       );
     }
 
-    const { direction } = await request.json();
-    const voteValue = direction === 'up' ? 1 : -1;
-
     // Use a transaction to handle the vote
     const result = await prisma.$transaction(async (tx) => {
       // Check for existing vote
@@ -44,46 +41,46 @@ export async function POST(
         }
       });
 
-      let scoreChange = voteValue;
-
       if (existingVote) {
-        if (existingVote.direction === voteValue) {
-          // Remove vote if clicking the same direction
-          await tx.forumVote.delete({
-            where: { id: existingVote.id }
-          });
-          scoreChange = -voteValue;
-        } else {
-          // Change vote direction
-          await tx.forumVote.update({
-            where: { id: existingVote.id },
-            data: { direction: voteValue }
-          });
-          scoreChange = voteValue * 2; // Double the change because we're flipping the vote
-        }
+        // Remove like if it exists
+        await tx.forumVote.delete({
+          where: { id: existingVote.id }
+        });
+        
+        // Update thread score
+        const thread = await tx.forumThread.update({
+          where: { id: params.id },
+          data: {
+            score: { decrement: 1 }
+          }
+        });
+
+        return {
+          score: thread.score,
+          liked: false
+        };
       } else {
-        // Create new vote
+        // Create new like
         await tx.forumVote.create({
           data: {
-            direction: voteValue,
             authorId: user.id,
             threadId: params.id
           }
         });
+
+        // Update thread score
+        const thread = await tx.forumThread.update({
+          where: { id: params.id },
+          data: {
+            score: { increment: 1 }
+          }
+        });
+
+        return {
+          score: thread.score,
+          liked: true
+        };
       }
-
-      // Update thread score
-      const thread = await tx.forumThread.update({
-        where: { id: params.id },
-        data: {
-          score: { increment: scoreChange }
-        }
-      });
-
-      return {
-        score: thread.score,
-        userVote: scoreChange === -voteValue ? 0 : voteValue
-      };
     });
 
     return NextResponse.json(result);
