@@ -26,8 +26,8 @@ const NovelCard = ({ novel, isPriority = false }: { novel: Novel; isPriority?: b
 
   return (
     <Link href={`/novels/${novel.slug}`} className="block">
-      <div className="flex flex-col items-center text-center p-2 mt-4">
-        <div className="w-24 h-32 sm:w-32 sm:h-44 relative mb-2">
+      <div className="flex flex-col items-center text-center mt-4">
+        <div className="w-24 h-32 sm:w-40 sm:h-56 relative mb-2">
           {novel.coverImageUrl ? (
             <Image
               src={`/novel-covers/${novel.coverImageUrl}`}
@@ -81,7 +81,7 @@ const NovelListing = () => {
 
   return (
     <div className="max-w-5xl mx-auto px-2 sm:px-4">
-      <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-4">
+      <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6">
         {novels.map((novel, index) => (
           <NovelCard 
             key={novel.id} 
