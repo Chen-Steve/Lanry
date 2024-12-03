@@ -8,6 +8,41 @@ import { useEffect, useState } from 'react';
 import { Icon } from '@iconify/react';
 import { getTotalChapters } from '@/services/chapterService';
 
+const NovelCover = ({ 
+  coverUrl, 
+  title, 
+  isPriority 
+}: { 
+  coverUrl?: string; 
+  title: string;
+  isPriority?: boolean;
+}) => (
+  <div className="relative aspect-[2/3] w-full rounded overflow-hidden bg-gray-200">
+    {coverUrl ? (
+      <Image
+        src={`/novel-covers/${coverUrl}`}
+        alt={`Cover for ${title}`}
+        fill
+        priority={isPriority}
+        loading={isPriority ? 'eager' : 'lazy'}
+        className="object-cover transition-transform hover:scale-105"
+        sizes="(max-width: 640px) 33vw, (max-width: 768px) 25vw, 16vw"
+      />
+    ) : (
+      <div className="w-full h-full flex items-center justify-center bg-gray-200">
+        <Icon icon="pepicons-print:book" className="text-3xl text-gray-400" />
+      </div>
+    )}
+  </div>
+);
+
+const NovelStats = ({ totalChapters }: { totalChapters: number }) => (
+  <div className="flex items-center gap-1 text-xs text-gray-600">
+    <Icon icon="pepicons-print:book" className="text-sm" />
+    <span>{totalChapters} Ch.</span>
+  </div>
+);
+
 const NovelCard = ({ novel, isPriority = false }: { novel: Novel; isPriority?: boolean }) => {
   const [totalChapters, setTotalChapters] = useState(0);
 
@@ -25,36 +60,38 @@ const NovelCard = ({ novel, isPriority = false }: { novel: Novel; isPriority?: b
   }, [novel.id]);
 
   return (
-    <Link href={`/novels/${novel.slug}`} className="block">
-      <div className="flex flex-col items-center text-center mt-4">
-        <div className="w-24 h-32 sm:w-40 sm:h-56 relative mb-2">
-          {novel.coverImageUrl ? (
-            <Image
-              src={`/novel-covers/${novel.coverImageUrl}`}
-              alt={`Cover for ${novel.title}`}
-              fill
-              priority={isPriority}
-              loading={isPriority ? 'eager' : 'lazy'}
-              className="object-cover rounded"
-              sizes="(max-width: 768px) 96px, 128px"
-            />
-          ) : (
-            <div className="w-full h-full bg-gray-300 rounded"></div>
-          )}
-        </div>
-        <div className="w-full">
-          <h3 className="text-sm sm:text-base font-semibold truncate text-black leading-tight">
+    <Link 
+      href={`/novels/${novel.slug}`} 
+      className="block p-2 hover:bg-gray-50 rounded-lg transition-colors h-full"
+    >
+      <div className="flex flex-col h-full">
+        <NovelCover 
+          coverUrl={novel.coverImageUrl} 
+          title={novel.title}
+          isPriority={isPriority}
+        />
+        <div className="mt-2 flex-1 min-h-[3.5rem] flex flex-col justify-between">
+          <h3 className="text-sm text-black font-medium leading-tight max-h-[2.5rem] line-clamp-2 overflow-hidden">
             {novel.title}
           </h3>
-          <div className="flex items-center justify-center gap-1 text-xs text-gray-600 mt-1">
-            <Icon icon="pepicons-print:book" className="text-base" />
-            <span>{totalChapters} Chapters</span>
-          </div>
+          <NovelStats totalChapters={totalChapters} />
         </div>
       </div>
     </Link>
   );
 };
+
+const LoadingGrid = () => (
+  <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+    {[...Array(12)].map((_, i) => (
+      <div key={i} className="animate-pulse">
+        <div className="aspect-[2/3] bg-gray-200 rounded" />
+        <div className="mt-2 h-4 bg-gray-200 rounded w-3/4" />
+        <div className="mt-1 h-3 bg-gray-200 rounded w-1/2" />
+      </div>
+    ))}
+  </div>
+);
 
 const NovelListing = () => {
   const [novels, setNovels] = useState<Novel[]>([]);
@@ -76,17 +113,21 @@ const NovelListing = () => {
   }, []);
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="max-w-5xl mx-auto px-4">
+        <LoadingGrid />
+      </div>
+    );
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-2 sm:px-4">
-      <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6">
+    <div className="max-w-5xl mx-auto px-4">
+      <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
         {novels.map((novel, index) => (
           <NovelCard 
             key={novel.id} 
             novel={novel}
-            isPriority={index < 3}
+            isPriority={index < 6}
           />
         ))}
       </div>
