@@ -27,10 +27,8 @@ const Footer = () => {
                   Feedback
                 </Link>
                 <Link 
-                  href="https://forms.gle/dYXhMkxfTi3odiLc8" 
+                  href="/novels/requests" 
                   className="text-xs sm:text-sm text-gray-600 hover:text-gray-800 hover:underline bg-blue-100 px-2 py-0.5 rounded transition-colors"
-                  target="_blank"
-                  rel="noopener noreferrer"
                 >
                   Request Novel
                 </Link>
