@@ -6,6 +6,7 @@ import supabase from '@/lib/supabaseClient';
 import { Icon } from '@iconify/react';
 import { useQuery } from '@tanstack/react-query';
 import { ErrorBoundary } from 'react-error-boundary';
+import Link from 'next/link';
 
 // Lazy load components with proper error handling
 const ReadingHistorySection = lazy(() => 
@@ -97,7 +98,7 @@ export default function UserDashboard() {
 
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('*, created_at')
+        .select('*, coins, created_at')
         .eq('id', user.id)
         .single();
 
@@ -174,10 +175,21 @@ export default function UserDashboard() {
       {/* Profile Header */}
       <div className="bg-white p-4 sm:p-6 border-b">
         <div className="flex items-center gap-3 sm:gap-4">
-          <div>
-            <h1 className="text-lg sm:text-xl font-semibold text-gray-900">
-              {profile?.username || 'User'}
-            </h1>
+          <div className="flex-grow">
+            <div className="flex items-center gap-3">
+              <h1 className="text-lg sm:text-xl font-semibold text-gray-900">
+                {profile?.username || 'User'}
+              </h1>
+              <Link 
+                href="/shop" 
+                className="flex items-center gap-1 bg-amber-50 px-2 py-1 rounded-full hover:bg-amber-100 transition-colors cursor-pointer"
+              >
+                <Icon icon="ph:coin" className="w-4 h-4 text-amber-500" />
+                <span className="text-sm text-amber-600 font-medium">
+                  {profile?.coins || 0}
+                </span>
+              </Link>
+            </div>
             <p className="text-xs sm:text-sm text-gray-500">
               Member since {new Date(profile?.created_at).toLocaleDateString()}
             </p>

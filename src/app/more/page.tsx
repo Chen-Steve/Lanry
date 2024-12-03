@@ -1,11 +1,116 @@
+import Link from 'next/link';
+import { Icon } from '@iconify/react';
+import Image from 'next/image';
+
+interface MenuItemProps {
+  href: string;
+  label: string;
+  external?: boolean;
+  icon?: string;
+  bgColor?: string;
+}
+
+function MenuItem({ href, label, external, icon, bgColor }: MenuItemProps) {
+  const className = `flex items-center justify-between w-full p-4 rounded-lg ${
+    bgColor || 'bg-gray-50'
+  } hover:bg-gray-100 transition-colors`;
+  
+  if (external) {
+    return (
+      <a
+        href={href}
+        className={className}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <span className="text-gray-700">{label}</span>
+        {icon ? (
+          <Icon icon={icon} className="text-xl text-gray-500" />
+        ) : (
+          <Icon icon="heroicons:arrow-up-right" className="text-xl text-gray-500" />
+        )}
+      </a>
+    );
+  }
+
+  return (
+    <Link href={href} className={className}>
+      <span className="text-gray-700">{label}</span>
+      <Icon icon="heroicons:chevron-right" className="text-xl text-gray-500" />
+    </Link>
+  );
+}
+
 export default function MorePage() {
   return (
-    <main className="min-h-[calc(100vh-4rem)] bg-white px-4 pt-6 pb-20">
-      <div className="space-y-4">
-        <div className="bg-gray-50 rounded-lg p-6 text-center">
-          <p className="text-lg font-medium text-gray-900">Coming Soon</p>
-          <p className="mt-2 text-sm text-gray-600">New features are on the way</p>
-        </div>
+    <main className="min-h-[calc(100vh-4rem)] bg-white px-4 py-6">
+      <div className="max-w-md mx-auto space-y-6">
+        {/* Brand Section */}
+        <section className="text-center pb-6">
+          <div className="flex items-center justify-center gap-3">
+            <Image
+              src="/lanry.jpg"
+              alt="Lanry Logo"
+              width={80}
+              height={80}
+              className="rounded-full"
+            />
+            <Link href="/" className="text-6xl font-bold text-gray-800">
+              Lanry
+            </Link>
+          </div>
+        </section>
+
+        {/* Main Menu */}
+        <section className="space-y-3">
+          <MenuItem href="/sponsors" label="Sponsors" />
+          <MenuItem href="/shop" label="Shop" />
+        </section>
+
+        {/* Support Section */}
+        <section className="space-y-3">
+          <MenuItem 
+            href="https://forms.gle/DV9X9C5wQjUxKece7" 
+            label="Send Feedback"
+            external
+            bgColor="bg-yellow-50"
+          />
+          <MenuItem 
+            href="https://forms.gle/dYXhMkxfTi3odiLc8" 
+            label="Request Novel"
+            external
+            bgColor="bg-blue-50"
+          />
+        </section>
+
+        {/* Social Links */}
+        <section className="space-y-3">
+          <MenuItem 
+            href="https://discord.gg/4CyamqVt" 
+            label="Join our Discord"
+            icon="mdi:discord"
+            external
+            bgColor="bg-indigo-50"
+          />
+        </section>
+
+        {/* Legal Section */}
+        <section className="pt-6 border-t">
+          <p className="text-sm text-gray-500 text-center mb-4">
+            © {new Date().getFullYear()} Lanry. All rights reserved.
+          </p>
+          <div className="flex justify-center space-x-6">
+            <Link href="/privacy" className="text-sm text-gray-600 hover:text-gray-800">
+              Privacy
+            </Link>
+            <Link href="/terms" className="text-sm text-gray-600 hover:text-gray-800">
+              Terms
+            </Link>
+            <Link href="/translation-policy" className="text-sm text-gray-600 hover:text-gray-800">
+              Translation
+            </Link>
+          </div>
+        </section>
       </div>
     </main>
   );

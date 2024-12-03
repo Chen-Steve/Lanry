@@ -44,3 +44,13 @@ body {
   filter: blur(30px);
   transition: all 7s ease-in-out;
 }
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+} 
