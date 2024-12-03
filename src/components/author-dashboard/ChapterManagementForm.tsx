@@ -35,6 +35,15 @@ const isAdvancedChapter = (chapter: Chapter): boolean => {
          (chapter.coins !== undefined && chapter.coins > 0);
 };
 
+const formatText = (text: string): string => {
+  // Split text into lines and process each line
+  return text
+    .split(/\r?\n/) // Split on newlines
+    .map(line => line.trim()) // Remove leading/trailing spaces
+    .filter(line => line !== '') // Remove empty lines
+    .join('\n\n'); // Join with double newlines
+};
+
 export default function ChapterManagementForm({ authorOnly = false }: ChapterManagementFormProps) {
   const [novels, setNovels] = useState<Novel[]>([]);
   const [selectedNovel, setSelectedNovel] = useState<string>('');
@@ -293,7 +302,16 @@ export default function ChapterManagementForm({ authorOnly = false }: ChapterMan
               <div className="space-y-2">
                 <textarea
                   value={formData.content}
-                  onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
+                  onChange={(e) => {
+                    const formattedText = formatText(e.target.value);
+                    setFormData(prev => ({ ...prev, content: formattedText }));
+                  }}
+                  onPaste={(e) => {
+                    e.preventDefault();
+                    const pastedText = e.clipboardData.getData('text');
+                    const formattedText = formatText(pastedText);
+                    setFormData(prev => ({ ...prev, content: formattedText }));
+                  }}
                   className="w-full p-3 border rounded-lg min-h-[300px] focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Chapter content"
                 />
