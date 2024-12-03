@@ -120,11 +120,7 @@ export default function CategoryPage({ params }: { params: { id: string } }) {
           <span className="font-medium">{category?.name || 'Loading...'}</span>
         </div>
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mt-4 gap-4">
-          <div>
-            {category?.description && (
-              <p className="text-black">{category.description}</p>
-            )}
-          </div>
+
           <div className="w-full sm:w-auto">
             {isLoading ? (
               <button disabled className="w-full sm:w-auto px-4 py-2 bg-gray-200 rounded-md">

@@ -110,28 +110,32 @@ export default function ThreadList({ categoryId, onThreadListRef }: ThreadListPr
                 <h2 className="text-xl font-semibold text-black group-hover:text-blue-600 transition">
                   {thread.title}
                 </h2>
-                <p className="text-gray-600 mt-1 line-clamp-2">{thread.content}</p>
-                <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
+                <div className="mt-1 text-sm text-gray-500">
                   <span className="flex items-center gap-1">
                     <Icon icon="mdi:account" className="w-4 h-4" />
                     {thread.author.username}
                   </span>
-                  <span className="flex items-center gap-1">
-                    <Icon icon="mdi:clock-outline" className="w-4 h-4" />
-                    {new Date(thread.created_at).toLocaleDateString()}
-                  </span>
+                </div>
+                <div className="flex items-center justify-between mt-2 text-sm text-gray-500">
                   <span className="flex items-center gap-1">
                     <Icon icon="mdi:comment-outline" className="w-4 h-4" />
-                    {thread.reply_count} {thread.reply_count === 1 ? 'reply' : 'replies'}
+                    Replies: {thread.reply_count}
                   </span>
-                  {currentUser === thread.author_id && (
-                    <button
-                      onClick={(e) => handleDeleteThread(thread.id, e)}
-                      className="text-red-500 hover:text-red-700 flex items-center gap-1"
-                    >
-                      Delete
-                    </button>
-                  )}
+                  <div className="flex items-center gap-4">
+                    <span className="flex items-center gap-1">
+                      <Icon icon="mdi:clock-outline" className="w-4 h-4" />
+                      {new Date(thread.created_at).toLocaleDateString()} {new Date(thread.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                    {currentUser === thread.author_id && (
+                      <button
+                        onClick={(e) => handleDeleteThread(thread.id, e)}
+                        className="text-red-500 hover:text-red-700 flex items-center gap-1"
+                      >
+                        <Icon icon="mdi:delete" className="w-4 h-4" />
+                        Delete
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
               {thread.is_pinned && (
