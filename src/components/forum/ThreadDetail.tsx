@@ -34,8 +34,15 @@ export default function ThreadDetail({ threadId }: ThreadDetailProps) {
   useEffect(() => {
     const loadThread = async () => {
       try {
-        // Fetch thread details
-        const threadResponse = await fetch(`/api/forum/threads/${threadId}`);
+        // Get the auth session first
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        // Fetch thread details with auth header
+        const threadResponse = await fetch(`/api/forum/threads/${threadId}`, {
+          headers: session?.access_token ? {
+            'Authorization': `Bearer ${session.access_token}`
+          } : undefined
+        });
         if (!threadResponse.ok) throw new Error('Failed to fetch thread');
         const threadData = await threadResponse.json();
         setThread(threadData);
@@ -47,8 +54,12 @@ export default function ThreadDetail({ threadId }: ThreadDetailProps) {
           setCategoryName(categoryData.name);
         }
 
-        // Fetch thread posts
-        const postsResponse = await fetch(`/api/forum/threads/${threadId}/posts`);
+        // Fetch thread posts with auth header
+        const postsResponse = await fetch(`/api/forum/threads/${threadId}/posts`, {
+          headers: session?.access_token ? {
+            'Authorization': `Bearer ${session.access_token}`
+          } : undefined
+        });
         if (!postsResponse.ok) throw new Error('Failed to fetch posts');
         const postsData = await postsResponse.json();
         setPosts(postsData);

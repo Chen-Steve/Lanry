@@ -11,8 +11,16 @@ export async function GET(
   try {
     const cookieStore = cookies();
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
-    const { data: { session } } = await supabase.auth.getSession();
-    const userId = session?.user?.id;
+    
+    // Get the session from the request header
+    const authHeader = request.headers.get('Authorization');
+    let userId: string | undefined;
+    
+    if (authHeader?.startsWith('Bearer ')) {
+      const token = authHeader.split(' ')[1];
+      const { data: { user } } = await supabase.auth.getUser(token);
+      userId = user?.id;
+    }
 
     const thread = await prisma.forumThread.findUnique({
       where: {
