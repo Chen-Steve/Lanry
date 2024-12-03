@@ -68,6 +68,17 @@ export default function ChapterProgressBar({
     const handleTouchStart = (e: TouchEvent) => {
       if (isCommentOpen || isDropdownOpen) return;
       
+      // Ignore if the touch is on a link or button
+      const target = e.target as HTMLElement;
+      if (
+        target.tagName.toLowerCase() === 'a' || 
+        target.tagName.toLowerCase() === 'button' ||
+        target.closest('a') ||
+        target.closest('button')
+      ) {
+        return;
+      }
+      
       setTouchStartY(e.touches[0].clientY);
       setIsTouching(true);
     };
@@ -75,12 +86,25 @@ export default function ChapterProgressBar({
     const handleTouchEnd = (e: TouchEvent) => {
       if (isCommentOpen || isDropdownOpen) return;
       
-      if (!touchStartY) return;
+      if (!touchStartY || !isTouching) return;
+
+      const target = e.target as HTMLElement;
+      // Ignore if the touch ended on a link or button
+      if (
+        target.tagName.toLowerCase() === 'a' || 
+        target.tagName.toLowerCase() === 'button' ||
+        target.closest('a') ||
+        target.closest('button')
+      ) {
+        setTouchStartY(null);
+        setIsTouching(false);
+        return;
+      }
 
       const touchEndY = e.changedTouches[0].clientY;
       const touchDistance = Math.abs(touchEndY - touchStartY);
 
-      if (touchDistance < 10 && isTouching) {
+      if (touchDistance < 10) {
         if (
           !(e.target as HTMLElement).closest('[role="scrollbar"]') &&
           !(progressBarRef.current?.contains(e.target as Node))
