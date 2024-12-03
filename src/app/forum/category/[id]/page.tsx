@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import ThreadList from '@/components/forum/ThreadList';
 import Link from 'next/link';
 import supabase from '@/lib/supabaseClient';
 import { User } from '@supabase/auth-helpers-nextjs';
-import { ForumCategory } from '@/types/database';
+import { ForumCategory, ForumThread } from '@/types/database';
 import { Icon } from '@iconify/react';
 
 export default function CategoryPage({ params }: { params: { id: string } }) {
@@ -19,6 +19,7 @@ export default function CategoryPage({ params }: { params: { id: string } }) {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const threadListRef = useRef<{ addThread: (thread: ForumThread) => void }>();
 
   useEffect(() => {
     const fetchCategory = async () => {
@@ -96,10 +97,12 @@ export default function CategoryPage({ params }: { params: { id: string } }) {
 
       if (!response.ok) throw new Error('Failed to create thread');
       
+      const newThread = await response.json();
+      threadListRef.current?.addThread(newThread);
+      
       setIsOpen(false);
       setTitle('');
       setContent('');
-      window.location.reload();
     } catch (error) {
       console.error('Error creating thread:', error);
       alert('Failed to create thread');
@@ -199,7 +202,12 @@ export default function CategoryPage({ params }: { params: { id: string } }) {
         </div>
       )}
 
-      <ThreadList categoryId={params.id} />
+      <ThreadList 
+        categoryId={params.id} 
+        onThreadListRef={(methods) => {
+          threadListRef.current = methods;
+        }}
+      />
     </main>
   );
 } 

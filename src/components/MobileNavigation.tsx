@@ -46,6 +46,14 @@ export default function MobileNavigation() {
           />
           <span className="text-xs">Profile</span>
         </Link>
+        
+        <Link href="/more" className={`flex flex-col items-center p-2 ${isActive('/more')}`}>
+          <Icon 
+            icon="pepicons-print:dots-x" 
+            className="w-6 h-6" 
+          />
+          <span className="text-xs">More</span>
+        </Link>
       </div>
     </nav>
   );

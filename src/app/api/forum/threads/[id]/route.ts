@@ -60,6 +60,8 @@ export async function GET(
   }
 }
 
+export const dynamic = 'force-dynamic';
+
 export async function DELETE(
   request: Request,
   { params }: { params: { id: string } }
@@ -71,8 +73,8 @@ export async function DELETE(
     // Get the session from the request header
     const authHeader = request.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { error: 'Missing or invalid authorization header' },
+      return new NextResponse(
+        JSON.stringify({ error: 'Missing or invalid authorization header' }),
         { status: 401 }
       );
     }
@@ -81,29 +83,28 @@ export async function DELETE(
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
 
     if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
+      return new NextResponse(
+        JSON.stringify({ error: 'Unauthorized' }),
         { status: 401 }
       );
     }
 
-    // Check if user is the thread author or an admin
+    // Check if the thread exists and if the user is the author
     const thread = await prisma.forumThread.findUnique({
       where: { id: params.id },
       select: { authorId: true }
     });
 
     if (!thread) {
-      return NextResponse.json(
-        { error: 'Thread not found' },
+      return new NextResponse(
+        JSON.stringify({ error: 'Thread not found' }),
         { status: 404 }
       );
     }
 
     if (thread.authorId !== user.id) {
-      // TODO: Add admin check here when admin roles are implemented
-      return NextResponse.json(
-        { error: 'Unauthorized to delete this thread' },
+      return new NextResponse(
+        JSON.stringify({ error: 'You can only delete your own threads' }),
         { status: 403 }
       );
     }
@@ -113,8 +114,8 @@ export async function DELETE(
     return new NextResponse(null, { status: 204 });
   } catch (error) {
     console.error('Error deleting thread:', error);
-    return NextResponse.json(
-      { error: 'Failed to delete thread' },
+    return new NextResponse(
+      JSON.stringify({ error: 'Failed to delete thread' }),
       { status: 500 }
     );
   }

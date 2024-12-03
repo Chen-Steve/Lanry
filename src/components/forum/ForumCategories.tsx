@@ -8,52 +8,79 @@ type ForumCategoriesProps = {
   categories: CategoryBasicInfo[];
 }
 
+function EmptyState() {
+  return (
+    <div className="text-center py-6">
+      <Icon icon="mdi:forum-outline" className="w-12 h-12 mx-auto text-black mb-2" />
+      <p className="text-black">No categories found.</p>
+    </div>
+  );
+}
+
+function CategoryStats({ 
+  threadCount, 
+  latestThread 
+}: { 
+  threadCount: number; 
+  latestThread?: Date | null;
+}) {
+  return (
+    <div className="flex items-center gap-3 text-sm text-gray-600">
+      <span>{threadCount} {threadCount === 1 ? 'thread' : 'threads'}</span>
+      {latestThread && (
+        <>
+          <span>•</span>
+          <span className="flex items-center gap-1">
+            <Icon icon="mdi:clock-outline" className="w-4 h-4" />
+            {latestThread.toLocaleDateString()}
+          </span>
+        </>
+      )}
+    </div>
+  );
+}
+
 export default function ForumCategories({ categories }: ForumCategoriesProps) {
   if (categories.length === 0) {
     return (
       <div className="max-w-5xl mx-auto px-4">
-        <div className="text-center py-8">
-          <Icon icon="mdi:forum-outline" className="w-16 h-16 mx-auto text-black mb-4" />
-          <p className="text-black">No categories found.</p>
-        </div>
+        <EmptyState />
       </div>
     );
   }
 
   return (
     <div className="max-w-5xl mx-auto px-4">
-      <div className="space-y-4">
+      <div className="divide-y">
         {categories.map((category) => (
-          <div
+          <Link 
             key={category.id}
-            className="border rounded-lg p-4 hover:bg-gray-50 transition group"
+            href={`/forum/category/${category.id}`}
+            className="block py-3 hover:bg-gray-50 transition group"
           >
-            <Link href={`/forum/category/${category.id}`}>
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <h2 className="text-2xl text-black font-semibold group-hover:text-blue-600 transition flex items-center gap-2">
-                    <Icon icon="pepicons-print:text-bubbles" className="w-12 h-12" />
-                    {category.name}
-                  </h2>
-                  <p className="text-black mt-1">{category.description}</p>
-                  <div className="flex items-center gap-4 mt-2 text-sm text-black">
-                    <span className="flex items-center gap-1">
-                      {category.thread_count} {category.thread_count === 1 ? 'thread' : 'threads'}
-                    </span>
-                    {category.latest_thread && (
-                      <span className="flex items-center gap-1">
-                        <Icon icon="mdi:clock-outline" className="w-4 h-4" />
-                        Last activity: {new Date(category.latest_thread).toLocaleDateString()}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <div className="text-black group-hover:translate-x-1 transition-transform">
-                  <Icon icon="mdi:chevron-right" className="w-6 h-6" />
-                </div>
+            <div className="flex text-black items-center gap-3">
+              <Icon 
+                icon="pepicons-print:text-bubbles" 
+                className="w-8 h-8 flex-shrink-0" 
+              />
+              <div className="flex-1 min-w-0">
+                <h2 className="text-lg font-medium text-black group-hover:text-blue-600 transition truncate">
+                  {category.name}
+                </h2>
+                <p className="hidden sm:block text-sm text-gray-600 line-clamp-1">
+                  {category.description}
+                </p>
+                <CategoryStats 
+                  threadCount={category.thread_count} 
+                  latestThread={category.latest_thread ? new Date(category.latest_thread) : null}
+                />
               </div>
-            </Link>
-          </div>
+              <Icon 
+                icon="mdi:chevron-right" 
+                className="w-5 h-5 text-gray-400 group-hover:translate-x-1 transition-transform" 
+              />
+            </div>
+          </Link>
         ))}
       </div>
     </div>

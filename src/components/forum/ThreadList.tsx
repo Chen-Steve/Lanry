@@ -2,14 +2,25 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
 import { ForumThread } from '@/types/database';
+import supabase from '@/lib/supabaseClient';
+import { toast } from 'react-hot-toast';
 
 interface ThreadListProps {
   categoryId: string;
+  onThreadListRef?: (methods: { addThread: (thread: ForumThread) => void }) => void;
 }
 
-export default function ThreadList({ categoryId }: ThreadListProps) {
+export default function ThreadList({ categoryId, onThreadListRef }: ThreadListProps) {
   const [threads, setThreads] = useState<ForumThread[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Get current user
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setCurrentUser(session?.user?.id || null);
+    });
+  }, []);
 
   useEffect(() => {
     const fetchThreads = async () => {
@@ -27,6 +38,47 @@ export default function ThreadList({ categoryId }: ThreadListProps) {
 
     fetchThreads();
   }, [categoryId]);
+
+  useEffect(() => {
+    // Expose the addThread method to parent components
+    if (onThreadListRef) {
+      onThreadListRef({
+        addThread: (newThread: ForumThread) => {
+          setThreads(currentThreads => [newThread, ...currentThreads]);
+        }
+      });
+    }
+  }, [onThreadListRef]);
+
+  const handleDeleteThread = async (threadId: string, e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent the Link navigation
+    e.stopPropagation(); // Prevent event bubbling
+
+    if (!window.confirm('Are you sure you want to delete this thread?')) {
+      return;
+    }
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('No access token found');
+
+      const response = await fetch(`/api/forum/threads/${threadId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        }
+      });
+
+      if (!response.ok) throw new Error('Failed to delete thread');
+
+      // Remove the thread from the list
+      setThreads(currentThreads => currentThreads.filter(t => t.id !== threadId));
+      toast.success('Thread deleted successfully');
+    } catch (error) {
+      console.error('Error deleting thread:', error);
+      toast.error('Failed to delete thread');
+    }
+  };
 
   if (isLoading) {
     return (
@@ -72,6 +124,14 @@ export default function ThreadList({ categoryId }: ThreadListProps) {
                     <Icon icon="mdi:comment-outline" className="w-4 h-4" />
                     {thread.reply_count} {thread.reply_count === 1 ? 'reply' : 'replies'}
                   </span>
+                  {currentUser === thread.author_id && (
+                    <button
+                      onClick={(e) => handleDeleteThread(thread.id, e)}
+                      className="text-red-500 hover:text-red-700 flex items-center gap-1"
+                    >
+                      Delete
+                    </button>
+                  )}
                 </div>
               </div>
               {thread.is_pinned && (

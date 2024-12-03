@@ -35,7 +35,9 @@ export default function RootLayout({
             <main className="flex-grow pb-16 md:pb-0">
               {children}
             </main>
-            <FooterWrapper />
+            <div className="hidden md:block">
+              <FooterWrapper />
+            </div>
           </div>
           <Toaster position="bottom-right" />
           <AnalyticsProvider />
