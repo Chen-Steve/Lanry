@@ -11,13 +11,23 @@ export interface NovelRequest {
   author: string;
   description: string;
   originalLanguage: string;
+  coverImage?: string;
   votes: number;
   createdAt: string;
   updatedAt: string;
   hasVoted?: boolean;
 }
 
-interface NovelRequestResponse extends Omit<NovelRequest, 'votes'> {
+// Database response type with snake_case fields
+interface DatabaseNovelRequest {
+  id: string;
+  title: string;
+  author: string;
+  description: string;
+  original_language: string;
+  cover_image?: string;
+  created_at: string;
+  updated_at: string;
   votes: Vote[];
 }
 
@@ -31,15 +41,24 @@ export async function getNovelRequests(): Promise<NovelRequest[]> {
         *,
         votes:novel_request_votes(profile_id)
       `)
-      .order('votes', { ascending: false });
+      .order('created_at', { ascending: false });
 
     if (error) throw error;
 
-    return (data as NovelRequestResponse[]).map(request => ({
-      ...request,
+    const transformedData = (data as DatabaseNovelRequest[]).map(request => ({
+      id: request.id,
+      title: request.title,
+      author: request.author,
+      description: request.description,
+      originalLanguage: request.original_language,
+      coverImage: request.cover_image,
+      createdAt: request.created_at,
+      updatedAt: request.updated_at,
       hasVoted: user ? request.votes.some((vote: Vote) => vote.profile_id === user.id) : false,
       votes: request.votes.length
     }));
+
+    return transformedData.sort((a, b) => b.votes - a.votes);
   } catch (error) {
     console.error('Error fetching novel requests:', error);
     return [];
@@ -50,7 +69,8 @@ export async function createNovelRequest(
   title: string,
   author: string,
   description: string,
-  originalLanguage: string
+  originalLanguage: string,
+  coverImage?: string
 ): Promise<NovelRequest | null> {
   try {
     const { data: { user } } = await supabase.auth.getUser();
@@ -64,6 +84,7 @@ export async function createNovelRequest(
         author,
         description,
         original_language: originalLanguage,
+        cover_image: coverImage,
         profile_id: user.id,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
@@ -89,12 +110,16 @@ export async function toggleVote(requestId: string): Promise<{ success: boolean;
     if (!user) throw new Error('User not authenticated');
 
     // Check if user has already voted
-    const { data: existingVote } = await supabase
+    const { data: existingVote, error: voteError } = await supabase
       .from('novel_request_votes')
-      .select()
+      .select('*')
       .eq('request_id', requestId)
       .eq('profile_id', user.id)
-      .single();
+      .maybeSingle();
+
+    if (voteError) throw voteError;
+
+    let hasVoted = false;
 
     if (existingVote) {
       // Remove vote
@@ -103,18 +128,7 @@ export async function toggleVote(requestId: string): Promise<{ success: boolean;
         .delete()
         .eq('request_id', requestId)
         .eq('profile_id', user.id);
-
-      const { data: updatedRequest } = await supabase
-        .from('novel_requests')
-        .select('votes:novel_request_votes(profile_id)')
-        .eq('id', requestId)
-        .single();
-
-      return {
-        success: true,
-        votes: updatedRequest?.votes?.length || 0,
-        hasVoted: false
-      };
+      hasVoted = false;
     } else {
       // Add vote
       await supabase
@@ -125,25 +139,24 @@ export async function toggleVote(requestId: string): Promise<{ success: boolean;
           profile_id: user.id,
           created_at: new Date().toISOString()
         });
-
-      const { data: updatedRequest } = await supabase
-        .from('novel_requests')
-        .select('votes:novel_request_votes(profile_id)')
-        .eq('id', requestId)
-        .single();
-
-      return {
-        success: true,
-        votes: updatedRequest?.votes?.length || 0,
-        hasVoted: true
-      };
+      hasVoted = true;
     }
+
+    // Get updated vote count
+    const { data: updatedVotes, error: countError } = await supabase
+      .from('novel_request_votes')
+      .select('*', { count: 'exact' })
+      .eq('request_id', requestId);
+
+    if (countError) throw countError;
+
+    return {
+      success: true,
+      votes: updatedVotes?.length || 0,
+      hasVoted
+    };
   } catch (error) {
     console.error('Error toggling vote:', error);
-    return {
-      success: false,
-      votes: 0,
-      hasVoted: false
-    };
+    throw error;
   }
 } 

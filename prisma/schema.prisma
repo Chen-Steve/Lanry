@@ -82,6 +82,8 @@ model Profile {
   forumThreads       ForumThread[]
   forumPosts         ForumPost[]
   forumVotes         ForumVote[]
+  novelRequests      NovelRequest[]
+  novelRequestVotes  NovelRequestVote[]
 
   @@map("profiles")
 }
@@ -233,6 +235,37 @@ model ForumVote {
   @@index([threadId])
   @@index([authorId])
   @@map("forum_votes")
+}
+
+model NovelRequest {
+  id               String             @id @default(uuid())
+  title            String
+  author           String
+  description      String
+  originalLanguage String             @map("original_language")
+  coverImage       String?            @map("cover_image")
+  createdAt        DateTime           @default(now()) @map("created_at")
+  updatedAt        DateTime           @updatedAt @map("updated_at")
+  profile          Profile            @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  profileId        String             @map("profile_id")
+  votes            NovelRequestVote[]
+
+  @@index([profileId])
+  @@map("novel_requests")
+}
+
+model NovelRequestVote {
+  id          String       @id @default(uuid())
+  createdAt   DateTime     @default(now()) @map("created_at")
+  request     NovelRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  requestId   String       @map("request_id")
+  profile     Profile      @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  profileId   String       @map("profile_id")
+
+  @@unique([profileId, requestId])
+  @@index([requestId])
+  @@index([profileId])
+  @@map("novel_request_votes")
 }
 
 enum NovelStatus {
