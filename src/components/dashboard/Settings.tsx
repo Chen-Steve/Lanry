@@ -3,7 +3,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import supabase from '@/lib/supabaseClient';
 import type { UserProfile } from '@/types/database';
 
-// Separate data fetching function
 const fetchProfile = async (): Promise<UserProfile> => {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Not authenticated');
@@ -24,23 +23,19 @@ interface SettingsProps {
 
 const Settings = ({ profile }: SettingsProps) => {
   const [profileState, setProfileState] = useState<UserProfile>(profile);
-
   const queryClient = useQueryClient();
 
-  // Use React Query for fetching profile
   const { isLoading, data } = useQuery({
     queryKey: ['profile'],
     queryFn: fetchProfile,
   });
 
-  // Update profile when data changes
   useEffect(() => {
     if (data) {
       setProfileState(data);
     }
   }, [data]);
 
-  // Use mutation for saving settings
   const mutation = useMutation({
     mutationFn: async (updatedProfile: UserProfile) => {
       const { error } = await supabase
@@ -67,19 +62,14 @@ const Settings = ({ profile }: SettingsProps) => {
   };
 
   if (isLoading) {
-    return (
-      <div className="p-6 text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-      </div>
-    );
+    return <div className="p-4 text-center">Loading...</div>;
   }
 
   return (
-    <div className="p-6">
-      <h2 className="text-xl text-black font-semibold mb-6">Account Settings</h2>
-      <form onSubmit={handleSubmit} className="max-w-md space-y-6">
+    <div className="p-4">
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="username" className="text-black block mb-1">
             Username
           </label>
           <input
@@ -87,16 +77,17 @@ const Settings = ({ profile }: SettingsProps) => {
             id="username"
             value={profileState.username}
             onChange={(e) => setProfileState({ ...profileState, username: e.target.value })}
-            className="text-black mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            className="w-full p-2 text-black border rounded"
+            placeholder="Enter username"
           />
         </div>
 
         <button
           type="submit"
           disabled={mutation.isPending}
-          className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
         >
-          {mutation.isPending ? 'Saving...' : 'Save Settings'}
+          {mutation.isPending ? 'Saving...' : 'Save'}
         </button>
       </form>
     </div>

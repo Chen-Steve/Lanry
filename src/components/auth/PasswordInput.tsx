@@ -78,46 +78,44 @@ interface PasswordInputProps {
   showStrength?: boolean;
 }
 
-export const PasswordInput = ({
+export function PasswordInput({
   value,
   onChange,
   placeholder = "Password",
   showPassword,
   onTogglePassword,
-  showStrength = false
-}: PasswordInputProps) => (
-  <div className="w-full">
-    <div className="relative">
-      <input
-        title={placeholder}
-        type={showPassword ? 'text' : 'password'}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="text-black w-full p-4 md:p-3 text-base md:text-sm border rounded-lg 
-          focus:ring-2 focus:ring-black focus:border-black
-          placeholder:text-gray-400"
-        placeholder={placeholder}
-        required
-        minLength={6}
-      />
-      <button
-        type="button"
-        onClick={onTogglePassword}
-        className="absolute right-2 top-1/2 -translate-y-1/2 p-2 
-          text-gray-500 hover:text-black active:text-black
-          transition-colors duration-200
-          touch-manipulation"
-        aria-label={showPassword ? 'Hide password' : 'Show password'}
-      >
-        <Icon 
-          icon={showPassword ? 'mdi:eye-off' : 'mdi:eye'} 
-          className="text-2xl md:text-xl"
-          aria-hidden="true"
+  showStrength = false,
+}: PasswordInputProps) {
+  return (
+    <div>
+      <div className="relative">
+        <input
+          type={showPassword ? "text" : "password"}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="text-black w-full p-4 border rounded-lg focus:ring-2 focus:ring-black focus:border-black text-base"
+          placeholder={placeholder}
+          required
         />
-      </button>
+        <button
+          type="button"
+          onClick={onTogglePassword}
+          className="absolute right-2 top-1/2 -translate-y-1/2 p-2 
+            text-gray-500 hover:text-black active:text-black
+            transition-colors duration-200
+            touch-manipulation"
+          aria-label={showPassword ? 'Hide password' : 'Show password'}
+        >
+          <Icon 
+            icon={showPassword ? 'mdi:eye-off' : 'mdi:eye'} 
+            className="text-2xl md:text-xl"
+            aria-hidden="true"
+          />
+        </button>
+      </div>
+      {showStrength && value && (
+        <PasswordStrengthIndicator password={value} />
+      )}
     </div>
-    {showStrength && value && (
-      <PasswordStrengthIndicator password={value} />
-    )}
-  </div>
-); 
+  );
+} 

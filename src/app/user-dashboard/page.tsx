@@ -29,37 +29,59 @@ const Settings = lazy(() =>
   })
 );
 
-// Loading skeleton component
+// Update TabSkeleton for mobile-first design
 const TabSkeleton = () => (
-  <div className="p-6">
-    <div className="animate-pulse space-y-4">
-      <div className="h-8 bg-gray-200 rounded-lg w-3/4"></div>
-      <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-      <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+  <div className="p-3 sm:p-4">
+    <div className="animate-pulse space-y-2 sm:space-y-3">
+      <div className="h-5 sm:h-6 bg-gray-100 rounded-md w-2/3"></div>
+      <div className="h-4 bg-gray-100 rounded-md w-1/2"></div>
+      <div className="h-4 bg-gray-100 rounded-md w-1/3"></div>
     </div>
   </div>
 );
 
-// Error Fallback component
+// Updated error fallback with minimal design
 const ErrorFallback = ({ error, resetErrorBoundary }: { 
   error: Error; 
   resetErrorBoundary: () => void;
-}) => {
-  return (
-    <div className="p-6 text-center">
-      <p className="text-red-500 mb-4">Something went wrong:</p>
-      <pre className="text-sm text-gray-500 mb-4">{error.message}</pre>
-      <button
-        onClick={resetErrorBoundary}
-        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-      >
-        Try again
-      </button>
-    </div>
-  );
-};
+}) => (
+  <div className="p-4 bg-red-50 rounded-lg">
+    <p className="text-red-600 font-medium mb-2">Error loading content</p>
+    <p className="text-sm text-red-500 mb-3">{error.message}</p>
+    <button
+      onClick={resetErrorBoundary}
+      className="text-sm px-3 py-1.5 bg-white border border-red-200 text-red-600 rounded-md hover:bg-red-50 transition-colors"
+    >
+      Retry
+    </button>
+  </div>
+);
 
 type DashboardTab = 'reading' | 'bookmarks' | 'settings';
+
+// Update TabButton for better mobile experience
+const TabButton = ({ 
+  active, 
+  onClick, 
+  children 
+}: { 
+  active: boolean; 
+  onClick: () => void; 
+  children: React.ReactNode;
+}) => (
+  <button
+    onClick={onClick}
+    className={`
+      min-w-[80px] px-3 py-1.5 sm:px-4 sm:py-2 text-sm rounded-md transition-colors
+      ${active 
+        ? 'bg-blue-50 text-blue-600 font-medium' 
+        : 'text-gray-600 hover:bg-gray-50'
+      }
+    `}
+  >
+    {children}
+  </button>
+);
 
 export default function UserDashboard() {
   const [activeTab, setActiveTab] = useState<DashboardTab>('reading');
@@ -118,8 +140,8 @@ export default function UserDashboard() {
   // Show loading state while checking auth
   if (isAuthChecking || isProfileLoading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <Icon icon="eos-icons:loading" className="w-8 h-8 animate-spin" />
+      <div className="flex justify-center items-center min-h-[50vh]">
+        <Icon icon="eos-icons:loading" className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 animate-spin" />
       </div>
     );
   }
@@ -127,14 +149,16 @@ export default function UserDashboard() {
   // Show error state if profile fetch failed
   if (profileError) {
     return (
-      <div className="max-w-5xl mx-auto px-4 py-8 text-center">
-        <p className="text-red-500 mb-4">Failed to load profile</p>
-        <button
-          onClick={() => router.push('/auth')}
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-        >
-          Return to Login
-        </button>
+      <div className="p-4 sm:p-6">
+        <div className="text-center bg-red-50 rounded-lg p-4 sm:p-6">
+          <p className="text-red-600 mb-3">Unable to load your profile</p>
+          <button
+            onClick={() => router.push('/auth')}
+            className="px-3 py-1.5 sm:px-4 sm:py-2 bg-white border border-red-200 text-red-600 rounded-md hover:bg-red-50 transition-colors"
+          >
+            Back to Login
+          </button>
+        </div>
       </div>
     );
   }
@@ -145,82 +169,61 @@ export default function UserDashboard() {
     return null;
   }
 
-  const renderTabContent = () => {
-    return (
-      <ErrorBoundary
-        FallbackComponent={ErrorFallback}
-        onReset={() => {
-          setActiveTab('reading');
-        }}
-      >
-        <Suspense fallback={<TabSkeleton />}>
-          {activeTab === 'reading' && <ReadingHistorySection userId={profile?.id} />}
-          {activeTab === 'bookmarks' && <Bookmarks userId={profile?.id} />}
-          {activeTab === 'settings' && <Settings profile={profile} />}
-        </Suspense>
-      </ErrorBoundary>
-    );
-  };
-
   return (
-    <div className="max-w-5xl mx-auto px-4 mt-4 sm:mt-8 mb-6 sm:mb-10">
-      <div className="bg-white border-b border-black rounded-md px-4 sm:px-6 py-3">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
-          <div className="flex items-center gap-4 mb-4 sm:mb-0">
-            <div>
-              <h1 className="text-2xl sm:text-3xl text-black font-bold mb-1">
-                {profile?.username || 'User'}
-              </h1>
-              <p className="text-sm text-gray-500">
-                Joined {new Date(profile?.created_at).toLocaleDateString()}
-              </p>
-            </div>
+    <div className="mx-auto max-w-5xl">
+      {/* Profile Header */}
+      <div className="bg-white p-4 sm:p-6 border-b">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div>
+            <h1 className="text-lg sm:text-xl font-semibold text-gray-900">
+              {profile?.username || 'User'}
+            </h1>
+            <p className="text-xs sm:text-sm text-gray-500">
+              Member since {new Date(profile?.created_at).toLocaleDateString()}
+            </p>
           </div>
         </div>
       </div>
 
-      {/* Dashboard Navigation */}
-      <div className="border-b border-gray-200 mb-8">
-        <nav className="-mb-px flex space-x-8">
-          <button
-            onClick={() => setActiveTab('reading')}
-            className={`py-4 px-1 border-b-2 font-medium ${
-              activeTab === 'reading'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-            title="Reading History"
-          >
-            Recent
-          </button>
-          <button
-            onClick={() => setActiveTab('bookmarks')}
-            className={`py-4 px-1 border-b-2 font-medium ${
-              activeTab === 'bookmarks'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-            title="Bookmarks"
-          >
-            Bookmarks
-          </button>
-          <button
-            onClick={() => setActiveTab('settings')}
-            className={`py-4 px-1 border-b-2 font-medium ${
-              activeTab === 'settings'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-            title="Settings"
-          >
-            Settings
-          </button>
-        </nav>
-      </div>
+      {/* Navigation and Content */}
+      <div className="bg-white">
+        <div className="border-b">
+          <nav className="p-2 sm:p-3 overflow-x-auto scrollbar-hide">
+            <div className="flex gap-2 min-w-min">
+              <TabButton 
+                active={activeTab === 'reading'} 
+                onClick={() => setActiveTab('reading')}
+              >
+                Reading
+              </TabButton>
+              <TabButton 
+                active={activeTab === 'bookmarks'} 
+                onClick={() => setActiveTab('bookmarks')}
+              >
+                Bookmarks
+              </TabButton>
+              <TabButton 
+                active={activeTab === 'settings'} 
+                onClick={() => setActiveTab('settings')}
+              >
+                Settings
+              </TabButton>
+            </div>
+          </nav>
+        </div>
 
-      {/* Dashboard Content */}
-      <div>
-        {renderTabContent()}
+        <div className="p-3 sm:p-4">
+          <ErrorBoundary
+            FallbackComponent={ErrorFallback}
+            onReset={() => setActiveTab('reading')}
+          >
+            <Suspense fallback={<TabSkeleton />}>
+              {activeTab === 'reading' && <ReadingHistorySection userId={profile?.id} />}
+              {activeTab === 'bookmarks' && <Bookmarks userId={profile?.id} />}
+              {activeTab === 'settings' && <Settings profile={profile} />}
+            </Suspense>
+          </ErrorBoundary>
+        </div>
       </div>
     </div>
   );
