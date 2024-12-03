@@ -44,13 +44,13 @@ export const NovelRecommendations = ({ novelId }: NovelRecommendationsProps) => 
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-xl shadow-sm border p-4">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="bg-white rounded-xl shadow-sm border p-3 sm:p-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
           {[...Array(6)].map((_, index) => (
             <div key={index} className="animate-pulse">
-              <div className="bg-gray-200 rounded-lg h-40 mb-2"></div>
-              <div className="bg-gray-200 h-4 rounded w-3/4 mb-2"></div>
-              <div className="bg-gray-200 h-4 rounded w-1/2"></div>
+              <div className="bg-gray-200 rounded-lg aspect-[2/3] mb-2"></div>
+              <div className="bg-gray-200 h-3 rounded w-3/4 mb-1.5"></div>
+              <div className="bg-gray-200 h-3 rounded w-1/2"></div>
             </div>
           ))}
         </div>
@@ -61,44 +61,44 @@ export const NovelRecommendations = ({ novelId }: NovelRecommendationsProps) => 
   if (recommendations.length === 0) {
     return (
       <div className="bg-white rounded-xl shadow-sm border p-4">
-        <div className="text-center text-gray-600 py-8">
-          <Icon icon="pepicons-print:book" className="text-4xl mx-auto mb-2" />
-          <p>No recommendations found</p>
+        <div className="text-center text-gray-600 py-6">
+          <Icon icon="pepicons-print:book" className="text-3xl sm:text-4xl mx-auto mb-2" />
+          <p className="text-sm sm:text-base">No recommendations found</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white p-2">
-      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="bg-white rounded-lg shadow-sm border p-2 sm:p-3">
+      <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
         {recommendations.map((novel) => (
           <Link
             key={novel.id}
             href={`/novels/${novel.slug}`}
-            className="block"
+            className="block hover:opacity-80 transition-opacity"
           >
-            <div className="relative aspect-[3/2] bg-gray-100">
+            <div className="relative aspect-[2/3] bg-gray-100 rounded-sm">
               {novel.coverImageUrl ? (
                 <Image
                   src={`/novel-covers/${novel.coverImageUrl}`}
                   alt={`Cover for ${novel.title}`}
                   fill
-                  className="object-cover"
-                  sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 33vw"
+                  className="object-cover rounded-sm"
+                  sizes="(max-width: 640px) 33vw, (max-width: 768px) 25vw, (max-width: 1024px) 20vw, 16.666vw"
                   loading="lazy"
                 />
               ) : (
-                <div className="absolute inset-0 flex items-center justify-center bg-gray-200">
-                  <Icon icon="pepicons-print:book" className="text-3xl text-gray-400" />
+                <div className="absolute inset-0 flex items-center justify-center bg-gray-200 rounded-sm">
+                  <Icon icon="pepicons-print:book" className="text-lg text-gray-400" />
                 </div>
               )}
             </div>
-            <div className="mt-1">
-              <h3 className="text-sm line-clamp-1">
+            <div className="mt-1 px-0.5">
+              <h3 className="text-xs font-medium text-black line-clamp-1">
                 {novel.title}
               </h3>
-              <div className="flex items-center gap-2 text-xs text-gray-600">
+              <div className="text-gray-600 flex items-center gap-1.5 text-[10px] mt-0.5">
                 <span>{novel.views || 0} views</span>
                 <span>{novel.bookmarkCount || 0} bookmarks</span>
               </div>
