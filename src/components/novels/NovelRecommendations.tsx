@@ -19,7 +19,7 @@ export const NovelRecommendations = ({ novelId }: NovelRecommendationsProps) => 
       try {
         const { data: novels, error } = await supabase
           .from('novels')
-          .select('*')
+          .select('*, bookmark_count')
           .neq('id', novelId)
           .limit(6);
 
@@ -27,7 +27,8 @@ export const NovelRecommendations = ({ novelId }: NovelRecommendationsProps) => 
         
         const mappedNovels = (novels || []).map(novel => ({
           ...novel,
-          coverImageUrl: novel.cover_image_url
+          coverImageUrl: novel.cover_image_url,
+          bookmarkCount: novel.bookmark_count
         }));
         
         setRecommendations(mappedNovels);
@@ -69,13 +70,13 @@ export const NovelRecommendations = ({ novelId }: NovelRecommendationsProps) => 
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border p-4">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="bg-white p-2">
+      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
         {recommendations.map((novel) => (
           <Link
             key={novel.id}
             href={`/novels/${novel.slug}`}
-            className="group hover:shadow-md transition-shadow rounded-lg overflow-hidden border"
+            className="block"
           >
             <div className="relative aspect-[3/2] bg-gray-100">
               {novel.coverImageUrl ? (
@@ -83,29 +84,23 @@ export const NovelRecommendations = ({ novelId }: NovelRecommendationsProps) => 
                   src={`/novel-covers/${novel.coverImageUrl}`}
                   alt={`Cover for ${novel.title}`}
                   fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-300"
+                  className="object-cover"
                   sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 33vw"
                   loading="lazy"
                 />
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center bg-gray-200">
-                  <Icon icon="pepicons-print:book" className="text-4xl text-gray-400" />
+                  <Icon icon="pepicons-print:book" className="text-3xl text-gray-400" />
                 </div>
               )}
             </div>
-            <div className="p-3">
-              <h3 className="font-medium text-gray-900 line-clamp-1 mb-1">
+            <div className="mt-1">
+              <h3 className="text-sm line-clamp-1">
                 {novel.title}
               </h3>
-              <div className="flex items-center gap-3 text-sm text-gray-600">
-                <span className="flex items-center gap-1">
-                  <Icon icon="pepicons-print:eye" className="text-base" />
-                  {novel.views || 0}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Icon icon="pepicons-print:bookmark" className="text-base" />
-                  {novel.bookmarkCount || 0}
-                </span>
+              <div className="flex items-center gap-2 text-xs text-gray-600">
+                <span>{novel.views || 0} views</span>
+                <span>{novel.bookmarkCount || 0} bookmarks</span>
               </div>
             </div>
           </Link>
