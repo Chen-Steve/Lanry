@@ -27,6 +27,17 @@ export const NovelComments = ({ novelId, isAuthenticated }: NovelCommentsProps) 
   const [newComment, setNewComment] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editedContent, setEditedContent] = useState('');
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUserId(user?.id || null);
+    };
+    getCurrentUser();
+  }, []);
 
   const transformDatabaseComment = useCallback((comment: SupabaseComment): NovelComment => {
     return {
@@ -117,6 +128,63 @@ export const NovelComments = ({ novelId, isAuthenticated }: NovelCommentsProps) 
     }
   };
 
+  const handleDeleteComment = async (commentId: string) => {
+    if (!currentUserId) return;
+
+    try {
+      const { error } = await supabase
+        .from('novel_comments')
+        .delete()
+        .eq('id', commentId)
+        .eq('profile_id', currentUserId);
+
+      if (error) throw error;
+
+      setComments(comments.filter(comment => comment.id !== commentId));
+      toast.success('Comment deleted successfully');
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+      toast.error('Failed to delete comment');
+    }
+  };
+
+  const handleEditComment = async (commentId: string) => {
+    const comment = comments.find(c => c.id === commentId);
+    if (comment) {
+      setEditingCommentId(commentId);
+      setEditedContent(comment.content);
+    }
+  };
+
+  const handleSaveEdit = async (commentId: string) => {
+    if (!currentUserId || !editedContent.trim()) return;
+
+    try {
+      const { error } = await supabase
+        .from('novel_comments')
+        .update({
+          content: editedContent.trim(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', commentId)
+        .eq('profile_id', currentUserId);
+
+      if (error) throw error;
+
+      setComments(comments.map(comment => 
+        comment.id === commentId 
+          ? { ...comment, content: editedContent.trim() }
+          : comment
+      ));
+      setEditingCommentId(null);
+      setEditedContent('');
+      toast.success('Comment updated successfully');
+    } catch (error) {
+      console.error('Error updating comment:', error);
+      toast.error('Failed to update comment');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-8">
@@ -177,17 +245,59 @@ export const NovelComments = ({ novelId, isAuthenticated }: NovelCommentsProps) 
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-baseline gap-2">
-                    <span className="font-medium text-gray-900">
-                      {comment.profile.username || 'Anonymous'}
-                    </span>
-                    <span className="text-sm text-gray-500">
-                      {formatRelativeDate(comment.created_at)}
-                    </span>
+                  <div className="flex items-baseline justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-gray-900">
+                        {comment.profile.username || 'Anonymous'}
+                      </span>
+                      <span className="text-sm text-gray-500">
+                        {formatRelativeDate(comment.created_at)}
+                      </span>
+                    </div>
+                    {currentUserId === comment.profile_id && (
+                      <div className="flex gap-2">
+                        {editingCommentId === comment.id ? (
+                          <button
+                            onClick={() => handleSaveEdit(comment.id)}
+                            className="text-green-600 hover:text-green-700"
+                            title="Save"
+                          >
+                            <Icon icon="mdi:check" className="text-xl" />
+                          </button>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => handleEditComment(comment.id)}
+                              className="text-blue-600 hover:text-blue-700"
+                              title="Edit"
+                            >
+                              <Icon icon="mdi:pencil" className="text-xl" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteComment(comment.id)}
+                              className="text-red-600 hover:text-red-700"
+                              title="Delete"
+                            >
+                              <Icon icon="mdi:delete" className="text-xl" />
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  <p className="mt-1 text-gray-700 whitespace-pre-wrap break-words">
-                    {comment.content}
-                  </p>
+                  {editingCommentId === comment.id ? (
+                    <textarea
+                      aria-label="Edit comment"
+                      value={editedContent}
+                      onChange={(e) => setEditedContent(e.target.value)}
+                      className="w-full mt-2 p-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                      rows={3}
+                    />
+                  ) : (
+                    <p className="mt-1 text-gray-700 whitespace-pre-wrap break-words">
+                      {comment.content}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
