@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { ChapterList } from './ChapterList';
 import { Chapter, UserProfile } from '@/types/database';
 import { NovelRecommendations } from './NovelRecommendations';
+import { NovelComments } from './NovelComments';
 
 interface SynopsisSectionProps {
   title: string;
@@ -56,7 +57,7 @@ export const SynopsisSection = ({
   userProfile,
   novelAuthorId,
 }: SynopsisSectionProps) => {
-  const [activeTab, setActiveTab] = useState<'synopsis' | 'chapters' | 'recommendations'>('synopsis');
+  const [activeTab, setActiveTab] = useState<'synopsis' | 'chapters' | 'recommendations' | 'comments'>('synopsis');
 
   return (
   <div className="max-w-5xl mx-auto px-4 py-4">
@@ -144,6 +145,19 @@ export const SynopsisSection = ({
         )}
       </button>
       <button
+        onClick={() => setActiveTab('comments')}
+        className={`px-4 py-2 font-medium text-sm transition-colors relative ${
+          activeTab === 'comments'
+            ? 'text-green-600'
+            : 'text-gray-600 hover:text-gray-900'
+        }`}
+      >
+        Comments
+        {activeTab === 'comments' && (
+          <div className="absolute bottom-0 left-0 w-full h-0.5 bg-green-600" />
+        )}
+      </button>
+      <button
         onClick={() => setActiveTab('recommendations')}
         className={`px-4 py-2 font-medium text-sm transition-colors relative ${
           activeTab === 'recommendations'
@@ -188,9 +202,24 @@ export const SynopsisSection = ({
         isAuthenticated={isAuthenticated}
         novelAuthorId={novelAuthorId}
       />
-    ) : (
+    ) : activeTab === 'recommendations' ? (
       <NovelRecommendations 
         novelId={novelId}
+      />
+    ) : activeTab === 'comments' ? (
+      <NovelComments
+        novelId={novelId}
+        userProfile={userProfile}
+        isAuthenticated={isAuthenticated}
+      />
+    ) : (
+      <ChapterList
+        chapters={chapters}
+        novelId={novelId}
+        novelSlug={novelSlug}
+        userProfile={userProfile}
+        isAuthenticated={isAuthenticated}
+        novelAuthorId={novelAuthorId}
       />
     )}
   </div>

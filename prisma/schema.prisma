@@ -31,6 +31,7 @@ model Novel {
   readingHistory ReadingHistory[]
   chapterUnlocks ChapterUnlock[]
   comments       ChapterComment[]
+  novelComments  NovelComment[]
   authorProfile  Profile?    @relation("NovelAuthor", fields: [authorProfileId], references: [id])
   authorProfileId  String?     @map("author_profile_id")
 
@@ -75,6 +76,7 @@ model Profile {
   bookmarks          Bookmark[]
   readingHistory     ReadingHistory[]
   chapterComments    ChapterComment[]
+  novelComments      NovelComment[]
   coins              Int       @default(0)
   transactions       CoinTransaction[]
   chapterUnlocks     ChapterUnlock[]
@@ -266,6 +268,22 @@ model NovelRequestVote {
   @@index([requestId])
   @@index([profileId])
   @@map("novel_request_votes")
+}
+
+model NovelComment {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  content   String   @db.Text
+  profile   Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  profileId String   @map("profile_id")
+  novel     Novel    @relation(fields: [novelId], references: [id], onDelete: Cascade)
+  novelId   String   @map("novel_id")
+
+  @@index([profileId])
+  @@index([novelId])
+  @@index([createdAt])
+  @@map("novel_comments")
 }
 
 enum NovelStatus {
