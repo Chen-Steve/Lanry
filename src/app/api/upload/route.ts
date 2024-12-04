@@ -77,9 +77,5 @@ export async function POST(req: Request) {
   }
 }
 
-// Optional: Add configuration for the route handler
-export const config = {
-  api: {
-    bodyParser: false, // Disable body parsing, as we're handling multipart/form-data
-  },
-}; 
+// Replace the old config with the new route segment config
+export const runtime = 'edge'; 

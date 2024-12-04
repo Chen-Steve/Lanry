@@ -56,7 +56,7 @@ const RequestCard = ({ request, onVote }: {
 
   return (
     <div className="flex gap-4 py-6 border-b border-gray-100 last:border-0">
-      <div className="w-20 h-28 md:w-24 md:h-36 flex-shrink-0 rounded-lg overflow-hidden bg-gray-50">
+      <div className="w-24 h-36 md:w-28 md:h-40 flex-shrink-0 rounded-lg overflow-hidden bg-gray-50">
         {request.coverImage ? (
           <Image
             src={request.coverImage}
@@ -66,7 +66,7 @@ const RequestCard = ({ request, onVote }: {
             priority={true}
             quality={95}
             className="w-full h-full object-cover"
-            sizes="(max-width: 768px) 80px, 96px"
+            sizes="(max-width: 768px) 96px, 112px"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
               target.src = 'https://placehold.co/192x288?text=No+Cover';
@@ -74,8 +74,8 @@ const RequestCard = ({ request, onVote }: {
           />
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 p-2">
-            <Icon icon="mdi:book-outline" className="text-2xl mb-1" />
-            <span className="text-[10px] text-center">No Cover</span>
+            <Icon icon="mdi:book-outline" className="text-3xl mb-1" />
+            <span className="text-xs text-center">No Cover</span>
           </div>
         )}
       </div>
@@ -118,7 +118,7 @@ const RequestCard = ({ request, onVote }: {
           </div>
         </div>
         
-        <p className="text-sm text-gray-600 leading-relaxed line-clamp-2 mt-2">
+        <p className="text-sm text-gray-600 leading-relaxed line-clamp-3 md:line-clamp-2 mt-2">
           {request.description}
         </p>
         
