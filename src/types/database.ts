@@ -178,4 +178,15 @@ export type NovelRequest = {
   profile?: {
     username: string | null;
   };
-}; 
+};
+
+export interface NovelComment {
+  id: string;
+  content: string;
+  created_at: string;
+  profile_id: string;
+  novel_id: string;
+  profile: {
+    username: string | null;
+  };
+} 

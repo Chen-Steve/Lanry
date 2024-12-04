@@ -1,8 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Icon } from '@iconify/react';
-import Image from 'next/image';
-import supabase from '@/lib/supabaseClient';
-import { UserProfile } from '@/types/database';
 import { formatRelativeDate } from '@/lib/utils';
 import toast from 'react-hot-toast';
 
@@ -13,13 +10,11 @@ interface NovelComment {
   profile_id: string;
   profile: {
     username: string | null;
-    avatar_url: string | null;
   };
 }
 
 interface NovelCommentsProps {
   novelId: string;
-  userProfile: UserProfile | null;
   isAuthenticated: boolean;
 }
 
@@ -30,11 +25,10 @@ interface DatabaseNovelComment {
   profile_id: string;
   profiles: {
     username: string | null;
-    avatar_url: string | null;
   }[];
 }
 
-export const NovelComments = ({ novelId, userProfile, isAuthenticated }: NovelCommentsProps) => {
+export const NovelComments = ({ novelId, isAuthenticated }: NovelCommentsProps) => {
   const [comments, setComments] = useState<NovelComment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -42,25 +36,10 @@ export const NovelComments = ({ novelId, userProfile, isAuthenticated }: NovelCo
 
   const fetchComments = useCallback(async () => {
     try {
-      const { data, error } = await supabase
-        .from('novel_comments')
-        .select(`
-          id,
-          content,
-          created_at,
-          profile_id,
-          profiles (
-            username,
-            avatar_url
-          )
-        `)
-        .eq('novel_id', novelId)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      
-      const transformedComments = (data as DatabaseNovelComment[]).map(transformDatabaseComment);
-      setComments(transformedComments);
+      const response = await fetch(`/api/novels/comments/${novelId}`);
+      if (!response.ok) throw new Error('Failed to fetch comments');
+      const data = await response.json();
+      setComments(data.map(transformDatabaseComment));
     } catch (error) {
       console.error('Error fetching comments:', error);
       toast.error('Failed to load comments');
@@ -79,8 +58,7 @@ export const NovelComments = ({ novelId, userProfile, isAuthenticated }: NovelCo
     created_at: comment.created_at,
     profile_id: comment.profile_id,
     profile: {
-      username: comment.profiles[0]?.username ?? null,
-      avatar_url: comment.profiles[0]?.avatar_url ?? null
+      username: comment.profiles[0]?.username ?? null
     }
   });
 
@@ -88,47 +66,29 @@ export const NovelComments = ({ novelId, userProfile, isAuthenticated }: NovelCo
     e.preventDefault();
     
     if (!isAuthenticated) {
-      toast.error('Please sign in to comment', {
-        duration: 3000,
-        position: 'bottom-center',
-      });
+      toast.error('Please sign in to comment');
       return;
     }
 
     if (!newComment.trim()) {
-      toast.error('Comment cannot be empty', {
-        duration: 3000,
-        position: 'bottom-center',
-      });
+      toast.error('Comment cannot be empty');
       return;
     }
 
     setIsSubmitting(true);
     try {
-      const { data: commentData, error: commentError } = await supabase
-        .from('novel_comments')
-        .insert([
-          {
-            novel_id: novelId,
-            profile_id: userProfile?.id,
-            content: newComment.trim(),
-          },
-        ])
-        .select(`
-          id,
-          content,
-          created_at,
-          profile_id,
-          profiles (
-            username,
-            avatar_url
-          )
-        `)
-        .single();
+      const response = await fetch(`/api/novels/comments/${novelId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content: newComment.trim() }),
+      });
 
-      if (commentError) throw commentError;
-
-      const transformedComment = transformDatabaseComment(commentData as DatabaseNovelComment);
+      if (!response.ok) throw new Error('Failed to add comment');
+      
+      const commentData = await response.json();
+      const transformedComment = transformDatabaseComment(commentData);
       setComments([transformedComment, ...comments]);
       setNewComment('');
       toast.success('Comment added successfully');
@@ -196,17 +156,7 @@ export const NovelComments = ({ novelId, userProfile, isAuthenticated }: NovelCo
               <div className="flex items-start gap-3">
                 <div className="flex-shrink-0">
                   <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-                    {comment.profile.avatar_url ? (
-                      <Image
-                        src={comment.profile.avatar_url}
-                        alt={comment.profile.username || 'User'}
-                        width={40}
-                        height={40}
-                        className="rounded-full object-cover"
-                      />
-                    ) : (
-                      <Icon icon="mdi:account" className="text-2xl text-gray-500" />
-                    )}
+                    <Icon icon="mdi:account" className="text-2xl text-gray-500" />
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">

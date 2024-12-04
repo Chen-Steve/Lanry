@@ -209,7 +209,6 @@ export const SynopsisSection = ({
     ) : activeTab === 'comments' ? (
       <NovelComments
         novelId={novelId}
-        userProfile={userProfile}
         isAuthenticated={isAuthenticated}
       />
     ) : (
