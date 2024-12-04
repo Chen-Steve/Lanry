@@ -114,23 +114,25 @@ export async function createNovelRequest(
 export async function toggleVote(requestId: string, userId: string): Promise<VoteResponse> {
   try {
     // First check if vote exists
-    const { data: existingVote, error: fetchError } = await supabase
+    const { data: votes, error: fetchError } = await supabase
       .from('novel_request_votes')
-      .select('id')
+      .select('*')
       .eq('request_id', requestId)
-      .eq('profile_id', userId)
-      .single();
+      .eq('profile_id', userId);
 
-    if (fetchError && fetchError.code !== 'PGRST116') {
+    if (fetchError) {
       throw new Error('Failed to check vote status');
     }
+
+    const existingVote = votes && votes.length > 0 ? votes[0] : null;
 
     if (existingVote) {
       // Remove vote if it exists
       const { error: deleteError } = await supabase
         .from('novel_request_votes')
         .delete()
-        .eq('id', existingVote.id);
+        .eq('request_id', requestId)
+        .eq('profile_id', userId);
 
       if (deleteError) throw new Error('Failed to remove vote');
     } else {
@@ -148,16 +150,16 @@ export async function toggleVote(requestId: string, userId: string): Promise<Vot
     }
 
     // Get updated vote count
-    const { data: votes, error: countError } = await supabase
+    const { data: updatedVotes, error: countError } = await supabase
       .from('novel_request_votes')
-      .select('id')
+      .select('*')
       .eq('request_id', requestId);
 
     if (countError) throw new Error('Failed to get updated vote count');
 
     return {
       success: true,
-      votes: votes?.length || 0,
+      votes: updatedVotes?.length || 0,
       hasVoted: !existingVote
     };
   } catch (error) {

@@ -22,34 +22,30 @@ export const formatDateMDY = (date: string | Date) => {
   });
 };
 
-export const formatRelativeDate = (date: string | Date) => {
+export function formatRelativeDate(date: string | Date) {
   const now = new Date();
-  const inputDate = new Date(date);
-  
-  // Reset time part for accurate day comparisons
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const inputDay = new Date(inputDate.getFullYear(), inputDate.getMonth(), inputDate.getDate());
-  
-  const diffTime = today.getTime() - inputDay.getTime();
-  const diffDays = diffTime / (1000 * 60 * 60 * 24);
+  const targetDate = new Date(date);
+  const diffInMilliseconds = now.getTime() - targetDate.getTime();
+  const diffInDays = Math.floor(diffInMilliseconds / (1000 * 60 * 60 * 24));
+  const diffInHours = Math.floor(diffInMilliseconds / (1000 * 60 * 60));
+  const diffInMinutes = Math.floor(diffInMilliseconds / (1000 * 60));
 
-  if (diffDays === 0) {
-    return 'Today';
-  } else if (diffDays === 1) {
-    return 'Yesterday';
-  } else if (diffDays < 7) {
-    return `${Math.floor(diffDays)} days ago`;
-  } else if (diffDays < 30) {
-    const weeks = Math.floor(diffDays / 7);
-    return `${weeks} ${weeks === 1 ? 'week' : 'weeks'} ago`;
+  if (diffInMinutes < 1) {
+    return 'just now';
+  } else if (diffInMinutes < 60) {
+    return `${diffInMinutes}m ago`;
+  } else if (diffInHours < 24) {
+    return `${diffInHours}h ago`;
+  } else if (diffInDays < 30) {
+    return `${diffInDays}d ago`;
   } else {
-    return inputDate.toLocaleDateString('en-US', {
+    return targetDate.toLocaleDateString('en-US', {
+      year: 'numeric',
       month: 'short',
-      day: 'numeric',
-      year: 'numeric'
+      day: 'numeric'
     });
   }
-};
+}
 
 export const formatRelativeTime = (date: string | Date) => {
   const now = new Date();
