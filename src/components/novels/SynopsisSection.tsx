@@ -117,59 +117,29 @@ export const SynopsisSection = ({
     </div>
 
     {/* Tab Navigation */}
-    <div className="flex gap-4 border-b mb-4">
-      <button
-        onClick={() => setActiveTab('synopsis')}
-        className={`px-4 py-2 font-medium text-sm transition-colors relative ${
-          activeTab === 'synopsis'
-            ? 'text-green-600'
-            : 'text-gray-600 hover:text-gray-900'
-        }`}
-      >
-        Synopsis
-        {activeTab === 'synopsis' && (
-          <div className="absolute bottom-0 left-0 w-full h-0.5 bg-green-600" />
-        )}
-      </button>
-      <button
-        onClick={() => setActiveTab('chapters')}
-        className={`px-4 py-2 font-medium text-sm transition-colors relative ${
-          activeTab === 'chapters'
-            ? 'text-green-600'
-            : 'text-gray-600 hover:text-gray-900'
-        }`}
-      >
-        Chapters
-        {activeTab === 'chapters' && (
-          <div className="absolute bottom-0 left-0 w-full h-0.5 bg-green-600" />
-        )}
-      </button>
-      <button
-        onClick={() => setActiveTab('comments')}
-        className={`px-4 py-2 font-medium text-sm transition-colors relative ${
-          activeTab === 'comments'
-            ? 'text-green-600'
-            : 'text-gray-600 hover:text-gray-900'
-        }`}
-      >
-        Comments
-        {activeTab === 'comments' && (
-          <div className="absolute bottom-0 left-0 w-full h-0.5 bg-green-600" />
-        )}
-      </button>
-      <button
-        onClick={() => setActiveTab('recommendations')}
-        className={`px-4 py-2 font-medium text-sm transition-colors relative ${
-          activeTab === 'recommendations'
-            ? 'text-green-600'
-            : 'text-gray-600 hover:text-gray-900'
-        }`}
-      >
-        Recommendations
-        {activeTab === 'recommendations' && (
-          <div className="absolute bottom-0 left-0 w-full h-0.5 bg-green-600" />
-        )}
-      </button>
+    <div className="flex overflow-x-auto scrollbar-hide border-b mb-4">
+      <div className="flex min-w-full sm:min-w-0 gap-4">
+        <TabButton 
+          label="Synopsis"
+          isActive={activeTab === 'synopsis'}
+          onClick={() => setActiveTab('synopsis')}
+        />
+        <TabButton 
+          label="Chapters"
+          isActive={activeTab === 'chapters'}
+          onClick={() => setActiveTab('chapters')}
+        />
+        <TabButton 
+          label="Comments"
+          isActive={activeTab === 'comments'}
+          onClick={() => setActiveTab('comments')}
+        />
+        <TabButton 
+          label="Recommendations"
+          isActive={activeTab === 'recommendations'}
+          onClick={() => setActiveTab('recommendations')}
+        />
+      </div>
     </div>
 
     {/* Tab Content */}
@@ -291,5 +261,29 @@ const BookmarkButton = ({
       className={`text-lg ${isBookmarkLoading ? 'animate-pulse' : ''}`}
     />
     <span className="font-medium text-black">{isBookmarked ? 'Bookmarked' : 'Bookmark'}</span>
+  </button>
+); 
+
+const TabButton = ({ 
+  label, 
+  isActive, 
+  onClick 
+}: { 
+  label: string;
+  isActive: boolean;
+  onClick: () => void;
+}) => (
+  <button
+    onClick={onClick}
+    className={`px-4 py-2 font-medium text-sm whitespace-nowrap transition-colors relative ${
+      isActive
+        ? 'text-green-600'
+        : 'text-gray-600 hover:text-gray-900'
+    }`}
+  >
+    {label}
+    {isActive && (
+      <div className="absolute bottom-0 left-0 w-full h-0.5 bg-green-600" />
+    )}
   </button>
 ); 
