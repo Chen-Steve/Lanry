@@ -20,6 +20,11 @@ const tabs = [
 export default function NovelTabs() {
   const pathname = usePathname();
 
+  // Hide tabs on chapter pages
+  if (pathname.includes('/chapters/')) {
+    return null;
+  }
+
   return (
     <div className="mb-4">
       <div className="max-w-5xl mx-auto px-4">
