@@ -28,6 +28,17 @@ export const NovelComments = ({ novelId, isAuthenticated }: NovelCommentsProps) 
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const transformDatabaseComment = useCallback((comment: SupabaseComment): NovelComment => {
+    return {
+      id: comment.id,
+      content: comment.content,
+      created_at: comment.created_at,
+      profile_id: comment.profile_id,
+      novel_id: novelId,
+      profile: comment.profile
+    };
+  }, [novelId]);
+
   const fetchComments = useCallback(async () => {
     try {
       const { data, error } = await supabase
@@ -50,23 +61,11 @@ export const NovelComments = ({ novelId, isAuthenticated }: NovelCommentsProps) 
     } finally {
       setIsLoading(false);
     }
-  }, [novelId]);
+  }, [novelId, transformDatabaseComment]);
 
   useEffect(() => {
     fetchComments();
   }, [fetchComments]);
-
-  const transformDatabaseComment = (comment: SupabaseComment): NovelComment => {
-    console.log('Transforming comment:', comment);
-    return {
-      id: comment.id,
-      content: comment.content,
-      created_at: comment.created_at,
-      profile_id: comment.profile_id,
-      novel_id: novelId,
-      profile: comment.profile
-    };
-  };
 
   const handleSubmitComment = async (e: React.FormEvent) => {
     e.preventDefault();
