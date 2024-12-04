@@ -246,8 +246,8 @@ model NovelRequest {
   coverImage       String?            @map("cover_image")
   createdAt        DateTime           @default(now()) @map("created_at")
   updatedAt        DateTime           @updatedAt @map("updated_at")
-  profile          Profile            @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  profileId        String             @map("profile_id")
+  profile          Profile?           @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  profileId        String?            @map("profile_id")
   votes            NovelRequestVote[]
 
   @@index([profileId])

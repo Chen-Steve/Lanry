@@ -1,12 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/hooks/useAuth';
-import { NovelRequest, getNovelRequests, createNovelRequest, toggleVote } from '@/services/novelRequestService';
 import { Icon } from '@iconify/react';
+import type { NovelRequest } from '@/types/database';
+import { getNovelRequests, createNovelRequest, toggleVote } from '@/services/novelRequestService';
 import { toast } from 'react-hot-toast';
 import { formatRelativeDate } from '@/lib/utils';
 import Image from 'next/image';
+import { uploadImage } from '@/services/uploadService';
+import { useAuth } from '@/hooks/useAuth';
 
 const RequestForm = ({ onSubmit, onClose }: { onSubmit: (request: NovelRequest) => void, onClose: () => void }) => {
   const [title, setTitle] = useState('');
@@ -15,13 +17,50 @@ const RequestForm = ({ onSubmit, onClose }: { onSubmit: (request: NovelRequest) 
   const [originalLanguage, setOriginalLanguage] = useState('');
   const [coverImage, setCoverImage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
+  const { userId, isAuthenticated } = useAuth();
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const previewUrl = URL.createObjectURL(file);
+      setImagePreview(previewUrl);
+      setCoverImage('');
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!isAuthenticated) {
+      toast.error('Please sign in to create a request');
+      return;
+    }
+    
     setIsSubmitting(true);
     
     try {
-      const request = await createNovelRequest(title, author, description, originalLanguage, coverImage);
+      let finalCoverImage = coverImage;
+      
+      if (imageFile) {
+        setIsUploading(true);
+        const uploadedUrl = await uploadImage(imageFile, userId);
+        finalCoverImage = uploadedUrl;
+        setIsUploading(false);
+      }
+
+      const request = await createNovelRequest(
+        title, 
+        author, 
+        description, 
+        originalLanguage, 
+        finalCoverImage,
+        userId
+      );
+      
       if (request) {
         onSubmit(request);
         setTitle('');
@@ -29,15 +68,30 @@ const RequestForm = ({ onSubmit, onClose }: { onSubmit: (request: NovelRequest) 
         setDescription('');
         setOriginalLanguage('');
         setCoverImage('');
+        setImageFile(null);
+        setImagePreview('');
         toast.success('Novel request submitted successfully!');
       }
     } catch (error: unknown) {
       console.error('Error submitting request:', error);
-      toast.error('Failed to submit request. Please try again.');
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error('Failed to submit request. Please try again.');
+      }
     } finally {
       setIsSubmitting(false);
+      setIsUploading(false);
     }
   };
+
+  useEffect(() => {
+    return () => {
+      if (imagePreview) {
+        URL.revokeObjectURL(imagePreview);
+      }
+    };
+  }, [imagePreview]);
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 md:relative md:bg-transparent">
@@ -68,13 +122,62 @@ const RequestForm = ({ onSubmit, onClose }: { onSubmit: (request: NovelRequest) 
               className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-colors text-base"
             />
 
-            <input
-              type="url"
-              placeholder="Cover Image URL (optional)"
-              value={coverImage}
-              onChange={(e) => setCoverImage(e.target.value)}
-              className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-colors text-base"
-            />
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
+                  id="cover-image-upload"
+                />
+                <label
+                  htmlFor="cover-image-upload"
+                  className="flex-1 px-4 py-3 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors text-center"
+                >
+                  {imagePreview ? 'Change Image' : 'Upload Cover Image'}
+                </label>
+                {imagePreview && (
+                  <button
+                    aria-label="Remove Image"
+                    type="button"
+                    onClick={() => {
+                      setImageFile(null);
+                      setImagePreview('');
+                    }}
+                    className="p-2 text-gray-400 hover:text-gray-600"
+                  >
+                    <Icon icon="mdi:close" className="text-xl" />
+                  </button>
+                )}
+              </div>
+              
+              {imagePreview && (
+                <div className="relative w-20 h-28 mx-auto">
+                  <Image
+                    src={imagePreview}
+                    alt="Cover preview"
+                    fill
+                    className="object-cover rounded-lg"
+                  />
+                </div>
+              )}
+
+              <div className="relative">
+                <input
+                  type="url"
+                  placeholder="Or paste cover image URL"
+                  value={coverImage}
+                  onChange={(e) => {
+                    setCoverImage(e.target.value);
+                    setImageFile(null);
+                    setImagePreview('');
+                  }}
+                  disabled={!!imageFile}
+                  className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-colors text-base disabled:bg-gray-50 disabled:text-gray-400"
+                />
+              </div>
+            </div>
 
             <select
               aria-label="Original Language"
@@ -102,10 +205,10 @@ const RequestForm = ({ onSubmit, onClose }: { onSubmit: (request: NovelRequest) 
 
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || isUploading}
             className="w-full py-3 px-4 bg-blue-600 text-white rounded-lg font-medium disabled:opacity-50 transition-opacity"
           >
-            {isSubmitting ? 'Submitting...' : 'Submit Request'}
+            {isUploading ? 'Uploading Image...' : isSubmitting ? 'Submitting...' : 'Submit Request'}
           </button>
         </form>
       </div>
@@ -117,15 +220,15 @@ const RequestCard = ({ request, onVote }: {
   request: NovelRequest; 
   onVote: (votes: number, hasVoted: boolean) => void 
 }) => {
-  const { isAuthenticated } = useAuth();
   const [isVoting, setIsVoting] = useState(false);
   const [localHasVoted, setLocalHasVoted] = useState(request.hasVoted);
-  const [localVotes, setLocalVotes] = useState(request.votes);
+  const [localVotes, setLocalVotes] = useState(request.voteCount);
+  const { isAuthenticated, userId } = useAuth();
 
   useEffect(() => {
     setLocalHasVoted(request.hasVoted);
-    setLocalVotes(request.votes);
-  }, [request.hasVoted, request.votes]);
+    setLocalVotes(request.voteCount);
+  }, [request.hasVoted, request.voteCount]);
 
   const handleVote = async () => {
     if (!isAuthenticated) {
@@ -135,7 +238,7 @@ const RequestCard = ({ request, onVote }: {
 
     setIsVoting(true);
     try {
-      const response = await toggleVote(request.id);
+      const response = await toggleVote(request.id, userId);
       if (response.success) {
         const newHasVoted = !localHasVoted;
         const newVotes = localHasVoted ? localVotes - 1 : localVotes + 1;
@@ -169,6 +272,7 @@ const RequestCard = ({ request, onVote }: {
             alt={`Cover for ${request.title}`}
             width={96}
             height={144}
+            priority={true}
             className="w-full h-full object-cover"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
@@ -253,7 +357,7 @@ export default function NovelRequests() {
     setRequests(prevRequests => 
       prevRequests.map(request => 
         request.id === requestId 
-          ? { ...request, votes, hasVoted }
+          ? { ...request, voteCount: votes, hasVoted }
           : request
       )
     );
@@ -273,7 +377,7 @@ export default function NovelRequests() {
       <div className="sticky top-0 z-10 flex items-center justify-between py-4 bg-white/95 backdrop-blur-sm">
         <h2 className="text-xl font-medium text-gray-900">Novel Requests</h2>
         <button
-          onClick={() => setShowForm(!showForm)}
+          onClick={() => setShowForm(true)}
           className="hidden md:block px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
         >
           + New Request
@@ -306,7 +410,7 @@ export default function NovelRequests() {
       </div>
 
       <button
-        aria-label="vote"
+        aria-label="New Request"
         onClick={() => setShowForm(true)}
         className="fixed right-4 bottom-4 md:hidden w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-transform"
       >
