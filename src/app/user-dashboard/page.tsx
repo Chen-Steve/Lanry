@@ -206,7 +206,7 @@ export default function UserDashboard() {
                 active={activeTab === 'reading'} 
                 onClick={() => setActiveTab('reading')}
               >
-                Reading
+                Recent Reads
               </TabButton>
               <TabButton 
                 active={activeTab === 'bookmarks'} 

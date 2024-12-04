@@ -169,7 +169,7 @@ export default function NovelRequests() {
   return (
     <main className="max-w-2xl mx-auto px-4 pb-20 md:pb-8">
       <header className="flex items-center justify-between pb-2">
-        <h2 className="text-lg font-medium text-gray-900">Novel Requests</h2>
+        <h2 className="text-lg font-medium text-gray-900 flex-1 text-center">Vote for Novels for us to Translate</h2>
         {isAuthenticated && (
           <button
             onClick={() => setShowForm(true)}
@@ -181,7 +181,7 @@ export default function NovelRequests() {
       </header>
       
       {!isAuthenticated && (
-        <p className="text-sm text-blue-600 -mt-1 mb-2">
+        <p className="text-sm text-blue-600 -mt-1 mb-2 text-center">
           Create account to request and vote!
         </p>
       )}

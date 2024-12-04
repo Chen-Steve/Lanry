@@ -90,18 +90,54 @@ export default function AuthPage() {
             throw new Error('Account created but failed to sign in automatically');
           }
 
+          // Wait for session to be established
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          const { data: sessionCheck } = await supabase.auth.getSession();
+          if (!sessionCheck.session) {
+            throw new Error('Failed to establish session');
+          }
+
           router.push('/');
           router.refresh();
         }
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
-          email: credentials.email,
-          password: credentials.password,
-        });
+        let retryCount = 0;
+        const maxRetries = 2;
+        
+        while (retryCount <= maxRetries) {
+          try {
+            const { error } = await supabase.auth.signInWithPassword({
+              email: credentials.email,
+              password: credentials.password,
+            });
 
-        if (error) throw error;
-        router.push('/');
-        router.refresh();
+            if (error) throw error;
+
+            // Wait for session to be established
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            const { data: sessionCheck } = await supabase.auth.getSession();
+            if (!sessionCheck.session) {
+              throw new Error('Failed to establish session');
+            }
+
+            router.push('/');
+            router.refresh();
+            return;
+          } catch (error) {
+            console.error(`Sign-in attempt ${retryCount + 1} failed:`, error);
+            retryCount++;
+            
+            if (retryCount <= maxRetries) {
+              await new Promise(resolve => 
+                setTimeout(resolve, Math.pow(2, retryCount) * 1000)
+              );
+            } else {
+              throw error;
+            }
+          }
+        }
       }
     } catch (error) {
       console.error('Auth error:', error);
