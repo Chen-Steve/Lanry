@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import supabase from '@/lib/supabaseClient';
 import type { UserProfile } from '@/types/database';
+import { useRouter } from 'next/navigation';
 
 const fetchProfile = async (): Promise<UserProfile> => {
   const { data: { user } } = await supabase.auth.getUser();
@@ -24,6 +25,7 @@ interface SettingsProps {
 const Settings = ({ profile }: SettingsProps) => {
   const [profileState, setProfileState] = useState<UserProfile>(profile);
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   const { isLoading, data } = useQuery({
     queryKey: ['profile'],
@@ -61,6 +63,19 @@ const Settings = ({ profile }: SettingsProps) => {
     mutation.mutate(profileState);
   };
 
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error('Error logging out:', error);
+      alert('Failed to log out');
+      return;
+    }
+    
+    // Clear any cached data
+    queryClient.clear();
+    router.push('/auth');
+  };
+
   if (isLoading) {
     return <div className="p-4 text-center">Loading...</div>;
   }
@@ -90,6 +105,15 @@ const Settings = ({ profile }: SettingsProps) => {
           {mutation.isPending ? 'Saving...' : 'Save'}
         </button>
       </form>
+
+      <div className="mt-8 pt-8 border-t">
+        <button
+          onClick={handleLogout}
+          className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+        >
+          Logout
+        </button>
+      </div>
     </div>
   );
 };

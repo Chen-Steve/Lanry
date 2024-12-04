@@ -140,6 +140,7 @@ const RequestCard = ({ request, onVote }: {
 export default function NovelRequests() {
   const [requests, setRequests] = useState<NovelRequest[]>([]);
   const [showForm, setShowForm] = useState(false);
+  const { isAuthenticated } = useAuth();
 
   const fetchRequests = async () => {
     const data = await getNovelRequests();
@@ -166,16 +167,24 @@ export default function NovelRequests() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-4 pb-20 md:pb-8">
-      <div className="sticky top-0 z-10 flex items-center justify-between py-4 bg-white/95 backdrop-blur-sm">
-        <h2 className="text-xl font-medium text-gray-900">Novel Requests</h2>
-        <button
-          onClick={() => setShowForm(true)}
-          className="hidden md:block px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-        >
-          + New Request
-        </button>
-      </div>
+    <main className="max-w-2xl mx-auto px-4 pb-20 md:pb-8">
+      <header className="flex items-center justify-between pb-2">
+        <h2 className="text-lg font-medium text-gray-900">Novel Requests</h2>
+        {isAuthenticated && (
+          <button
+            onClick={() => setShowForm(true)}
+            className="hidden md:block px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+          >
+            + New Request
+          </button>
+        )}
+      </header>
+      
+      {!isAuthenticated && (
+        <p className="text-sm text-blue-600 -mt-1 mb-2">
+          Create account to request and vote!
+        </p>
+      )}
 
       {showForm && (
         <div className="relative z-50">
@@ -183,7 +192,7 @@ export default function NovelRequests() {
         </div>
       )}
 
-      <div className="divide-y divide-gray-100">
+      <section className="divide-y divide-gray-100">
         {requests.map(request => (
           <RequestCard
             key={request.id}
@@ -196,19 +205,21 @@ export default function NovelRequests() {
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <Icon icon="mdi:book-plus-outline" className="text-4xl text-gray-300 mb-2" />
             <p className="text-sm text-gray-500">
-              No novel requests yet. Be the first to request a novel!
+              No novel requests yet. {isAuthenticated ? 'Be the first to request a novel!' : 'Create an account to make the first request!'}
             </p>
           </div>
         )}
-      </div>
+      </section>
 
-      <button
-        aria-label="New Request"
-        onClick={() => setShowForm(true)}
-        className="fixed right-4 bottom-4 md:hidden w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-transform"
-      >
-        <Icon icon="mdi:plus" className="text-2xl" />
-      </button>
-    </div>
+      {isAuthenticated && (
+        <button
+          aria-label="New Request"
+          onClick={() => setShowForm(true)}
+          className="fixed right-4 bottom-4 md:hidden w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-transform"
+        >
+          <Icon icon="mdi:plus" className="text-2xl" />
+        </button>
+      )}
+    </main>
   );
 } 

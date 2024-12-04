@@ -21,9 +21,9 @@ export default function NovelTabs() {
   const pathname = usePathname();
 
   return (
-    <div className="mb-8">
+    <div className="mb-4">
       <div className="max-w-5xl mx-auto px-4">
-        <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+        <nav className="flex space-x-8" aria-label="Tabs">
           {tabs.map((tab) => {
             const isActive = 
               tab.href === '/novels' 
