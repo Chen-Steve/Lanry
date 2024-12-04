@@ -2,12 +2,16 @@ import { useState, useEffect, useCallback } from 'react';
 import { Icon } from '@iconify/react';
 import { formatRelativeDate } from '@/lib/utils';
 import toast from 'react-hot-toast';
+import supabase from '@/lib/supabaseClient';
+import type { NovelComment } from '@/types/database';
 
-interface NovelComment {
+interface SupabaseComment {
   id: string;
   content: string;
   created_at: string;
   profile_id: string;
+  novel_id: string;
+  updated_at: string;
   profile: {
     username: string | null;
   };
@@ -18,16 +22,6 @@ interface NovelCommentsProps {
   isAuthenticated: boolean;
 }
 
-interface DatabaseNovelComment {
-  id: string;
-  content: string;
-  created_at: string;
-  profile_id: string;
-  profiles: {
-    username: string | null;
-  }[];
-}
-
 export const NovelComments = ({ novelId, isAuthenticated }: NovelCommentsProps) => {
   const [comments, setComments] = useState<NovelComment[]>([]);
   const [newComment, setNewComment] = useState('');
@@ -36,9 +30,19 @@ export const NovelComments = ({ novelId, isAuthenticated }: NovelCommentsProps) 
 
   const fetchComments = useCallback(async () => {
     try {
-      const response = await fetch(`/api/novels/comments/${novelId}`);
-      if (!response.ok) throw new Error('Failed to fetch comments');
-      const data = await response.json();
+      const { data, error } = await supabase
+        .from('novel_comments')
+        .select(`
+          *,
+          profile:profiles (
+            username
+          )
+        `)
+        .eq('novel_id', novelId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      console.log('Raw data from Supabase:', data);
       setComments(data.map(transformDatabaseComment));
     } catch (error) {
       console.error('Error fetching comments:', error);
@@ -52,15 +56,17 @@ export const NovelComments = ({ novelId, isAuthenticated }: NovelCommentsProps) 
     fetchComments();
   }, [fetchComments]);
 
-  const transformDatabaseComment = (comment: DatabaseNovelComment): NovelComment => ({
-    id: comment.id,
-    content: comment.content,
-    created_at: comment.created_at,
-    profile_id: comment.profile_id,
-    profile: {
-      username: comment.profiles[0]?.username ?? null
-    }
-  });
+  const transformDatabaseComment = (comment: SupabaseComment): NovelComment => {
+    console.log('Transforming comment:', comment);
+    return {
+      id: comment.id,
+      content: comment.content,
+      created_at: comment.created_at,
+      profile_id: comment.profile_id,
+      novel_id: novelId,
+      profile: comment.profile
+    };
+  };
 
   const handleSubmitComment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,18 +83,30 @@ export const NovelComments = ({ novelId, isAuthenticated }: NovelCommentsProps) 
 
     setIsSubmitting(true);
     try {
-      const response = await fetch(`/api/novels/comments/${novelId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ content: newComment.trim() }),
-      });
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not found');
 
-      if (!response.ok) throw new Error('Failed to add comment');
+      const { data, error } = await supabase
+        .from('novel_comments')
+        .insert({
+          id: crypto.randomUUID(),
+          novel_id: novelId,
+          content: newComment.trim(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          profile_id: user.id
+        })
+        .select(`
+          *,
+          profile:profiles (
+            username
+          )
+        `)
+        .single();
+
+      if (error) throw error;
       
-      const commentData = await response.json();
-      const transformedComment = transformDatabaseComment(commentData);
+      const transformedComment = transformDatabaseComment(data);
       setComments([transformedComment, ...comments]);
       setNewComment('');
       toast.success('Comment added successfully');
