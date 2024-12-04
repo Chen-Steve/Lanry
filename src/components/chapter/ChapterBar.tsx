@@ -109,7 +109,7 @@ export default function ChapterProgressBar({
           !(e.target as HTMLElement).closest('[role="scrollbar"]') &&
           !(progressBarRef.current?.contains(e.target as Node))
         ) {
-          setIsVisible(!isVisible);
+          setIsVisible(prev => !prev);
         }
       }
 
@@ -124,13 +124,13 @@ export default function ChapterProgressBar({
       document.removeEventListener('touchstart', handleTouchStart);
       document.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [isMobile, isVisible, touchStartY, isTouching, isCommentOpen, isDropdownOpen]);
+  }, [isMobile, touchStartY, isTouching, isCommentOpen, isDropdownOpen]);
 
   useEffect(() => {
     if ((isCommentOpen || isDropdownOpen) && isVisible) {
       setIsVisible(false);
     }
-  }, [isCommentOpen, isDropdownOpen]);
+  }, [isCommentOpen, isDropdownOpen, isVisible]);
 
   if (!isMobile) return null;
 
