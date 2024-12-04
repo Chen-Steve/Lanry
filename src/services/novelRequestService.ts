@@ -1,11 +1,16 @@
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import type { NovelRequest } from '@/types/database';
+import supabase from '@/lib/supabaseClient';
+import { generateUUID } from '@/lib/utils';
 
 interface NovelRequestVote {
   profile_id: string;
 }
 
-const supabase = createClientComponentClient();
+interface VoteResponse {
+  success: boolean;
+  votes: number;
+  hasVoted: boolean;
+}
 
 export async function getNovelRequests(): Promise<NovelRequest[]> {
   const { data: requests, error } = await supabase
@@ -58,8 +63,7 @@ export async function createNovelRequest(
     throw new Error('Must be logged in to create a request');
   }
 
-  // Generate a UUID for the new request
-  const id = crypto.randomUUID();
+  const id = generateUUID();
   const now = new Date().toISOString();
 
   const { data, error } = await supabase
@@ -107,49 +111,57 @@ export async function createNovelRequest(
   };
 }
 
-export async function toggleVote(requestId: string, userId: string | null) {
-  if (!userId) {
-    throw new Error('Must be logged in to vote');
-  }
-
-  // Check if vote exists
-  const { data: existingVote } = await supabase
-    .from('novel_request_votes')
-    .select()
-    .eq('request_id', requestId)
-    .eq('profile_id', userId)
-    .single();
-
-  if (existingVote) {
-    // Delete vote if it exists
-    const { error } = await supabase
+export async function toggleVote(requestId: string, userId: string): Promise<VoteResponse> {
+  try {
+    // First check if vote exists
+    const { data: existingVote, error: fetchError } = await supabase
       .from('novel_request_votes')
-      .delete()
+      .select('id')
       .eq('request_id', requestId)
-      .eq('profile_id', userId);
+      .eq('profile_id', userId)
+      .single();
 
-    if (error) throw new Error('Failed to remove vote');
-  } else {
-    // Create vote if it doesn't exist
-    const { error } = await supabase
+    if (fetchError && fetchError.code !== 'PGRST116') {
+      throw new Error('Failed to check vote status');
+    }
+
+    if (existingVote) {
+      // Remove vote if it exists
+      const { error: deleteError } = await supabase
+        .from('novel_request_votes')
+        .delete()
+        .eq('id', existingVote.id);
+
+      if (deleteError) throw new Error('Failed to remove vote');
+    } else {
+      // Add new vote
+      const { error: insertError } = await supabase
+        .from('novel_request_votes')
+        .insert({
+          id: generateUUID(),
+          request_id: requestId,
+          profile_id: userId,
+          created_at: new Date().toISOString()
+        });
+
+      if (insertError) throw new Error('Failed to add vote');
+    }
+
+    // Get updated vote count
+    const { data: votes, error: countError } = await supabase
       .from('novel_request_votes')
-      .insert({
-        request_id: requestId,
-        profile_id: userId
-      });
+      .select('id')
+      .eq('request_id', requestId);
 
-    if (error) throw new Error('Failed to add vote');
+    if (countError) throw new Error('Failed to get updated vote count');
+
+    return {
+      success: true,
+      votes: votes?.length || 0,
+      hasVoted: !existingVote
+    };
+  } catch (error) {
+    console.error('Vote toggle error:', error);
+    throw error;
   }
-
-  // Get updated vote count
-  const { count } = await supabase
-    .from('novel_request_votes')
-    .select('*', { count: 'exact', head: true })
-    .eq('request_id', requestId);
-
-  return {
-    success: true,
-    votes: count || 0,
-    hasVoted: !existingVote
-  };
 } 

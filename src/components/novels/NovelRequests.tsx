@@ -236,28 +236,25 @@ const RequestCard = ({ request, onVote }: {
       return;
     }
 
+    if (!userId) {
+      toast.error('User ID not found');
+      return;
+    }
+
     setIsVoting(true);
     try {
       const response = await toggleVote(request.id, userId);
-      if (response.success) {
-        const newHasVoted = !localHasVoted;
-        const newVotes = localHasVoted ? localVotes - 1 : localVotes + 1;
-        
-        setLocalHasVoted(newHasVoted);
-        setLocalVotes(newVotes);
-        onVote(response.votes, response.hasVoted);
-        
-        toast.success(newHasVoted ? 'Vote added' : 'Vote removed');
-      } else {
-        toast.error('Failed to vote. Please try again.');
-      }
-    } catch (error: unknown) {
+      const newHasVoted = !localHasVoted;
+      const newVotes = response.votes;
+      
+      setLocalHasVoted(newHasVoted);
+      setLocalVotes(newVotes);
+      onVote(newVotes, newHasVoted);
+      
+      toast.success(newHasVoted ? 'Vote added' : 'Vote removed');
+    } catch (error) {
       console.error('Error voting on request:', error);
-      if (error instanceof Error) {
-        toast.error(error.message);
-      } else {
-        toast.error('Failed to vote. Please try again.');
-      }
+      toast.error('Failed to vote. Please try again.');
     } finally {
       setIsVoting(false);
     }
@@ -270,13 +267,15 @@ const RequestCard = ({ request, onVote }: {
           <Image
             src={request.coverImage}
             alt={`Cover for ${request.title}`}
-            width={96}
-            height={144}
+            width={192}
+            height={288}
             priority={true}
+            quality={95}
             className="w-full h-full object-cover"
+            sizes="(max-width: 768px) 80px, 96px"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
-              target.src = 'https://placehold.co/96x144?text=No+Cover';
+              target.src = 'https://placehold.co/192x288?text=No+Cover';
             }}
           />
         ) : (
