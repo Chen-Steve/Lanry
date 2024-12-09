@@ -52,7 +52,7 @@ export default function ChapterContent({
   };
 
   const handleCommentClick = useCallback((
-    event: React.MouseEvent<HTMLButtonElement>,
+    event: React.MouseEvent<Element>,
     paragraphId: string
   ) => {
     event.preventDefault();
@@ -94,7 +94,9 @@ export default function ChapterContent({
               <div className="relative">
                 <div 
                   id={paragraphId}
-                  className={`mb-4 leading-relaxed ${isMobile ? 'touch-action-none' : ''}`}
+                  className={`mb-4 leading-relaxed cursor-pointer active:underline active:decoration-dashed active:decoration-gray-400 active:underline-offset-4 transition-all duration-200 
+                    ${isMobile ? 'touch-action-none' : ''} 
+                    ${selectedParagraphId === paragraphId ? 'underline decoration-dashed decoration-gray-400 underline-offset-4' : ''}`}
                   style={isMobile ? {
                     WebkitTouchCallout: 'none',
                     WebkitUserSelect: 'none',
@@ -103,6 +105,7 @@ export default function ChapterContent({
                     userSelect: 'none',
                     WebkitTapHighlightColor: 'transparent'
                   } : undefined}
+                  onClick={(e) => !isMobile && handleCommentClick(e, paragraphId)}
                   onContextMenu={(e) => isMobile && handleParagraphLongPress(e, paragraphId)}
                   onTouchStart={(e) => {
                     if (!isMobile) return;
@@ -122,25 +125,27 @@ export default function ChapterContent({
                   }}
                 >
                   {paragraph}
-                  {paragraphComments.length > 0 && (
-                    <span className="text-sm text-blue-500 ml-1">
-                      ({paragraphComments.length})
-                    </span>
-                  )}
+                  <span className="inline-flex items-center">
+                    {!isMobile && paragraphComments.length > 0 && (
+                      <button
+                        onClick={(e) => handleCommentClick(e, paragraphId)}
+                        className="transition-colors duration-200 ml-1"
+                        aria-label="View comments"
+                      >
+                        <Icon 
+                          icon="pepicons-print:text-bubbles" 
+                          className="w-4 h-4 text-gray-400 hover:text-blue-500 transition-colors"
+                        />
+                      </button>
+                    )}
+                    {paragraphComments.length > 0 && (
+                      <span className="text-sm text-blue-500 ml-1">
+                        ({paragraphComments.length})
+                      </span>
+                    )}
+                  </span>
                 </div>
               </div>
-              {!isMobile && (
-                <button
-                  onClick={(e) => handleCommentClick(e, paragraphId)}
-                  className="absolute left-[-30px] top-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                  aria-label="Add comment"
-                >
-                  <Icon 
-                    icon="pepicons-print:text-bubbles" 
-                    className="w-5 h-5 text-gray-400 hover:text-blue-500 transition-colors"
-                  />
-                </button>
-              )}
             </div>
           );
         })}
