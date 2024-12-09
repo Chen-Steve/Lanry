@@ -321,7 +321,7 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-4 md:py-8">
+    <div className="max-w-4xl mx-auto px-4 py-4 md:py-8">
       <ChapterHeader
         novelId={novelId}
         novelTitle={chapter.novel.title}

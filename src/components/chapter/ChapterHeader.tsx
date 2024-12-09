@@ -14,7 +14,7 @@ export default function ChapterHeader({
 }: ChapterHeaderProps) {
   return (
     <div className="mb-6 md:mb-8">
-      <div className="text-center">
+      <div className="max-w-2xl mx-auto text-center">
         <Link 
           href={`/novels/${novelId}`}
           className="inline-block hover:text-gray-700"

@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { formatDate } from '@/lib/utils';
-import CommentPopover from '@/components/chapter/CommentPopover';
+import CommentPopover from '@/components/chapter/CommentBar';
 import { useComments } from '@/hooks/useComments';
 import { Icon } from '@iconify/react';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
@@ -29,7 +29,6 @@ export default function ChapterContent({
   onCommentStateChange,
 }: ChapterContentProps) {
   const [selectedParagraphId, setSelectedParagraphId] = useState<string | null>(null);
-  const [commentPosition, setCommentPosition] = useState({ x: 0, y: 0 });
   const { comments, addComment, isAuthenticated, isLoading } = useComments(novelId, chapterNumber);
   const isMobile = useMediaQuery('(max-width: 768px)');
 
@@ -48,17 +47,6 @@ export default function ChapterContent({
     paragraphId: string
   ) => {
     event.preventDefault();
-    
-    const rect = (event.target as HTMLElement).getBoundingClientRect();
-    const clientX = 'touches' in event 
-      ? event.touches[0].clientX 
-      : (event as React.MouseEvent).clientX;
-
-    setCommentPosition({
-      x: clientX,
-      y: rect.bottom
-    });
-    
     setSelectedParagraphId(paragraphId);
     onCommentStateChange(true);
   };
@@ -69,13 +57,6 @@ export default function ChapterContent({
   ) => {
     event.preventDefault();
     event.stopPropagation();
-    
-    const rect = (event.target as HTMLElement).getBoundingClientRect();
-    setCommentPosition({
-      x: event.clientX,
-      y: rect.bottom
-    });
-    
     setSelectedParagraphId(paragraphId);
     onCommentStateChange(true);
   }, [onCommentStateChange]);
@@ -86,19 +67,19 @@ export default function ChapterContent({
 
   return (
     <div className="mb-6 md:mb-8">
-      <div className="mb-4 flex justify-between items-center">
+      <div className="mb-4 max-w-2xl mx-auto">
         <div>
           <h2 className="text-lg md:text-xl font-semibold text-black">
             Chapter {chapterNumber}: {title}
           </h2>
-          <p className="text-xs md:text-sm text-black">
+          <p className="text-xs md:text-sm text-gray-600">
             Published {formatDate(createdAt)}
           </p>
         </div>
       </div>
       
       <div 
-        className="prose prose-sm md:prose-base max-w-none text-black chapter-content"
+        className="prose prose-sm md:prose-base max-w-2xl mx-auto text-black chapter-content"
         style={{ 
           fontFamily: fontFamily,
           fontSize: `${fontSize}px`
@@ -110,36 +91,43 @@ export default function ChapterContent({
           
           return (
             <div key={index} className="relative group">
-              <div 
-                id={paragraphId}
-                className={`mb-4 leading-relaxed relative ${isMobile ? 'touch-action-none' : ''}`}
-                style={isMobile ? {
-                  WebkitTouchCallout: 'none',
-                  WebkitUserSelect: 'none',
-                  MozUserSelect: 'none',
-                  msUserSelect: 'none',
-                  userSelect: 'none',
-                  WebkitTapHighlightColor: 'transparent'
-                } : undefined}
-                onContextMenu={(e) => isMobile && handleParagraphLongPress(e, paragraphId)}
-                onTouchStart={(e) => {
-                  if (!isMobile) return;
-                  
-                  const timer = setTimeout(() => {
-                    handleParagraphLongPress(e, paragraphId);
-                  }, 500);
-                  
-                  const cleanup = () => {
-                    clearTimeout(timer);
-                    document.removeEventListener('touchend', cleanup);
-                    document.removeEventListener('touchmove', cleanup);
-                  };
-                  
-                  document.addEventListener('touchend', cleanup);
-                  document.addEventListener('touchmove', cleanup);
-                }}
-              >
-                {paragraph}
+              <div className="relative">
+                <div 
+                  id={paragraphId}
+                  className={`mb-4 leading-relaxed ${isMobile ? 'touch-action-none' : ''}`}
+                  style={isMobile ? {
+                    WebkitTouchCallout: 'none',
+                    WebkitUserSelect: 'none',
+                    MozUserSelect: 'none',
+                    msUserSelect: 'none',
+                    userSelect: 'none',
+                    WebkitTapHighlightColor: 'transparent'
+                  } : undefined}
+                  onContextMenu={(e) => isMobile && handleParagraphLongPress(e, paragraphId)}
+                  onTouchStart={(e) => {
+                    if (!isMobile) return;
+                    
+                    const timer = setTimeout(() => {
+                      handleParagraphLongPress(e, paragraphId);
+                    }, 500);
+                    
+                    const cleanup = () => {
+                      clearTimeout(timer);
+                      document.removeEventListener('touchend', cleanup);
+                      document.removeEventListener('touchmove', cleanup);
+                    };
+                    
+                    document.addEventListener('touchend', cleanup);
+                    document.addEventListener('touchmove', cleanup);
+                  }}
+                >
+                  {paragraph}
+                  {paragraphComments.length > 0 && (
+                    <span className="text-sm text-blue-500 ml-1">
+                      ({paragraphComments.length})
+                    </span>
+                  )}
+                </div>
               </div>
               {!isMobile && (
                 <button
@@ -153,11 +141,6 @@ export default function ChapterContent({
                   />
                 </button>
               )}
-              {paragraphComments.length > 0 && (
-                <span className="ml-2 text-sm text-blue-500">
-                  ({paragraphComments.length})
-                </span>
-              )}
             </div>
           );
         })}
@@ -165,7 +148,6 @@ export default function ChapterContent({
 
       {selectedParagraphId && (
         <CommentPopover
-          position={commentPosition}
           paragraphId={selectedParagraphId}
           comments={(comments[selectedParagraphId] || []).map(comment => ({
             ...comment,
