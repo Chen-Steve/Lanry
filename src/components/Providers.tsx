@@ -5,6 +5,7 @@ import { useState, useEffect, createContext, useContext } from 'react';
 import { createClientComponentClient, User } from '@supabase/auth-helpers-nextjs';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { PayPalScriptProvider } from "@paypal/react-paypal-js";
+import { Analytics } from '@vercel/analytics/react';
 
 interface SupabaseContext {
   supabase: SupabaseClient;
@@ -87,15 +88,18 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <PayPalScriptProvider options={{
-      clientId: process.env.NEXT_PUBLIC_PAYPAL_SANDBOX_CLIENT_ID!,
-      currency: "USD"
-    }}>
-      <SupabaseContext.Provider value={{ supabase, user }}>
-        <QueryClientProvider client={queryClient}>
-          {children}
-        </QueryClientProvider>
-      </SupabaseContext.Provider>
-    </PayPalScriptProvider>
+    <>
+      <Analytics />
+      <PayPalScriptProvider options={{
+        clientId: process.env.NEXT_PUBLIC_PAYPAL_SANDBOX_CLIENT_ID!,
+        currency: "USD"
+      }}>
+        <SupabaseContext.Provider value={{ supabase, user }}>
+          <QueryClientProvider client={queryClient}>
+            {children}
+          </QueryClientProvider>
+        </SupabaseContext.Provider>
+      </PayPalScriptProvider>
+    </>
   );
 } 
