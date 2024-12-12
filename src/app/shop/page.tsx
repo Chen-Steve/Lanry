@@ -2,9 +2,12 @@
 
 import { useState } from 'react';
 import { Icon } from '@iconify/react';
-import supabase from '@/lib/supabaseClient';
-import { useQuery } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
+import { PayPalButtons } from "@paypal/react-paypal-js";
+import { useAuth } from '@/hooks/useAuth';
+import { useStreak } from '@/hooks/useStreak';
+import supabase from '@/lib/supabaseClient';
 
 interface CoinPackage {
   id: number;
@@ -21,33 +24,79 @@ const coinPackages: CoinPackage[] = [
 ];
 
 export default function ShopPage() {
+  const { userId, isAuthenticated } = useAuth();
+  const { userProfile } = useStreak(userId);
+  const queryClient = useQueryClient();
   const [selectedPackage, setSelectedPackage] = useState<CoinPackage | null>(null);
 
-  // Query user's current coin balance
-  const { data: userCoins, isLoading, isError, error } = useQuery({
-    queryKey: ['userCoins'],
-    queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) return null;
-
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('coins')
-        .eq('id', session.user.id)
-        .single();
-
-      if (error) throw error;
-      return data.coins;
-    },
-  });
-
   const handlePurchaseClick = async (pkg: CoinPackage) => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) {
+    if (!isAuthenticated) {
       toast.error('Please create an account to buy coins');
       return;
     }
     setSelectedPackage(pkg);
+  };
+
+  const handlePaypalSuccess = async (orderId: string, packageId: number) => {
+    if (!userId) {
+      toast.error('Please log in to complete the purchase');
+      return;
+    }
+
+    const selectedPkg = coinPackages.find(pkg => pkg.id === packageId);
+    if (!selectedPkg) {
+      toast.error('Invalid package selected');
+      return;
+    }
+
+    try {
+      // Verify session before making the request
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error('Please log in to complete the purchase');
+        return;
+      }
+
+      console.log('Sending purchase request:', {
+        userId,
+        amount: selectedPkg.coins,
+        orderId,
+        type: 'PURCHASE'
+      });
+
+      const response = await fetch('/api/coins/add', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          amount: selectedPkg.coins,
+          orderId,
+          type: 'PURCHASE'
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Purchase error:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText
+        });
+        throw new Error(errorText);
+      }
+
+      const result = await response.json();
+      console.log('Purchase successful:', result);
+
+      await queryClient.invalidateQueries({ queryKey: ['userProfile'] });
+      toast.success(`Successfully purchased ${selectedPkg.coins} coins!`);
+      setSelectedPackage(null);
+    } catch (error) {
+      console.error('Error updating coins:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to update coin balance');
+    }
   };
 
   return (
@@ -57,17 +106,13 @@ export default function ShopPage() {
         <h1 className="text-3xl font-bold mb-4 text-black">Coin Shop</h1>
         <div className="bg-amber-50 p-4 rounded-lg inline-flex items-center gap-2">
           <Icon icon="pepicons-print:coin" className="text-amber-600 text-xl" />
-          {isLoading ? (
-            <span className="font-medium text-black">Loading balance...</span>
-          ) : isError ? (
-            <span className="text-red-500">Error loading balance: {error?.message}</span>
-          ) : (
-            <span className="font-medium text-black">Current Balance: {userCoins || 0} coins</span>
-          )}
+          <span className="font-medium text-black">
+            Current Balance: {userProfile?.coins || 0} coins
+          </span>
         </div>
       </div>
 
-      {/* Ko-fi Purchase Modal */}
+      {/* Purchase Modal */}
       {selectedPackage && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg max-w-md w-full">
@@ -77,28 +122,39 @@ export default function ShopPage() {
             </p>
             
             <div className="space-y-3">
-              <a
-                href={`https://ko-fi.com/niasser/`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full py-2 px-4 rounded-md font-medium bg-[#FF5E5B] hover:bg-[#e54744] text-white text-center flex items-center justify-center gap-2"
+              <PayPalButtons
+                createOrder={(data, actions) => {
+                  return actions.order.create({
+                    intent: "CAPTURE",
+                    purchase_units: [{
+                      amount: {
+                        value: selectedPackage.price.toString(),
+                        currency_code: "USD"
+                      }
+                    }]
+                  });
+                }}
+                onApprove={async (data, actions) => {
+                  if (actions.order) {
+                    const order = await actions.order.capture();
+                    if (order.id) {
+                      await handlePaypalSuccess(order.id, selectedPackage.id);
+                    }
+                  }
+                }}
+                onError={() => {
+                  toast.error('PayPal transaction failed');
+                }}
+                style={{ layout: "horizontal" }}
+              />
+
+              <button
+                onClick={() => setSelectedPackage(null)}
+                className="w-full mt-4 py-2 px-4 rounded-md bg-gray-100 hover:bg-gray-200"
               >
-                <Icon icon="simple-icons:kofi" className="text-xl" />
-                Support on Ko-fi
-              </a>
+                Cancel
+              </button>
             </div>
-
-            <div className="mt-4 text-sm text-gray-600">
-              <p>Important: Please include your username in the message when making the payment!</p>
-              <p className="mt-2 italic">Note: Your coin balance will be updated within 1 hours after payment confirmation.</p>
-            </div>
-
-            <button
-              onClick={() => setSelectedPackage(null)}
-              className="w-full mt-4 py-2 px-4 rounded-md bg-gray-100 hover:bg-gray-200"
-            >
-              Cancel
-            </button>
           </div>
         </div>
       )}
@@ -147,41 +203,6 @@ export default function ShopPage() {
         ))}
       </div>
 
-      {/* Payment Methods Notice */}
-      <div className="mt-8 text-center text-sm text-gray-600">
-        <p>
-          We&apos;re working on integrating Stripe, PayPal, and Apple Pay for more convenient payment options.
-          Stay tuned!
-        </p>
-      </div>
-
-      {/* How to Earn Section */}
-      <div className="mt-16">
-        <h2 className="text-2xl font-bold mb-6 text-black">Other Ways to Earn Coins (Coming Soon)</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="border border-gray-200 rounded-lg p-6">
-            <Icon icon="pepicons-print:fire" className="text-3xl text-orange-500 mb-4" />
-            <h3 className="font-bold mb-2 text-black">Daily Streak</h3>
-            <p className="text-black">
-              Maintain your daily reading streak to earn bonus coins
-            </p>
-          </div>
-          <div className="border border-gray-200 rounded-lg p-6">
-            <Icon icon="pepicons-print:text-bubble" className="text-3xl text-blue-500 mb-4" />
-            <h3 className="font-bold mb-2 text-black">Write Reviews</h3>
-            <p className="text-black">
-              Earn coins by writing quality reviews for novels
-            </p>
-          </div>
-          <div className="border border-gray-200 rounded-lg p-6">
-            <Icon icon="pepicons-print:handshake" className="text-3xl text-green-500 mb-4" />
-            <h3 className="font-bold mb-2 text-black">Share Novels</h3>
-            <p className="text-black">
-              Get coins when friends read novels you&apos;ve shared
-            </p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 } 

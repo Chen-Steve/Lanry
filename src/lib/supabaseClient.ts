@@ -7,6 +7,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables');
 }
 
+// Initialize the Supabase client with better session handling
 const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     flowType: 'pkce',
@@ -15,18 +16,32 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: true,
     storage: {
       getItem: (key) => {
-        if (typeof window === 'undefined') return null;
-        return localStorage.getItem(key);
+        try {
+          if (typeof window === 'undefined') return null;
+          const storedValue = localStorage.getItem(key);
+          return storedValue;
+        } catch (error) {
+          console.warn('Error accessing localStorage:', error);
+          return null;
+        }
       },
       setItem: (key, value) => {
-        if (typeof window === 'undefined') return;
-        localStorage.setItem(key, value);
+        try {
+          if (typeof window === 'undefined') return;
+          localStorage.setItem(key, value);
+        } catch (error) {
+          console.warn('Error setting localStorage:', error);
+        }
       },
       removeItem: (key) => {
-        if (typeof window === 'undefined') return;
-        localStorage.removeItem(key);
+        try {
+          if (typeof window === 'undefined') return;
+          localStorage.removeItem(key);
+        } catch (error) {
+          console.warn('Error removing from localStorage:', error);
+        }
       },
-    },
+    }
   },
   global: {
     headers: {
@@ -38,5 +53,12 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     schema: 'public'
   }
 });
+
+// Add auth state change listener for debugging
+if (typeof window !== 'undefined') {
+  supabase.auth.onAuthStateChange((event, session) => {
+    console.debug('Auth state changed:', event, session?.user?.email);
+  });
+}
 
 export default supabase;
