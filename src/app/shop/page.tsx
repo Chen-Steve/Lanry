@@ -7,7 +7,6 @@ import { toast } from 'react-hot-toast';
 import { PayPalButtons } from "@paypal/react-paypal-js";
 import { useAuth } from '@/hooks/useAuth';
 import { useStreak } from '@/hooks/useStreak';
-import supabase from '@/lib/supabaseClient';
 
 interface CoinPackage {
   id: number;
@@ -37,67 +36,6 @@ export default function ShopPage() {
     setSelectedPackage(pkg);
   };
 
-  const handlePaypalSuccess = async (orderId: string, packageId: number) => {
-    if (!userId) {
-      toast.error('Please log in to complete the purchase');
-      return;
-    }
-
-    const selectedPkg = coinPackages.find(pkg => pkg.id === packageId);
-    if (!selectedPkg) {
-      toast.error('Invalid package selected');
-      return;
-    }
-
-    try {
-      // Verify session before making the request
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast.error('Please log in to complete the purchase');
-        return;
-      }
-
-      console.log('Sending purchase request:', {
-        userId,
-        amount: selectedPkg.coins,
-        orderId,
-        type: 'PURCHASE'
-      });
-
-      const response = await fetch('/api/coins/add', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          amount: selectedPkg.coins,
-          orderId,
-          type: 'PURCHASE'
-        }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Purchase error:', {
-          status: response.status,
-          statusText: response.statusText,
-          error: errorText
-        });
-        throw new Error(errorText);
-      }
-
-      const result = await response.json();
-      console.log('Purchase successful:', result);
-
-      await queryClient.invalidateQueries({ queryKey: ['userProfile'] });
-      toast.success(`Successfully purchased ${selectedPkg.coins} coins!`);
-      setSelectedPackage(null);
-    } catch (error) {
-      console.error('Error updating coins:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to update coin balance');
-    }
-  };
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
@@ -130,7 +68,8 @@ export default function ShopPage() {
                       amount: {
                         value: selectedPackage.price.toString(),
                         currency_code: "USD"
-                      }
+                      },
+                      custom_id: `${userId}:${selectedPackage.id}`
                     }]
                   });
                 }}
@@ -138,12 +77,18 @@ export default function ShopPage() {
                   if (actions.order) {
                     const order = await actions.order.capture();
                     if (order.id) {
-                      await handlePaypalSuccess(order.id, selectedPackage.id);
+                      toast.loading('Processing your payment...');
+                      toast.success('Payment successful! Your coins will be added shortly.');
+                      setSelectedPackage(null);
+                      setTimeout(() => {
+                        queryClient.invalidateQueries({ queryKey: ['userProfile'] });
+                      }, 2000);
                     }
                   }
                 }}
-                onError={() => {
-                  toast.error('PayPal transaction failed');
+                onError={(err) => {
+                  console.error('PayPal error:', err);
+                  toast.error('Payment failed. Please try again.');
                 }}
                 style={{ layout: "horizontal" }}
               />
