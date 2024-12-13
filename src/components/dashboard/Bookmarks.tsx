@@ -23,6 +23,7 @@ interface Bookmark {
 
 interface BookmarksProps {
   userId: string | undefined;
+  isOwnProfile?: boolean;
 }
 
 // Separate data fetching logic
@@ -48,7 +49,7 @@ const fetchBookmarks = async (userId: string | undefined) => {
   return data;
 };
 
-const Bookmarks = ({ userId }: BookmarksProps) => {
+const Bookmarks = ({ userId, isOwnProfile = false }: BookmarksProps) => {
   const queryClient = useQueryClient();
 
   // Add auth state listener
@@ -154,13 +155,15 @@ const Bookmarks = ({ userId }: BookmarksProps) => {
             >
               <span>Read</span>
             </Link>
-            <button
-              onClick={() => removeMutation.mutate(bookmark.id)}
-              className="flex items-center gap-1.5 text-red-600 px-3 py-1.5 border border-red-600 rounded-md touch-action-manipulation whitespace-nowrap text-xs sm:text-base transition-colors hover:bg-red-50"
-              aria-label="Remove bookmark"
-            >
-              <span>Remove</span>
-            </button>
+            {isOwnProfile && (
+              <button
+                onClick={() => removeMutation.mutate(bookmark.id)}
+                className="flex items-center gap-1.5 text-red-600 px-3 py-1.5 border border-red-600 rounded-md touch-action-manipulation whitespace-nowrap text-xs sm:text-base transition-colors hover:bg-red-50"
+                aria-label="Remove bookmark"
+              >
+                <span>Remove</span>
+              </button>
+            )}
           </div>
         </article>
       ))}

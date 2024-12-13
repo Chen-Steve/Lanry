@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, lazy, Suspense, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import supabase from '@/lib/supabaseClient';
 import { Icon } from '@iconify/react';
 import { useQuery } from '@tanstack/react-query';
@@ -86,14 +86,23 @@ const TabButton = ({
 export default function UserDashboard() {
   const [activeTab, setActiveTab] = useState<DashboardTab>('reading');
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isAuthChecking, setIsAuthChecking] = useState(true);
+  const [isOwnProfile, setIsOwnProfile] = useState(false);
+  const profileId = searchParams.get('id');
 
   // Fetch user profile data
   const { data: profile, isLoading: isProfileLoading, error: profileError } = useQuery({
-    queryKey: ['profile'],
+    queryKey: ['profile', profileId],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
+      
+      // If no profileId is provided, show the current user's profile
+      const targetId = profileId || user?.id;
+      if (!targetId) return null;
+
+      // Set whether this is the user's own profile
+      setIsOwnProfile(user?.id === targetId);
 
       // Fetch profile with bookmarks and reading history counts
       const { data: profile, error: profileError } = await supabase
@@ -106,7 +115,7 @@ export default function UserDashboard() {
           bookmarks!inner(count),
           reading_history!inner(count)
         `)
-        .eq('id', user.id)
+        .eq('id', targetId)
         .single();
 
       if (profileError) throw profileError;
@@ -115,7 +124,7 @@ export default function UserDashboard() {
       const { data: readingTimeData, error: readingTimeError } = await supabase
         .from('reading_time')
         .select('total_minutes')
-        .eq('profile_id', user.id)
+        .eq('profile_id', targetId)
         .single();
 
       if (readingTimeError && readingTimeError.code !== 'PGRST116') {
@@ -136,14 +145,19 @@ export default function UserDashboard() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-          router.push('/auth');
-          return;
+        // Only check auth if viewing own profile (no profileId in URL)
+        if (!profileId) {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) {
+            router.push('/auth');
+            return;
+          }
         }
       } catch (error) {
         console.error('Auth check error:', error);
-        router.push('/auth');
+        if (!profileId) {
+          router.push('/auth');
+        }
       } finally {
         setIsAuthChecking(false);
       }
@@ -151,16 +165,17 @@ export default function UserDashboard() {
 
     checkAuth();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!session) {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (!profileId && event === 'SIGNED_OUT') {
         router.push('/auth');
       }
+      setIsAuthChecking(false);
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [router]);
+  }, [router, profileId]);
 
   // Show loading state while checking auth
   if (isAuthChecking || isProfileLoading) {
@@ -176,7 +191,7 @@ export default function UserDashboard() {
     return (
       <div className="p-4 sm:p-6">
         <div className="text-center bg-red-50 rounded-lg p-4 sm:p-6">
-          <p className="text-red-600 mb-3">Unable to load your profile</p>
+          <p className="text-red-600 mb-3">Unable to load profile</p>
           <button
             onClick={() => router.push('/auth')}
             className="px-3 py-1.5 sm:px-4 sm:py-2 bg-white border border-red-200 text-red-600 rounded-md hover:bg-red-50 transition-colors"
@@ -188,15 +203,26 @@ export default function UserDashboard() {
     );
   }
 
-  // If no profile is found, redirect to auth
+  // If no profile is found, show error
   if (!profile && !isProfileLoading) {
-    router.push('/auth');
-    return null;
+    return (
+      <div className="p-4 sm:p-6">
+        <div className="text-center bg-red-50 rounded-lg p-4 sm:p-6">
+          <p className="text-red-600 mb-3">Profile not found</p>
+          <button
+            onClick={() => router.push('/')}
+            className="px-3 py-1.5 sm:px-4 sm:py-2 bg-white border border-red-200 text-red-600 rounded-md hover:bg-red-50 transition-colors"
+          >
+            Back to Home
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
-      {/* Simplified Profile Header */}
+      {/* Profile Header */}
       <div className="flex items-center gap-4 mb-6">
         <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white text-xl font-semibold">
           {profile?.username?.[0]?.toUpperCase() || 'U'}
@@ -230,7 +256,7 @@ export default function UserDashboard() {
         bookmarkCount={profile?.bookmarks_count || 0}
       />
 
-      {/* Simplified Navigation and Content */}
+      {/* Navigation Tabs */}
       <nav className="border-b border-gray-100 p-1">
         <div className="flex gap-1">
           <TabButton 
@@ -245,12 +271,14 @@ export default function UserDashboard() {
           >
             Bookmarks
           </TabButton>
-          <TabButton 
-            active={activeTab === 'settings'} 
-            onClick={() => setActiveTab('settings')}
-          >
-            Settings
-          </TabButton>
+          {isOwnProfile && (
+            <TabButton 
+              active={activeTab === 'settings'} 
+              onClick={() => setActiveTab('settings')}
+            >
+              Settings
+            </TabButton>
+          )}
         </div>
       </nav>
 
@@ -261,8 +289,8 @@ export default function UserDashboard() {
         >
           <Suspense fallback={<TabSkeleton />}>
             {activeTab === 'reading' && <ReadingHistorySection userId={profile?.id} />}
-            {activeTab === 'bookmarks' && <Bookmarks userId={profile?.id} />}
-            {activeTab === 'settings' && <Settings profile={profile} />}
+            {activeTab === 'bookmarks' && <Bookmarks userId={profile?.id} isOwnProfile={isOwnProfile} />}
+            {isOwnProfile && activeTab === 'settings' && <Settings profile={profile} />}
           </Suspense>
         </ErrorBoundary>
       </div>

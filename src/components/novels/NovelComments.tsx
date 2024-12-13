@@ -4,6 +4,8 @@ import { formatRelativeDate } from '@/lib/utils';
 import toast from 'react-hot-toast';
 import supabase from '@/lib/supabaseClient';
 import type { NovelComment } from '@/types/database';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 interface SupabaseComment {
   id: string;
@@ -197,21 +199,19 @@ export const NovelComments = ({ novelId, isAuthenticated }: NovelCommentsProps) 
     <div className="space-y-6">
       {/* Comment Form */}
       <form onSubmit={handleSubmitComment} className="space-y-4">
-        <div>
-          <textarea
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            placeholder={isAuthenticated ? "Write a comment..." : "Please sign in to comment"}
-            disabled={!isAuthenticated || isSubmitting}
-            className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors disabled:bg-gray-50 disabled:text-gray-500"
-            rows={3}
-          />
-        </div>
+        <textarea
+          value={newComment}
+          onChange={(e) => setNewComment(e.target.value)}
+          placeholder={isAuthenticated ? "Write a comment..." : "Please sign in to comment"}
+          disabled={!isAuthenticated || isSubmitting}
+          className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500 disabled:bg-gray-50"
+          rows={3}
+        />
         <div className="flex justify-end">
-          <button
+          <Button
             type="submit"
             disabled={!isAuthenticated || isSubmitting || !newComment.trim()}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center gap-2"
+            className="flex items-center gap-2"
           >
             {isSubmitting ? (
               <>
@@ -224,86 +224,154 @@ export const NovelComments = ({ novelId, isAuthenticated }: NovelCommentsProps) 
                 Post Comment
               </>
             )}
-          </button>
+          </Button>
         </div>
       </form>
 
       {/* Comments List */}
       <div className="space-y-4">
         {comments.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <Icon icon="mdi:comment-text-outline" className="mx-auto text-4xl mb-2" />
-            <p>No comments yet. Be the first to comment!</p>
-          </div>
+          <EmptyComments />
         ) : (
           comments.map((comment) => (
-            <div key={comment.id} className="bg-white p-4 rounded-lg border">
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0">
-                  <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-                    <Icon icon="mdi:account" className="text-2xl text-gray-500" />
-                  </div>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-baseline justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-gray-900">
-                        {comment.profile.username || 'Anonymous'}
-                      </span>
-                      <span className="text-sm text-gray-500">
-                        {formatRelativeDate(comment.created_at)}
-                      </span>
-                    </div>
-                    {currentUserId === comment.profile_id && (
-                      <div className="flex gap-2">
-                        {editingCommentId === comment.id ? (
-                          <button
-                            onClick={() => handleSaveEdit(comment.id)}
-                            className="text-green-600 hover:text-green-700"
-                            title="Save"
-                          >
-                            <Icon icon="mdi:check" className="text-xl" />
-                          </button>
-                        ) : (
-                          <>
-                            <button
-                              onClick={() => handleEditComment(comment.id)}
-                              className="text-blue-600 hover:text-blue-700"
-                              title="Edit"
-                            >
-                              <Icon icon="mdi:pencil" className="text-xl" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteComment(comment.id)}
-                              className="text-red-600 hover:text-red-700"
-                              title="Delete"
-                            >
-                              <Icon icon="mdi:delete" className="text-xl" />
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  {editingCommentId === comment.id ? (
-                    <textarea
-                      aria-label="Edit comment"
-                      value={editedContent}
-                      onChange={(e) => setEditedContent(e.target.value)}
-                      className="w-full mt-2 p-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                      rows={3}
-                    />
-                  ) : (
-                    <p className="mt-1 text-gray-700 whitespace-pre-wrap break-words">
-                      {comment.content}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
+            <CommentItem
+              key={comment.id}
+              comment={comment}
+              currentUserId={currentUserId}
+              editingCommentId={editingCommentId}
+              editedContent={editedContent}
+              onEdit={handleEditComment}
+              onDelete={handleDeleteComment}
+              onSave={handleSaveEdit}
+              setEditedContent={setEditedContent}
+            />
           ))
         )}
       </div>
+    </div>
+  );
+};
+
+const EmptyComments = () => (
+  <div className="text-center py-8 text-gray-500">
+    <Icon icon="mdi:comment-text-outline" className="mx-auto text-4xl mb-2" />
+    <p>No comments yet. Be the first to comment!</p>
+  </div>
+);
+
+interface CommentItemProps {
+  comment: NovelComment;
+  currentUserId: string | null;
+  editingCommentId: string | null;
+  editedContent: string;
+  onEdit: (id: string) => void;
+  onDelete: (id: string) => void;
+  onSave: (id: string) => void;
+  setEditedContent: (content: string) => void;
+}
+
+const CommentItem = ({
+  comment,
+  currentUserId,
+  editingCommentId,
+  editedContent,
+  onEdit,
+  onDelete,
+  onSave,
+  setEditedContent
+}: CommentItemProps) => (
+  <div className="bg-white p-4 rounded-lg border">
+    <div className="flex items-start gap-3">
+      <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+        <Icon icon="mdi:account" className="text-2xl text-gray-500" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-baseline justify-between">
+          <div className="flex items-center gap-2">
+            <Link 
+              href={`/user-dashboard?id=${comment.profile_id}`}
+              className="font-medium hover:text-blue-600 transition-colors"
+            >
+              {comment.profile.username || 'Anonymous'}
+            </Link>
+            <span className="text-sm text-gray-500">
+              {formatRelativeDate(comment.created_at)}
+            </span>
+          </div>
+          <CommentActions
+            comment={comment}
+            currentUserId={currentUserId}
+            editingCommentId={editingCommentId}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            onSave={onSave}
+          />
+        </div>
+        {editingCommentId === comment.id ? (
+          <textarea
+            placeholder="Edit your comment..."
+            value={editedContent}
+            onChange={(e) => setEditedContent(e.target.value)}
+            className="w-full mt-2 p-2 border rounded-lg focus:ring-2 focus:ring-green-500"
+            rows={3}
+          />
+        ) : (
+          <p className="mt-1 text-gray-700 whitespace-pre-wrap break-words">
+            {comment.content}
+          </p>
+        )}
+      </div>
+    </div>
+  </div>
+);
+
+interface CommentActionsProps {
+  comment: NovelComment;
+  currentUserId: string | null;
+  editingCommentId: string | null;
+  onEdit: (id: string) => void;
+  onDelete: (id: string) => void;
+  onSave: (id: string) => void;
+}
+
+const CommentActions = ({
+  comment,
+  currentUserId,
+  editingCommentId,
+  onEdit,
+  onDelete,
+  onSave
+}: CommentActionsProps) => {
+  if (currentUserId !== comment.profile_id) return null;
+
+  return (
+    <div className="flex gap-2">
+      {editingCommentId === comment.id ? (
+        <button
+          onClick={() => onSave(comment.id)}
+          className="text-green-600 hover:text-green-700"
+          title="Save"
+        >
+          <Icon icon="mdi:check" className="text-xl" />
+        </button>
+      ) : (
+        <>
+          <button
+            onClick={() => onEdit(comment.id)}
+            className="text-blue-600 hover:text-blue-700"
+            title="Edit"
+          >
+            <Icon icon="mdi:pencil" className="text-xl" />
+          </button>
+          <button
+            onClick={() => onDelete(comment.id)}
+            className="text-red-600 hover:text-red-700"
+            title="Delete"
+          >
+            <Icon icon="mdi:delete" className="text-xl" />
+          </button>
+        </>
+      )}
     </div>
   );
 }; 
