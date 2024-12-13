@@ -70,59 +70,52 @@ async function verifyPayPalWebhook(req: Request) {
 
 async function processPayment(orderId: string, event: PayPalWebhookEvent) {
   try {
-    // Get custom data from the payment
+    console.log('5a. Starting processPayment');
+    
     const customId = event.resource.purchase_units[0]?.custom_id;
+    console.log('5b. Custom ID:', customId);
+    
     if (!customId) {
-      console.error('No custom ID found in payment');
       throw new Error('No custom ID found in payment');
     }
 
     const [userId, packageId] = customId.split(':');
-    console.log('Processing payment for:', { userId, packageId, orderId });
+    console.log('5c. Parsed IDs:', { userId, packageId });
 
-    const { data: coinPackage, error: fetchError } = await supabase
-      .from('coin_packages')
-      .select('coins')
-      .eq('id', packageId)
-      .single();
+    const coinPackage = coinPackages.find(pkg => pkg.id === parseInt(packageId));
+    console.log('5d. Coin package:', coinPackage);
 
-    if (fetchError || !coinPackage) {
-      console.error('Error fetching coin package:', fetchError);
+    if (!coinPackage) {
       throw new Error('Invalid package ID');
     }
 
-    console.log('Found coin package:', coinPackage);
-
-    // Update user's coin balance
-    const { error: transactionError } = await supabase.from('coin_transactions').insert({
-      user_id: userId,
-      amount: coinPackage.coins,
-      type: 'PURCHASE',
-      payment_id: orderId,
-      status: 'COMPLETED',
-    });
-
-    if (transactionError) {
-      console.error('Error inserting transaction:', transactionError);
-      throw transactionError;
-    }
-
-    console.log('Transaction recorded successfully');
-
-    // Update user's total coins using the correct function name
-    const { error: updateError } = await supabase.rpc('add_coins', {
+    const { data: rpcResult, error: updateError } = await supabase.rpc('add_coins', {
       coin_amount: coinPackage.coins,
       user_id: userId
     });
 
+    console.log('5e. Add coins result:', { data: rpcResult, error: updateError });
+
     if (updateError) {
-      console.error('Error updating user coins:', updateError);
       throw updateError;
     }
 
-    console.log('Coins updated successfully');
+    const { error: transactionError } = await supabase.from('coin_transactions').insert({
+      profileId: userId,
+      amount: coinPackage.coins,
+      type: 'PURCHASE',
+      orderId: orderId,
+    });
+
+    console.log('5f. Transaction recording result:', { error: transactionError });
+
+    if (transactionError) {
+      throw transactionError;
+    }
+
   } catch (error) {
-    console.error('Error in processPayment:', error);
+    console.error('ProcessPayment error:', error);
+    console.error('Full error details:', JSON.stringify(error, null, 2));
     throw error;
   }
 }
@@ -138,11 +131,25 @@ async function markTransactionStatus(orderId: string, status: 'COMPLETED' | 'PEN
   }
 }
 
+const coinPackages = [
+  { id: 1, coins: 10, price: 1 },
+  { id: 2, coins: 50, price: 5, popular: true },
+  { id: 3, coins: 100, price: 10 },
+  { id: 4, coins: 200, price: 20 },
+];
+
 export async function POST(req: Request) {
   try {
-    console.log('Received PayPal webhook');
+    console.log('1. Received PayPal webhook request');
+    
+    // Clone the request to read it twice
+    const clonedReq = req.clone();
+    const rawBody = await clonedReq.text();
+    console.log('2. Webhook raw body:', rawBody);
     
     const isValid = await verifyPayPalWebhook(req);
+    console.log('3. Webhook verification status:', isValid);
+    
     if (!isValid) {
       console.error('Invalid webhook signature');
       return NextResponse.json(
@@ -151,17 +158,22 @@ export async function POST(req: Request) {
       );
     }
 
-    const event: PayPalWebhookEvent = await req.json();
+    const event: PayPalWebhookEvent = JSON.parse(rawBody);
+    console.log('4. Parsed webhook event:', {
+      eventType: event.event_type,
+      orderId: event.resource.id,
+      purchaseUnits: event.resource.purchase_units
+    });
+
     const eventType = event.event_type;
     const orderId = event.resource.id;
-
-    console.log('Processing webhook event:', { eventType, orderId });
 
     // Handle different PayPal webhook events
     switch (eventType) {
       case 'PAYMENT.CAPTURE.COMPLETED':
+        console.log('5. Starting payment processing');
         await processPayment(orderId, event);
-        console.log('Payment processed successfully');
+        console.log('6. Payment processed successfully');
         break;
       
       case 'PAYMENT.CAPTURE.PENDING':
@@ -188,9 +200,11 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ received: true });
   } catch (error) {
-    console.error('Webhook error:', error);
+    console.error('Webhook processing error:', error);
+    // Log the full error object
+    console.error('Full error details:', JSON.stringify(error, null, 2));
     return NextResponse.json(
-      { error: 'Webhook processing failed' },
+      { error: 'Webhook processing failed', details: error },
       { status: 500 }
     );
   }
