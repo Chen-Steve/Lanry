@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Icon } from '@iconify/react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
 import { PayPalButtons } from "@paypal/react-paypal-js";
 import { useAuth } from '@/hooks/useAuth';
 import { useStreak } from '@/hooks/useStreak';
+import { usePayPalScriptReducer } from "@paypal/react-paypal-js";
 
 interface CoinPackage {
   id: number;
@@ -27,6 +28,16 @@ export default function ShopPage() {
   const { userProfile } = useStreak(userId);
   const queryClient = useQueryClient();
   const [selectedPackage, setSelectedPackage] = useState<CoinPackage | null>(null);
+  const [{ isPending, isInitial, isRejected, isResolved }] = usePayPalScriptReducer();
+
+  useEffect(() => {
+    console.log('PayPal Script Status:', {
+      isPending,
+      isInitial,
+      isRejected,
+      isResolved
+    });
+  }, [isPending, isInitial, isRejected, isResolved]);
 
   const handlePurchaseClick = async (pkg: CoinPackage) => {
     if (!isAuthenticated) {
@@ -60,38 +71,48 @@ export default function ShopPage() {
             </p>
             
             <div className="space-y-3">
-              <PayPalButtons
-                createOrder={(data, actions) => {
-                  return actions.order.create({
-                    intent: "CAPTURE",
-                    purchase_units: [{
-                      amount: {
-                        value: selectedPackage.price.toString(),
-                        currency_code: "USD"
-                      },
-                      custom_id: `${userId}:${selectedPackage.id}`
-                    }]
-                  });
-                }}
-                onApprove={async (data, actions) => {
-                  if (actions.order) {
-                    const order = await actions.order.capture();
-                    if (order.id) {
-                      toast.loading('Processing your payment...');
-                      toast.success('Payment successful! Your coins will be added shortly.');
-                      setSelectedPackage(null);
-                      setTimeout(() => {
-                        queryClient.invalidateQueries({ queryKey: ['userProfile'] });
-                      }, 2000);
+              {isPending ? (
+                <div className="flex justify-center items-center py-4">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
+                </div>
+              ) : (
+                <PayPalButtons
+                  createOrder={(data, actions) => {
+                    return actions.order.create({
+                      intent: "CAPTURE",
+                      purchase_units: [{
+                        amount: {
+                          value: selectedPackage.price.toString(),
+                          currency_code: "USD"
+                        },
+                        custom_id: `${userId}:${selectedPackage.id}`
+                      }]
+                    });
+                  }}
+                  onApprove={async (data, actions) => {
+                    if (actions.order) {
+                      const order = await actions.order.capture();
+                      if (order.id) {
+                        toast.loading('Processing your payment...');
+                        toast.success('Payment successful! Your coins will be added shortly.');
+                        setSelectedPackage(null);
+                        setTimeout(() => {
+                          queryClient.invalidateQueries({ queryKey: ['userProfile'] });
+                        }, 2000);
+                      }
                     }
-                  }
-                }}
-                onError={(err) => {
-                  console.error('PayPal error:', err);
-                  toast.error('Payment failed. Please try again.');
-                }}
-                style={{ layout: "horizontal" }}
-              />
+                  }}
+                  onError={(err) => {
+                    console.error('PayPal error:', err);
+                    toast.error('Payment failed. Please try again.');
+                  }}
+                  style={{ 
+                    layout: "horizontal",
+                    height: 48,
+                  }}
+                  disabled={false}
+                />
+              )}
 
               <button
                 onClick={() => setSelectedPackage(null)}

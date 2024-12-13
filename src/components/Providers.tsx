@@ -36,6 +36,20 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const supabase = createClientComponentClient();
 
+  const paypalClientId = process.env.PAYPAL_SANDBOX_CLIENT_ID;
+
+  if (!paypalClientId) {
+    console.error('PayPal Client ID is not configured');
+  }
+
+  const paypalInitialOptions = {
+    clientId: process.env.NEXT_PUBLIC_PAYPAL_SANDBOX_CLIENT_ID!,
+    currency: "USD",
+    intent: "capture",
+    "enable-funding": "paypal",
+    "disable-funding": "credit,card",
+  };
+
   useEffect(() => {
     const initializeAuth = async () => {
       try {
@@ -90,10 +104,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   return (
     <>
       <Analytics />
-      <PayPalScriptProvider options={{
-        clientId: process.env.NEXT_PUBLIC_PAYPAL_SANDBOX_CLIENT_ID!,
-        currency: "USD"
-      }}>
+      <PayPalScriptProvider options={paypalInitialOptions}>
         <SupabaseContext.Provider value={{ supabase, user }}>
           <QueryClientProvider client={queryClient}>
             {children}
