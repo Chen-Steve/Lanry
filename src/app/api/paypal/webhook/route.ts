@@ -89,33 +89,32 @@ async function processPayment(orderId: string, event: PayPalWebhookEvent) {
       throw new Error('Invalid package ID');
     }
 
-    const { data: rpcResult, error: updateError } = await supabase.rpc('add_coins', {
-      coin_amount: coinPackage.coins,
-      user_id: userId.toString()
-    });
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .update({ 
+        coins: supabase.rpc('add_coins', {
+          coin_amount: coinPackage.coins,
+          user_id: userId
+        }),
+        updatedAt: new Date().toISOString()
+      })
+      .eq('id', userId)
+      .select('coins');
 
-    console.log('5e. Add coins call details:', {
-      coin_amount: coinPackage.coins,
-      user_id: userId.toString(),
-      userIdType: typeof userId,
-      result: rpcResult,
-      error: updateError ? {
-        message: updateError.message,
-        details: updateError.details,
-        hint: updateError.hint
-      } : null
-    });
+    console.log('5e. Profile update result:', { data: profileData, error: profileError });
 
-    if (updateError) {
-      throw updateError;
+    if (profileError) {
+      throw profileError;
     }
 
-    const { error: transactionError } = await supabase.from('coin_transactions').insert({
-      profileId: userId,
-      amount: coinPackage.coins,
-      type: 'PURCHASE',
-      orderId: orderId,
-    });
+    const { error: transactionError } = await supabase
+      .from('coin_transactions')
+      .insert({
+        profileId: userId,
+        amount: coinPackage.coins,
+        type: 'PURCHASE',
+        orderId: orderId
+      });
 
     console.log('5f. Transaction recording result:', { error: transactionError });
 
