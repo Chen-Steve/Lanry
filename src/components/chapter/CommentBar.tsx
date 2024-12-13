@@ -85,9 +85,18 @@ export default function CommentBar({
             {comments.map((comment) => (
               <div key={comment.id} className="bg-gray-50 rounded-lg p-3">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-black">
-                    {comment.profile?.username ?? 'Anonymous'}
-                  </span>
+                  {comment.profile?.username ? (
+                    <Link 
+                      href={`/user-dashboard?id=${comment.profile_id}`}
+                      className="text-sm font-medium text-black hover:text-blue-600 transition-colors"
+                    >
+                      {comment.profile.username}
+                    </Link>
+                  ) : (
+                    <span className="text-sm font-medium text-black">
+                      Anonymous
+                    </span>
+                  )}
                   <span className="text-xs text-gray-600">
                     {formatDate(comment.created_at)}
                   </span>
