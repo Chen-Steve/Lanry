@@ -91,20 +91,26 @@ export default function ShopPage() {
                   }}
                   onApprove={async (data, actions) => {
                     if (actions.order) {
-                      const order = await actions.order.capture();
-                      if (order.id) {
-                        toast.loading('Processing your payment...');
-                        toast.success('Payment successful! Your coins will be added shortly.');
-                        setSelectedPackage(null);
-                        setTimeout(() => {
-                          queryClient.invalidateQueries({ queryKey: ['userProfile'] });
-                        }, 2000);
+                      try {
+                        const order = await actions.order.capture();
+                        if (order.status === 'COMPLETED') {
+                          toast.success('Payment successful! Adding coins to your account...');
+                          await queryClient.invalidateQueries({ queryKey: ['userProfile'] });
+                          setSelectedPackage(null);
+                        } else {
+                          toast.error('Payment was not completed successfully');
+                          console.error('Payment status:', order.status);
+                        }
+                      } catch (error) {
+                        console.error('Payment capture error:', error);
+                        toast.error('There was an error processing your payment');
                       }
                     }
                   }}
                   onError={(err) => {
                     console.error('PayPal error:', err);
                     toast.error('Payment failed. Please try again.');
+                    setSelectedPackage(null);
                   }}
                   style={{ 
                     layout: "horizontal",
