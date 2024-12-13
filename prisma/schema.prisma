@@ -26,6 +26,8 @@ model Novel {
   status         NovelStatus
   bookmarkCount  Int       @default(0) @map("bookmark_count")
   views          Int       @default(0)
+  rating         Float     @default(0) @map("rating")
+  ratingCount    Int       @default(0) @map("rating_count")
   chapters       Chapter[]
   bookmarks      Bookmark[]
   readingHistory ReadingHistory[]
@@ -34,11 +36,13 @@ model Novel {
   novelComments  NovelComment[]
   authorProfile  Profile?    @relation("NovelAuthor", fields: [authorProfileId], references: [id])
   authorProfileId  String?     @map("author_profile_id")
+  ratings       NovelRating[]
 
   @@index([title])
   @@index([author])
   @@index([bookmarkCount])
   @@index([views])
+  @@index([rating])
   @@index([authorProfileId])
   @@map("novels")
 }
@@ -87,6 +91,7 @@ model Profile {
   forumVotes         ForumVote[]
   novelRequests      NovelRequest[]
   novelRequestVotes  NovelRequestVote[]
+  novelRatings       NovelRating[]
 
   @@map("profiles")
 }
@@ -296,6 +301,22 @@ model ReadingTime {
   profileId       String   @unique @map("profile_id")
 
   @@map("reading_time")
+}
+
+model NovelRating {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  rating    Int      @db.SmallInt
+  profile   Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  profileId String   @map("profile_id")
+  novel     Novel    @relation(fields: [novelId], references: [id], onDelete: Cascade)
+  novelId   String   @map("novel_id")
+
+  @@unique([profileId, novelId])
+  @@index([novelId])
+  @@index([profileId])
+  @@map("novel_ratings")
 }
 
 enum NovelStatus {

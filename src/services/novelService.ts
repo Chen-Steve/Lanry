@@ -27,6 +27,10 @@ export async function getNovel(id: string, userId?: string): Promise<Novel | nul
         chapter_unlocks!left (
           chapter_number,
           profile_id
+        ),
+        novel_ratings!left (
+          rating,
+          profile_id
         )
       `)
       .eq(isNumericId ? 'id' : 'slug', isNumericId ? Number(id) : id)
@@ -45,6 +49,11 @@ export async function getNovel(id: string, userId?: string): Promise<Novel | nul
         ) : false
     })).sort((a: Chapter, b: Chapter) => a.chapter_number - b.chapter_number);
 
+    // Get user's rating if they're logged in
+    const userRating = userId && data.novel_ratings 
+      ? data.novel_ratings.find((r: { profile_id: string }) => r.profile_id === userId)?.rating 
+      : undefined;
+
     return {
       ...data,
       translator: data.translator ? {
@@ -53,10 +62,13 @@ export async function getNovel(id: string, userId?: string): Promise<Novel | nul
       coverImageUrl: data.cover_image_url,
       bookmarkCount: data.bookmarks?.length ?? 0,
       isBookmarked: userId ? data.bookmarks?.some((b: { profile_id: string }) => b.profile_id === userId) ?? false : false,
-      chapters
+      chapters,
+      userRating,
+      rating: data.rating || 0,
+      ratingCount: data.rating_count || 0
     };
   } catch (error) {
-    console.error('Detailed error in getNovel:', error);
+    console.error('Error fetching novel:', error);
     return null;
   }
 }

@@ -183,6 +183,9 @@ export default function NovelPage({ params }: { params: { id: string } }) {
         novelId={novel.id}
         userProfile={userProfile}
         novelAuthorId={novel.author_profile_id}
+        rating={novel.rating}
+        ratingCount={novel.ratingCount}
+        userRating={novel.userRating}
       />
     </div>
   );

@@ -26,7 +26,10 @@ export interface Novel {
   chapters: Chapter[];
   bookmarkCount: number;
   views: number;
+  rating: number;
+  ratingCount: number;
   isBookmarked?: boolean;
+  userRating?: number;
   chapterUnlocks?: ChapterUnlock[];
   author_profile_id: string;
   translator_id?: string;
@@ -189,4 +192,15 @@ export interface NovelComment {
   profile: {
     username: string | null;
   };
+}
+
+export interface NovelRating {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  rating: number;
+  profile_id: string;
+  novel_id: string;
+  profile?: UserProfile;
+  novel?: Novel;
 } 
