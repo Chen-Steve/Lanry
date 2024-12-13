@@ -91,10 +91,20 @@ async function processPayment(orderId: string, event: PayPalWebhookEvent) {
 
     const { data: rpcResult, error: updateError } = await supabase.rpc('add_coins', {
       coin_amount: coinPackage.coins,
-      user_id: userId
+      user_id: userId.toString()
     });
 
-    console.log('5e. Add coins result:', { data: rpcResult, error: updateError });
+    console.log('5e. Add coins call details:', {
+      coin_amount: coinPackage.coins,
+      user_id: userId.toString(),
+      userIdType: typeof userId,
+      result: rpcResult,
+      error: updateError ? {
+        message: updateError.message,
+        details: updateError.details,
+        hint: updateError.hint
+      } : null
+    });
 
     if (updateError) {
       throw updateError;
