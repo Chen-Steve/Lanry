@@ -29,7 +29,8 @@
     "react-dom": "^18.2.0",
     "react-error-boundary": "^4.1.2",
     "react-hot-toast": "^2.4.1",
-    "react-use": "^17.5.1"
+    "react-use": "^17.5.1",
+    "slonik": "^46.2.0"
   },
   "devDependencies": {
     "@types/lodash": "^4.17.13",

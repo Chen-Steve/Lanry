@@ -6,7 +6,8 @@ import supabase from '@/lib/supabaseClient';
 import { Icon } from '@iconify/react';
 import { useQuery } from '@tanstack/react-query';
 import { ErrorBoundary } from 'react-error-boundary';
-import Link from 'next/link';
+import StatusSection from '@/components/dashboard/StatusSection';
+import { calculateLevel } from '@/lib/utils';
 
 // Lazy load components with proper error handling
 const ReadingHistorySection = lazy(() => 
@@ -60,20 +61,19 @@ const ErrorFallback = ({ error, resetErrorBoundary }: {
 
 type DashboardTab = 'reading' | 'bookmarks' | 'settings';
 
-// Update TabButton for better mobile experience
 const TabButton = ({ 
   active, 
   onClick, 
   children 
 }: { 
   active: boolean; 
-  onClick: () => void; 
+  onClick: () => void;
   children: React.ReactNode;
 }) => (
   <button
     onClick={onClick}
     className={`
-      min-w-[80px] px-3 py-1.5 sm:px-4 sm:py-2 text-sm rounded-md transition-colors
+      px-3 py-1.5 text-sm rounded-md transition-colors
       ${active 
         ? 'bg-blue-50 text-blue-600 font-medium' 
         : 'text-gray-600 hover:bg-gray-50'
@@ -96,14 +96,39 @@ export default function UserDashboard() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
 
-      const { data: profile, error } = await supabase
+      // Fetch profile with bookmarks and reading history counts
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('*, coins, created_at')
+        .select(`
+          *,
+          coins,
+          created_at,
+          current_streak,
+          bookmarks!inner(count),
+          reading_history!inner(count)
+        `)
         .eq('id', user.id)
         .single();
 
-      if (error) throw error;
-      return profile;
+      if (profileError) throw profileError;
+
+      // Fetch reading time
+      const { data: readingTimeData, error: readingTimeError } = await supabase
+        .from('reading_time')
+        .select('total_minutes')
+        .eq('profile_id', user.id)
+        .single();
+
+      if (readingTimeError && readingTimeError.code !== 'PGRST116') {
+        throw readingTimeError;
+      }
+
+      return {
+        ...profile,
+        reading_time: readingTimeData || { total_minutes: 0 },
+        bookmarks_count: profile.bookmarks[0]?.count || 0,
+        stories_read: profile.reading_history[0]?.count || 0
+      };
     },
     retry: 1,
     staleTime: 30000,
@@ -171,60 +196,67 @@ export default function UserDashboard() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl">
-      {/* Profile Header */}
-      <div className="bg-white p-4 sm:p-6 border-b">
-        <div className="flex items-center gap-3 sm:gap-4">
-          <div className="flex-grow">
-            <div className="flex items-center gap-3">
-              <h1 className="text-lg sm:text-xl font-semibold text-gray-900">
-                {profile?.username || 'User'}
-              </h1>
-              <Link 
-                href="/shop" 
-                className="flex items-center gap-1 bg-amber-50 px-2 py-1 rounded-full hover:bg-amber-100 transition-colors cursor-pointer"
-              >
-                <Icon icon="ph:coin" className="w-4 h-4 text-amber-500" />
-                <span className="text-sm text-amber-600 font-medium">
-                  {profile?.coins || 0}
-                </span>
-              </Link>
+    <div className="max-w-5xl mx-auto px-4 py-6">
+      {/* Simplified Profile Header */}
+      <div className="flex items-center gap-4 mb-6">
+        <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white text-xl font-semibold">
+          {profile?.username?.[0]?.toUpperCase() || 'U'}
+        </div>
+        <div className="flex-grow">
+          <h1 className="text-xl font-bold text-gray-900 mb-2">
+            {profile?.username || 'User'}
+          </h1>
+          <div className="flex gap-2">
+            <div className="flex items-center gap-1.5 bg-amber-50 px-2.5 py-1 rounded-md">
+              <Icon icon="ph:coin-fill" className="w-4 h-4 text-amber-500" />
+              <span className="text-sm text-amber-700 font-medium">{profile?.coins || 0}</span>
             </div>
-            <p className="text-xs sm:text-sm text-gray-500">
-              Member since {new Date(profile?.created_at).toLocaleDateString()}
-            </p>
+            <div className="flex items-center gap-1.5 bg-blue-50 px-2.5 py-1 rounded-md">
+              <Icon icon="heroicons:star" className="w-4 h-4 text-blue-500" />
+              <span className="text-sm text-blue-700 font-medium">Level {calculateLevel(profile?.reading_time?.total_minutes || 0)}</span>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Navigation and Content */}
-      <div className="bg-white">
-        <div className="border-b">
-          <nav className="p-2 sm:p-3 overflow-x-auto scrollbar-hide">
-            <div className="flex gap-2 min-w-min">
-              <TabButton 
-                active={activeTab === 'reading'} 
-                onClick={() => setActiveTab('reading')}
-              >
-                Recent Reads
-              </TabButton>
-              <TabButton 
-                active={activeTab === 'bookmarks'} 
-                onClick={() => setActiveTab('bookmarks')}
-              >
-                Bookmarks
-              </TabButton>
-              <TabButton 
-                active={activeTab === 'settings'} 
-                onClick={() => setActiveTab('settings')}
-              >
-                Settings
-              </TabButton>
-            </div>
-          </nav>
-        </div>
+      {/* Status Section */}
+      <StatusSection 
+        readingStreak={profile?.current_streak || 0}
+        totalReadingTime={profile?.reading_time?.total_minutes || 0}
+        joinedDate={new Date(profile?.created_at).toLocaleDateString('en-US', { 
+          month: 'long',
+          year: 'numeric'
+        })}
+        storiesRead={profile?.stories_read || 0}
+        bookmarkCount={profile?.bookmarks_count || 0}
+      />
 
-        <div className="p-3 sm:p-4">
+      {/* Simplified Navigation and Content */}
+      <div className="bg-white rounded-lg border border-gray-100">
+        <nav className="border-b border-gray-100 p-1">
+          <div className="flex gap-1">
+            <TabButton 
+              active={activeTab === 'reading'} 
+              onClick={() => setActiveTab('reading')}
+            >
+              Recent Reads
+            </TabButton>
+            <TabButton 
+              active={activeTab === 'bookmarks'} 
+              onClick={() => setActiveTab('bookmarks')}
+            >
+              Bookmarks
+            </TabButton>
+            <TabButton 
+              active={activeTab === 'settings'} 
+              onClick={() => setActiveTab('settings')}
+            >
+              Settings
+            </TabButton>
+          </div>
+        </nav>
+
+        <div className="p-4">
           <ErrorBoundary
             FallbackComponent={ErrorFallback}
             onReset={() => setActiveTab('reading')}

@@ -132,4 +132,14 @@ export const formatForumDateTime = (date: string | Date) => {
       year: 'numeric'
     }) + ` at ${timeStr}`;
   }
+};
+
+export const calculateLevel = (totalMinutes: number): number => {
+  // Each level requires progressively more time
+  // Level 1: 0-60 minutes (1 hour)
+  // Level 2: 61-180 minutes (3 hours)
+  // Level 3: 181-360 minutes (6 hours)
+  // And so on...
+  if (totalMinutes <= 60) return 1;
+  return Math.floor(Math.log2(totalMinutes / 60) + 2);
 }; 

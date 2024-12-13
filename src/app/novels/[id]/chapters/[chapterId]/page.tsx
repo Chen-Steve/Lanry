@@ -189,6 +189,22 @@ const updateReadingHistory = async (
   }
 };
 
+// Add a function to update reading time
+const updateReadingTime = async (minutes: number) => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+
+  // First try to update existing record
+  const { error: updateError } = await supabase.rpc('increment_reading_time', {
+    user_id: user.id,
+    minutes_to_add: minutes
+  });
+
+  if (updateError) {
+    console.error('Error updating reading time:', updateError);
+  }
+};
+
 export default function ChapterPage({ params }: { params: { id: string; chapterId: string } }) {
   const { id: novelId, chapterId } = params;
   const [chapter, setChapter] = useState<ChapterWithNovel | null>(null);
@@ -268,6 +284,33 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
       updateReadingHistory(novelId, chapter.chapter_number);
     }
   }, [novelId, chapter]);
+
+  // Add useEffect to track reading time
+  useEffect(() => {
+    let startTime = Date.now();
+    let timeoutId: NodeJS.Timeout;
+
+    // Update reading time every 5 minutes
+    const trackReadingTime = () => {
+      const elapsedMinutes = Math.floor((Date.now() - startTime) / (1000 * 60));
+      if (elapsedMinutes >= 1) {
+        updateReadingTime(elapsedMinutes);
+        startTime = Date.now(); // Reset start time
+      }
+      timeoutId = setTimeout(trackReadingTime, 5 * 60 * 1000); // Check every 5 minutes
+    };
+
+    timeoutId = setTimeout(trackReadingTime, 5 * 60 * 1000);
+
+    return () => {
+      clearTimeout(timeoutId);
+      // Save remaining time when component unmounts
+      const finalMinutes = Math.floor((Date.now() - startTime) / (1000 * 60));
+      if (finalMinutes >= 1) {
+        updateReadingTime(finalMinutes);
+      }
+    };
+  }, []);
 
   const handleChapterSelect = (chapterNum: number) => {
     window.location.href = `/novels/${novelId}/chapters/c${chapterNum}`;

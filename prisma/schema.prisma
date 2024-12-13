@@ -75,6 +75,7 @@ model Profile {
   role               UserRole  @default(USER)
   bookmarks          Bookmark[]
   readingHistory     ReadingHistory[]
+  readingTime        ReadingTime?
   chapterComments    ChapterComment[]
   novelComments      NovelComment[]
   coins              Int       @default(0)
@@ -284,6 +285,17 @@ model NovelComment {
   @@index([novelId])
   @@index([createdAt])
   @@map("novel_comments")
+}
+
+model ReadingTime {
+  id              String   @id @default(uuid())
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  totalMinutes    Int      @default(0) @map("total_minutes")
+  profile         Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  profileId       String   @unique @map("profile_id")
+
+  @@map("reading_time")
 }
 
 enum NovelStatus {

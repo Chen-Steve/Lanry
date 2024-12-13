@@ -59,6 +59,9 @@ export default function ShopPage() {
             Current Balance: {userProfile?.coins || 0} coins
           </span>
         </div>
+        <p className="mt-3 text-gray-600 italic">
+          We are working on getting the coins feature implemented
+        </p>
       </div>
 
       {/* Purchase Modal */}
@@ -161,15 +164,17 @@ export default function ShopPage() {
 
             <button
               onClick={() => handlePurchaseClick(pkg)}
+              disabled
               className={`
                 w-full py-2 px-4 rounded-md font-medium
                 ${pkg.popular 
-                  ? 'bg-amber-500 hover:bg-amber-600 text-white' 
-                  : 'bg-gray-100 hover:bg-gray-200 text-gray-800'}
+                  ? 'bg-amber-300 cursor-not-allowed text-white' 
+                  : 'bg-gray-100 cursor-not-allowed text-gray-400'}
                 transition-colors
               `}
+              title="PayPal integration coming soon!"
             >
-              Purchase
+              Coming Soon
             </button>
           </div>
         ))}
