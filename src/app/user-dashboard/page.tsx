@@ -9,7 +9,6 @@ import { ErrorBoundary } from 'react-error-boundary';
 import StatusSection from '@/components/dashboard/StatusSection';
 import { calculateLevel } from '@/lib/utils';
 
-// Lazy load components with proper error handling
 const ReadingHistorySection = lazy(() => 
   import('@/components/dashboard/ReadingHistory').catch(() => {
     console.error('Failed to load ReadingHistory component');
@@ -232,42 +231,40 @@ export default function UserDashboard() {
       />
 
       {/* Simplified Navigation and Content */}
-      <div className="bg-white rounded-lg border border-gray-100">
-        <nav className="border-b border-gray-100 p-1">
-          <div className="flex gap-1">
-            <TabButton 
-              active={activeTab === 'reading'} 
-              onClick={() => setActiveTab('reading')}
-            >
-              Recent Reads
-            </TabButton>
-            <TabButton 
-              active={activeTab === 'bookmarks'} 
-              onClick={() => setActiveTab('bookmarks')}
-            >
-              Bookmarks
-            </TabButton>
-            <TabButton 
-              active={activeTab === 'settings'} 
-              onClick={() => setActiveTab('settings')}
-            >
-              Settings
-            </TabButton>
-          </div>
-        </nav>
-
-        <div className="p-4">
-          <ErrorBoundary
-            FallbackComponent={ErrorFallback}
-            onReset={() => setActiveTab('reading')}
+      <nav className="border-b border-gray-100 p-1">
+        <div className="flex gap-1">
+          <TabButton 
+            active={activeTab === 'reading'} 
+            onClick={() => setActiveTab('reading')}
           >
-            <Suspense fallback={<TabSkeleton />}>
-              {activeTab === 'reading' && <ReadingHistorySection userId={profile?.id} />}
-              {activeTab === 'bookmarks' && <Bookmarks userId={profile?.id} />}
-              {activeTab === 'settings' && <Settings profile={profile} />}
-            </Suspense>
-          </ErrorBoundary>
+            Recent Reads
+          </TabButton>
+          <TabButton 
+            active={activeTab === 'bookmarks'} 
+            onClick={() => setActiveTab('bookmarks')}
+          >
+            Bookmarks
+          </TabButton>
+          <TabButton 
+            active={activeTab === 'settings'} 
+            onClick={() => setActiveTab('settings')}
+          >
+            Settings
+          </TabButton>
         </div>
+      </nav>
+
+      <div className={activeTab === 'settings' ? 'p-4' : ''}>
+        <ErrorBoundary
+          FallbackComponent={ErrorFallback}
+          onReset={() => setActiveTab('reading')}
+        >
+          <Suspense fallback={<TabSkeleton />}>
+            {activeTab === 'reading' && <ReadingHistorySection userId={profile?.id} />}
+            {activeTab === 'bookmarks' && <Bookmarks userId={profile?.id} />}
+            {activeTab === 'settings' && <Settings profile={profile} />}
+          </Suspense>
+        </ErrorBoundary>
       </div>
     </div>
   );
