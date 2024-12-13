@@ -43,7 +43,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   }
 
   const paypalInitialOptions = {
-    clientId: process.env.NEXT_PUBLIC_PAYPAL_SANDBOX_CLIENT_ID!,
+    clientId: process.env.PAYPAL_SANDBOX_CLIENT_ID!,
     currency: "USD",
     intent: "capture",
     "enable-funding": "paypal",
