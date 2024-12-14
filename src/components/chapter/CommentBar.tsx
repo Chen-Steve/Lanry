@@ -55,6 +55,7 @@ export default function CommentBar({
   return createPortal(
     <AnimatePresence>
       <motion.div
+        key="overlay"
         initial={{ opacity: 0 }}
         animate={{ opacity: 0.5 }}
         exit={{ opacity: 0 }}
@@ -62,6 +63,7 @@ export default function CommentBar({
         onClick={onClose}
       />
       <motion.div
+        key="sidebar"
         ref={barRef}
         initial={{ x: '100%' }}
         animate={{ x: 0 }}

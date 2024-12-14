@@ -89,7 +89,7 @@ export default function ChapterContent({
           const paragraphComments = comments[paragraphId] || [];
           
           return (
-            <div key={index} className="relative group">
+            <div key={`${chapterNumber}-${paragraphId}`} className="relative group">
               <div className="relative">
                 <div 
                   id={paragraphId}
