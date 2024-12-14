@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import ForumCategories from '@/components/forum/ForumCategories';
+import ForumCategories from '@/app/forum/_components/ForumCategories';
 import { prisma } from '@/lib/prisma';
 import type { CategoryBasicInfo } from '@/types/database';
 

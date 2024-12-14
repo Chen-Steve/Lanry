@@ -3,11 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import supabase from '@/lib/supabaseClient';
-import NovelUploadForm from '@/components/author-dashboard/NovelUploadForm';
-import ChapterManagementForm from '@/components/author-dashboard/ChapterManagementForm';
-import ChapterPurchaseHistory from '@/components/author-dashboard/ChapterPurchaseHistory';
-import NovelStatistics from '@/components/author-dashboard/NovelStatistics';
-import TranslatorLinks from '@/components/author-dashboard/TranslatorLinks';
+import NovelUploadForm from '@/app/author/_components/NovelUploadForm';
+import ChapterManagementForm from '@/app/author/_components/ChapterManagementForm';
+import ChapterPurchaseHistory from '@/app/author/_components/ChapterPurchaseHistory';
+import NovelStatistics from '@/app/author/_components/NovelStatistics';
+import TranslatorLinks from '@/app/author/_components/TranslatorLinks';
 import { Icon } from '@iconify/react';
 
 export default function AuthorDashboard() {

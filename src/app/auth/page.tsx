@@ -4,8 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import supabase from '@/lib/supabaseClient';
 import { generateUsername } from '@/utils/username';
-import { LoadingSpinner } from '@/components/auth/LoadingSpinner';
-import { PasswordInput } from '@/components/auth/PasswordInput';
+import { LoadingSpinner } from '@/app/auth/_components/LoadingSpinner';
+import { PasswordInput } from '@/app/auth/_components/PasswordInput';
 
 type AuthMode = 'signin' | 'signup';
 

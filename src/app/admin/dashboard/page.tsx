@@ -3,9 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import supabase from '@/lib/supabaseClient';
-import NovelUploadForm from '@/components/admin-dashboard/NovelUploadForm';
-import ChapterManagementForm from '@/components/admin-dashboard/ChapterManagementForm';
-import RoleManagement from '@/components/admin-dashboard/RoleManagement';
+import NovelUploadForm from '@/app/admin/_components/NovelUploadForm';
+import ChapterManagementForm from '@/app/admin/_components/ChapterManagementForm';
+import RoleManagement from '@/app/admin/_components/RoleManagement';
 import { Icon } from '@iconify/react';
 
 export default function AdminDashboard() {

@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import ThreadDetail from '@/components/forum/ThreadDetail';
+import ThreadDetail from '@/app/forum/_components/ThreadDetail';
 
 export const metadata: Metadata = {
   title: 'Thread | Novel Reading Platform',

@@ -6,25 +6,25 @@ import supabase from '@/lib/supabaseClient';
 import { Icon } from '@iconify/react';
 import { useQuery } from '@tanstack/react-query';
 import { ErrorBoundary } from 'react-error-boundary';
-import StatusSection from '@/components/dashboard/StatusSection';
+import StatusSection from '@/app/user-dashboard/_components/StatusSection';
 import { calculateLevel } from '@/lib/utils';
 
 const ReadingHistorySection = lazy(() => 
-  import('@/components/dashboard/ReadingHistory').catch(() => {
+  import('@/app/user-dashboard/_components/ReadingHistory').catch(() => {
     console.error('Failed to load ReadingHistory component');
     return { default: () => <div>Failed to load reading history</div> };
   })
 );
 
 const Bookmarks = lazy(() => 
-  import('@/components/dashboard/Bookmarks').catch(() => {
+  import('@/app/user-dashboard/_components/Bookmarks').catch(() => {
     console.error('Failed to load Bookmarks component');
     return { default: () => <div>Failed to load bookmarks</div> };
   })
 );
 
 const Settings = lazy(() => 
-  import('@/components/dashboard/Settings').catch(() => {
+  import('@/app/user-dashboard/_components/Settings').catch(() => {
     console.error('Failed to load Settings component');
     return { default: () => <div>Failed to load settings</div> };
   })

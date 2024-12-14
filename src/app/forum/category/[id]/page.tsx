@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import ThreadList from '@/components/forum/ThreadList';
+import ThreadList from '@/app/forum/_components/ThreadList';
 import Link from 'next/link';
 import supabase from '@/lib/supabaseClient';
 import { User } from '@supabase/auth-helpers-nextjs';
