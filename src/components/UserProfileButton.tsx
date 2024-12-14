@@ -62,16 +62,16 @@ const UserProfileButton = ({
           </div>
         </button>
         {isProfileDropdownOpen && (
-          <div className="bg-gray-50 py-1">
+          <div className="bg-[#F7F4ED] py-1">
             <Link
               href="/user-dashboard"
-              className="block px-4 py-2 text-sm text-gray-700 border-b border-gray-200 hover:bg-gray-100"
+              className="block px-4 py-2 text-sm text-gray-700 border-b border-amber-200 hover:bg-[#F2EEE5] transition-colors"
               onClick={onMenuClose}
             >
               {userProfile?.username}
             </Link>
-            <div className="px-4 py-2 text-sm text-gray-600 border-b border-gray-200 flex items-center gap-2">
-              <Icon icon="mdi:fire" className={`${userProfile?.current_streak ? 'text-orange-500' : 'text-gray-400'}`} />
+            <div className="px-4 py-2 text-sm text-gray-600 border-b border-amber-200 flex items-center gap-2">
+              <Icon icon="mdi:fire" className={`${userProfile?.current_streak ? 'text-amber-600' : 'text-gray-400'}`} />
               <span>
                 {userProfile?.current_streak || 0} day
                 {(userProfile?.current_streak || 0) !== 1 ? 's' : ''} streak
@@ -80,7 +80,7 @@ const UserProfileButton = ({
             <button
               type="button"
               onClick={onSignOut}
-              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-[#F2EEE5] transition-colors"
             >
               Sign Out
             </button>
@@ -101,15 +101,15 @@ const UserProfileButton = ({
         </div>
       </button>
       {isProfileDropdownOpen && (
-        <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 border border-gray-200">
+        <div className="absolute right-0 mt-2 w-48 bg-[#F7F4ED] rounded-md shadow-lg py-1 z-10 border border-amber-200">
           <Link
             href="/user-dashboard"
-            className="block px-4 py-2 text-sm text-gray-700 border-b border-gray-200 hover:bg-gray-100"
+            className="block px-4 py-2 text-sm text-gray-700 border-b border-amber-200 hover:bg-[#F2EEE5] transition-colors"
           >
             {userProfile?.username || 'Error loading profile'}
           </Link>
-          <div className="px-4 py-2 text-sm text-gray-600 border-b border-gray-200 flex items-center gap-2">
-            <Icon icon="mdi:fire" className={`${userProfile?.current_streak ? 'text-orange-500' : 'text-gray-400'}`} />
+          <div className="px-4 py-2 text-sm text-gray-600 border-b border-amber-200 flex items-center gap-2">
+            <Icon icon="mdi:fire" className={`${userProfile?.current_streak ? 'text-amber-600' : 'text-gray-400'}`} />
             <span>
               {userProfile?.current_streak || 0} day
               {(userProfile?.current_streak || 0) !== 1 ? 's' : ''} streak
@@ -118,7 +118,7 @@ const UserProfileButton = ({
           <button
             type="button"
             onClick={onSignOut}
-            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-[#F2EEE5] transition-colors"
           >
             Sign Out
           </button>

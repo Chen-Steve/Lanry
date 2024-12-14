@@ -10,10 +10,17 @@ interface StatusSectionProps {
 
 export default function StatusSection({ 
   readingStreak = 0,
+  totalReadingTime = 0,
   joinedDate,
   storiesRead = 0,
   bookmarkCount = 0,
 }: StatusSectionProps) {
+  const formatReadingTime = (minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    if (hours < 1) return `${minutes}m`;
+    return `${hours}h ${minutes % 60}m`;
+  };
+
   const statusCards = [
     {
       icon: 'heroicons:fire',
@@ -21,6 +28,13 @@ export default function StatusSection({
       value: `${readingStreak} days`,
       bgColor: 'bg-orange-50',
       iconColor: 'text-orange-500'
+    },
+    {
+      icon: 'heroicons:clock',
+      label: 'Reading Time',
+      value: formatReadingTime(totalReadingTime),
+      bgColor: 'bg-yellow-50',
+      iconColor: 'text-yellow-500'
     },
     {
       icon: 'heroicons:calendar',
@@ -46,7 +60,7 @@ export default function StatusSection({
   ];
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 mb-4 sm:mb-6">
+    <div className="grid grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-3 mb-4 sm:mb-6">
       {statusCards.map((card, index) => (
         <StatusCard key={index} {...card} />
       ))}

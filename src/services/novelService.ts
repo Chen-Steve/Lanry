@@ -10,7 +10,11 @@ export async function getNovel(id: string, userId?: string): Promise<Novel | nul
       .select(`
         *,
         translator:author_profile_id (
-          username
+          username,
+          kofi_url,
+          patreon_url,
+          custom_url,
+          custom_url_label
         ),
         chapters (
           id,
@@ -49,23 +53,37 @@ export async function getNovel(id: string, userId?: string): Promise<Novel | nul
         ) : false
     })).sort((a: Chapter, b: Chapter) => a.chapter_number - b.chapter_number);
 
+    // Calculate ratings
+    const ratings = data.novel_ratings || [];
+    const ratingCount = ratings.length;
+    const averageRating = ratingCount > 0
+      ? ratings.reduce((sum: number, r: { rating: number }) => sum + r.rating, 0) / ratingCount
+      : 0;
+
     // Get user's rating if they're logged in
-    const userRating = userId && data.novel_ratings 
-      ? data.novel_ratings.find((r: { profile_id: string }) => r.profile_id === userId)?.rating 
+    const userRating = userId && ratings.length > 0
+      ? ratings.find((r: { profile_id: string; rating: number }) => r.profile_id === userId)?.rating
       : undefined;
+
+    // Calculate bookmark count
+    const bookmarkCount = data.bookmarks?.length || 0;
 
     return {
       ...data,
       translator: data.translator ? {
-        username: data.translator.username
-      } : undefined,
+        username: data.translator.username,
+        kofiUrl: data.translator.kofi_url,
+        patreonUrl: data.translator.patreon_url,
+        customUrl: data.translator.custom_url,
+        customUrlLabel: data.translator.custom_url_label
+      } : null,
       coverImageUrl: data.cover_image_url,
-      bookmarkCount: data.bookmarks?.length ?? 0,
-      isBookmarked: userId ? data.bookmarks?.some((b: { profile_id: string }) => b.profile_id === userId) ?? false : false,
-      chapters,
+      isBookmarked: userId ? data.bookmarks?.some((b: { profile_id: string }) => b.profile_id === userId) : false,
       userRating,
-      rating: data.rating || 0,
-      ratingCount: data.rating_count || 0
+      rating: averageRating,
+      ratingCount,
+      bookmarkCount,
+      chapters
     };
   } catch (error) {
     console.error('Error fetching novel:', error);
@@ -143,7 +161,11 @@ export async function getNovels(): Promise<Novel[]> {
       .select(`
         *,
         translator:author_profile_id (
-          username
+          username,
+          kofi_url,
+          patreon_url,
+          custom_url,
+          custom_url_label
         )
       `)
       .order('created_at', { ascending: false })
@@ -154,8 +176,12 @@ export async function getNovels(): Promise<Novel[]> {
     return data.map(novel => ({
       ...novel,
       translator: novel.translator ? {
-        username: novel.translator.username
-      } : undefined,
+        username: novel.translator.username,
+        kofiUrl: novel.translator.kofi_url,
+        patreonUrl: novel.translator.patreon_url,
+        customUrl: novel.translator.custom_url,
+        customUrlLabel: novel.translator.custom_url_label
+      } : null,
       coverImageUrl: novel.cover_image_url
     }));
   } catch (error) {

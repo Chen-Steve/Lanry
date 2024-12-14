@@ -77,6 +77,10 @@ model Profile {
   currentStreak      Int       @default(0) @map("current_streak")
   lastVisit          DateTime? @map("last_visit")
   role               UserRole  @default(USER)
+  kofiUrl            String?   @map("kofi_url")
+  patreonUrl         String?   @map("patreon_url")
+  customUrl          String?   @map("custom_url")
+  customUrlLabel     String?   @map("custom_url_label")
   bookmarks          Bookmark[]
   readingHistory     ReadingHistory[]
   readingTime        ReadingTime?

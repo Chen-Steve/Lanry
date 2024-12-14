@@ -7,6 +7,7 @@ import NovelUploadForm from '@/components/author-dashboard/NovelUploadForm';
 import ChapterManagementForm from '@/components/author-dashboard/ChapterManagementForm';
 import ChapterPurchaseHistory from '@/components/author-dashboard/ChapterPurchaseHistory';
 import NovelStatistics from '@/components/author-dashboard/NovelStatistics';
+import TranslatorLinks from '@/components/author-dashboard/TranslatorLinks';
 import { Icon } from '@iconify/react';
 
 export default function AuthorDashboard() {
@@ -115,6 +116,19 @@ export default function AuthorDashboard() {
                 Statistics
               </span>
             </button>
+            <button
+              onClick={() => setActiveTab('links')}
+              className={`w-full py-2 px-4 rounded-lg transition-colors text-left ${
+                activeTab === 'links'
+                  ? 'bg-blue-100 text-blue-700'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <Icon icon="mdi:link-variant" />
+                Support Links
+              </span>
+            </button>
           </nav>
         </div>
       </div>
@@ -132,6 +146,9 @@ export default function AuthorDashboard() {
         )}
         {activeTab === 'statistics' && (
           <NovelStatistics />
+        )}
+        {activeTab === 'links' && (
+          <TranslatorLinks />
         )}
       </div>
     </div>

@@ -20,7 +20,13 @@ interface SynopsisSectionProps {
   createdAt: string;
   updatedAt: string;
   author: string;
-  translator?: { username: string } | null;
+  translator?: { 
+    username: string;
+    kofiUrl?: string;
+    patreonUrl?: string;
+    customUrl?: string;
+    customUrlLabel?: string;
+  } | null;
   novelSlug: string;
   firstChapterNumber?: number;
   isAuthenticated: boolean;
@@ -38,6 +44,51 @@ interface SynopsisSectionProps {
   userRating?: number;
   onRate?: (rating: number) => void;
 }
+
+const TranslatorLinks = ({ translator }: { translator: NonNullable<SynopsisSectionProps['translator']> }) => {
+  if (!translator.kofiUrl && !translator.patreonUrl && !translator.customUrl) return null;
+  
+  return (
+    <div className="bg-[#F7F4ED] rounded-xl shadow-sm border-2 border-dashed border-black p-4 w-full sm:w-48 md:w-56">
+      <h3 className="font-semibold text-gray-900 mb-3">Support Translator</h3>
+      <div className="flex flex-col gap-2">
+        {translator.kofiUrl && (
+          <a
+            href={translator.kofiUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#13C3FF] hover:bg-[#00B9FF] transition-colors text-white font-medium"
+          >
+            <Icon icon="simple-icons:kofi" className="text-lg" />
+            <span>Ko-fi</span>
+          </a>
+        )}
+        {translator.patreonUrl && (
+          <a
+            href={translator.patreonUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#FF424D] hover:bg-[#E23833] transition-colors text-white font-medium"
+          >
+            <Icon icon="simple-icons:patreon" className="text-lg" />
+            <span>Patreon</span>
+          </a>
+        )}
+        {translator.customUrl && (
+          <a
+            href={translator.customUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-600 hover:bg-gray-700 transition-colors text-white font-medium"
+          >
+            <Icon icon="mdi:link-variant" className="text-lg" />
+            <span>{translator.customUrlLabel || 'Support'}</span>
+          </a>
+        )}
+      </div>
+    </div>
+  );
+};
 
 export const SynopsisSection = ({ 
   title,
@@ -155,94 +206,100 @@ export const SynopsisSection = ({
   return (
   <div className="max-w-5xl mx-auto px-4 py-4">
     {/* Header Section */}
-    <div className="flex flex-col sm:flex-row gap-4 mb-4">
-      {/* Cover Image */}
-      <div className="w-48 sm:w-36 md:w-44 mx-auto sm:mx-0 flex-shrink-0">
-        <div className="relative aspect-[2/3] rounded-xl overflow-hidden shadow-lg">
-          {coverImageUrl ? (
-            <Image
-              src={`/novel-covers/${coverImageUrl}`}
-              alt={title}
-              fill
-              priority
-              className="object-cover"
-              sizes="(max-width: 640px) 192px, (max-width: 768px) 144px, 176px"
-            />
-          ) : (
-            <div className="w-full h-full bg-gray-200" />
-          )}
-        </div>
-      </div>
-
-      {/* Title and Quick Stats */}
-      <div className="flex-1 text-center sm:text-left">
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 text-gray-900">{title}</h1>
-        <div className="text-sm text-gray-600 mb-3">
-          by {author}
-          {translator && (
-            <> • TL: <span className="text-gray-700">{translator.username}</span></>
-          )}
-        </div>
-        
-        {/* Quick Stats */}
-        <div className="flex flex-wrap justify-center sm:justify-start gap-4 text-sm mb-4">
-          <StatsItem icon="pepicons-print:book" value={`${chaptersCount} Chapters`} color="blue" />
-          <StatsItem icon="pepicons-print:bookmark" value={`${bookmarkCount} Bookmarks`} />
-          <StatsItem icon="pepicons-print:eye" value={`${viewCount} Views`} color="purple" />
-        </div>
-
-        {/* Action Buttons */}
-        {showActionButtons && (
-          <div className="flex flex-col sm:flex-row gap-3 mb-4">
-            <ReadButton
-              firstChapterNumber={firstChapterNumber}
-              novelSlug={novelSlug}
-            />
-            <BookmarkButton
-              isAuthenticated={isAuthenticated}
-              isBookmarked={isBookmarked}
-              isBookmarkLoading={isBookmarkLoading}
-              onBookmarkClick={onBookmarkClick}
-            />
-          </div>
-        )}
-        
-        {/* Rating Section */}
-        <div className="flex flex-col sm:flex-row items-center gap-2">
-          <div className="flex items-center gap-0.5">
-            {[1, 2, 3, 4, 5].map((star) => (
-              <button
-                aria-label={`Rate ${star} stars`}
-                key={star}
-                onClick={() => handleRate(star)}
-                disabled={isRating}
-                className={`p-1 transition-colors ${isRating ? 'opacity-50' : 'hover:text-amber-400'}`}
-              >
-                <Icon 
-                  icon={
-                    localUserRating && star <= localUserRating
-                      ? "pepicons-print:star-filled"
-                      : "pepicons-print:star"
-                  }
-                  className={`text-2xl sm:text-3xl ${
-                    localUserRating && star <= localUserRating
-                      ? 'text-amber-400'
-                      : 'text-gray-400'
-                  }`}
-                />
-              </button>
-            ))}
-          </div>
-          <div className="flex flex-wrap items-center text-sm sm:text-base text-gray-600 ml-1">
-            <span>{localRating.toFixed(1)}</span>
-            <span className="mx-1">•</span>
-            <span>{localRatingCount} {localRatingCount === 1 ? 'rating' : 'ratings'}</span>
-            {!isAuthenticated && (
-              <span className="text-xs sm:text-sm text-gray-500 ml-2">(Sign in to rate)</span>
+    <div className="flex flex-col lg:flex-row gap-4 mb-4">
+      {/* Left side with cover and main content */}
+      <div className="flex flex-col sm:flex-row gap-4 flex-1">
+        {/* Cover Image */}
+        <div className="w-48 sm:w-36 md:w-44 mx-auto sm:mx-0 flex-shrink-0">
+          <div className="relative aspect-[2/3] rounded-xl overflow-hidden shadow-lg">
+            {coverImageUrl ? (
+              <Image
+                src={`/novel-covers/${coverImageUrl}`}
+                alt={title}
+                fill
+                priority
+                className="object-cover"
+                sizes="(max-width: 640px) 192px, (max-width: 768px) 144px, 176px"
+              />
+            ) : (
+              <div className="w-full h-full bg-gray-200" />
             )}
           </div>
         </div>
+
+        {/* Title and Quick Stats */}
+        <div className="flex-1 text-center sm:text-left">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 text-gray-900">{title}</h1>
+          <div className="text-sm text-gray-600 mb-3">
+            by {author}
+            {translator && (
+              <> • TL: <span className="text-gray-700">{translator.username}</span></>
+            )}
+          </div>
+          
+          {/* Quick Stats */}
+          <div className="flex flex-wrap justify-center sm:justify-start gap-4 text-sm mb-4">
+            <StatsItem icon="pepicons-print:book" value={`${chaptersCount} Chapters`} color="blue" />
+            <StatsItem icon="pepicons-print:bookmark" value={`${bookmarkCount} Bookmarks`} />
+            <StatsItem icon="pepicons-print:eye" value={`${viewCount} Views`} color="purple" />
+          </div>
+
+          {/* Action Buttons */}
+          {showActionButtons && (
+            <div className="flex flex-col sm:flex-row gap-3 mb-4">
+              <ReadButton
+                firstChapterNumber={firstChapterNumber}
+                novelSlug={novelSlug}
+              />
+              <BookmarkButton
+                isAuthenticated={isAuthenticated}
+                isBookmarked={isBookmarked}
+                isBookmarkLoading={isBookmarkLoading}
+                onBookmarkClick={onBookmarkClick}
+              />
+            </div>
+          )}
+          
+          {/* Rating Section */}
+          <div className="flex flex-col sm:flex-row items-center gap-2">
+            <div className="flex items-center gap-0.5">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  aria-label={`Rate ${star} stars`}
+                  key={star}
+                  onClick={() => handleRate(star)}
+                  disabled={isRating}
+                  className={`p-1 transition-colors ${isRating ? 'opacity-50' : 'hover:text-amber-400'}`}
+                >
+                  <Icon 
+                    icon={
+                      localUserRating && star <= localUserRating
+                        ? "pepicons-print:star-filled"
+                        : "pepicons-print:star"
+                    }
+                    className={`text-2xl sm:text-3xl ${
+                      localUserRating && star <= localUserRating
+                        ? 'text-amber-400'
+                        : 'text-gray-400'
+                    }`}
+                  />
+                </button>
+              ))}
+            </div>
+            <div className="flex flex-wrap items-center text-sm sm:text-base text-gray-600 ml-1">
+              <span>{localRating.toFixed(1)}</span>
+              <span className="mx-1">•</span>
+              <span>{localRatingCount} {localRatingCount === 1 ? 'rating' : 'ratings'}</span>
+              {!isAuthenticated && (
+                <span className="text-xs sm:text-sm text-gray-500 ml-2">(Sign in to rate)</span>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
+
+      {/* Translator Links Box */}
+      {translator && <TranslatorLinks translator={translator} />}
     </div>
 
     {/* Tab Navigation */}
