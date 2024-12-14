@@ -9,6 +9,8 @@ import { NovelRecommendations } from './NovelRecommendations';
 import { NovelComments } from './NovelComments';
 import toast from 'react-hot-toast';
 import supabase from '@/lib/supabaseClient';
+import { TranslatorLinks } from './TranslatorLinks';
+import { TabButton } from './TabButton';
 
 interface SynopsisSectionProps {
   title: string;
@@ -44,51 +46,6 @@ interface SynopsisSectionProps {
   userRating?: number;
   onRate?: (rating: number) => void;
 }
-
-const TranslatorLinks = ({ translator }: { translator: NonNullable<SynopsisSectionProps['translator']> }) => {
-  if (!translator.kofiUrl && !translator.patreonUrl && !translator.customUrl) return null;
-  
-  return (
-    <div className="bg-[#F7F4ED] rounded-xl shadow-sm border-2 border-dashed border-black p-4 w-full sm:w-48 md:w-56">
-      <h3 className="font-semibold text-gray-900 mb-3">Support Translator</h3>
-      <div className="flex flex-col gap-2">
-        {translator.kofiUrl && (
-          <a
-            href={translator.kofiUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#13C3FF] hover:bg-[#00B9FF] transition-colors text-white font-medium"
-          >
-            <Icon icon="simple-icons:kofi" className="text-lg" />
-            <span>Ko-fi</span>
-          </a>
-        )}
-        {translator.patreonUrl && (
-          <a
-            href={translator.patreonUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#FF424D] hover:bg-[#E23833] transition-colors text-white font-medium"
-          >
-            <Icon icon="simple-icons:patreon" className="text-lg" />
-            <span>Patreon</span>
-          </a>
-        )}
-        {translator.customUrl && (
-          <a
-            href={translator.customUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-600 hover:bg-gray-700 transition-colors text-white font-medium"
-          >
-            <Icon icon="mdi:link-variant" className="text-lg" />
-            <span>{translator.customUrlLabel || 'Support'}</span>
-          </a>
-        )}
-      </div>
-    </div>
-  );
-};
 
 export const SynopsisSection = ({ 
   title,
@@ -447,29 +404,5 @@ const BookmarkButton = ({
       className={`text-lg ${isBookmarkLoading ? 'animate-pulse' : ''}`}
     />
     <span className="font-medium text-black">{isBookmarked ? 'Bookmarked' : 'Bookmark'}</span>
-  </button>
-); 
-
-const TabButton = ({ 
-  label, 
-  isActive, 
-  onClick 
-}: { 
-  label: string;
-  isActive: boolean;
-  onClick: () => void;
-}) => (
-  <button
-    onClick={onClick}
-    className={`px-4 py-2 font-medium text-sm whitespace-nowrap transition-colors relative ${
-      isActive
-        ? 'text-green-600'
-        : 'text-gray-600 hover:text-gray-900'
-    }`}
-  >
-    {label}
-    {isActive && (
-      <div className="absolute bottom-0 left-0 w-full h-0.5 bg-green-600" />
-    )}
   </button>
 ); 

@@ -8,7 +8,7 @@ import supabase from '@/lib/supabaseClient';
 import toast from 'react-hot-toast';
 import { getNovel, toggleBookmark } from '@/services/novelService';
 import { track } from '@vercel/analytics';
-import { SynopsisSection } from '@/components/novels/SynopsisSection';
+import { SynopsisSection } from '@/app/novels/[id]/_components/SynopsisSection';
 
 export default function NovelPage({ params }: { params: { id: string } }) {
   const { id } = params;
