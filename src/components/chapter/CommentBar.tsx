@@ -13,8 +13,10 @@ interface CommentBarProps {
   comments: ChapterComment[];
   onClose: () => void;
   onAddComment: (content: string) => void;
+  onDeleteComment: (commentId: string) => Promise<void>;
   isAuthenticated: boolean;
   isLoading: boolean;
+  userId: string | null;
   novelId: string;
 }
 
@@ -23,8 +25,10 @@ export default function CommentBar({
   comments,
   onClose,
   onAddComment,
+  onDeleteComment,
   isAuthenticated,
   isLoading,
+  userId,
 }: CommentBarProps) {
   const [newComment, setNewComment] = useState('');
   const barRef = useRef<HTMLDivElement>(null);
@@ -84,22 +88,33 @@ export default function CommentBar({
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {comments.map((comment) => (
               <div key={comment.id} className="bg-gray-50 rounded-lg p-3">
-                <div className="flex items-center gap-2">
-                  {comment.profile?.username ? (
-                    <Link 
-                      href={`/user-dashboard?id=${comment.profile_id}`}
-                      className="text-sm font-medium text-black hover:text-blue-600 transition-colors"
-                    >
-                      {comment.profile.username}
-                    </Link>
-                  ) : (
-                    <span className="text-sm font-medium text-black">
-                      Anonymous
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {comment.profile?.username ? (
+                      <Link 
+                        href={`/user-dashboard?id=${comment.profile_id}`}
+                        className="text-sm font-medium text-black hover:text-blue-600 transition-colors"
+                      >
+                        {comment.profile.username}
+                      </Link>
+                    ) : (
+                      <span className="text-sm font-medium text-black">
+                        Anonymous
+                      </span>
+                    )}
+                    <span className="text-xs text-gray-600">
+                      {formatDate(comment.created_at)}
                     </span>
+                  </div>
+                  {userId === comment.profile_id && (
+                    <button
+                      onClick={() => onDeleteComment(comment.id)}
+                      className="p-1 hover:bg-gray-200 rounded-full transition-colors"
+                      aria-label="Delete comment"
+                    >
+                      <Icon icon="mdi:delete-outline" className="text-gray-500 hover:text-red-500 w-4 h-4" />
+                    </button>
                   )}
-                  <span className="text-xs text-gray-600">
-                    {formatDate(comment.created_at)}
-                  </span>
                 </div>
                 <p className="text-sm mt-1 text-black">{comment.content}</p>
               </div>

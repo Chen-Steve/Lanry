@@ -202,7 +202,35 @@ export function useComments(novelId: string, chapterNumber: number) {
     }
   };
 
+  const deleteComment = async (commentId: string) => {
+    if (!userId) return;
+
+    try {
+      const { error } = await supabase
+        .from('chapter_comments')
+        .delete()
+        .eq('id', commentId)
+        .eq('profile_id', userId);
+
+      if (error) throw error;
+
+      // Update local state by removing the deleted comment from all paragraphs
+      setComments(prevComments => {
+        const newComments = { ...prevComments };
+        for (const paragraphId in newComments) {
+          newComments[paragraphId] = newComments[paragraphId].filter(
+            comment => comment.id !== commentId
+          );
+        }
+        return newComments;
+      });
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+      throw error;
+    }
+  };
+
   const isAuthenticated = !!userId;
 
-  return { comments, addComment, isAuthenticated, isLoading };
+  return { comments, addComment, deleteComment, isAuthenticated, isLoading, userId };
 } 

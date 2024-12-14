@@ -29,7 +29,7 @@ export default function ChapterContent({
   onCommentStateChange,
 }: ChapterContentProps) {
   const [selectedParagraphId, setSelectedParagraphId] = useState<string | null>(null);
-  const { comments, addComment, isAuthenticated, isLoading } = useComments(novelId, chapterNumber);
+  const { comments, addComment, deleteComment, isAuthenticated, isLoading, userId } = useComments(novelId, chapterNumber);
   const isMobile = useMediaQuery('(max-width: 768px)');
 
   const handleCloseComment = () => {
@@ -39,7 +39,6 @@ export default function ChapterContent({
 
   const handleAddComment = async (paragraphId: string, content: string) => {
     await addComment(paragraphId, content);
-    setSelectedParagraphId(null);
   };
 
   const handleParagraphLongPress = (
@@ -158,8 +157,10 @@ export default function ChapterContent({
           }))}
           onClose={handleCloseComment}
           onAddComment={(content) => handleAddComment(selectedParagraphId, content)}
+          onDeleteComment={deleteComment}
           isAuthenticated={isAuthenticated}
           isLoading={isLoading}
+          userId={userId}
           novelId={novelId}
         />
       )}
