@@ -79,11 +79,11 @@ const SearchSection: React.FC<SearchSectionProps> = ({ onSearch }) => {
         value={searchQuery}
         onChange={handleInputChange}
         placeholder="Search for novels..."
-        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full px-4 py-2 bg-[#F7F4ED] border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors"
       />
 
       {showDropdown && (
-        <div className="absolute w-full bg-white mt-1 rounded-lg shadow-lg border border-gray-200 max-h-60 overflow-y-auto z-50">
+        <div className="absolute w-full bg-[#F7F4ED] mt-1 rounded-lg shadow-lg border border-gray-200 max-h-60 overflow-y-auto z-50">
           {isLoading ? (
             <div className="px-4 py-2 text-center text-gray-500">
               Searching...

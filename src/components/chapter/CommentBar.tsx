@@ -69,7 +69,7 @@ export default function CommentBar({
         animate={{ x: 0 }}
         exit={{ x: '100%' }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className="fixed right-0 top-0 bottom-0 w-full md:w-[400px] bg-white shadow-lg z-50 
+        className="fixed right-0 top-0 bottom-0 w-full md:w-[400px] bg-[#F2EEE5] shadow-lg z-50 
                   overflow-hidden flex flex-col"
       >
         <div className="h-full flex flex-col">
@@ -80,7 +80,7 @@ export default function CommentBar({
             </div>
             <button 
               onClick={onClose} 
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors text-black"
+              className="p-2 hover:bg-[#F7F4ED] rounded-full transition-colors text-black"
               aria-label="Close comments"
             >
               <Icon icon="mdi:close" className="text-xl" />
@@ -89,7 +89,7 @@ export default function CommentBar({
 
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {comments.map((comment) => (
-              <div key={comment.id} className="bg-gray-50 rounded-lg p-3">
+              <div key={comment.id} className="bg-[#F7F4ED] rounded-lg p-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     {comment.profile?.username ? (
@@ -111,7 +111,7 @@ export default function CommentBar({
                   {userId === comment.profile_id && (
                     <button
                       onClick={() => onDeleteComment(comment.id)}
-                      className="p-1 hover:bg-gray-200 rounded-full transition-colors"
+                      className="p-1 hover:bg-[#F2EEE5] rounded-full transition-colors"
                       aria-label="Delete comment"
                     >
                       <Icon icon="mdi:delete-outline" className="text-gray-500 hover:text-red-500 w-4 h-4" />
@@ -137,14 +137,14 @@ export default function CommentBar({
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
                   placeholder="Add a comment..."
-                  className="w-full p-3 border rounded-lg text-sm resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-black placeholder-gray-500"
+                  className="w-full p-3 border rounded-lg text-sm resize-none bg-[#F7F4ED] focus:ring-2 focus:ring-amber-500 focus:border-transparent text-black placeholder-gray-500"
                   rows={3}
                 />
                 <button
                   type="submit"
                   disabled={!newComment.trim()}
-                  className="mt-2 w-full py-2 bg-purple-600 text-white rounded-lg text-sm font-medium 
-                           disabled:opacity-50 hover:bg-purple-700 transition-colors"
+                  className="mt-2 w-full py-2 bg-amber-500 text-white rounded-lg text-sm font-medium 
+                           disabled:opacity-50 hover:bg-amber-600 transition-colors"
                 >
                   Post Comment
                 </button>
@@ -152,7 +152,7 @@ export default function CommentBar({
             </div>
           ) : (
             <div className="p-4 border-t text-center">
-              <Link href="/auth" className="text-purple-600 hover:underline text-sm">
+              <Link href="/auth" className="text-amber-600 hover:underline text-sm">
                 Sign in to comment
               </Link>
             </div>

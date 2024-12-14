@@ -33,7 +33,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="bg-white min-h-screen relative">
+      <body className="bg-[#F2EEE5] min-h-screen relative">
         <Providers>
           <div className="flex flex-col min-h-screen">
             <HeaderWrapper />

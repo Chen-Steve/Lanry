@@ -5,7 +5,7 @@ import { Icon } from '@iconify/react';
 
 const Footer = () => {
   return (
-    <footer className="bg-white border-t mt-8 sm:mt-16">
+    <footer className="bg-[#F2EEE5] border-t mt-8 sm:mt-16">
       <div className="px-3 py-4 sm:px-4 sm:py-6 max-w-5xl mx-auto">
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           {/* Left Column - Brand */}

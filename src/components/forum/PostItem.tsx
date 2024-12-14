@@ -6,6 +6,7 @@ import { useUser } from '@/hooks/useUser';
 import CreatePostButton from './CreatePostButton';
 import VoteControls from './VoteControls';
 import { formatForumDateTime } from '@/lib/utils';
+import { useState } from 'react';
 
 interface PostItemProps {
   post: ForumPost & { isLiked?: boolean };
@@ -26,11 +27,16 @@ export default function PostItem({
 }: PostItemProps) {
   const { user } = useUser();
   const isAuthor = user?.id === post.author_id;
+  const [showReplyForm, setShowReplyForm] = useState(false);
 
   const handleDelete = async () => {
     if (confirm('Are you sure you want to delete this post?')) {
       onDelete(post.id);
     }
+  };
+
+  const handleReplyClick = () => {
+    setShowReplyForm(true);
   };
 
   return (
@@ -61,26 +67,41 @@ export default function PostItem({
                 {' • '}
                 {formatForumDateTime(post.created_at)}
               </div>
-              {!threadLocked && (
-                <CreatePostButton 
-                  mode="reply"
-                  threadId={post.thread_id}
-                  parentPostId={post.id}
-                  replyToUsername={post.author.username}
-                  onPostCreated={onReply}
-                />
-              )}
+              <div className="flex items-center gap-3 text-sm">
+                {!threadLocked && (
+                  <button
+                    onClick={handleReplyClick}
+                    className="text-blue-600 hover:text-blue-700 flex items-center"
+                  >
+                    <Icon icon="mdi:reply" className="w-4 h-4 mr-1" />
+                    Reply
+                  </button>
+                )}
+                {isAuthor && (
+                  <button
+                    onClick={handleDelete}
+                    className="text-red-600 hover:text-red-700 flex items-center"
+                  >
+                    Delete
+                  </button>
+                )}
+              </div>
             </div>
-            {isAuthor && (
-              <button
-                onClick={handleDelete}
-                className="text-sm text-red-500 hover:text-red-700"
-                title="Delete post"
-              >
-                Delete
-              </button>
-            )}
           </div>
+          {showReplyForm && !threadLocked && (
+            <div className="mt-4">
+              <CreatePostButton 
+                mode="reply"
+                threadId={post.thread_id}
+                parentPostId={post.id}
+                replyToUsername={post.author.username}
+                onPostCreated={(newPost) => {
+                  onReply(newPost);
+                  setShowReplyForm(false);
+                }}
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>

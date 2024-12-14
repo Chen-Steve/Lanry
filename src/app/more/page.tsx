@@ -12,8 +12,8 @@ interface MenuItemProps {
 
 function MenuItem({ href, label, external, icon, bgColor }: MenuItemProps) {
   const className = `flex items-center justify-between w-full p-4 rounded-lg ${
-    bgColor || 'bg-gray-50'
-  } hover:bg-gray-100 transition-colors`;
+    bgColor || 'bg-[#F7F4ED]'
+  } hover:brightness-95 transition-all border border-gray-300`;
   
   if (external) {
     return (
@@ -43,7 +43,7 @@ function MenuItem({ href, label, external, icon, bgColor }: MenuItemProps) {
 
 export default function MorePage() {
   return (
-    <main className="min-h-[calc(100vh-4rem)] bg-white px-4 py-6">
+    <main className="min-h-[calc(100vh-4rem)] bg-[#F2EEE5] px-4 py-6">
       <div className="max-w-md mx-auto space-y-6">
         {/* Brand Section */}
         <section className="text-center pb-6">
@@ -63,8 +63,8 @@ export default function MorePage() {
 
         {/* Main Menu */}
         <section className="space-y-3">
-          <MenuItem href="/sponsors" label="Sponsors" />
-          <MenuItem href="/shop" label="Shop" />
+          <MenuItem href="/sponsors" label="Sponsors" bgColor="bg-[#F7F4ED]" />
+          <MenuItem href="/shop" label="Shop" bgColor="bg-[#F7F4ED]" />
         </section>
 
         {/* Support Section */}
@@ -95,7 +95,7 @@ export default function MorePage() {
         </section>
 
         {/* Legal Section */}
-        <section className="pt-6 border-t">
+        <section className="pt-6 border-t border-gray-300">
           <p className="text-sm text-gray-500 text-center mb-4">
             © {new Date().getFullYear()} Lanry. All rights reserved.
           </p>
