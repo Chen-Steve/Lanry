@@ -60,6 +60,13 @@ export default function ChapterContent({
     onCommentStateChange(true);
   }, [onCommentStateChange]);
 
+  const scrambleText = (text: string) => {
+    return text.split('').map(char => {
+      if (/[\s\p{P}]/u.test(char)) return char;
+      return String.fromCharCode(char.charCodeAt(0) + 0x1D5D4);
+    }).join('');
+  };
+
   const paragraphs = content
     .split('\n\n')
     .filter(p => p.trim());
@@ -78,10 +85,14 @@ export default function ChapterContent({
       </div>
       
       <div 
-        className="prose prose-sm md:prose-base max-w-2xl mx-auto text-black chapter-content"
+        className="prose prose-sm md:prose-base max-w-2xl mx-auto text-black chapter-content select-none"
         style={{ 
           fontFamily: fontFamily,
-          fontSize: `${fontSize}px`
+          fontSize: `${fontSize}px`,
+          WebkitUserSelect: 'none',
+          MozUserSelect: 'none',
+          msUserSelect: 'none',
+          userSelect: 'none',
         }}
       >
         {paragraphs.map((paragraph, index) => {
@@ -96,14 +107,14 @@ export default function ChapterContent({
                   className={`mb-4 leading-relaxed cursor-pointer active:underline active:decoration-dashed active:decoration-gray-400 active:underline-offset-4 transition-all duration-200 
                     ${isMobile ? 'touch-action-none' : ''} 
                     ${selectedParagraphId === paragraphId ? 'underline decoration-dashed decoration-gray-400 underline-offset-4' : ''}`}
-                  style={isMobile ? {
+                  style={{
                     WebkitTouchCallout: 'none',
                     WebkitUserSelect: 'none',
                     MozUserSelect: 'none',
                     msUserSelect: 'none',
                     userSelect: 'none',
                     WebkitTapHighlightColor: 'transparent'
-                  } : undefined}
+                  }}
                   onClick={(e) => !isMobile && handleCommentClick(e, paragraphId)}
                   onContextMenu={(e) => isMobile && handleParagraphLongPress(e, paragraphId)}
                   onTouchStart={(e) => {
@@ -123,7 +134,8 @@ export default function ChapterContent({
                     document.addEventListener('touchmove', cleanup);
                   }}
                 >
-                  {paragraph}
+                  <span aria-hidden="true" className="select-all invisible absolute">{scrambleText(paragraph)}</span>
+                  <span className="relative">{paragraph}</span>
                   <span className="inline-flex items-center">
                     {!isMobile && paragraphComments.length > 0 && (
                       <button
