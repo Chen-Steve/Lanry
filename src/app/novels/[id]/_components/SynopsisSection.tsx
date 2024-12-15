@@ -360,7 +360,7 @@ const ReadButton = ({ firstChapterNumber, novelSlug }: { firstChapterNumber?: nu
   
   return (
     <Link 
-      href={`/novels/${novelSlug}/chapters/c${firstChapterNumber}`}
+      href={`/novels/${novelSlug}/c${firstChapterNumber}`}
       className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 transition-colors text-white font-medium"
     >
       <Icon icon="pepicons-print:book" className="text-lg" />

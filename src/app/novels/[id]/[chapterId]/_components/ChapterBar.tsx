@@ -158,7 +158,7 @@ export default function ChapterProgressBar({
             {/* Previous button */}
             {navigation.prevChapter ? (
               <Link
-                href={`/novels/${novelId}/chapters/c${navigation.prevChapter.chapter_number}`}
+                href={`/novels/${novelId}/c${navigation.prevChapter.chapter_number}`}
                 className="p-2 hover:bg-gray-100 rounded-full transition-colors text-black"
                 aria-label="Previous chapter"
               >
@@ -185,7 +185,7 @@ export default function ChapterProgressBar({
             {/* Next button */}
             {navigation.nextChapter ? (
               <Link
-                href={`/novels/${novelId}/chapters/c${navigation.nextChapter.chapter_number}`}
+                href={`/novels/${novelId}/c${navigation.nextChapter.chapter_number}`}
                 className="p-2 hover:bg-gray-100 rounded-full transition-colors text-black"
                 aria-label="Next chapter"
               >

@@ -8,12 +8,12 @@ import { notFound } from 'next/navigation';
 import { formatDate } from '@/lib/utils';
 import { ChapterWithNovel } from '@/types/database';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
-import ChapterHeader from '../_components/ChapterHeader';
-import ChapterContent from '../_components/ChapterContent';
+import ChapterHeader from './_components/ChapterHeader';
+import ChapterContent from './_components/ChapterContent';
 import supabase from '@/lib/supabaseClient';
-import ChapterProgressBar from '../_components/ChapterBar';
-import ChapterSidebar from '../_components/ChapterSidebar';
-import ChapterNavigation from '../_components/ChapterNavigation';
+import ChapterProgressBar from './_components/ChapterBar';
+import ChapterSidebar from './_components/ChapterSidebar';
+import ChapterNavigation from './_components/ChapterNavigation';
 
 function ScrollToTopButton() {
   const [isVisible, setIsVisible] = useState(false);
@@ -222,7 +222,7 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
   }, []);
 
   const handleChapterSelect = (chapterNum: number) => {
-    window.location.href = `/novels/${novelId}/chapters/c${chapterNum}`;
+    window.location.href = `/novels/${novelId}/c${chapterNum}`;
   };
 
   if (isLoading) {

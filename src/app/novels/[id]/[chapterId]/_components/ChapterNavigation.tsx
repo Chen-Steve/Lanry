@@ -35,7 +35,7 @@ export default function ChapterNavigation({
       <div className="w-auto">
         {navigation.prevChapter ? (
           <Link
-            href={`/novels/${novelId}/chapters/c${navigation.prevChapter.chapter_number}`}
+            href={`/novels/${novelId}/c${navigation.prevChapter.chapter_number}`}
             className="inline-flex items-center px-3 py-2 bg-[#F7F4ED] hover:bg-[#F2EEE5] rounded-lg text-black transition-colors text-sm whitespace-nowrap border border-gray-300"
           >
             <div className="flex items-center gap-1">
@@ -79,7 +79,7 @@ export default function ChapterNavigation({
       <div className="w-auto">
         {navigation.nextChapter ? (
           <Link
-            href={`/novels/${novelId}/chapters/c${navigation.nextChapter.chapter_number}`}
+            href={`/novels/${novelId}/c${navigation.nextChapter.chapter_number}`}
             className="inline-flex items-center px-3 py-2 bg-[#F7F4ED] hover:bg-[#F2EEE5] rounded-lg text-black transition-colors text-sm whitespace-nowrap border border-gray-300"
           >
             <div className="flex items-center gap-1">

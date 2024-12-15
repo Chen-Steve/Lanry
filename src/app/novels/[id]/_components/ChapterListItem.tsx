@@ -147,7 +147,7 @@ export function ChapterListItem({
       if (unlockError) throw new Error('Failed to create unlock record');
 
       // After successful transaction, redirect to the chapter
-      router.push(`/novels/${novelSlug}/chapters/c${chapterNumber}`);
+      router.push(`/novels/${novelSlug}/c${chapterNumber}`);
       return true;
     } catch (error) {
       console.error('Unlock error:', error);
@@ -204,7 +204,7 @@ export function ChapterListItem({
       }
 
       if (existingUnlock) {
-        router.push(`/novels/${novelSlug}/chapters/c${chapter.chapter_number}`);
+        router.push(`/novels/${novelSlug}/c${chapter.chapter_number}`);
         return;
       }
 
@@ -284,7 +284,7 @@ export function ChapterListItem({
     } transition-colors rounded-lg`}>
       {isPublished ? (
         <Link 
-          href={`/novels/${novelSlug}/chapters/c${chapter.chapter_number}`}
+          href={`/novels/${novelSlug}/c${chapter.chapter_number}`}
           className="flex-grow flex flex-col sm:flex-row sm:items-center text-gray-600 gap-1 hover:text-gray-900"
         >
           {chapterContent}

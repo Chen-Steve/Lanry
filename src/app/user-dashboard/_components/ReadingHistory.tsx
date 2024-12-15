@@ -107,7 +107,7 @@ const ReadingHistorySection = ({ userId }: ReadingHistorySectionProps) => {
             </p>
           </div>
           <Link
-            href={`/novels/${item.novel.slug}/chapters/c${item.last_chapter}`}
+            href={`/novels/${item.novel.slug}/c${item.last_chapter}`}
             className="flex flex-col items-center gap-0.5 text-black px-1 sm:px-2 border border-black rounded-md touch-action-manipulation whitespace-nowrap flex-shrink-0 text-xs sm:text-base transition-colors hover:bg-gray-100"
           >
             <span>Continue</span>
