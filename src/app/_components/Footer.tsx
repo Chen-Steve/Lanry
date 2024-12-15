@@ -107,13 +107,13 @@ const Footer = () => {
               © {new Date().getFullYear()} Lanry. All rights reserved.
             </p>
             <div className="flex space-x-4">
-              <Link href="/privacy" className="text-xs sm:text-sm text-gray-600 hover:text-gray-800 transition-colors">
+              <Link href="/policies/privacy" className="text-xs sm:text-sm text-gray-600 hover:text-gray-800 transition-colors">
                 Privacy
               </Link>
-              <Link href="/terms" className="text-xs sm:text-sm text-gray-600 hover:text-gray-800 transition-colors">
+              <Link href="/policies/terms" className="text-xs sm:text-sm text-gray-600 hover:text-gray-800 transition-colors">
                 Terms
               </Link>
-              <Link href="/translation-policy" className="text-xs sm:text-sm text-gray-600 hover:text-gray-800 transition-colors">
+              <Link href="/policies/translation" className="text-xs sm:text-sm text-gray-600 hover:text-gray-800 transition-colors">
                 Translation Policy
               </Link>
             </div>
