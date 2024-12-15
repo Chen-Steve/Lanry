@@ -8,12 +8,12 @@ import { notFound } from 'next/navigation';
 import { formatDate } from '@/lib/utils';
 import { ChapterWithNovel } from '@/types/database';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
-import ChapterHeader from '@/components/chapter/ChapterHeader';
-import ChapterContent from '@/components/chapter/ChapterContent';
+import ChapterHeader from '../_components/ChapterHeader';
+import ChapterContent from '../_components/ChapterContent';
 import supabase from '@/lib/supabaseClient';
-import ChapterProgressBar from '@/components/chapter/ChapterBar';
-import ChapterSidebar from '@/components/chapter/ChapterSidebar';
-import ChapterNavigation from '@/components/chapter/ChapterNavigation';
+import ChapterProgressBar from '../_components/ChapterBar';
+import ChapterSidebar from '../_components/ChapterSidebar';
+import ChapterNavigation from '../_components/ChapterNavigation';
 
 function ScrollToTopButton() {
   const [isVisible, setIsVisible] = useState(false);

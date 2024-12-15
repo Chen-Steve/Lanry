@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { formatDate } from '@/lib/utils';
-import CommentPopover from '@/components/chapter/CommentBar';
+import CommentPopover from './CommentBar';
 import { useComments } from '@/hooks/useComments';
 import { Icon } from '@iconify/react';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
