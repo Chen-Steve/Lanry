@@ -170,6 +170,7 @@ export default function NovelPage({ params }: { params: { id: string } }) {
         createdAt={novel.created_at}
         updatedAt={novel.updated_at}
         author={novel.author}
+        isAuthorNameCustom={novel.is_author_name_custom}
         translator={novel.translator}
         novelSlug={novel.slug}
         firstChapterNumber={novel.chapters[0]?.chapter_number}

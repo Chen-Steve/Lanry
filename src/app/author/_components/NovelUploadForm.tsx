@@ -61,62 +61,57 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.description.trim()) {
-      alert('Description is required');
-      return;
-    }
-
-    const sanitizedDescription = formData.description.replace(/<[^>]*>/g, '');
-
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) {
-        throw new Error('Not authenticated');
+        throw new Error('You must be logged in to create or edit a novel');
       }
 
-      if (authorOnly && editingNovel) {
-        const { data: novel } = await supabase
-          .from('novels')
-          .select('author_profile_id')
-          .eq('id', editingNovel.id)
-          .single();
-
-        if (novel?.author_profile_id !== session.user.id) {
-          throw new Error('Not authorized to edit this novel');
-        }
-      }
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('id', session.user.id)
+        .single();
 
       const slug = generateNovelSlug(formData.title);
+      const isCustomAuthor = Boolean(formData.author.trim());
+      const authorName = isCustomAuthor ? formData.author.trim() : (profile?.username || 'Anonymous');
+
+      const novelData = {
+        id: crypto.randomUUID(),
+        ...formData,
+        author: authorName,
+        slug,
+        author_profile_id: session.user.id,
+        is_author_name_custom: isCustomAuthor,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        translator_id: isCustomAuthor ? session.user.id : null
+      };
+
+      let error;
 
       if (editingNovel) {
-        const { error } = await supabase
+        // Update existing novel
+        const { error: updateError } = await supabase
           .from('novels')
           .update({
-            ...formData,
-            description: sanitizedDescription,
-            slug,
-            updated_at: new Date().toISOString()
+            ...novelData,
+            id: editingNovel.id
           })
-          .eq('id', editingNovel.id)
-          .eq('author_profile_id', session.user.id);
-
-        if (error) throw error;
+          .eq('id', editingNovel.id);
+        error = updateError;
       } else {
-        const { error } = await supabase
+        // Insert new novel
+        const { error: insertError } = await supabase
           .from('novels')
-          .insert({
-            id: crypto.randomUUID(),
-            ...formData,
-            description: sanitizedDescription,
-            slug,
-            author_profile_id: session.user.id,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          });
-
-        if (error) throw error;
+          .insert([novelData]);
+        error = insertError;
       }
 
+      if (error) throw error;
+
+      // Reset form and refresh novels
       setFormData({
         title: '',
         description: '',
@@ -126,10 +121,9 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
       });
       setEditingNovel(null);
       fetchNovels();
-      alert(`Novel ${editingNovel ? 'updated' : 'created'} successfully!`);
     } catch (error) {
-      console.error('Error:', error);
-      alert(error instanceof Error ? error.message : 'An error occurred');
+      console.error(`Error ${editingNovel ? 'updating' : 'creating'} novel:`, error);
+      alert(`Failed to ${editingNovel ? 'update' : 'create'} novel`);
     }
   };
 
@@ -253,11 +247,10 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
             <div>
               <input
                 type="text"
-                placeholder="Author"
+                placeholder="Author (leave empty to use your username)"
                 value={formData.author}
                 onChange={(e) => setFormData({ ...formData, author: e.target.value })}
                 className="w-full p-2 border rounded"
-                required
               />
             </div>
 

@@ -33,10 +33,15 @@ export interface Novel {
   chapterUnlocks?: ChapterUnlock[];
   author_profile_id: string;
   translator_id?: string;
+  is_author_name_custom?: boolean;
   translator?: {
-    id: string;
-    username: string;
-  };
+    username: string | null;
+    profile_id: string;
+    kofiUrl?: string;
+    patreonUrl?: string;
+    customUrl?: string;
+    customUrlLabel?: string;
+  } | null;
 }
 
 export interface ChapterUnlock {

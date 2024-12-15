@@ -28,6 +28,7 @@ model Novel {
   views          Int       @default(0)
   rating         Float     @default(0) @map("rating")
   ratingCount    Int       @default(0) @map("rating_count")
+  isAuthorNameCustom Boolean @default(true) @map("is_author_name_custom")
   chapters       Chapter[]
   bookmarks      Bookmark[]
   readingHistory ReadingHistory[]
@@ -36,6 +37,8 @@ model Novel {
   novelComments  NovelComment[]
   authorProfile  Profile?    @relation("NovelAuthor", fields: [authorProfileId], references: [id])
   authorProfileId  String?     @map("author_profile_id")
+  translator     Profile?    @relation("NovelTranslator", fields: [translatorId], references: [id])
+  translatorId   String?     @map("translator_id")
   ratings       NovelRating[]
 
   @@index([title])
@@ -44,6 +47,7 @@ model Novel {
   @@index([views])
   @@index([rating])
   @@index([authorProfileId])
+  @@index([translatorId])
   @@map("novels")
 }
 
@@ -90,6 +94,7 @@ model Profile {
   transactions       CoinTransaction[]
   chapterUnlocks     ChapterUnlock[]
   authoredNovels     Novel[]   @relation("NovelAuthor")
+  translatedNovels   Novel[]   @relation("NovelTranslator")
   forumThreads       ForumThread[]
   forumPosts         ForumPost[]
   forumVotes         ForumVote[]

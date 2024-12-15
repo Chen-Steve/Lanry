@@ -43,6 +43,7 @@ interface SynopsisSectionProps {
   userRating?: number;
   onRate?: (rating: number) => void;
   translatorId?: string;
+  isAuthorNameCustom?: boolean;
 }
 
 export const SynopsisSection = ({ 
@@ -71,6 +72,7 @@ export const SynopsisSection = ({
   rating = 0,
   ratingCount = 0,
   userRating,
+  isAuthorNameCustom = true,
 }: SynopsisSectionProps) => {
   const [activeTab, setActiveTab] = useState<'synopsis' | 'chapters' | 'recommendations' | 'comments'>('synopsis');
   const [isRating, setIsRating] = useState(false);
@@ -186,18 +188,29 @@ export const SynopsisSection = ({
         <div className="flex-1 text-center sm:text-left">
           <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 text-gray-900">{title}</h1>
           <div className="text-sm text-gray-600 mb-3">
-            by {author}
-            {translator && (
-              <> • TL: {translator.username ? (
-                <Link 
-                  href={`/user-dashboard?id=${translator.profile_id}`}
-                  className="text-gray-700 hover:text-gray-900 hover:underline"
-                >
-                  {translator.username}
-                </Link>
-              ) : (
-                <span className="text-gray-700">Anonymous</span>
-              )}</>
+            {isAuthorNameCustom ? (
+              <>
+                by {author}
+                {translator && (
+                  <> • TL: {translator.username ? (
+                    <Link 
+                      href={`/user-dashboard?id=${translator.profile_id}`}
+                      className="text-gray-700 hover:text-gray-900 hover:underline"
+                    >
+                      {translator.username}
+                    </Link>
+                  ) : (
+                    <span className="text-gray-700">Anonymous</span>
+                  )}</>
+                )}
+              </>
+            ) : (
+              <>Author: <Link 
+                href={`/user-dashboard?id=${novelAuthorId}`}
+                className="text-gray-700 hover:text-gray-900 hover:underline"
+              >
+                {author}
+              </Link></>
             )}
           </div>
           
