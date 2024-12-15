@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import supabase from '@/lib/supabaseClient';
 import { generateChapterSlug } from '@/lib/utils';
+import { Icon } from '@iconify/react';
 
 interface ChapterManagementFormProps {
   authorOnly?: boolean;
@@ -220,6 +221,47 @@ export default function ChapterManagementForm({ authorOnly = false }: ChapterMan
     });
   };
 
+  const handleDeleteChapter = async (chapterId: string) => {
+    if (!selectedNovel || !window.confirm('Are you sure you want to delete this chapter? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) throw new Error('Not authenticated');
+
+      if (authorOnly) {
+        const { data: novel } = await supabase
+          .from('novels')
+          .select('author_profile_id')
+          .eq('id', selectedNovel)
+          .single();
+
+        if (novel?.author_profile_id !== session.user.id) {
+          throw new Error('Not authorized to delete chapters for this novel');
+        }
+      }
+
+      const { error } = await supabase
+        .from('chapters')
+        .delete()
+        .eq('id', chapterId)
+        .eq('novel_id', selectedNovel);
+
+      if (error) throw error;
+
+      if (editingChapter?.id === chapterId) {
+        handleCancelEdit();
+      }
+      
+      fetchChapters(selectedNovel);
+      alert('Chapter deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting chapter:', error);
+      alert(error instanceof Error ? error.message : 'An error occurred while deleting the chapter');
+    }
+  };
+
   return (
     <div className="max-w-5xl mx-auto px-4">
       <div className="mb-6">
@@ -246,25 +288,36 @@ export default function ChapterManagementForm({ authorOnly = false }: ChapterMan
               {chapters.map((chapter) => (
                 <div
                   key={chapter.id}
-                  onClick={() => handleChapterClick(chapter)}
-                  className={`p-4 border rounded cursor-pointer relative ${
+                  className={`p-4 border rounded relative ${
                     editingChapter?.id === chapter.id ? 'ring-2 ring-blue-500 bg-blue-50' : 'hover:bg-gray-50'
                   }`}
                 >
-                  {isAdvancedChapter(chapter) && (
-                    <span className="absolute top-2 right-2 text-xs font-semibold px-2 py-1 bg-purple-100 text-purple-700 rounded">
-                      Advanced
-                    </span>
-                  )}
-                  <h4 className="font-medium">
-                    Chapter {chapter.chapter_number}
-                    {chapter.title && `: ${chapter.title}`}
-                  </h4>
-                  {chapter.publish_at && (
-                    <p className="text-sm text-gray-500">
-                      Publishes: {new Date(chapter.publish_at).toLocaleDateString()}
-                    </p>
-                  )}
+                  <div 
+                    onClick={() => handleChapterClick(chapter)}
+                    className="cursor-pointer"
+                  >
+                    {isAdvancedChapter(chapter) && (
+                      <span className="absolute top-2 right-2 text-xs font-semibold px-2 py-1 bg-purple-100 text-purple-700 rounded">
+                        Advanced
+                      </span>
+                    )}
+                    <h4 className="font-medium">
+                      Chapter {chapter.chapter_number}
+                      {chapter.title && `: ${chapter.title}`}
+                    </h4>
+                    {chapter.publish_at && (
+                      <p className="text-sm text-gray-500">
+                        Publishes: {new Date(chapter.publish_at).toLocaleDateString()}
+                      </p>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => handleDeleteChapter(chapter.id)}
+                    className="absolute top-2 right-2 p-1 text-gray-500 hover:text-red-500 rounded-full hover:bg-red-50"
+                    title="Delete chapter"
+                  >
+                    <Icon icon="mdi:delete-outline" className="w-5 h-5" />
+                  </button>
                 </div>
               ))}
             </div>
@@ -397,6 +450,9 @@ export default function ChapterManagementForm({ authorOnly = false }: ChapterMan
                     }}
                     className="w-full p-3 border rounded-lg"
                   />
+                  <p className="text-sm text-gray-600 mt-1">
+                    Set a future date to make this an advanced chapter
+                  </p>
                 </div>
                 <div className="w-1/3">
                   <input
@@ -423,6 +479,11 @@ export default function ChapterManagementForm({ authorOnly = false }: ChapterMan
                     className="w-full p-3 border rounded-lg disabled:bg-gray-100 disabled:cursor-not-allowed"
                     title={formData.publishAt ? "Set coins required to access this chapter" : "Set publish date first to enable paid chapter"}
                   />
+                  <p className="text-sm text-gray-600 mt-1">
+                    {formData.publishAt 
+                      ? "Coins required for early access" 
+                      : "Set future date to enable coins"}
+                  </p>
                 </div>
               </div>
 
