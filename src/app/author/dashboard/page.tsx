@@ -56,9 +56,9 @@ export default function AuthorDashboard() {
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen" style={{ backgroundColor: '#F2EEE5' }}>
       {/* Left Sidebar */}
-      <div className="w-64 bg-white border-r border-gray-200 fixed h-full">
+      <div className="w-64 bg-[#F2EEE5] border-r border-[#E5E1D8] fixed h-full">
         <div className="p-6">
           <a href="https://lanry.vercel.app/" className="text-2xl font-bold mb-6 block text-center">
             Lanry
@@ -68,8 +68,8 @@ export default function AuthorDashboard() {
               onClick={() => setActiveTab('novels')}
               className={`w-full py-2 px-4 rounded-lg transition-colors text-left ${
                 activeTab === 'novels'
-                  ? 'bg-blue-100 text-blue-700'
-                  : 'text-gray-600 hover:bg-gray-100'
+                  ? 'bg-[#E5E1D8] text-indigo-700'
+                  : 'text-gray-600 hover:bg-[#E5E1D8]/50'
               }`}
             >
               <span className="flex items-center gap-2">
@@ -81,8 +81,8 @@ export default function AuthorDashboard() {
               onClick={() => setActiveTab('chapters')}
               className={`w-full py-2 px-4 rounded-lg transition-colors text-left ${
                 activeTab === 'chapters'
-                  ? 'bg-blue-100 text-blue-700'
-                  : 'text-gray-600 hover:bg-gray-100'
+                  ? 'bg-[#E5E1D8] text-indigo-700'
+                  : 'text-gray-600 hover:bg-[#E5E1D8]/50'
               }`}
             >
               <span className="flex items-center gap-2">
@@ -94,8 +94,8 @@ export default function AuthorDashboard() {
               onClick={() => setActiveTab('purchases')}
               className={`w-full py-2 px-4 rounded-lg transition-colors text-left ${
                 activeTab === 'purchases'
-                  ? 'bg-blue-100 text-blue-700'
-                  : 'text-gray-600 hover:bg-gray-100'
+                  ? 'bg-[#E5E1D8] text-indigo-700'
+                  : 'text-gray-600 hover:bg-[#E5E1D8]/50'
               }`}
             >
               <span className="flex items-center gap-2">
@@ -107,8 +107,8 @@ export default function AuthorDashboard() {
               onClick={() => setActiveTab('statistics')}
               className={`w-full py-2 px-4 rounded-lg transition-colors text-left ${
                 activeTab === 'statistics'
-                  ? 'bg-blue-100 text-blue-700'
-                  : 'text-gray-600 hover:bg-gray-100'
+                  ? 'bg-[#E5E1D8] text-indigo-700'
+                  : 'text-gray-600 hover:bg-[#E5E1D8]/50'
               }`}
             >
               <span className="flex items-center gap-2">
@@ -120,8 +120,8 @@ export default function AuthorDashboard() {
               onClick={() => setActiveTab('links')}
               className={`w-full py-2 px-4 rounded-lg transition-colors text-left ${
                 activeTab === 'links'
-                  ? 'bg-blue-100 text-blue-700'
-                  : 'text-gray-600 hover:bg-gray-100'
+                  ? 'bg-[#E5E1D8] text-indigo-700'
+                  : 'text-gray-600 hover:bg-[#E5E1D8]/50'
               }`}
             >
               <span className="flex items-center gap-2">
