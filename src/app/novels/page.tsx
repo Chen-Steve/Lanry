@@ -1,4 +1,4 @@
-import NovelListing from '@/components/NovelListing';
+import NovelListing from '@/app/novels/_components/NovelListing';
 import NovelRequests from '@/app/novels/_components/NovelRequests';
 import NovelTabs from '@/app/novels/_components/NovelTabs';
 

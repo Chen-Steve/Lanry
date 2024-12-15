@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     type: 'website',
   },
   icons: {
-    icon: '/download.ico',
+    icon: '/lanry.ico',
   },
 };
 
