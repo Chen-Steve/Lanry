@@ -306,6 +306,70 @@ export default function ChapterManagementForm({ authorOnly = false }: ChapterMan
                     const formattedText = formatText(e.target.value);
                     setFormData(prev => ({ ...prev, content: formattedText }));
                   }}
+                  onKeyDown={(e) => {
+                    if (e.ctrlKey) {
+                      const textarea = e.currentTarget;
+                      const start = textarea.selectionStart;
+                      const end = textarea.selectionEnd;
+                      const selectedText = textarea.value.substring(start, end);
+                      
+                      let newText = '';
+                      let offset = 0;
+                      
+                      switch (e.key.toLowerCase()) {
+                        case 'b':
+                          e.preventDefault();
+                          // Check if text is already bold
+                          if (selectedText.startsWith('**') && selectedText.endsWith('**')) {
+                            newText = textarea.value.substring(0, start) + selectedText.slice(2, -2) + textarea.value.substring(end);
+                            offset = -4;
+                          } else {
+                            newText = textarea.value.substring(0, start) + `**${selectedText}**` + textarea.value.substring(end);
+                            offset = 4;
+                          }
+                          break;
+                        case 'i':
+                          e.preventDefault();
+                          // Check if text is already italic
+                          if (selectedText.startsWith('*') && selectedText.endsWith('*') && 
+                              !(selectedText.startsWith('**') && selectedText.endsWith('**'))) {
+                            newText = textarea.value.substring(0, start) + selectedText.slice(1, -1) + textarea.value.substring(end);
+                            offset = -2;
+                          } else {
+                            newText = textarea.value.substring(0, start) + `*${selectedText}*` + textarea.value.substring(end);
+                            offset = 2;
+                          }
+                          break;
+                        case 'u':
+                          e.preventDefault();
+                          // Check if text is already underlined
+                          if (selectedText.startsWith('_') && selectedText.endsWith('_')) {
+                            newText = textarea.value.substring(0, start) + selectedText.slice(1, -1) + textarea.value.substring(end);
+                            offset = -2;
+                          } else {
+                            newText = textarea.value.substring(0, start) + `_${selectedText}_` + textarea.value.substring(end);
+                            offset = 2;
+                          }
+                          break;
+                      }
+                      
+                      if (newText) {
+                        setFormData(prev => ({ ...prev, content: newText }));
+                        // Set cursor position after the formatting is applied
+                        setTimeout(() => {
+                          if (selectedText) {
+                            textarea.selectionStart = start;
+                            textarea.selectionEnd = end + offset;
+                          } else {
+                            const cursorPos = start + Math.abs(offset) / 2;
+                            textarea.selectionStart = cursorPos;
+                            textarea.selectionEnd = cursorPos;
+                          }
+                          textarea.focus();
+                        }, 0);
+                      }
+                    }
+                  }}
                   onPaste={(e) => {
                     e.preventDefault();
                     const pastedText = e.clipboardData.getData('text');
@@ -313,7 +377,7 @@ export default function ChapterManagementForm({ authorOnly = false }: ChapterMan
                     setFormData(prev => ({ ...prev, content: formattedText }));
                   }}
                   className="w-full p-3 border rounded-lg min-h-[300px] focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Chapter content"
+                  placeholder="Chapter content (Ctrl+B for bold, Ctrl+I for italic, Ctrl+U for underline)"
                 />
               </div>
 
