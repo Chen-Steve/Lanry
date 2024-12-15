@@ -3,9 +3,9 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
-import SearchSection from './SearchSection';
+import SearchSection from '@/components/SearchSection';
 import type { Novel } from '@/types/database';
-import UserProfileButton from './UserProfileButton';
+import UserProfileButton from '@/components/UserProfileButton';
 import { useStreak } from '@/hooks/useStreak';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -189,4 +189,4 @@ const Header = () => {
   );
 };
 
-export default Header;
+export default Header; 

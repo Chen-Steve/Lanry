@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import HeaderWrapper from '@/components/HeaderWrapper';
-import FooterWrapper from '@/components/FooterWrapper';
+import Header from './_components/Header';
+import Footer from './_components/Footer';
 import Providers from '@/components/Providers';
 import { Toaster } from 'react-hot-toast';
 import MobileNavigationWrapper from '@/components/MobileNavigationWrapper';
@@ -36,12 +36,12 @@ export default function RootLayout({
       <body className="bg-[#F2EEE5] min-h-screen relative">
         <Providers>
           <div className="flex flex-col min-h-screen">
-            <HeaderWrapper />
+            <Header />
             <main className="flex-grow pb-16 md:pb-0">
               {children}
             </main>
             <div className="hidden md:block">
-              <FooterWrapper />
+              <Footer />
             </div>
           </div>
           <Toaster position="bottom-right" />
