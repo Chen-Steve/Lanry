@@ -1,9 +1,16 @@
+'use client';
+
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
 import { usePathname } from 'next/navigation';
 
 export default function MobileNavigation() {
   const pathname = usePathname();
+
+  // Don't render mobile navigation if we're on a chapter page
+  if (pathname?.includes('/chapters/')) {
+    return null;
+  }
 
   const isActive = (path: string) => {
     if (pathname === path) {

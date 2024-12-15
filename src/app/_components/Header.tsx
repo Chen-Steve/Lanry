@@ -3,9 +3,9 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
-import SearchSection from '@/components/SearchSection';
+import SearchSection from '@/app/_components/SearchSection';
 import type { Novel } from '@/types/database';
-import UserProfileButton from '@/components/UserProfileButton';
+import UserProfileButton from '@/app/_components/UserProfileButton';
 import { useStreak } from '@/hooks/useStreak';
 import { useAuth } from '@/hooks/useAuth';
 

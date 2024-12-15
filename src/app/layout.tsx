@@ -2,9 +2,9 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import Header from './_components/Header';
 import Footer from './_components/Footer';
-import Providers from '@/components/Providers';
+import Providers from './providers';
 import { Toaster } from 'react-hot-toast';
-import MobileNavigationWrapper from '@/components/MobileNavigationWrapper';
+import MobileNavigation from './_components/MobileNavigation';
 
 export const metadata: Metadata = {
   title: "Lanry",
@@ -45,7 +45,7 @@ export default function RootLayout({
             </div>
           </div>
           <Toaster position="bottom-right" />
-          <MobileNavigationWrapper />
+          <MobileNavigation />
         </Providers>
       </body>
     </html>
