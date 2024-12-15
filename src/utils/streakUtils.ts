@@ -23,6 +23,8 @@ export const calculateStreak = (lastVisit: string | null, currentStreak: number 
   }
 
   const lastVisitDate = new Date(lastVisit);
+  
+  // Get dates without time components for day comparison
   const lastVisitDay = new Date(
     lastVisitDate.getFullYear(), 
     lastVisitDate.getMonth(), 
@@ -37,17 +39,22 @@ export const calculateStreak = (lastVisit: string | null, currentStreak: number 
   const diffTime = todayDay.getTime() - lastVisitDay.getTime();
   const diffDays = diffTime / (1000 * 60 * 60 * 24);
   
+  // If last visit was today, never update
   if (diffDays === 0) {
     return {
       newStreak: currentStreak,
       shouldUpdate: false
     };
-  } else if (diffDays === 1) {
+  } 
+  // If last visit was yesterday, increment streak
+  else if (diffDays === 1) {
     return {
       newStreak: currentStreak + 1,
       shouldUpdate: true
     };
-  } else {
+  } 
+  // If more than 1 day has passed, reset streak
+  else {
     return {
       newStreak: 1,
       shouldUpdate: true

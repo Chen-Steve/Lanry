@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { Icon } from '@iconify/react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
 import { PayPalButtons } from "@paypal/react-paypal-js";
 import { useAuth } from '@/hooks/useAuth';
-import { useStreak } from '@/hooks/useStreak';
+import supabase from '@/lib/supabaseClient';
 import { usePayPalScriptReducer } from "@paypal/react-paypal-js";
 
 interface CoinPackage {
@@ -25,10 +25,28 @@ const coinPackages: CoinPackage[] = [
 
 export default function ShopPage() {
   const { userId, isAuthenticated } = useAuth();
-  const { userProfile } = useStreak(userId);
   const queryClient = useQueryClient();
   const [selectedPackage, setSelectedPackage] = useState<CoinPackage | null>(null);
   const [{ isPending, isInitial, isRejected, isResolved }] = usePayPalScriptReducer();
+
+  // Simple query for user's coin balance
+  const { data: userProfile } = useQuery({
+    queryKey: ['shop-profile', userId],
+    queryFn: async () => {
+      if (!userId) return null;
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('coins')
+        .eq('id', userId)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!userId,
+    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
+  });
 
   useEffect(() => {
     //console.log('PayPal Script Status:', {
@@ -98,7 +116,7 @@ export default function ShopPage() {
                         const order = await actions.order.capture();
                         if (order.status === 'COMPLETED') {
                           toast.success('Payment successful! Adding coins to your account...');
-                          await queryClient.invalidateQueries({ queryKey: ['userProfile'] });
+                          await queryClient.invalidateQueries({ queryKey: ['shop-profile'] });
                           setSelectedPackage(null);
                         } else {
                           toast.error('Payment was not completed successfully');

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
 import supabase from '@/lib/supabaseClient';
@@ -11,8 +11,7 @@ interface UserProfile {
   coins: number;
 }
 
-export function useStreak(userId: string | null) {
-  const [streakUpdatedToday, setStreakUpdatedToday] = useState(false);
+export function useStreak(userId: string | null, checkStreak: boolean = false) {
   const queryClient = useQueryClient();
 
   // Query for user profile including streak data
@@ -61,9 +60,9 @@ export function useStreak(userId: string | null) {
     retry: false,
   });
 
-  // Update streak when needed
+  // Update streak only when checkStreak is true
   useEffect(() => {
-    if (userId && userProfile && !streakUpdatedToday) {
+    if (checkStreak && userId && userProfile) {
       const { shouldUpdate } = calculateStreak(
         userProfile.last_visit, 
         userProfile.current_streak
@@ -71,15 +70,9 @@ export function useStreak(userId: string | null) {
       
       if (shouldUpdate) {
         updateStreakMutation.mutate();
-        setStreakUpdatedToday(true);
       }
     }
-  }, [userId, userProfile, streakUpdatedToday, updateStreakMutation]);
-
-  // Reset the flag when the user ID changes
-  useEffect(() => {
-    setStreakUpdatedToday(false);
-  }, [userId]);
+  }, [checkStreak, userId, userProfile, updateStreakMutation]);
 
   return { userProfile };
 } 

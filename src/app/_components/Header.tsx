@@ -12,7 +12,7 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const { isAuthenticated, userId, isLoading, handleSignOut } = useAuth();
-  const { userProfile } = useStreak(userId);
+  const { userProfile } = useStreak(userId, true);
 
   const renderAuthLink = () => {
     if (isLoading) {
