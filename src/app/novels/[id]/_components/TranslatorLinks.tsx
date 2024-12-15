@@ -2,7 +2,8 @@ import { Icon } from '@iconify/react';
 
 interface TranslatorLinksProps {
   translator: {
-    username: string;
+    username: string | null;
+    profile_id: string;
     kofiUrl?: string;
     patreonUrl?: string;
     customUrl?: string;

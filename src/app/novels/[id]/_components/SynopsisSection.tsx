@@ -23,11 +23,8 @@ interface SynopsisSectionProps {
   updatedAt: string;
   author: string;
   translator?: { 
-    username: string;
-    kofiUrl?: string;
-    patreonUrl?: string;
-    customUrl?: string;
-    customUrlLabel?: string;
+    username: string | null;
+    profile_id: string;
   } | null;
   novelSlug: string;
   firstChapterNumber?: number;
@@ -45,6 +42,7 @@ interface SynopsisSectionProps {
   ratingCount: number;
   userRating?: number;
   onRate?: (rating: number) => void;
+  translatorId?: string;
 }
 
 export const SynopsisSection = ({ 
@@ -190,7 +188,16 @@ export const SynopsisSection = ({
           <div className="text-sm text-gray-600 mb-3">
             by {author}
             {translator && (
-              <> • TL: <span className="text-gray-700">{translator.username}</span></>
+              <> • TL: {translator.username ? (
+                <Link 
+                  href={`/user-dashboard?id=${translator.profile_id}`}
+                  className="text-gray-700 hover:text-gray-900 hover:underline"
+                >
+                  {translator.username}
+                </Link>
+              ) : (
+                <span className="text-gray-700">Anonymous</span>
+              )}</>
             )}
           </div>
           

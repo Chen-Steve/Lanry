@@ -88,6 +88,7 @@ const ReadingHistorySection = ({ userId }: ReadingHistorySectionProps) => {
               src={`/novel-covers/${item.novel.coverImageUrl}` || '/images/default-cover.jpg'}
               alt={item.novel.title}
               width={120}
+              priority
               height={120}
               className="object-cover shadow-sm w-[60px] h-[60px] sm:w-[120px] sm:h-[120px]"
             />

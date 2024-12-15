@@ -134,6 +134,7 @@ const Bookmarks = ({ userId, isOwnProfile = false }: BookmarksProps) => {
               alt={bookmark.novel.title}
               width={120}
               height={120}
+              priority
               className="object-cover shadow-sm w-[60px] h-[60px] sm:w-[120px] sm:h-[120px]"
             />
           </Link>

@@ -10,6 +10,7 @@ export async function getNovel(id: string, userId?: string): Promise<Novel | nul
       .select(`
         *,
         translator:author_profile_id (
+          id,
           username,
           kofi_url,
           patreon_url,
@@ -72,6 +73,7 @@ export async function getNovel(id: string, userId?: string): Promise<Novel | nul
       ...data,
       translator: data.translator ? {
         username: data.translator.username,
+        profile_id: data.translator.id,
         kofiUrl: data.translator.kofi_url,
         patreonUrl: data.translator.patreon_url,
         customUrl: data.translator.custom_url,
@@ -161,6 +163,7 @@ export async function getNovels(): Promise<Novel[]> {
       .select(`
         *,
         translator:author_profile_id (
+          id,
           username,
           kofi_url,
           patreon_url,
@@ -177,6 +180,7 @@ export async function getNovels(): Promise<Novel[]> {
       ...novel,
       translator: novel.translator ? {
         username: novel.translator.username,
+        profile_id: novel.translator.id,
         kofiUrl: novel.translator.kofi_url,
         patreonUrl: novel.translator.patreon_url,
         customUrl: novel.translator.custom_url,
