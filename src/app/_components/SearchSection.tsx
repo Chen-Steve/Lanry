@@ -4,10 +4,10 @@ import debounce from 'lodash/debounce';
 import type { Novel } from '@/types/database';
 
 interface SearchSectionProps {
-  onSearch: (query: string, results: Novel[]) => void;
+  onSearch?: (query: string, results: Novel[]) => void;
 }
 
-const SearchSection: React.FC<SearchSectionProps> = ({ onSearch }) => {
+const SearchSection: React.FC<SearchSectionProps> = ({ onSearch = () => {} }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<Novel[]>([]);

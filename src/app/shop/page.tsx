@@ -31,12 +31,12 @@ export default function ShopPage() {
   const [{ isPending, isInitial, isRejected, isResolved }] = usePayPalScriptReducer();
 
   useEffect(() => {
-    console.log('PayPal Script Status:', {
-      isPending,
-      isInitial,
-      isRejected,
-      isResolved
-    });
+    //console.log('PayPal Script Status:', {
+    //  isPending,
+    //  isInitial,
+    //  isRejected,
+    //  isResolved
+    //});
   }, [isPending, isInitial, isRejected, isResolved]);
 
   const handlePurchaseClick = async (pkg: CoinPackage) => {

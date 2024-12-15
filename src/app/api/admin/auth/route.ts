@@ -5,11 +5,11 @@ export async function POST(request: Request) {
     const { email, password } = await request.json();
 
     // Add debug logging
-    console.log('Received credentials:', { email, password });
-    console.log('Expected credentials:', { 
-      adminEmail: process.env.ADMIN_EMAIL,
-      adminPassword: process.env.ADMIN_PASSWORD 
-    });
+    //console.log('Received credentials:', { email, password });
+    //console.log('Expected credentials:', { 
+    //  adminEmail: process.env.ADMIN_EMAIL,
+    //  adminPassword: process.env.ADMIN_PASSWORD 
+    //});
 
     const adminEmail = process.env.ADMIN_EMAIL;
     const adminPassword = process.env.ADMIN_PASSWORD;

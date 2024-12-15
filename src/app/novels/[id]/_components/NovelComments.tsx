@@ -66,7 +66,7 @@ export const NovelComments = ({ novelId, isAuthenticated }: NovelCommentsProps) 
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      console.log('Raw data from Supabase:', data);
+      // console.log('Raw data from Supabase:', data);
       setComments(data.map(transformDatabaseComment));
     } catch (error) {
       console.error('Error fetching comments:', error);

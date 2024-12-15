@@ -48,7 +48,7 @@ export function useAuth() {
   }, []);
 
   const handleSignOut = async () => {
-    console.log('Sign out initiated');
+    // console.log('Sign out initiated');
     try {
       // Clear stored session data
       if (typeof window !== 'undefined') {

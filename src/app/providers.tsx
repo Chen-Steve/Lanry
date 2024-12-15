@@ -84,7 +84,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event, session?.user?.email);
+      // console.log('Auth state changed:', event, session?.user?.email);
       if (event === 'SIGNED_IN') {
         setUser(session?.user ?? null);
       } else if (event === 'SIGNED_OUT') {

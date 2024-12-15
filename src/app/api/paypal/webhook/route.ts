@@ -70,26 +70,26 @@ async function verifyPayPalWebhook(req: Request) {
 
 async function processPayment(orderId: string, event: PayPalWebhookEvent) {
   try {
-    console.log('5a. Starting processPayment');
+    //console.log('5a. Starting processPayment');
     
     const customId = event.resource.purchase_units[0]?.custom_id;
-    console.log('5b. Custom ID:', customId);
+    //console.log('5b. Custom ID:', customId);
     
     if (!customId) {
       throw new Error('No custom ID found in payment');
     }
 
     const [userId, packageId] = customId.split(':');
-    console.log('5c. Parsed IDs:', { userId, packageId });
+    //console.log('5c. Parsed IDs:', { userId, packageId });
 
     const coinPackage = coinPackages.find(pkg => pkg.id === parseInt(packageId));
-    console.log('5d. Coin package:', coinPackage);
+    //console.log('5d. Coin package:', coinPackage);
 
     if (!coinPackage) {
       throw new Error('Invalid package ID');
     }
 
-    const { data: profileData, error: profileError } = await supabase
+    const { error: profileError } = await supabase
       .from('profiles')
       .update({ 
         coins: supabase.rpc('add_coins', {
@@ -101,7 +101,7 @@ async function processPayment(orderId: string, event: PayPalWebhookEvent) {
       .eq('id', userId)
       .select('coins');
 
-    console.log('5e. Profile update result:', { data: profileData, error: profileError });
+    //console.log('5e. Profile update result:', { data: profileData, error: profileError });
 
     if (profileError) {
       throw profileError;
@@ -116,15 +116,15 @@ async function processPayment(orderId: string, event: PayPalWebhookEvent) {
         orderId: orderId
       });
 
-    console.log('5f. Transaction recording result:', { error: transactionError });
+    //console.log('5f. Transaction recording result:', { error: transactionError });
 
     if (transactionError) {
       throw transactionError;
     }
 
   } catch (error) {
-    console.error('ProcessPayment error:', error);
-    console.error('Full error details:', JSON.stringify(error, null, 2));
+    //console.error('ProcessPayment error:', error);
+    //console.error('Full error details:', JSON.stringify(error, null, 2));
     throw error;
   }
 }
@@ -149,15 +149,15 @@ const coinPackages = [
 
 export async function POST(req: Request) {
   try {
-    console.log('1. Received PayPal webhook request');
+    //console.log('1. Received PayPal webhook request');
     
     // Clone the request to read it twice
     const clonedReq = req.clone();
     const rawBody = await clonedReq.text();
-    console.log('2. Webhook raw body:', rawBody);
+    //console.log('2. Webhook raw body:', rawBody);
     
     const isValid = await verifyPayPalWebhook(req);
-    console.log('3. Webhook verification status:', isValid);
+    //console.log('3. Webhook verification status:', isValid);
     
     if (!isValid) {
       console.error('Invalid webhook signature');
@@ -168,11 +168,11 @@ export async function POST(req: Request) {
     }
 
     const event: PayPalWebhookEvent = JSON.parse(rawBody);
-    console.log('4. Parsed webhook event:', {
-      eventType: event.event_type,
-      orderId: event.resource.id,
-      purchaseUnits: event.resource.purchase_units
-    });
+    //console.log('4. Parsed webhook event:', {
+    //  eventType: event.event_type,
+    //  orderId: event.resource.id,
+    //  purchaseUnits: event.resource.purchase_units
+    //});
 
     const eventType = event.event_type;
     const orderId = event.resource.id;
@@ -180,31 +180,31 @@ export async function POST(req: Request) {
     // Handle different PayPal webhook events
     switch (eventType) {
       case 'PAYMENT.CAPTURE.COMPLETED':
-        console.log('5. Starting payment processing');
+        //console.log('5. Starting payment processing');
         await processPayment(orderId, event);
-        console.log('6. Payment processed successfully');
+        //console.log('6. Payment processed successfully');
         break;
       
       case 'PAYMENT.CAPTURE.PENDING':
         await markTransactionStatus(orderId, 'PENDING');
-        console.log('Payment pending:', event);
+        //console.log('Payment pending:', event);
         break;
 
       case 'PAYMENT.CAPTURE.DENIED':
       case 'PAYMENT.CAPTURE.DECLINED':
         await markTransactionStatus(orderId, 'FAILED');
-        console.log('Payment failed:', event);
+        //console.log('Payment failed:', event);
         break;
       
       case 'PAYMENT.CAPTURE.REVERSED':
       case 'PAYMENT.CAPTURE.REFUNDED':
         await markTransactionStatus(orderId, 'REFUNDED');
         // You might want to implement coin removal logic here
-        console.log('Payment refunded:', event);
+        //console.log('Payment refunded:', event);
         break;
 
       default:
-        console.log('Unhandled event type:', eventType);
+        //console.log('Unhandled event type:', eventType);
     }
 
     return NextResponse.json({ received: true });

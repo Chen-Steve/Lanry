@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
 import SearchSection from '@/app/_components/SearchSection';
-import type { Novel } from '@/types/database';
 import UserProfileButton from '@/app/_components/UserProfileButton';
 import { useStreak } from '@/hooks/useStreak';
 import { useAuth } from '@/hooks/useAuth';
@@ -46,11 +45,6 @@ const Header = () => {
     );
   };
 
-  const handleSearchResults = (query: string, results: Novel[]) => {
-    // Handle search results here if needed
-    console.log('Search results:', results);
-  };
-
   return (
     <header className="w-full bg-[#F2EEE5] hidden md:block">
       <div className="max-w-5xl mx-auto px-4 mt-4 sm:mt-8 mb-6 sm:mb-10">
@@ -63,7 +57,7 @@ const Header = () => {
 
             {/* Search Section */}
             <div className="hidden md:block">
-              <SearchSection onSearch={handleSearchResults} />
+              <SearchSection />
             </div>
 
             {/* Mobile Menu Button */}
@@ -119,7 +113,7 @@ const Header = () => {
           {isMenuOpen && (
             <nav className="md:hidden border-t border-gray-200 mt-2">
               <div className="py-2">
-                <SearchSection onSearch={handleSearchResults} />
+                <SearchSection />
               </div>
               <ul className="py-1 space-y-1">
                 <li>

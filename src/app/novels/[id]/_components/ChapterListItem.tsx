@@ -80,11 +80,11 @@ export function ChapterListItem({
       if (!userProfile) throw new Error('User profile not found');
       
       const chapterCost = chapter.coins;
-      console.log('Transaction details:', {
-        chapterCost,
-        userInitialCoins: userProfile.coins,
-        authorId
-      });
+      //  console.log('Transaction details:', {
+      //  chapterCost,
+      //  userInitialCoins: userProfile.coins,
+      //  authorId
+      //});
 
       if (userProfile.coins < chapterCost) {
         throw new Error('Insufficient coins');
@@ -92,7 +92,7 @@ export function ChapterListItem({
 
       // Calculate author's share (90%)
       const authorShare = Math.floor(chapterCost * 0.9);
-      console.log('Author share:', authorShare);
+      //  console.log('Author share:', authorShare);
 
       // Deduct coins from user
       const { error: deductError } = await supabase
@@ -118,7 +118,7 @@ export function ChapterListItem({
       }
       if (!authorProfile) throw new Error('Author profile not found');
 
-      console.log('Author current coins:', authorProfile.coins);
+      // console.log('Author current coins:', authorProfile.coins);
 
       // Add 90% of coins to author
       const { error: addError } = await supabase
@@ -132,15 +132,6 @@ export function ChapterListItem({
         console.error('Add coins error:', addError);
         throw new Error('Failed to add coins to author');
       }
-
-      // Optionally verify the new balance
-      const { data: verifyAuthor } = await supabase
-        .from('profiles')
-        .select('coins')
-        .eq('id', authorId)
-        .single();
-
-      console.log('Author new coins:', verifyAuthor?.coins);
 
       // Create unlock record
       const { error: unlockError } = await supabase
@@ -170,13 +161,13 @@ export function ChapterListItem({
   };
 
   const handleLockedChapterClick = async () => {
-    console.log('Chapter clicked:', {
-      isPublished: !chapter.publish_at || new Date(chapter.publish_at) <= new Date(),
-      isAuthenticated,
-      userProfile: userProfile?.id,
-      chapterId: chapter.id,
-      publishAt: chapter.publish_at
-    });
+    // console.log('Chapter clicked:', {
+    //   isPublished: !chapter.publish_at || new Date(chapter.publish_at) <= new Date(),
+    //   isAuthenticated,
+    //   userProfile: userProfile?.id,
+    //   chapterId: chapter.id,
+    //   publishAt: chapter.publish_at
+    // });
     
     if (!isAuthenticated) {
       toast.error('Please create an account to unlock advance chapters', {

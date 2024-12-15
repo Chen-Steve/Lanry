@@ -8,7 +8,7 @@ export const trackEvent = (eventName: string, properties?: EventProperties) => {
   } catch {
     // Silently fail in development or if tracking fails
     if (process.env.NODE_ENV === 'development') {
-      console.log(`[Analytics] ${eventName}`, properties);
+      // console.log(`[Analytics] ${eventName}`, properties);
     }
   }
 };

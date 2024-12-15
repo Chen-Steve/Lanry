@@ -57,7 +57,7 @@ export default function NovelPage({ params }: { params: { id: string } }) {
         
         const data = await getNovel(id, session?.user?.id);
         if (data) {
-          console.log('Novel data:', data);
+          // console.log('Novel data:', data);
           setNovel(data);
           setIsBookmarked(data.isBookmarked || false);
           setViewCount(data.views || 0);

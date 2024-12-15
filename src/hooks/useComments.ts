@@ -178,8 +178,8 @@ export function useComments(novelId: string, chapterNumber: number) {
         .single();
 
       if (error) {
-        console.error('Supabase error:', error);
-        console.log('Attempted to insert:', newComment);
+        // console.error('Supabase error:', error);
+        // console.log('Attempted to insert:', newComment);
         throw error;
       }
 
