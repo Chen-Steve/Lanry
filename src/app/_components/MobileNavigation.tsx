@@ -24,14 +24,6 @@ export default function MobileNavigation() {
       <div className="flex justify-around items-center">
         <Link href="/" className={`flex flex-col items-center p-2 ${isActive('/')}`}>
           <Icon 
-            icon="pepicons-print:house" 
-            className="w-6 h-6" 
-          />
-          <span className="text-xs">Home</span>
-        </Link>
-        
-        <Link href="/browse" className={`flex flex-col items-center p-2 ${isActive('/browse')}`}>
-          <Icon 
             icon="pepicons-print:book" 
             className="w-6 h-6" 
           />
