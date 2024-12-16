@@ -9,6 +9,7 @@ import { ErrorBoundary } from 'react-error-boundary';
 import StatusSection from '@/app/user-dashboard/_components/StatusSection';
 import { calculateLevel } from '@/lib/utils';
 import Image from 'next/image';
+import Link from 'next/link';
 
 const ReadingHistorySection = lazy(() => 
   import('@/app/user-dashboard/_components/ReadingHistory').catch(() => {
@@ -252,9 +253,20 @@ export default function UserDashboard() {
           )}
         </div>
         <div className="flex-grow">
-          <h1 className="text-xl font-bold text-gray-900 mb-2">
-            {profile?.username || 'User'}
-          </h1>
+          <div className="flex items-center gap-3 mb-2">
+            <h1 className="text-xl font-bold text-gray-900">
+              {profile?.username || 'User'}
+            </h1>
+            {isOwnProfile && (
+              <Link
+                href="/author/dashboard"
+                className="text-gray-600 hover:text-gray-800 transition-colors flex items-center gap-1"
+              >
+                <Icon icon="mdi:pencil" className="text-lg" />
+                <span>Author</span>
+              </Link>
+            )}
+          </div>
           <div className="flex gap-2">
             <div className="flex items-center gap-1.5 bg-amber-50 px-2.5 py-1 rounded-md">
               <Icon icon="ph:coin-fill" className="w-4 h-4 text-amber-500" />

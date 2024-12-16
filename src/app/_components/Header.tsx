@@ -25,16 +25,25 @@ const Header = () => {
 
     if (isAuthenticated) {
       return (
-        <UserProfileButton
-          userProfile={userProfile}
-          isProfileDropdownOpen={isProfileDropdownOpen}
-          setIsProfileDropdownOpen={setIsProfileDropdownOpen}
-          onSignOut={() => {
-            handleSignOut();
-            setIsProfileDropdownOpen(false);
-            setIsMenuOpen(false);
-          }}
-        />
+        <div className="flex items-center gap-3">
+          <Link
+            href="/author/dashboard"
+            className="text-gray-600 hover:text-gray-800 transition-colors flex items-center gap-1"
+          >
+            <Icon icon="mdi:pencil" className="text-lg" />
+            <span>Author</span>
+          </Link>
+          <UserProfileButton
+            userProfile={userProfile}
+            isProfileDropdownOpen={isProfileDropdownOpen}
+            setIsProfileDropdownOpen={setIsProfileDropdownOpen}
+            onSignOut={() => {
+              handleSignOut();
+              setIsProfileDropdownOpen(false);
+              setIsMenuOpen(false);
+            }}
+          />
+        </div>
       );
     }
 
@@ -152,18 +161,30 @@ const Header = () => {
                 </li>
                 <li>
                   {isAuthenticated ? (
-                    <UserProfileButton
-                      userProfile={userProfile}
-                      isProfileDropdownOpen={isProfileDropdownOpen}
-                      setIsProfileDropdownOpen={setIsProfileDropdownOpen}
-                      onSignOut={() => {
-                        handleSignOut();
-                        setIsProfileDropdownOpen(false);
-                        setIsMenuOpen(false);
-                      }}
-                      isMobile
-                      onMenuClose={() => setIsMenuOpen(false)}
-                    />
+                    <div className="space-y-2">
+                      <Link 
+                        href="/author/dashboard"
+                        className="block px-2 py-1.5 text-sm text-gray-600 hover:text-gray-800 transition-colors"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <span className="inline-flex items-center gap-2">
+                          <Icon icon="mdi:pencil" className="text-lg" />
+                          <span>Author Dashboard</span>
+                        </span>
+                      </Link>
+                      <UserProfileButton
+                        userProfile={userProfile}
+                        isProfileDropdownOpen={isProfileDropdownOpen}
+                        setIsProfileDropdownOpen={setIsProfileDropdownOpen}
+                        onSignOut={() => {
+                          handleSignOut();
+                          setIsProfileDropdownOpen(false);
+                          setIsMenuOpen(false);
+                        }}
+                        isMobile
+                        onMenuClose={() => setIsMenuOpen(false)}
+                      />
+                    </div>
                   ) : (
                     <Link 
                       href="/auth" 
