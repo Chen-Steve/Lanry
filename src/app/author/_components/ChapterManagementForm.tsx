@@ -3,7 +3,9 @@
 import { useState, useEffect } from 'react';
 import supabase from '@/lib/supabaseClient';
 import { generateChapterSlug } from '@/lib/utils';
-import { Icon } from '@iconify/react';
+import ChapterEditor from './ChapterEditor';
+import ChapterPublishSettings from './ChapterPublishSettings';
+import ChapterList from './ChapterList';
 
 interface ChapterManagementFormProps {
   authorOnly?: boolean;
@@ -27,23 +29,6 @@ interface Chapter {
   created_at: string;
   updated_at: string;
 }
-
-const isAdvancedChapter = (chapter: Chapter): boolean => {
-  const now = new Date();
-  const publishDate = chapter.publish_at ? new Date(chapter.publish_at) : null;
-  
-  return (publishDate !== null && publishDate > now) && 
-         (chapter.coins !== undefined && chapter.coins > 0);
-};
-
-const formatText = (text: string): string => {
-  // Split text into lines and process each line
-  return text
-    .split(/\r?\n/) // Split on newlines
-    .map(line => line.trim()) // Remove leading/trailing spaces
-    .filter(line => line !== '') // Remove empty lines
-    .join('\n\n'); // Join with double newlines
-};
 
 export default function ChapterManagementForm({ authorOnly = false }: ChapterManagementFormProps) {
   const [novels, setNovels] = useState<Novel[]>([]);
@@ -283,44 +268,12 @@ export default function ChapterManagementForm({ authorOnly = false }: ChapterMan
       {selectedNovel && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-1">
-            <h3 className="text-lg font-semibold mb-4">Chapters</h3>
-            <div className="space-y-2 h-[calc(100vh-250px)] overflow-y-auto pr-2">
-              {chapters.map((chapter) => (
-                <div
-                  key={chapter.id}
-                  className={`p-4 border rounded relative ${
-                    editingChapter?.id === chapter.id ? 'ring-2 ring-blue-500 bg-blue-50' : 'hover:bg-gray-50'
-                  }`}
-                >
-                  <div 
-                    onClick={() => handleChapterClick(chapter)}
-                    className="cursor-pointer"
-                  >
-                    {isAdvancedChapter(chapter) && (
-                      <span className="absolute top-2 right-2 text-xs font-semibold px-2 py-1 bg-purple-100 text-purple-700 rounded">
-                        Advanced
-                      </span>
-                    )}
-                    <h4 className="font-medium">
-                      Chapter {chapter.chapter_number}
-                      {chapter.title && `: ${chapter.title}`}
-                    </h4>
-                    {chapter.publish_at && (
-                      <p className="text-sm text-gray-500">
-                        Publishes: {new Date(chapter.publish_at).toLocaleDateString()}
-                      </p>
-                    )}
-                  </div>
-                  <button
-                    onClick={() => handleDeleteChapter(chapter.id)}
-                    className="absolute top-2 right-2 p-1 text-gray-500 hover:text-red-500 rounded-full hover:bg-red-50"
-                    title="Delete chapter"
-                  >
-                    <Icon icon="mdi:delete-outline" className="w-5 h-5" />
-                  </button>
-                </div>
-              ))}
-            </div>
+            <ChapterList
+              chapters={chapters}
+              editingChapterId={editingChapter?.id || null}
+              onChapterClick={handleChapterClick}
+              onDeleteChapter={handleDeleteChapter}
+            />
           </div>
 
           <div className="lg:col-span-2">
@@ -353,139 +306,17 @@ export default function ChapterManagementForm({ authorOnly = false }: ChapterMan
               </div>
 
               <div className="space-y-2">
-                <textarea
+                <ChapterEditor
                   value={formData.content}
-                  onChange={(e) => {
-                    const formattedText = formatText(e.target.value);
-                    setFormData(prev => ({ ...prev, content: formattedText }));
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.ctrlKey) {
-                      const textarea = e.currentTarget;
-                      const start = textarea.selectionStart;
-                      const end = textarea.selectionEnd;
-                      const selectedText = textarea.value.substring(start, end);
-                      
-                      let newText = '';
-                      let offset = 0;
-                      
-                      switch (e.key.toLowerCase()) {
-                        case 'b':
-                          e.preventDefault();
-                          // Check if text is already bold
-                          if (selectedText.startsWith('**') && selectedText.endsWith('**')) {
-                            newText = textarea.value.substring(0, start) + selectedText.slice(2, -2) + textarea.value.substring(end);
-                            offset = -4;
-                          } else {
-                            newText = textarea.value.substring(0, start) + `**${selectedText}**` + textarea.value.substring(end);
-                            offset = 4;
-                          }
-                          break;
-                        case 'i':
-                          e.preventDefault();
-                          // Check if text is already italic
-                          if (selectedText.startsWith('*') && selectedText.endsWith('*') && 
-                              !(selectedText.startsWith('**') && selectedText.endsWith('**'))) {
-                            newText = textarea.value.substring(0, start) + selectedText.slice(1, -1) + textarea.value.substring(end);
-                            offset = -2;
-                          } else {
-                            newText = textarea.value.substring(0, start) + `*${selectedText}*` + textarea.value.substring(end);
-                            offset = 2;
-                          }
-                          break;
-                        case 'u':
-                          e.preventDefault();
-                          // Check if text is already underlined
-                          if (selectedText.startsWith('_') && selectedText.endsWith('_')) {
-                            newText = textarea.value.substring(0, start) + selectedText.slice(1, -1) + textarea.value.substring(end);
-                            offset = -2;
-                          } else {
-                            newText = textarea.value.substring(0, start) + `_${selectedText}_` + textarea.value.substring(end);
-                            offset = 2;
-                          }
-                          break;
-                      }
-                      
-                      if (newText) {
-                        setFormData(prev => ({ ...prev, content: newText }));
-                        // Set cursor position after the formatting is applied
-                        setTimeout(() => {
-                          if (selectedText) {
-                            textarea.selectionStart = start;
-                            textarea.selectionEnd = end + offset;
-                          } else {
-                            const cursorPos = start + Math.abs(offset) / 2;
-                            textarea.selectionStart = cursorPos;
-                            textarea.selectionEnd = cursorPos;
-                          }
-                          textarea.focus();
-                        }, 0);
-                      }
-                    }
-                  }}
-                  onPaste={(e) => {
-                    e.preventDefault();
-                    const pastedText = e.clipboardData.getData('text');
-                    const formattedText = formatText(pastedText);
-                    setFormData(prev => ({ ...prev, content: formattedText }));
-                  }}
-                  className="w-full p-3 border rounded-lg min-h-[300px] focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Chapter content (Ctrl+B for bold, Ctrl+I for italic, Ctrl+U for underline)"
+                  onChange={(value) => setFormData(prev => ({ ...prev, content: value }))}
                 />
               </div>
 
-              <div className="flex gap-4">
-                <div className="flex-1">
-                  <input
-                    type="datetime-local"
-                    placeholder="Schedule Publication (Optional)"
-                    value={formData.publishAt}
-                    onChange={(e) => {
-                      const newPublishAt = e.target.value;
-                      setFormData({ 
-                        ...formData, 
-                        publishAt: newPublishAt,
-                        coins: newPublishAt ? formData.coins : '0'
-                      });
-                    }}
-                    className="w-full p-3 border rounded-lg"
-                  />
-                  <p className="text-sm text-gray-600 mt-1">
-                    Set a future date to make this an advanced chapter
-                  </p>
-                </div>
-                <div className="w-1/3">
-                  <input
-                    type="number"
-                    min="1"
-                    placeholder="Set Cost"
-                    value={formData.coins}
-                    disabled={!formData.publishAt}
-                    onKeyDown={(e) => {
-                      if (e.key === 'e' || e.key === 'E' || e.key === '+' || e.key === '-') {
-                        e.preventDefault();
-                      }
-                    }}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(/[eE]/g, '');
-                      setFormData({ ...formData, coins: value });
-                    }}
-                    onBlur={(e) => {
-                      if (formData.publishAt) {
-                        const value = parseInt(e.target.value) || 1;
-                        setFormData({ ...formData, coins: Math.max(1, value).toString() });
-                      }
-                    }}
-                    className="w-full p-3 border rounded-lg disabled:bg-gray-100 disabled:cursor-not-allowed"
-                    title={formData.publishAt ? "Set coins required to access this chapter" : "Set publish date first to enable paid chapter"}
-                  />
-                  <p className="text-sm text-gray-600 mt-1">
-                    {formData.publishAt 
-                      ? "Coins required for early access" 
-                      : "Set future date to enable coins"}
-                  </p>
-                </div>
-              </div>
+              <ChapterPublishSettings
+                publishAt={formData.publishAt}
+                coins={formData.coins}
+                onSettingsChange={(settings) => setFormData(prev => ({ ...prev, ...settings }))}
+              />
 
               <div className="flex gap-4">
                 <button
