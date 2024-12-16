@@ -290,7 +290,7 @@ const CommentItem = ({
           <div className="flex items-center gap-2">
             <Link 
               href={`/user-dashboard?id=${comment.profile_id}`}
-              className="font-medium hover:text-blue-600 transition-colors"
+              className="font-medium text-black hover:text-blue-600 transition-colors"
             >
               {comment.profile.username || 'Anonymous'}
             </Link>
