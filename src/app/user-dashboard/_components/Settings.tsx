@@ -64,14 +64,14 @@ const Settings = ({ profile }: SettingsProps) => {
         let avatarUrl = updatedProfile.avatar_url;
 
         if (avatarFile) {
-          console.log('Uploading new avatar file:', avatarFile.name);
+          // console.log('Uploading new avatar file:', avatarFile.name);
           avatarUrl = await uploadImage(avatarFile, profileState.id);
-          console.log('Got new avatar URL:', avatarUrl);
+          // console.log('Got new avatar URL:', avatarUrl);
           // Update preview with the new URL immediately
           setAvatarPreview(avatarUrl);
         }
 
-        console.log('Updating profile with avatar URL:', avatarUrl);
+        // console.log('Updating profile with avatar URL:', avatarUrl);
         const { error } = await supabase
           .from('profiles')
           .upsert({
@@ -101,8 +101,8 @@ const Settings = ({ profile }: SettingsProps) => {
       alert('Settings saved successfully!');
       setAvatarFile(null);
     },
-    onError: (error) => {
-      console.error('Error saving settings:', error);
+    onError: () => {
+      // console.error('Error saving settings:', error);
       alert('Failed to save settings');
     },
   });
@@ -115,7 +115,7 @@ const Settings = ({ profile }: SettingsProps) => {
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
-      console.error('Error logging out:', error);
+      // console.error('Error logging out:', error);
       alert('Failed to log out');
       return;
     }
@@ -145,11 +145,11 @@ const Settings = ({ profile }: SettingsProps) => {
                   unoptimized
                   className="w-full h-full object-cover"
                   onError={() => {
-                    console.log('Image failed to load:', avatarPreview);
+                    // console.log('Image failed to load:', avatarPreview);
                     setAvatarPreview(null);
                   }}
                   onLoad={() => {
-                    console.log('Image loaded successfully:', avatarPreview);
+                    // console.log('Image loaded successfully:', avatarPreview);
                   }}
                 />
               ) : (

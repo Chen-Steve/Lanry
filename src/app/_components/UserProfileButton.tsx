@@ -52,9 +52,9 @@ const UserProfileButton = ({
   };
 
   const renderAvatar = () => {
-    console.log('UserProfile in renderAvatar:', userProfile);
+    // console.log('UserProfile in renderAvatar:', userProfile);
     if (userProfile?.avatar_url) {
-      console.log('Avatar URL found:', userProfile.avatar_url);
+      // console.log('Avatar URL found:', userProfile.avatar_url);
       return (
         <Image
           src={userProfile.avatar_url}
@@ -64,7 +64,7 @@ const UserProfileButton = ({
           unoptimized
           className="w-8 h-8 rounded-full object-cover"
           onError={() => {
-            console.log('Failed to load avatar:', userProfile.avatar_url);
+            // console.log('Failed to load avatar:', userProfile.avatar_url);
             // Force re-render with fallback
             const target = document.querySelector(`img[alt="${userProfile.username}"]`) as HTMLImageElement;
             if (target) {
@@ -74,7 +74,7 @@ const UserProfileButton = ({
         />
       );
     } else {
-      console.log('No avatar URL found in userProfile');
+      // console.log('No avatar URL found in userProfile');
     }
     return (
       <div className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center">

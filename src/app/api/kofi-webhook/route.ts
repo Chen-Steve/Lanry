@@ -2,12 +2,13 @@ import { NextResponse } from 'next/server';
 import supabase from '@/lib/supabaseClient';
 
 interface KofiData {
+  verification_token: string;
   message_id: string;
   timestamp: string;
-  type: string;
+  type: 'Donation' | 'Subscription' | 'Commission' | 'Shop Order';
   is_public: boolean;
   from_name: string;
-  message: string;
+  message: string | null;
   amount: string;
   url: string;
   email: string;
@@ -15,30 +16,20 @@ interface KofiData {
   is_subscription_payment: boolean;
   is_first_subscription_payment: boolean;
   kofi_transaction_id: string;
-  verification_token: string;
-  shop_items: Array<{
-    direct_link_code: string;
-  }>;
+  shop_items: Array<{ direct_link_code: string }> | null;
+  tier_name: string | null;
 }
 
 const KOFI_VERIFICATION_TOKEN = process.env.KOFI_VERIFICATION_TOKEN;
 
 export async function POST(request: Request) {
   try {
-    const data = await request.json();
-    const kofiData: KofiData = JSON.parse(data.data);
+    const formData = await request.formData();
+    const kofiData: KofiData = JSON.parse(formData.get('data') as string);
 
     // Verify the webhook is from Ko-fi
     if (kofiData.verification_token !== KOFI_VERIFICATION_TOKEN) {
       return NextResponse.json({ error: 'Invalid verification token' }, { status: 401 });
-    }
-
-    // Extract the user ID from the message or shop item code
-    // You'll need to implement your own logic to map Ko-fi purchases to user IDs
-    // This is just an example assuming the shop item code contains the user ID
-    const shopItem = kofiData.shop_items?.[0];
-    if (!shopItem?.direct_link_code) {
-      return NextResponse.json({ error: 'No shop item found' }, { status: 400 });
     }
 
     // Parse the amount to determine coins to award
@@ -54,11 +45,24 @@ export async function POST(request: Request) {
       default: coinsToAward = Math.floor(amount * 10); // Fallback calculation
     }
 
+    // Get user ID from message or email (you'll need to implement your own mapping logic)
+    // For now, we'll use the email to find the user
+    const { data: userData, error: userError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('email', kofiData.email)
+      .single();
+
+    if (userError || !userData) {
+      console.error('Error finding user:', userError);
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
     // Update the user's coin balance in Supabase
     const { error: updateError } = await supabase.rpc(
       'increment_coins',
       { 
-        user_id: shopItem.direct_link_code,
+        user_id: userData.id,
         coins_to_add: coinsToAward 
       }
     );
@@ -72,11 +76,13 @@ export async function POST(request: Request) {
     const { error: logError } = await supabase
       .from('coin_transactions')
       .insert({
-        user_id: shopItem.direct_link_code,
+        user_id: userData.id,
         amount: coinsToAward,
-        transaction_type: 'purchase',
+        transaction_type: kofiData.type.toLowerCase(),
         payment_id: kofiData.kofi_transaction_id,
-        payment_platform: 'kofi'
+        payment_platform: 'kofi',
+        is_subscription: kofiData.is_subscription_payment,
+        subscription_tier: kofiData.tier_name
       });
 
     if (logError) {
