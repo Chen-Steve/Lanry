@@ -1,6 +1,8 @@
 'use client';
 
 import { Icon } from '@iconify/react';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'react-hot-toast';
 
 interface CoinPackage {
   id: number;
@@ -16,6 +18,17 @@ const coinPackages: CoinPackage[] = [
 ];
 
 export default function ShopPage() {
+  const { isAuthenticated } = useAuth();
+
+  const handlePurchaseClick = () => {
+    if (!isAuthenticated) {
+      toast.error('Please create an account to buy coins');
+      return;
+    }
+    
+    window.open('https://ko-fi.com/niasser', '_blank');
+  };
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
       {/* Header Section */}
@@ -27,6 +40,9 @@ export default function ShopPage() {
       <div className="bg-blue-50 p-4 rounded-lg mb-8">
         <h2 className="font-semibold text-lg mb-2 text-blue-900">How to buy coins:</h2>
         <ol className="list-decimal list-inside text-blue-800 space-y-2">
+          {!isAuthenticated && (
+            <li className="text-red-600 font-medium">First, please create an account or sign in</li>
+          )}
           <li>Click on your preferred coin package below</li>
           <li>You&apos;ll be redirected to Ko-fi for payment</li>
           <li><strong>Important:</strong> Include your username in the message when making the purchase</li>
@@ -50,15 +66,20 @@ export default function ShopPage() {
               ${pkg.price.toFixed(2)}
             </p>
 
-            <a
-              href="https://ko-fi.com/niasser"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 w-full py-2 px-4 rounded-md font-medium bg-[#29abe0] hover:bg-[#228db8] text-white transition-colors"
+            <button
+              onClick={handlePurchaseClick}
+              className={`
+                inline-flex items-center justify-center gap-2 w-full py-2 px-4 rounded-md font-medium
+                ${isAuthenticated 
+                  ? 'bg-[#29abe0] hover:bg-[#228db8] text-white' 
+                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'}
+                transition-colors
+              `}
+              disabled={!isAuthenticated}
             >
               <Icon icon="simple-icons:kofi" className="text-xl" />
               Buy on Ko-fi
-            </a>
+            </button>
           </div>
         ))}
       </div>
