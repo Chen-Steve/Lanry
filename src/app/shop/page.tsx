@@ -1,33 +1,28 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { Icon } from '@iconify/react';
-import { useQueryClient, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
-import { PayPalButtons } from "@paypal/react-paypal-js";
 import { useAuth } from '@/hooks/useAuth';
 import supabase from '@/lib/supabaseClient';
-import { usePayPalScriptReducer } from "@paypal/react-paypal-js";
 
 interface CoinPackage {
   id: number;
   coins: number;
   price: number;
+  kofiCode: string;
   popular?: boolean;
 }
 
 const coinPackages: CoinPackage[] = [
-  { id: 1, coins: 10, price: 1 },
-  { id: 2, coins: 50, price: 5, popular: true },
-  { id: 3, coins: 100, price: 10 },
-  { id: 4, coins: 200, price: 20 },
+  { id: 1, coins: 10, price: 1, kofiCode: 'Support1' },
+  { id: 2, coins: 50, price: 5, kofiCode: 'Support5', popular: true },
+  { id: 3, coins: 100, price: 10, kofiCode: 'Support10' },
+  { id: 4, coins: 200, price: 20, kofiCode: 'Support20' },
 ];
 
 export default function ShopPage() {
   const { userId, isAuthenticated } = useAuth();
-  const queryClient = useQueryClient();
-  const [selectedPackage, setSelectedPackage] = useState<CoinPackage | null>(null);
-  const [{ isPending, isInitial, isRejected, isResolved }] = usePayPalScriptReducer();
 
   // Simple query for user's coin balance
   const { data: userProfile } = useQuery({
@@ -48,23 +43,18 @@ export default function ShopPage() {
     staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
   });
 
-  useEffect(() => {
-    //console.log('PayPal Script Status:', {
-    //  isPending,
-    //  isInitial,
-    //  isRejected,
-    //  isResolved
-    //});
-  }, [isPending, isInitial, isRejected, isResolved]);
-
   const handlePurchaseClick = async (pkg: CoinPackage) => {
     if (!isAuthenticated) {
       toast.error('Please create an account to buy coins');
       return;
     }
-    setSelectedPackage(pkg);
+    
+    // Open Ko-fi in a new window
+    const kofiUrl = `https://ko-fi.com/YOUR_KOFI_USERNAME/${pkg.kofiCode}`;
+    window.open(kofiUrl, '_blank');
+    
+    toast.success('Redirecting to Ko-fi for purchase. Your coins will be credited once the payment is complete.');
   };
-
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
@@ -77,80 +67,7 @@ export default function ShopPage() {
             Current Balance: {userProfile?.coins || 0} coins
           </span>
         </div>
-        <p className="mt-3 text-gray-600 italic">
-          We are working on getting the coins feature implemented
-        </p>
       </div>
-
-      {/* Purchase Modal */}
-      {selectedPackage && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-md w-full">
-            <h2 className="text-xl font-bold mb-4">Complete Purchase</h2>
-            <p className="mb-4">
-              Purchase {selectedPackage.coins} coins for ${selectedPackage.price.toFixed(2)}
-            </p>
-            
-            <div className="space-y-3">
-              {isPending ? (
-                <div className="flex justify-center items-center py-4">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
-                </div>
-              ) : (
-                <PayPalButtons
-                  createOrder={(data, actions) => {
-                    return actions.order.create({
-                      intent: "CAPTURE",
-                      purchase_units: [{
-                        amount: {
-                          value: selectedPackage.price.toString(),
-                          currency_code: "USD"
-                        },
-                        custom_id: `${userId}:${selectedPackage.id}`
-                      }]
-                    });
-                  }}
-                  onApprove={async (data, actions) => {
-                    if (actions.order) {
-                      try {
-                        const order = await actions.order.capture();
-                        if (order.status === 'COMPLETED') {
-                          toast.success('Payment successful! Adding coins to your account...');
-                          await queryClient.invalidateQueries({ queryKey: ['shop-profile'] });
-                          setSelectedPackage(null);
-                        } else {
-                          toast.error('Payment was not completed successfully');
-                          console.error('Payment status:', order.status);
-                        }
-                      } catch (error) {
-                        console.error('Payment capture error:', error);
-                        toast.error('There was an error processing your payment');
-                      }
-                    }
-                  }}
-                  onError={(err) => {
-                    console.error('PayPal error:', err);
-                    toast.error('Payment failed. Please try again.');
-                    setSelectedPackage(null);
-                  }}
-                  style={{ 
-                    layout: "horizontal",
-                    height: 48,
-                  }}
-                  disabled={false}
-                />
-              )}
-
-              <button
-                onClick={() => setSelectedPackage(null)}
-                className="w-full mt-4 py-2 px-4 rounded-md bg-gray-100 hover:bg-gray-200"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Packages Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -182,22 +99,22 @@ export default function ShopPage() {
 
             <button
               onClick={() => handlePurchaseClick(pkg)}
-              disabled
               className={`
                 w-full py-2 px-4 rounded-md font-medium
                 ${pkg.popular 
-                  ? 'bg-amber-300 cursor-not-allowed text-white' 
-                  : 'bg-gray-100 cursor-not-allowed text-gray-400'}
+                  ? 'bg-[#29abe0] hover:bg-[#228db8] text-white' 
+                  : 'bg-gray-100 hover:bg-gray-200 text-gray-800'}
                 transition-colors
               `}
-              title="PayPal integration coming soon!"
             >
-              Coming Soon
+              <div className="flex items-center justify-center gap-2">
+                <Icon icon="simple-icons:kofi" className="text-xl" />
+                Support on Ko-fi
+              </div>
             </button>
           </div>
         ))}
       </div>
-
     </div>
   );
 } 
