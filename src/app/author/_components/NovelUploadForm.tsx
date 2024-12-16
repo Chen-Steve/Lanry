@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react';
 import { generateNovelSlug } from '@/lib/utils';
 import supabase from '@/lib/supabaseClient';
 import { Icon } from '@iconify/react';
+import Image from 'next/image';
+import { uploadImage } from '@/services/uploadService';
+import { toast } from 'react-hot-toast';
 
 interface NovelUploadFormProps {
   authorOnly?: boolean;
@@ -19,11 +22,15 @@ interface Novel {
   created_at: string;
   updated_at: string;
   author_profile_id: string;
+  cover_image_url?: string;
 }
 
 export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormProps) {
   const [novels, setNovels] = useState<Novel[]>([]);
   const [editingNovel, setEditingNovel] = useState<Novel | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
+  const [isUploading, setIsUploading] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -60,8 +67,22 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
     }
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+    setImageFile(file);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsUploading(true);
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -78,9 +99,21 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
       const slug = generateNovelSlug(formData.title);
       const isCustomAuthor = Boolean(formData.author.trim());
       const authorName = isCustomAuthor ? formData.author.trim() : (profile?.username || 'Anonymous');
+      const novelId = editingNovel?.id || crypto.randomUUID();
+
+      let coverImageUrl = editingNovel?.cover_image_url;
+      if (imageFile) {
+        try {
+          coverImageUrl = await uploadImage(imageFile, session.user.id);
+        } catch (error) {
+          console.error('Error uploading image:', error);
+          toast.error('Failed to upload cover image');
+          return;
+        }
+      }
 
       const novelData = {
-        id: crypto.randomUUID(),
+        id: novelId,
         ...formData,
         author: authorName,
         slug,
@@ -88,13 +121,13 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
         is_author_name_custom: isCustomAuthor,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        translator_id: isCustomAuthor ? session.user.id : null
+        translator_id: isCustomAuthor ? session.user.id : null,
+        cover_image_url: coverImageUrl,
       };
 
       let error;
 
       if (editingNovel) {
-        // Update existing novel
         const { error: updateError } = await supabase
           .from('novels')
           .update({
@@ -104,7 +137,6 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
           .eq('id', editingNovel.id);
         error = updateError;
       } else {
-        // Insert new novel
         const { error: insertError } = await supabase
           .from('novels')
           .insert([novelData]);
@@ -122,10 +154,15 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
         slug: '',
       });
       setEditingNovel(null);
+      setImageFile(null);
+      setImagePreview('');
       fetchNovels();
+      toast.success(`Novel ${editingNovel ? 'updated' : 'created'} successfully!`);
     } catch (error) {
       console.error(`Error ${editingNovel ? 'updating' : 'creating'} novel:`, error);
-      alert(`Failed to ${editingNovel ? 'update' : 'create'} novel`);
+      toast.error(`Failed to ${editingNovel ? 'update' : 'create'} novel`);
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -142,6 +179,8 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
 
   const handleCancelEdit = () => {
     setEditingNovel(null);
+    setImageFile(null);
+    setImagePreview('');
     setFormData({
       title: '',
       description: '',
@@ -236,6 +275,49 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
             {editingNovel ? 'Edit Novel' : 'Add New Novel'}
           </h3>
 
+          {/* Image Upload */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              Cover Image
+            </label>
+            <div className="flex items-center space-x-4">
+              {(imagePreview || editingNovel?.cover_image_url) && (
+                <div className="relative w-32 h-48 border rounded overflow-hidden">
+                  <Image
+                    src={imagePreview || editingNovel?.cover_image_url || ''}
+                    alt="Cover preview"
+                    fill
+                    className="object-cover"
+                    sizes="128px"
+                  />
+                  <button
+                    title="Remove cover image"
+                    type="button"
+                    onClick={() => {
+                      setImageFile(null);
+                      setImagePreview('');
+                    }}
+                    className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full hover:bg-red-600"
+                  >
+                    <Icon icon="mdi:close" className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+              <div className="flex-1">
+                <label className="flex flex-col items-center px-4 py-6 bg-white text-blue-500 rounded-lg border-2 border-blue-500 border-dashed cursor-pointer hover:bg-blue-50">
+                  <Icon icon="mdi:cloud-upload" className="w-8 h-8" />
+                  <span className="mt-2 text-sm">Click to upload cover image</span>
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                  />
+                </label>
+              </div>
+            </div>
+          </div>
+
           <input
             type="text"
             placeholder="Title"
@@ -276,9 +358,10 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
           <div className="flex gap-4">
             <button
               type="submit"
-              className="flex-1 bg-blue-500 py-2 px-4 rounded hover:bg-blue-600"
+              disabled={isUploading}
+              className="flex-1 bg-blue-500 py-2 px-4 rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {editingNovel ? 'Update Novel' : 'Add Novel'}
+              {isUploading ? 'Uploading...' : (editingNovel ? 'Update Novel' : 'Add Novel')}
             </button>
             {editingNovel && (
               <button

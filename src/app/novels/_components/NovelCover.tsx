@@ -25,7 +25,7 @@ const NovelCover = ({
   <div className="relative aspect-[2/3] w-full rounded overflow-hidden bg-gray-200">
     {coverUrl ? (
       <Image
-        src={`/novel-covers/${coverUrl}`}
+        src={coverUrl.startsWith('http') ? coverUrl : `/novel-covers/${coverUrl}`}
         alt={`Cover for ${title}`}
         fill
         priority={isPriority}
