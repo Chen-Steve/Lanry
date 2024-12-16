@@ -16,6 +16,7 @@ interface DatabaseComment {
   profile_id: string;
   profile?: {
     username: string;
+    avatar_url: string;
   };
 }
 
@@ -92,8 +93,10 @@ export function useComments(novelId: string, chapterNumber: number) {
                 ...(prev[newComment.paragraph_id] || []),
                 {
                   ...newComment,
+                  novel_id: novelId,
                   profile: {
-                    username: newComment.profile?.username ?? 'Anonymous'
+                    username: newComment.profile?.username ?? 'Anonymous',
+                    avatar_url: newComment.profile?.avatar_url
                   }
                 } as ChapterComment
               ]
@@ -109,7 +112,8 @@ export function useComments(novelId: string, chapterNumber: number) {
         .select(`
           *,
           profile:profiles (
-            username
+            username,
+            avatar_url
           )
         `)
         .eq('novel_id', novelId)
@@ -130,7 +134,8 @@ export function useComments(novelId: string, chapterNumber: number) {
         const processedComment = {
           ...comment,
           profile: {
-            username: comment.profile?.username ?? 'Anonymous'
+            username: comment.profile?.username ?? 'Anonymous',
+            avatar_url: comment.profile?.avatar_url
           }
         } as ChapterComment;
         
@@ -172,14 +177,13 @@ export function useComments(novelId: string, chapterNumber: number) {
         .select(`
           *,
           profile:profiles (
-            username
+            username,
+            avatar_url
           )
         `)
         .single();
 
       if (error) {
-        // console.error('Supabase error:', error);
-        // console.log('Attempted to insert:', newComment);
         throw error;
       }
 
@@ -191,7 +195,8 @@ export function useComments(novelId: string, chapterNumber: number) {
           {
             ...data,
             profile: {
-              username: data.profile?.username ?? 'Anonymous'
+              username: data.profile?.username ?? 'Anonymous',
+              avatar_url: data.profile?.avatar_url
             }
           } as ChapterComment
         ]

@@ -6,7 +6,16 @@ import { formatDate } from '@/lib/utils';
 import Link from 'next/link';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { ChapterComment } from '@/types/database';
+import type { ChapterComment as BaseChapterComment } from '@/types/database';
+import Image from 'next/image';
+
+// Extend the base type to include avatar_url
+interface ChapterComment extends Omit<BaseChapterComment, 'profile'> {
+  profile?: {
+    username: string | null;
+    avatar_url?: string;
+  };
+}
 
 interface CommentBarProps {
   paragraphId: string;
@@ -90,35 +99,67 @@ export default function CommentBar({
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {comments.map((comment) => (
               <div key={comment.id} className="bg-[#F7F4ED] rounded-lg p-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    {comment.profile?.username ? (
-                      <Link 
-                        href={`/user-dashboard?id=${comment.profile_id}`}
-                        className="text-sm font-medium text-black hover:text-blue-600 transition-colors"
-                      >
-                        {comment.profile.username}
-                      </Link>
-                    ) : (
-                      <span className="text-sm font-medium text-black">
-                        Anonymous
-                      </span>
-                    )}
-                    <span className="text-xs text-gray-600">
-                      {formatDate(comment.created_at)}
-                    </span>
+                <div className="flex gap-3">
+                  <Link href={`/user-dashboard?id=${comment.profile_id}`} className="flex-shrink-0">
+                    <div className="w-8 h-8 rounded-full overflow-hidden bg-blue-500">
+                      {comment.profile?.avatar_url ? (
+                        <Image
+                          src={comment.profile.avatar_url}
+                          alt={comment.profile.username || 'User avatar'}
+                          width={32}
+                          height={32}
+                          className="w-full h-full object-cover"
+                          unoptimized
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            const parent = target.parentElement;
+                            if (parent && comment.profile) {
+                              parent.innerHTML = comment.profile.username?.[0]?.toUpperCase() || '?';
+                              parent.className = "w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm font-semibold";
+                            }
+                          }}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-white text-sm font-semibold">
+                          {comment.profile?.username?.[0]?.toUpperCase() || '?'}
+                        </div>
+                      )}
+                    </div>
+                  </Link>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        {comment.profile?.username ? (
+                          <Link 
+                            href={`/user-dashboard?id=${comment.profile_id}`}
+                            className="text-sm font-medium text-black hover:text-blue-600 transition-colors"
+                          >
+                            {comment.profile.username}
+                          </Link>
+                        ) : (
+                          <span className="text-sm font-medium text-black">
+                            Anonymous
+                          </span>
+                        )}
+                        <span className="text-xs text-gray-600">
+                          {formatDate(comment.created_at)}
+                        </span>
+                      </div>
+                      {userId === comment.profile_id && (
+                        <button
+                          onClick={() => onDeleteComment(comment.id)}
+                          className="p-1 hover:bg-[#F2EEE5] rounded-full transition-colors"
+                          aria-label="Delete comment"
+                        >
+                          <Icon icon="mdi:delete-outline" className="text-gray-500 hover:text-red-500 w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-sm mt-1 text-black">{comment.content}</p>
                   </div>
-                  {userId === comment.profile_id && (
-                    <button
-                      onClick={() => onDeleteComment(comment.id)}
-                      className="p-1 hover:bg-[#F2EEE5] rounded-full transition-colors"
-                      aria-label="Delete comment"
-                    >
-                      <Icon icon="mdi:delete-outline" className="text-gray-500 hover:text-red-500 w-4 h-4" />
-                    </button>
-                  )}
                 </div>
-                <p className="text-sm mt-1 text-black">{comment.content}</p>
               </div>
             ))}
             {comments.length === 0 && (

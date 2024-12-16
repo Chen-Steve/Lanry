@@ -85,6 +85,7 @@ model Profile {
   patreonUrl         String?   @map("patreon_url")
   customUrl          String?   @map("custom_url")
   customUrlLabel     String?   @map("custom_url_label")
+  avatarUrl          String?   @map("avatar_url")
   bookmarks          Bookmark[]
   readingHistory     ReadingHistory[]
   readingTime        ReadingTime?

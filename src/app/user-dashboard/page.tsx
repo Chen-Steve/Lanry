@@ -8,6 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ErrorBoundary } from 'react-error-boundary';
 import StatusSection from '@/app/user-dashboard/_components/StatusSection';
 import { calculateLevel } from '@/lib/utils';
+import Image from 'next/image';
 
 const ReadingHistorySection = lazy(() => 
   import('@/app/user-dashboard/_components/ReadingHistory').catch(() => {
@@ -224,8 +225,31 @@ export default function UserDashboard() {
     <div className="max-w-5xl mx-auto px-4 py-6">
       {/* Profile Header */}
       <div className="flex items-center gap-4 mb-6">
-        <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white text-xl font-semibold">
-          {profile?.username?.[0]?.toUpperCase() || 'U'}
+        <div className="w-16 h-16 rounded-full overflow-hidden bg-blue-500">
+          {profile?.avatar_url ? (
+            <Image
+              src={profile.avatar_url}
+              alt={profile.username || 'User avatar'}
+              width={64}
+              height={64}
+              className="w-full h-full object-cover"
+              unoptimized
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+                // Show initials fallback
+                const parent = target.parentElement;
+                if (parent) {
+                  parent.innerHTML = profile?.username?.[0]?.toUpperCase() || 'U';
+                  parent.className = "w-16 h-16 rounded-full bg-blue-500 flex items-center justify-center text-white text-xl font-semibold";
+                }
+              }}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-white text-xl font-semibold">
+              {profile?.username?.[0]?.toUpperCase() || 'U'}
+            </div>
+          )}
         </div>
         <div className="flex-grow">
           <h1 className="text-xl font-bold text-gray-900 mb-2">

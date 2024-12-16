@@ -3,9 +3,18 @@ import { Icon } from '@iconify/react';
 import { formatRelativeDate } from '@/lib/utils';
 import toast from 'react-hot-toast';
 import supabase from '@/lib/supabaseClient';
-import type { NovelComment } from '@/types/database';
+import type { NovelComment as BaseNovelComment } from '@/types/database';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import Image from 'next/image';
+
+// Extend the base type to include avatar_url
+interface NovelComment extends Omit<BaseNovelComment, 'profile'> {
+  profile: {
+    username: string | null;
+    avatar_url?: string;
+  };
+}
 
 interface SupabaseComment {
   id: string;
@@ -16,6 +25,7 @@ interface SupabaseComment {
   updated_at: string;
   profile: {
     username: string | null;
+    avatar_url?: string;
   };
 }
 
@@ -59,14 +69,14 @@ export const NovelComments = ({ novelId, isAuthenticated }: NovelCommentsProps) 
         .select(`
           *,
           profile:profiles (
-            username
+            username,
+            avatar_url
           )
         `)
         .eq('novel_id', novelId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      // console.log('Raw data from Supabase:', data);
       setComments(data.map(transformDatabaseComment));
     } catch (error) {
       console.error('Error fetching comments:', error);
@@ -279,99 +289,109 @@ const CommentItem = ({
   onDelete,
   onSave,
   setEditedContent
-}: CommentItemProps) => (
-  <div className="bg-white p-4 rounded-lg border">
-    <div className="flex items-start gap-3">
-      <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-        <Icon icon="mdi:account" className="text-2xl text-gray-500" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-baseline justify-between">
-          <div className="flex items-center gap-2">
+}: CommentItemProps) => {
+  const isEditing = editingCommentId === comment.id;
+  const isOwnComment = currentUserId === comment.profile_id;
+
+  return (
+    <div className="flex gap-3 p-4 bg-white rounded-lg shadow-sm">
+      {/* Avatar */}
+      <Link href={`/user-dashboard?id=${comment.profile_id}`} className="flex-shrink-0">
+        <div className="w-10 h-10 rounded-full overflow-hidden bg-blue-500">
+          {comment.profile.avatar_url ? (
+            <Image
+              src={comment.profile.avatar_url}
+              alt={comment.profile.username || 'User avatar'}
+              width={40}
+              height={40}
+              className="w-full h-full object-cover"
+              unoptimized
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+                // Show initials fallback
+                const parent = target.parentElement;
+                if (parent) {
+                  parent.innerHTML = comment.profile.username?.[0]?.toUpperCase() || '?';
+                  parent.className = "w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm font-semibold";
+                }
+              }}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-white text-sm font-semibold">
+              {comment.profile.username?.[0]?.toUpperCase() || '?'}
+            </div>
+          )}
+        </div>
+      </Link>
+
+      <div className="flex-grow min-w-0">
+        <div className="flex items-start justify-between gap-x-2">
+          <div>
             <Link 
               href={`/user-dashboard?id=${comment.profile_id}`}
-              className="font-medium text-black hover:text-blue-600 transition-colors"
+              className="font-medium text-gray-900 hover:text-gray-600 transition-colors"
             >
-              {comment.profile.username || 'Anonymous'}
+              {comment.profile.username || 'Unknown User'}
             </Link>
+            <span className="mx-2 text-gray-300">•</span>
             <span className="text-sm text-gray-500">
               {formatRelativeDate(comment.created_at)}
             </span>
           </div>
-          <CommentActions
-            comment={comment}
-            currentUserId={currentUserId}
-            editingCommentId={editingCommentId}
-            onEdit={onEdit}
-            onDelete={onDelete}
-            onSave={onSave}
-          />
+          {isOwnComment && !isEditing && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => onEdit(comment.id)}
+                className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                title="Edit comment"
+              >
+                <Icon icon="mdi:pencil" className="text-lg" />
+              </button>
+              <button
+                onClick={() => onDelete(comment.id)}
+                className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                title="Delete comment"
+              >
+                <Icon icon="mdi:delete" className="text-lg" />
+              </button>
+            </div>
+          )}
         </div>
-        {editingCommentId === comment.id ? (
-          <textarea
-            placeholder="Edit your comment..."
-            value={editedContent}
-            onChange={(e) => setEditedContent(e.target.value)}
-            className="w-full mt-2 p-2 border rounded-lg focus:ring-2 focus:ring-green-500"
-            rows={3}
-          />
+
+        {isEditing ? (
+          <div className="mt-2 space-y-2">
+            <textarea
+              placeholder="Edit your comment..."
+              value={editedContent}
+              onChange={(e) => setEditedContent(e.target.value)}
+              className="w-full p-2 border rounded-md"
+              rows={3}
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => onSave(comment.id)}
+                className="px-3 py-1 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors"
+              >
+                Save
+              </button>
+              <button
+                onClick={() => {
+                  setEditedContent('');
+                  onEdit('');
+                }}
+                className="px-3 py-1 bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         ) : (
-          <p className="mt-1 text-gray-700 whitespace-pre-wrap break-words">
+          <p className="mt-1 text-gray-600 whitespace-pre-wrap break-words">
             {comment.content}
           </p>
         )}
       </div>
-    </div>
-  </div>
-);
-
-interface CommentActionsProps {
-  comment: NovelComment;
-  currentUserId: string | null;
-  editingCommentId: string | null;
-  onEdit: (id: string) => void;
-  onDelete: (id: string) => void;
-  onSave: (id: string) => void;
-}
-
-const CommentActions = ({
-  comment,
-  currentUserId,
-  editingCommentId,
-  onEdit,
-  onDelete,
-  onSave
-}: CommentActionsProps) => {
-  if (currentUserId !== comment.profile_id) return null;
-
-  return (
-    <div className="flex gap-2">
-      {editingCommentId === comment.id ? (
-        <button
-          onClick={() => onSave(comment.id)}
-          className="text-green-600 hover:text-green-700"
-          title="Save"
-        >
-          <Icon icon="mdi:check" className="text-xl" />
-        </button>
-      ) : (
-        <>
-          <button
-            onClick={() => onEdit(comment.id)}
-            className="text-blue-600 hover:text-blue-700"
-            title="Edit"
-          >
-            <Icon icon="mdi:pencil" className="text-xl" />
-          </button>
-          <button
-            onClick={() => onDelete(comment.id)}
-            className="text-red-600 hover:text-red-700"
-            title="Delete"
-          >
-            <Icon icon="mdi:delete" className="text-xl" />
-          </button>
-        </>
-      )}
     </div>
   );
 }; 

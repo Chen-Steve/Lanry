@@ -76,15 +76,14 @@ export interface ReadingHistory {
 
 export interface UserProfile {
   id: string;
-  username: string;
-  created_at: string;
-  updated_at: string;
+  username: string | null;
   current_streak: number;
   last_visit: string | null;
+  role: 'USER' | 'AUTHOR' | 'ADMIN' | 'SUPER_ADMIN';
   coins: number;
-  role: 'USER' | 'ADMIN' | 'AUTHOR';
-  transactions?: CoinTransaction[];
-  chapterUnlocks?: ChapterUnlock[];
+  avatar_url?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface ChapterComment {
