@@ -69,90 +69,61 @@ export function ChapterListItem({
     userProfileId: string
   ) => {
     try {
-      // Check if user has enough coins
-      const { data: userProfile, error: userError } = await supabase
-        .from('profiles')
-        .select('coins')
-        .eq('id', userProfileId)
-        .single();
+      // Log the input parameters for debugging
+      console.log('Purchase parameters:', {
+        p_novel_id: novelId,
+        p_author_id: authorId,
+        p_chapter_number: chapterNumber,
+        p_user_id: userProfileId,
+        p_cost: chapter.coins,
+        types: {
+          novelId: typeof novelId,
+          authorId: typeof authorId,
+          chapterNumber: typeof chapterNumber,
+          userProfileId: typeof userProfileId,
+          coins: typeof chapter.coins
+        }
+      });
 
-      if (userError) throw new Error('Failed to fetch user profile');
-      if (!userProfile) throw new Error('User profile not found');
-      
-      const chapterCost = chapter.coins;
-      //  console.log('Transaction details:', {
-      //  chapterCost,
-      //  userInitialCoins: userProfile.coins,
-      //  authorId
-      //});
+      // Start a Supabase transaction
+      const { data, error: transactionError } = await supabase.rpc(
+        'process_chapter_purchase',
+        {
+          p_novel_id: novelId,
+          p_author_id: authorId,
+          p_chapter_number: chapterNumber,
+          p_user_id: userProfileId,
+          p_cost: chapter.coins
+        }
+      );
 
-      if (userProfile.coins < chapterCost) {
-        throw new Error('Insufficient coins');
+      console.log('Transaction response:', { data, error: transactionError });
+
+      if (transactionError) {
+        console.error('Transaction error:', transactionError);
+        throw new Error(transactionError.message || 'Failed to process purchase');
       }
 
-      // Calculate author's share (90%)
-      const authorShare = Math.floor(chapterCost * 0.9);
-      //  console.log('Author share:', authorShare);
-
-      // Deduct coins from user
-      const { error: deductError } = await supabase
-        .from('profiles')
-        .update({ coins: userProfile.coins - chapterCost })
-        .eq('id', userProfileId);
-
-      if (deductError) {
-        console.error('Deduct error:', deductError);
-        throw new Error('Failed to deduct coins');
+      if (data && !data.success) {
+        throw new Error(data.message || 'Failed to process purchase');
       }
 
-      // Get author's current coins
-      const { data: authorProfile, error: authorError } = await supabase
-        .from('profiles')
-        .select('coins')
-        .eq('id', authorId)
-        .single();
-
-      if (authorError) {
-        console.error('Author fetch error:', authorError);
-        throw new Error('Failed to fetch author profile');
-      }
-      if (!authorProfile) throw new Error('Author profile not found');
-
-      // console.log('Author current coins:', authorProfile.coins);
-
-      // Add 90% of coins to author
-      const { error: addError } = await supabase
-        .from('profiles')
-        .update({ 
-          coins: authorProfile.coins + authorShare
-        })
-        .eq('id', authorId);
-
-      if (addError) {
-        console.error('Add coins error:', addError);
-        throw new Error('Failed to add coins to author');
-      }
-
-      // Create unlock record
-      const { error: unlockError } = await supabase
-        .from('chapter_unlocks')
-        .insert({
-          id: crypto.randomUUID(),
-          profile_id: userProfileId,
-          novel_id: novelId,
-          chapter_number: chapterNumber,
-          cost: chapterCost
-        });
-
-      if (unlockError) throw new Error('Failed to create unlock record');
-
-      // After successful transaction, redirect to the chapter
+      // After successful transaction, update local state and redirect
+      setIsUnlocked(true);
+      toast.success('Chapter unlocked successfully!');
       router.push(`/novels/${novelSlug}/c${chapterNumber}`);
       return true;
     } catch (error) {
       console.error('Unlock error:', error);
-      if (error instanceof Error && error.message === 'Insufficient coins') {
-        toast.error('You don\'t have enough coins to unlock this chapter');
+      if (error instanceof Error) {
+        if (error.message.includes('Insufficient coins')) {
+          toast.error('You don\'t have enough coins to unlock this chapter');
+        } else if (error.message.includes('Invalid UUID')) {
+          console.error('Invalid UUID error:', { novelId, authorId, userProfileId });
+          toast.error('Invalid data format. Please try again.');
+        } else {
+          toast.error(error.message || 'Failed to unlock chapter. Please try again.');
+        }
       } else {
         toast.error('Failed to unlock chapter. Please try again.');
       }
