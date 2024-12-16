@@ -4,8 +4,19 @@ import { Novel } from '@/types/database';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { getTotalChapters } from '@/services/chapterService';
+import { Icon } from '@iconify/react';
 import NovelCover from './NovelCover';
-import NovelStats from './NovelStats';
+
+interface NovelStatsProps {
+  totalChapters: number;
+}
+
+const NovelStats = ({ totalChapters }: NovelStatsProps) => (
+  <div className="flex items-center gap-1 text-xs text-gray-600">
+    <Icon icon="pepicons-print:book" className="text-sm" />
+    <span>{totalChapters} Chapters</span>
+  </div>
+);
 
 interface NovelCardProps {
   novel: Novel;
