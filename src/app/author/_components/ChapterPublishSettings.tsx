@@ -71,7 +71,7 @@ export default function ChapterPublishSettings({
               onSettingsChange({ publishAt, coins: Math.max(1, value).toString() });
             }
           }}
-          className="w-full p-2 sm:p-3 border rounded-lg bg-white disabled:bg-gray-100 disabled:cursor-not-allowed focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          className="w-full p-2 sm:p-3 border rounded-lg text-black bg-white disabled:bg-gray-100 disabled:cursor-not-allowed focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           title={publishAt ? "Set coins required to access this chapter" : "Set publish date first to enable paid chapter"}
         />
         <p className="text-xs sm:text-sm text-gray-600">

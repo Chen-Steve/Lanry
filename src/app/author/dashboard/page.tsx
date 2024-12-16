@@ -155,21 +155,23 @@ export default function AuthorDashboard() {
 
       {/* Main Content */}
       <div className="lg:ml-64 flex-1 p-8 pt-16 lg:pt-8">
-        {activeTab === 'novels' && (
-          <NovelUploadForm authorOnly={true} />
-        )}
-        {activeTab === 'chapters' && (
-          <ChapterManagementForm authorOnly={true} />
-        )}
-        {activeTab === 'purchases' && (
-          <ChapterPurchaseHistory />
-        )}
-        {activeTab === 'statistics' && (
-          <NovelStatistics />
-        )}
-        {activeTab === 'links' && (
-          <TranslatorLinks />
-        )}
+        <div className="max-w-5xl mx-auto">
+          {activeTab === 'novels' && (
+            <NovelUploadForm authorOnly={true} />
+          )}
+          {activeTab === 'chapters' && (
+            <ChapterManagementForm authorOnly={true} />
+          )}
+          {activeTab === 'purchases' && (
+            <ChapterPurchaseHistory />
+          )}
+          {activeTab === 'statistics' && (
+            <NovelStatistics />
+          )}
+          {activeTab === 'links' && (
+            <TranslatorLinks />
+          )}
+        </div>
       </div>
     </div>
   );

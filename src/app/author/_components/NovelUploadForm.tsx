@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { generateNovelSlug } from '@/lib/utils';
 import supabase from '@/lib/supabaseClient';
+import { Icon } from '@iconify/react';
 
 interface NovelUploadFormProps {
   authorOnly?: boolean;
@@ -30,6 +31,7 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
     status: 'ONGOING' as Novel['status'],
     slug: '',
   });
+  const [isNovelListVisible, setIsNovelListVisible] = useState(true);
 
   useEffect(() => {
     fetchNovels();
@@ -179,115 +181,117 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-1">
-          <h3 className="mb-4">My Novels</h3>
-          <div className="space-y-2">
-            {novels.map((novel) => (
-              <div
-                key={novel.id}
-                className={`p-3 border rounded hover:bg-gray-100 cursor-pointer ${
-                  editingNovel?.id === novel.id ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-gray-50'
-                }`}
-              >
-                <div className="flex justify-between items-start">
-                  <div onClick={() => handleNovelClick(novel)}>
-                    <h4 className="text-black">{novel.title}</h4>
-                    <p className="text-black">by {novel.author}</p>
-                    <span className="bg-gray-200 px-2 py-1 rounded mt-2 inline-block text-black">
-                      {novel.status}
-                    </span>
-                  </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDelete(novel.id);
-                    }}
-                    className="text-black hover:text-red-700 p-1"
-                    title="Delete novel"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                    </svg>
-                  </button>
+    <div className="space-y-6">
+      {/* Novel List Section */}
+      <section>
+        <button
+          onClick={() => setIsNovelListVisible(!isNovelListVisible)}
+          className="w-full flex justify-between items-center p-3 bg-gray-100 rounded-lg"
+        >
+          <h3 className="font-medium text-black">My Novels</h3>
+          <Icon 
+            icon={isNovelListVisible ? 'mdi:chevron-up' : 'mdi:chevron-down'} 
+            className="w-6 h-6 text-black"
+          />
+        </button>
+        
+        <div className={`space-y-2 transition-all duration-300 overflow-hidden ${
+          isNovelListVisible ? 'max-h-[1000px] mt-4' : 'max-h-0'
+        }`}>
+          {novels.map((novel) => (
+            <div
+              key={novel.id}
+              className={`p-3 border rounded hover:bg-gray-100 cursor-pointer ${
+                editingNovel?.id === novel.id ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-gray-50'
+              }`}
+            >
+              <div className="flex justify-between items-start">
+                <div onClick={() => handleNovelClick(novel)}>
+                  <h4 className="text-black">{novel.title}</h4>
+                  <p className="text-black">by {novel.author}</p>
+                  <span className="bg-gray-200 px-2 py-1 rounded mt-2 inline-block text-black">
+                    {novel.status}
+                  </span>
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="md:col-span-2">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <h3 className="mb-4">
-              {editingNovel ? 'Edit Novel' : 'Add New Novel'}
-            </h3>
-
-            <div>
-              <input
-                type="text"
-                placeholder="Title"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="w-full p-2 border rounded"
-                required
-              />
-            </div>
-
-            <div>
-              <textarea
-                placeholder="Description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full p-2 border rounded min-h-[100px]"
-                required
-              />
-            </div>
-
-            <div>
-              <input
-                type="text"
-                placeholder="Author (leave empty to use your username)"
-                value={formData.author}
-                onChange={(e) => setFormData({ ...formData, author: e.target.value })}
-                className="w-full p-2 border rounded"
-              />
-            </div>
-
-            <div>
-              <select
-                aria-label="Status"
-                value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value as Novel['status'] })}
-                className="w-full p-2 border rounded text-black"
-                required
-              >
-                <option value="ONGOING">Ongoing</option>
-                <option value="COMPLETED">Completed</option>
-                <option value="HIATUS">Hiatus</option>
-              </select>
-            </div>
-
-            <div className="flex gap-4">
-              <button
-                type="submit"
-                className="flex-1 bg-blue-500 py-2 px-4 rounded hover:bg-blue-600"
-              >
-                {editingNovel ? 'Update Novel' : 'Add Novel'}
-              </button>
-              {editingNovel && (
                 <button
-                  type="button"
-                  onClick={handleCancelEdit}
-                  className="flex-1 bg-gray-500 py-2 px-4 rounded hover:bg-gray-600"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(novel.id);
+                  }}
+                  className="text-black hover:text-red-700 p-1"
+                  title="Delete novel"
                 >
-                  Cancel Edit
+                  <Icon icon="mdi:delete" className="w-5 h-5" />
                 </button>
-              )}
+              </div>
             </div>
-          </form>
+          ))}
         </div>
-      </div>
+      </section>
+
+      {/* Novel Form Section */}
+      <section>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <h3 className="mb-4">
+            {editingNovel ? 'Edit Novel' : 'Add New Novel'}
+          </h3>
+
+          <input
+            type="text"
+            placeholder="Title"
+            value={formData.title}
+            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            className="w-full p-2 border rounded"
+            required
+          />
+
+          <textarea
+            placeholder="Description"
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            className="w-full p-2 border rounded min-h-[100px]"
+            required
+          />
+
+          <input
+            type="text"
+            placeholder="Author (leave empty to use your username)"
+            value={formData.author}
+            onChange={(e) => setFormData({ ...formData, author: e.target.value })}
+            className="w-full p-2 border rounded"
+          />
+
+          <select
+            aria-label="Status"
+            value={formData.status}
+            onChange={(e) => setFormData({ ...formData, status: e.target.value as Novel['status'] })}
+            className="w-full p-2 border rounded text-black"
+            required
+          >
+            <option value="ONGOING">Ongoing</option>
+            <option value="COMPLETED">Completed</option>
+            <option value="HIATUS">Hiatus</option>
+          </select>
+
+          <div className="flex gap-4">
+            <button
+              type="submit"
+              className="flex-1 bg-blue-500 py-2 px-4 rounded hover:bg-blue-600"
+            >
+              {editingNovel ? 'Update Novel' : 'Add Novel'}
+            </button>
+            {editingNovel && (
+              <button
+                type="button"
+                onClick={handleCancelEdit}
+                className="flex-1 bg-gray-500 py-2 px-4 rounded hover:bg-gray-600"
+              >
+                Cancel Edit
+              </button>
+            )}
+          </div>
+        </form>
+      </section>
     </div>
   );
 } 
