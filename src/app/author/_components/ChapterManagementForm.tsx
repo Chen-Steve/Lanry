@@ -211,7 +211,7 @@ export default function ChapterManagementForm({ authorOnly = false }: ChapterMan
                     placeholder="Ch. #"
                     value={formData.chapterNumber}
                     onChange={(e) => setFormData({ ...formData, chapterNumber: e.target.value })}
-                    className="w-full p-2 sm:p-3 border rounded-lg"
+                    className="w-full text-black p-2 sm:p-3 border rounded-lg"
                     required
                   />
                 </div>
