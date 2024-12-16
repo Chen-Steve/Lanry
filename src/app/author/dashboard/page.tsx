@@ -12,6 +12,7 @@ import { Icon } from '@iconify/react';
 
 export default function AuthorDashboard() {
   const [activeTab, setActiveTab] = useState('novels');
+  const [isSidebarOpen, setSidebarOpen] = useState(false);
   const router = useRouter();
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -56,10 +57,29 @@ export default function AuthorDashboard() {
   }
 
   return (
-    <div className="flex min-h-screen" style={{ backgroundColor: '#F2EEE5' }}>
+    <div className="flex min-h-screen relative" style={{ backgroundColor: '#F2EEE5' }}>
+      {/* Mobile Toggle Button */}
+      <button
+        onClick={() => setSidebarOpen(!isSidebarOpen)}
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-[#E5E1D8] text-gray-600 hover:bg-[#E5E1D8]/80"
+        aria-label="Toggle Sidebar"
+      >
+        <Icon icon={isSidebarOpen ? "mdi:close" : "mdi:menu"} className="text-2xl" />
+      </button>
+
+      {/* Overlay for mobile */}
+      {isSidebarOpen && (
+        <div 
+          className="lg:hidden fixed inset-0 bg-black/20 z-30"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Left Sidebar */}
-      <div className="w-64 bg-[#F2EEE5] border-r border-[#E5E1D8] fixed h-full">
-        <div className="p-6">
+      <div className={`w-64 bg-[#F2EEE5] border-r border-[#E5E1D8] fixed h-full z-40 transition-transform duration-300 lg:translate-x-0 ${
+        isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+      }`}>
+        <div className="p-6 pt-16 lg:pt-6">
           <a href="https://lanry.vercel.app/" className="text-2xl font-bold mb-6 block text-center">
             Lanry
           </a>
@@ -134,7 +154,7 @@ export default function AuthorDashboard() {
       </div>
 
       {/* Main Content */}
-      <div className="ml-64 flex-1 p-8">
+      <div className="lg:ml-64 flex-1 p-8 pt-16 lg:pt-8">
         {activeTab === 'novels' && (
           <NovelUploadForm authorOnly={true} />
         )}

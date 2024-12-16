@@ -55,19 +55,19 @@ export default function ChapterList({
                   Advanced
                 </span>
               )}
-              <h4 className="font-medium">
+              <h4 className="font-medium text-black">
                 Chapter {chapter.chapter_number}
                 {chapter.title && `: ${chapter.title}`}
               </h4>
               {chapter.publish_at && (
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-black">
                   Publishes: {new Date(chapter.publish_at).toLocaleDateString()}
                 </p>
               )}
             </div>
             <button
               onClick={() => onDeleteChapter(chapter.id)}
-              className="absolute top-2 right-2 p-1 text-gray-500 hover:text-red-500 rounded-full hover:bg-red-50"
+              className="absolute top-2 right-2 p-1 text-black hover:text-red-500 rounded-full hover:bg-red-50"
               title="Delete chapter"
             >
               <Icon icon="mdi:delete-outline" className="w-5 h-5" />

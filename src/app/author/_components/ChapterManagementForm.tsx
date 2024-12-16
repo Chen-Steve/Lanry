@@ -254,11 +254,11 @@ export default function ChapterManagementForm({ authorOnly = false }: ChapterMan
           title="Select a novel"
           value={selectedNovel}
           onChange={(e) => setSelectedNovel(e.target.value)}
-          className="w-full p-3 border rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          className="w-full p-3 border rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
         >
-          <option value="">Select a novel...</option>
+          <option value="" className="text-black">Select a novel...</option>
           {novels.map((novel) => (
-            <option key={novel.id} value={novel.id}>
+            <option key={novel.id} value={novel.id} className="text-black">
               {novel.title}
             </option>
           ))}

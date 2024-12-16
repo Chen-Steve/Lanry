@@ -193,9 +193,9 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
               >
                 <div className="flex justify-between items-start">
                   <div onClick={() => handleNovelClick(novel)}>
-                    <h4>{novel.title}</h4>
-                    <p>by {novel.author}</p>
-                    <span className="bg-gray-200 px-2 py-1 rounded mt-2 inline-block">
+                    <h4 className="text-black">{novel.title}</h4>
+                    <p className="text-black">by {novel.author}</p>
+                    <span className="bg-gray-200 px-2 py-1 rounded mt-2 inline-block text-black">
                       {novel.status}
                     </span>
                   </div>
@@ -204,7 +204,7 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
                       e.stopPropagation();
                       handleDelete(novel.id);
                     }}
-                    className="hover:text-red-700 p-1"
+                    className="text-black hover:text-red-700 p-1"
                     title="Delete novel"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -259,7 +259,7 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
                 aria-label="Status"
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value as Novel['status'] })}
-                className="w-full p-2 border rounded"
+                className="w-full p-2 border rounded text-black"
                 required
               >
                 <option value="ONGOING">Ongoing</option>
