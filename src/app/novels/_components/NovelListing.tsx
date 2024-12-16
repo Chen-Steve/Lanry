@@ -35,7 +35,7 @@ const NovelListing = () => {
 
   return (
     <div className="max-w-5xl mx-auto px-4">
-      <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-1.5">
         {novels.map((novel, index) => (
           <NovelCard 
             key={novel.id} 
