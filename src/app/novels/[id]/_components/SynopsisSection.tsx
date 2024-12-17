@@ -171,7 +171,7 @@ export const SynopsisSection = ({
           <div className="relative aspect-[2/3] rounded-xl overflow-hidden shadow-lg">
             {coverImageUrl ? (
               <Image
-                src={`/novel-covers/${coverImageUrl}`}
+                src={coverImageUrl.startsWith('http') ? coverImageUrl : `/novel-covers/${coverImageUrl}`}
                 alt={title}
                 fill
                 priority
