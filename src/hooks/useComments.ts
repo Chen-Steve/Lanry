@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import supabase from '@/lib/supabaseClient';
 import type { ChapterComment, CommentsByParagraph } from '@/types/database';
 import { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
+import { generateUUID } from '@/lib/utils';
 
 // Type for our comment data
 interface DatabaseComment {
@@ -161,7 +162,7 @@ export function useComments(novelId: string, chapterNumber: number) {
 
     try {
       const newComment = {
-        id: crypto.randomUUID(),
+        id: generateUUID(),
         novel_id: novelId,
         chapter_number: chapterNumber,
         paragraph_id: paragraphId,

@@ -1,5 +1,5 @@
 import supabase from '@/lib/supabaseClient';
-import { generateChapterSlug } from '@/lib/utils';
+import { generateChapterSlug, generateUUID } from '@/lib/utils';
 
 export async function fetchAuthorNovels(userId: string, authorOnly: boolean) {
   let query = supabase
@@ -82,7 +82,7 @@ export async function createChapter(
   const { error } = await supabase
     .from('chapters')
     .insert({
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       novel_id: novelId,
       ...chapterData,
       slug: generateChapterSlug(chapterData.chapter_number),

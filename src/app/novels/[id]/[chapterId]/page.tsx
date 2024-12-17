@@ -5,7 +5,7 @@ import { getChapter, getChapterNavigation, getTotalChapters } from '@/services/c
 import { Icon } from '@iconify/react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { formatDate } from '@/lib/utils';
+import { formatDate, generateUUID } from '@/lib/utils';
 import { ChapterWithNovel } from '@/types/database';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import ChapterHeader from './_components/ChapterHeader';
@@ -82,7 +82,7 @@ const updateReadingHistory = async (
     const { error } = await supabase
       .from('reading_history')
       .upsert({
-        id: crypto.randomUUID(),
+        id: generateUUID(),
         profile_id: user.id,
         novel_id: novel.id,
         last_chapter: chapterNumber,
