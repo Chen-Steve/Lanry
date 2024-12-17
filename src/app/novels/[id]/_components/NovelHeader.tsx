@@ -124,6 +124,7 @@ export const NovelHeader = ({
   const [localRating, setLocalRating] = useState(rating);
   const [localRatingCount, setLocalRatingCount] = useState(ratingCount);
   const [localUserRating, setLocalUserRating] = useState(userRating);
+  const [isHovering, setIsHovering] = useState(false);
 
   const handleRate = async (newRating: number) => {
     if (!isAuthenticated) {
@@ -275,7 +276,11 @@ export const NovelHeader = ({
 
           {/* Rating Section */}
           <div className="flex flex-col sm:flex-row items-center gap-2 mb-4">
-            <div className="flex items-center gap-0.5">
+            <div 
+              className="flex items-center gap-0.5"
+              onMouseEnter={() => setIsHovering(true)}
+              onMouseLeave={() => setIsHovering(false)}
+            >
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
                   aria-label={`Rate ${star} stars`}
@@ -286,12 +291,14 @@ export const NovelHeader = ({
                 >
                   <Icon 
                     icon={
-                      localUserRating && star <= localUserRating
+                      (isHovering && localUserRating && star <= localUserRating) || 
+                      (!isHovering && star <= localRating)
                         ? "pepicons-print:star-filled"
                         : "pepicons-print:star"
                     }
                     className={`text-2xl sm:text-3xl ${
-                      localUserRating && star <= localUserRating
+                      (isHovering && localUserRating && star <= localUserRating) || 
+                      (!isHovering && star <= localRating)
                         ? 'text-amber-400'
                         : 'text-gray-400'
                     }`}
