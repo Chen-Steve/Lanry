@@ -24,17 +24,17 @@ export const calculateStreak = (lastVisit: string | null, currentStreak: number 
 
   const lastVisitDate = new Date(lastVisit);
   
-  // Get dates in UTC without time components for day comparison
-  const lastVisitDay = new Date(Date.UTC(
-    lastVisitDate.getUTCFullYear(), 
-    lastVisitDate.getUTCMonth(), 
-    lastVisitDate.getUTCDate()
-  ));
-  const todayDay = new Date(Date.UTC(
-    today.getUTCFullYear(), 
-    today.getUTCMonth(), 
-    today.getUTCDate()
-  ));
+  // Get dates without time components for day comparison in local time
+  const lastVisitDay = new Date(
+    lastVisitDate.getFullYear(),
+    lastVisitDate.getMonth(),
+    lastVisitDate.getDate()
+  );
+  const todayDay = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate()
+  );
   
   const diffTime = todayDay.getTime() - lastVisitDay.getTime();
   const diffDays = diffTime / (1000 * 60 * 60 * 24);
