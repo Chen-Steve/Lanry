@@ -4,14 +4,14 @@ import { getCategories } from '@/services/categoryService';
 import { Icon } from '@iconify/react';
 
 interface CategoryFilterProps {
-  selectedCategory?: string;
-  onCategoryChange: (categoryName: string | undefined) => void;
+  selectedCategories: string[];
+  onCategoriesChange: (categoryNames: string[]) => void;
   categoryCounts: Record<string, number>;
 }
 
 export default function CategoryFilter({
-  selectedCategory,
-  onCategoryChange,
+  selectedCategories,
+  onCategoriesChange,
   categoryCounts
 }: CategoryFilterProps) {
   const [categories, setCategories] = useState<NovelCategory[]>([]);
@@ -27,6 +27,13 @@ export default function CategoryFilter({
 
     fetchCategories();
   }, []);
+
+  const handleCategoryToggle = (categoryName: string) => {
+    const newSelectedCategories = selectedCategories.includes(categoryName.toLowerCase())
+      ? selectedCategories.filter(cat => cat !== categoryName.toLowerCase())
+      : [...selectedCategories, categoryName.toLowerCase()];
+    onCategoriesChange(newSelectedCategories);
+  };
 
   if (isLoading) {
     return <div className="animate-pulse h-12 bg-gray-200 rounded-lg mb-6"></div>;
@@ -51,38 +58,27 @@ export default function CategoryFilter({
       <div className={`grid gap-2 transition-all duration-300 ${
         isExpanded ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4' : 'grid-cols-2 sm:grid-cols-3'
       }`}>
-        <button
-          onClick={() => onCategoryChange(undefined)}
-          className={`flex items-center justify-between px-4 py-2 rounded-lg text-sm ${
-            !selectedCategory
-              ? 'bg-blue-100 text-blue-800'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-          }`}
-        >
-          <span>All Novels</span>
-          <span className="text-xs font-medium">
-            {Object.values(categoryCounts).reduce((a, b) => a + b, 0)}
-          </span>
-        </button>
-        
         {categories
           .slice(0, isExpanded ? categories.length : 5)
-          .map((category) => (
-            <button
-              key={category.id}
-              onClick={() => onCategoryChange(category.name)}
-              className={`flex items-center justify-between px-4 py-2 rounded-lg text-sm ${
-                selectedCategory === category.name
-                  ? 'bg-blue-100 text-blue-800'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              <span>{category.name}</span>
-              <span className="text-xs font-medium">
-                {categoryCounts[category.name] || 0}
-              </span>
-            </button>
-          ))}
+          .map((category) => {
+            const isSelected = selectedCategories.includes(category.name.toLowerCase());
+            return (
+              <button
+                key={category.id}
+                onClick={() => handleCategoryToggle(category.name)}
+                className={`flex items-center justify-between px-4 py-2 rounded-lg text-sm transition-colors ${
+                  isSelected
+                    ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <span>{category.name}</span>
+                <span className="text-xs font-medium">
+                  {categoryCounts[category.name] || 0}
+                </span>
+              </button>
+            );
+          })}
       </div>
     </div>
   );

@@ -13,7 +13,7 @@ const NovelListing = () => {
   const [isLoading, setIsLoading] = useState(true);
   const searchParams = useSearchParams();
   const router = useRouter();
-  const selectedCategory = searchParams.get('category') || undefined;
+  const selectedCategories = searchParams.get('categories')?.split(',').filter(Boolean) || [];
 
   useEffect(() => {
     const fetchNovels = async () => {
@@ -31,13 +31,13 @@ const NovelListing = () => {
   }, []);
 
   const filteredNovels = useMemo(() => {
-    if (!selectedCategory) return novels;
+    if (selectedCategories.length === 0) return novels;
     return novels.filter(novel => 
       novel.categories?.some(category => 
-        category.name.toLowerCase() === selectedCategory.toLowerCase()
+        selectedCategories.includes(category.name.toLowerCase())
       )
     );
-  }, [novels, selectedCategory]);
+  }, [novels, selectedCategories]);
 
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -49,9 +49,9 @@ const NovelListing = () => {
     return counts;
   }, [novels]);
 
-  const handleCategoryChange = (categoryName: string | undefined) => {
-    if (categoryName) {
-      router.push(`/novels?category=${categoryName.toLowerCase()}`);
+  const handleCategoriesChange = (categoryNames: string[]) => {
+    if (categoryNames.length > 0) {
+      router.push(`/novels?categories=${categoryNames.map(cat => cat.toLowerCase()).join(',')}`);
     } else {
       router.push('/novels');
     }
@@ -69,14 +69,14 @@ const NovelListing = () => {
   return (
     <div className="max-w-5xl mx-auto px-4">
       <CategoryFilter
-        selectedCategory={selectedCategory}
-        onCategoryChange={handleCategoryChange}
+        selectedCategories={selectedCategories}
+        onCategoriesChange={handleCategoriesChange}
         categoryCounts={categoryCounts}
       />
       
       {filteredNovels.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-gray-500">No novels found in this category.</p>
+          <p className="text-gray-500">No novels found in the selected categories.</p>
         </div>
       ) : (
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-1.5">
