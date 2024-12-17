@@ -8,7 +8,7 @@ interface ChapterNavigationProps {
   };
   novelId: string;
   currentChapter: number;
-  totalChapters: number;
+  availableChapters: number[];
   isDropdownOpen: boolean;
   setIsDropdownOpen: (open: boolean) => void;
   handleChapterSelect: (num: number) => void;
@@ -19,7 +19,7 @@ export default function ChapterNavigation({
   navigation, 
   novelId, 
   currentChapter, 
-  totalChapters, 
+  availableChapters = [],
   isDropdownOpen, 
   setIsDropdownOpen, 
   handleChapterSelect,
@@ -28,6 +28,8 @@ export default function ChapterNavigation({
   const dropdownPosition = position === 'top' 
     ? 'top-full left-1/2 -translate-x-1/2 mt-2' 
     : 'bottom-full left-1/2 -translate-x-1/2 mb-2';
+
+  const chapters = Array.isArray(availableChapters) ? availableChapters : [];
 
   return (
     <div className="flex items-center justify-center gap-2">
@@ -59,18 +61,24 @@ export default function ChapterNavigation({
         </button>
 
         {isDropdownOpen && (
-          <div className={`absolute ${dropdownPosition} w-44 max-h-[60vh] overflow-y-auto bg-[#F7F4ED] border rounded-lg shadow-lg z-50 left-1/2 -translate-x-1/2`}>
-            {Array.from({ length: totalChapters }, (_, i) => i + 1).map((num) => (
-              <button
-                key={num}
-                onClick={() => handleChapterSelect(num)}
-                className={`w-full px-3 py-2 text-left hover:bg-[#F2EEE5] transition-colors text-black text-sm ${
-                  num === currentChapter ? 'bg-[#F2EEE5]' : ''
-                }`}
-              >
-                Chapter {num}
-              </button>
-            ))}
+          <div className={`absolute ${dropdownPosition} w-full max-h-[60vh] overflow-y-auto bg-[#F7F4ED] border rounded-lg shadow-lg z-50`}>
+            {chapters.length > 0 ? (
+              chapters.map((num) => (
+                <button
+                  key={num}
+                  onClick={() => handleChapterSelect(num)}
+                  className={`w-full px-3 py-2 text-left hover:bg-[#F2EEE5] transition-colors text-black text-sm ${
+                    num === currentChapter ? 'bg-[#F2EEE5]' : ''
+                  }`}
+                >
+                  Chapter {num}
+                </button>
+              ))
+            ) : (
+              <div className="px-3 py-2 text-gray-500 text-sm text-center">
+                No chapters available
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -88,7 +96,7 @@ export default function ChapterNavigation({
             </div>
           </Link>
         ) : (
-          <div className="px-3 py-2 text-gray-400 text-sm text-right border border-gray-200 rounded-lg">Ch.{totalChapters}</div>
+          <div className="px-3 py-2 text-gray-400 text-sm text-right border border-gray-200 rounded-lg">Ch.{chapters.length}</div>
         )}
       </div>
     </div>

@@ -97,7 +97,7 @@ export async function getChapterNavigation(novelId: string, currentChapterNumber
       .or(`id.eq.${novelId},slug.eq.${novelId}`)
       .single();
 
-    if (novelError || !novel) return { prevChapter: null, nextChapter: null };
+    if (novelError || !novel) return { prevChapter: null, nextChapter: null, availableChapters: [] };
 
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -109,7 +109,7 @@ export async function getChapterNavigation(novelId: string, currentChapterNumber
       .order('chapter_number');
 
     if (!chapters || chapters.length === 0) {
-      return { prevChapter: null, nextChapter: null };
+      return { prevChapter: null, nextChapter: null, availableChapters: [] };
     }
 
     // If user is authenticated, get their unlocks
@@ -136,10 +136,11 @@ export async function getChapterNavigation(novelId: string, currentChapterNumber
     return {
       prevChapter: currentIndex > 0 ? accessibleChapters[currentIndex - 1] : null,
       nextChapter: currentIndex < accessibleChapters.length - 1 ? accessibleChapters[currentIndex + 1] : null,
+      availableChapters: accessibleChapters.map(ch => ch.chapter_number)
     };
   } catch (error) {
     console.error('Error fetching chapter navigation:', error);
-    return { prevChapter: null, nextChapter: null };
+    return { prevChapter: null, nextChapter: null, availableChapters: [] };
   }
 }
 

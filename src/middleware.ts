@@ -50,6 +50,11 @@ async function getCountryFromIP(ip: string): Promise<string | null> {
 }
 
 export async function middleware(req: NextRequest) {
+  // Skip blocking for the blocked page itself
+  if (req.nextUrl.pathname === '/blocked') {
+    return NextResponse.next();
+  }
+
   // Get the real IP address
   const ip = req.ip || req.headers.get('x-real-ip') || req.headers.get('x-forwarded-for')?.split(',')[0];
   
@@ -58,18 +63,8 @@ export async function middleware(req: NextRequest) {
     
     // Block traffic from China and Korea
     if (country === 'cn' || country === 'kr' || country === 'kp') {
-      return new NextResponse(
-        JSON.stringify({
-          success: false,
-          message: 'Access denied from your region',
-        }),
-        {
-          status: 403,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      // Redirect to blocked page instead of JSON response
+      return NextResponse.redirect(new URL('/blocked', req.url));
     }
   }
 

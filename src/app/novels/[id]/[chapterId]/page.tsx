@@ -107,7 +107,8 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
   const [navigation, setNavigation] = useState<{
     prevChapter: { id: string; chapter_number: number; title: string } | null;
     nextChapter: { id: string; chapter_number: number; title: string } | null;
-  }>({ prevChapter: null, nextChapter: null });
+    availableChapters: number[];
+  }>({ prevChapter: null, nextChapter: null, availableChapters: [] });
   const [totalChapters, setTotalChapters] = useState(0);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [fontFamily, setFontFamily] = useLocalStorage(
@@ -247,7 +248,7 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
           navigation={navigation}
           novelId={novelId}
           currentChapter={chapter.chapter_number}
-          totalChapters={totalChapters}
+          availableChapters={navigation.availableChapters}
           isDropdownOpen={isDropdownOpen}
           setIsDropdownOpen={setIsDropdownOpen}
           handleChapterSelect={handleChapterSelect}
@@ -272,7 +273,7 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
           navigation={navigation}
           novelId={novelId}
           currentChapter={chapter.chapter_number}
-          totalChapters={totalChapters}
+          availableChapters={navigation.availableChapters}
           isDropdownOpen={isDropdownOpen}
           setIsDropdownOpen={setIsDropdownOpen}
           handleChapterSelect={handleChapterSelect}
