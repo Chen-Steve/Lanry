@@ -40,6 +40,7 @@ model Novel {
   translator     Profile?    @relation("NovelTranslator", fields: [translatorId], references: [id])
   translatorId   String?     @map("translator_id")
   ratings       NovelRating[]
+  categories    CategoriesOnNovels[]
 
   @@index([title])
   @@index([author])
@@ -327,6 +328,27 @@ model NovelRating {
   @@index([novelId])
   @@index([profileId])
   @@map("novel_ratings")
+}
+
+model NovelCategory {
+  id          String               @id @default(uuid())
+  name        String               @unique
+  novels      CategoriesOnNovels[]
+  createdAt   DateTime             @default(now()) @map("created_at")
+  updatedAt   DateTime             @updatedAt @map("updated_at")
+
+  @@map("novel_categories")
+}
+
+model CategoriesOnNovels {
+  novel       Novel         @relation(fields: [novelId], references: [id])
+  novelId     String        @map("novel_id")
+  category    NovelCategory @relation(fields: [categoryId], references: [id])
+  categoryId  String        @map("category_id")
+  assignedAt  DateTime      @default(now())
+
+  @@id([novelId, categoryId])
+  @@map("categories_on_novels")
 }
 
 enum NovelStatus {

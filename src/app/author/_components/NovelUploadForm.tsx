@@ -7,6 +7,8 @@ import { Icon } from '@iconify/react';
 import Image from 'next/image';
 import { uploadImage } from '@/services/uploadService';
 import { toast } from 'react-hot-toast';
+import CategorySelect from './CategorySelect';
+import { NovelCategory } from '@/types/database';
 
 interface NovelUploadFormProps {
   authorOnly?: boolean;
@@ -23,6 +25,11 @@ interface Novel {
   updated_at: string;
   author_profile_id: string;
   cover_image_url?: string;
+  categories?: NovelCategory[];
+}
+
+interface CategoryData {
+  category: NovelCategory;
 }
 
 export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormProps) {
@@ -51,7 +58,17 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
 
       let query = supabase
         .from('novels')
-        .select('*')
+        .select(`
+          *,
+          categories:categories_on_novels (
+            category:category_id (
+              id,
+              name,
+              created_at,
+              updated_at
+            )
+          )
+        `)
         .order('created_at', { ascending: false });
 
       if (authorOnly) {
@@ -61,7 +78,14 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
       const { data, error } = await query;
 
       if (error) throw error;
-      setNovels(data || []);
+      
+      // Transform the nested category data
+      const novelsWithCategories = data?.map(novel => ({
+        ...novel,
+        categories: novel.categories?.map((c: CategoryData) => c.category) || []
+      })) || [];
+
+      setNovels(novelsWithCategories);
     } catch (error) {
       console.error('Error fetching novels:', error);
     }
@@ -268,112 +292,131 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
         </div>
       </section>
 
-      {/* Novel Form Section */}
+      {/* Form Section */}
       <section>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <h3 className="mb-4">
-            {editingNovel ? 'Edit Novel' : 'Add New Novel'}
+        <div className="bg-white rounded-lg p-6 shadow-sm border">
+          <h3 className="text-lg font-semibold mb-6">
+            {editingNovel ? 'Edit Novel' : 'Upload New Novel'}
           </h3>
 
-          {/* Image Upload */}
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">
-              Cover Image
-            </label>
-            <div className="flex items-center space-x-4">
-              {(imagePreview || editingNovel?.cover_image_url) && (
-                <div className="relative w-32 h-48 border rounded overflow-hidden">
-                  <Image
-                    src={imagePreview || editingNovel?.cover_image_url || ''}
-                    alt="Cover preview"
-                    fill
-                    className="object-cover"
-                    sizes="128px"
-                  />
-                  <button
-                    title="Remove cover image"
-                    type="button"
-                    onClick={() => {
-                      setImageFile(null);
-                      setImagePreview('');
-                    }}
-                    className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full hover:bg-red-600"
-                  >
-                    <Icon icon="mdi:close" className="w-4 h-4" />
-                  </button>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Image Upload */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Cover Image
+              </label>
+              <div className="flex items-center space-x-4">
+                {(imagePreview || editingNovel?.cover_image_url) && (
+                  <div className="relative w-32 h-48 border rounded overflow-hidden">
+                    <Image
+                      src={imagePreview || (editingNovel?.cover_image_url?.startsWith('http') 
+                        ? editingNovel.cover_image_url 
+                        : `/novel-covers/${editingNovel?.cover_image_url}`
+                      ) || ''}
+                      alt="Cover preview"
+                      fill
+                      className="object-cover"
+                      sizes="128px"
+                    />
+                    <button
+                      title="Remove cover image"
+                      type="button"
+                      onClick={() => {
+                        setImageFile(null);
+                        setImagePreview('');
+                      }}
+                      className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full hover:bg-red-600"
+                    >
+                      <Icon icon="mdi:close" className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+                <div className="flex-1">
+                  <label className="flex flex-col items-center px-4 py-6 bg-white text-blue-500 rounded-lg border-2 border-blue-500 border-dashed cursor-pointer hover:bg-blue-50">
+                    <Icon icon="mdi:cloud-upload" className="w-8 h-8" />
+                    <span className="mt-2 text-sm">Click to upload cover image</span>
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                    />
+                  </label>
                 </div>
-              )}
-              <div className="flex-1">
-                <label className="flex flex-col items-center px-4 py-6 bg-white text-blue-500 rounded-lg border-2 border-blue-500 border-dashed cursor-pointer hover:bg-blue-50">
-                  <Icon icon="mdi:cloud-upload" className="w-8 h-8" />
-                  <span className="mt-2 text-sm">Click to upload cover image</span>
-                  <input
-                    type="file"
-                    className="hidden"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                  />
-                </label>
               </div>
             </div>
-          </div>
 
-          <input
-            type="text"
-            placeholder="Title"
-            value={formData.title}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            className="w-full p-2 border rounded"
-            required
-          />
+            <input
+              type="text"
+              placeholder="Title"
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              className="w-full p-2 border rounded"
+              required
+            />
 
-          <textarea
-            placeholder="Description"
-            value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            className="w-full p-2 border rounded min-h-[100px]"
-            required
-          />
+            <textarea
+              placeholder="Description"
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              className="w-full p-2 border rounded min-h-[100px]"
+              required
+            />
 
-          <input
-            type="text"
-            placeholder="Author (leave empty to use your username)"
-            value={formData.author}
-            onChange={(e) => setFormData({ ...formData, author: e.target.value })}
-            className="w-full p-2 border rounded"
-          />
+            <input
+              type="text"
+              placeholder="Author (leave empty to use your username)"
+              value={formData.author}
+              onChange={(e) => setFormData({ ...formData, author: e.target.value })}
+              className="w-full p-2 border rounded"
+            />
 
-          <select
-            aria-label="Status"
-            value={formData.status}
-            onChange={(e) => setFormData({ ...formData, status: e.target.value as Novel['status'] })}
-            className="w-full p-2 border rounded text-black"
-            required
-          >
-            <option value="ONGOING">Ongoing</option>
-            <option value="COMPLETED">Completed</option>
-            <option value="HIATUS">Hiatus</option>
-          </select>
-
-          <div className="flex gap-4">
-            <button
-              type="submit"
-              disabled={isUploading}
-              className="flex-1 bg-blue-500 py-2 px-4 rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            <select
+              aria-label="Status"
+              value={formData.status}
+              onChange={(e) => setFormData({ ...formData, status: e.target.value as Novel['status'] })}
+              className="w-full p-2 border rounded text-black"
+              required
             >
-              {isUploading ? 'Uploading...' : (editingNovel ? 'Update Novel' : 'Add Novel')}
-            </button>
+              <option value="ONGOING">Ongoing</option>
+              <option value="COMPLETED">Completed</option>
+              <option value="HIATUS">Hiatus</option>
+            </select>
+
+            {/* Categories - Only show when editing a novel */}
             {editingNovel && (
-              <button
-                type="button"
-                onClick={handleCancelEdit}
-                className="flex-1 bg-gray-500 py-2 px-4 rounded hover:bg-gray-600"
-              >
-                Cancel Edit
-              </button>
+              <CategorySelect
+                novelId={editingNovel.id}
+                initialCategories={editingNovel.categories}
+                onCategoriesChange={(categories) => {
+                  setEditingNovel(prev => prev ? {
+                    ...prev,
+                    categories
+                  } : null);
+                }}
+              />
             )}
-          </div>
-        </form>
+
+            <div className="flex gap-4">
+              <button
+                type="submit"
+                disabled={isUploading}
+                className="flex-1 bg-blue-500 py-2 px-4 rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isUploading ? 'Uploading...' : (editingNovel ? 'Update Novel' : 'Add Novel')}
+              </button>
+              {editingNovel && (
+                <button
+                  type="button"
+                  onClick={handleCancelEdit}
+                  className="flex-1 bg-gray-500 py-2 px-4 rounded hover:bg-gray-600"
+                >
+                  Cancel Edit
+                </button>
+              )}
+            </div>
+          </form>
+        </div>
       </section>
     </div>
   );

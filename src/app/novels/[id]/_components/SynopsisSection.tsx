@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { formatDateMDY } from '@/lib/utils';
 import { useState } from 'react';
 import { ChapterList } from './ChapterList';
-import { Chapter, UserProfile } from '@/types/database';
+import { Chapter, UserProfile, NovelCategory } from '@/types/database';
 import { NovelRecommendations } from './NovelRecommendations';
 import { NovelComments } from './NovelComments';
 import toast from 'react-hot-toast';
@@ -44,6 +44,7 @@ interface SynopsisSectionProps {
   onRate?: (rating: number) => void;
   translatorId?: string;
   isAuthorNameCustom?: boolean;
+  categories?: NovelCategory[];
 }
 
 export const SynopsisSection = ({ 
@@ -73,6 +74,7 @@ export const SynopsisSection = ({
   ratingCount = 0,
   userRating,
   isAuthorNameCustom = true,
+  categories,
 }: SynopsisSectionProps) => {
   const [activeTab, setActiveTab] = useState<'synopsis' | 'chapters' | 'recommendations' | 'comments'>('synopsis');
   const [isRating, setIsRating] = useState(false);
@@ -220,6 +222,21 @@ export const SynopsisSection = ({
             <StatsItem icon="pepicons-print:bookmark" value={`${bookmarkCount} Bookmarks`} />
             <StatsItem icon="pepicons-print:eye" value={`${viewCount} Views`} color="purple" />
           </div>
+
+          {/* Categories */}
+          {categories && categories.length > 0 && (
+            <div className="flex flex-wrap justify-center sm:justify-start gap-2 mb-4">
+              {categories.map((category) => (
+                <Link
+                  key={category.id}
+                  href={`/novels?category=${category.name.toLowerCase()}`}
+                  className="px-3 py-1 text-sm rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
+                >
+                  {category.name}
+                </Link>
+              ))}
+            </div>
+          )}
 
           {/* Action Buttons */}
           {showActionButtons && (

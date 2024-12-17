@@ -34,6 +34,7 @@ export interface Novel {
   author_profile_id: string;
   translator_id?: string;
   is_author_name_custom?: boolean;
+  categories?: NovelCategory[];
   translator?: {
     username: string | null;
     profile_id: string;
@@ -207,4 +208,11 @@ export interface NovelRating {
   novel_id: string;
   profile?: UserProfile;
   novel?: Novel;
+}
+
+export interface NovelCategory {
+  id: string;
+  name: string;
+  created_at: string;
+  updated_at: string;
 } 

@@ -1,4 +1,4 @@
-import { Novel, Chapter, ChapterUnlock } from '@/types/database';
+import { Novel, Chapter, ChapterUnlock, NovelCategory } from '@/types/database';
 import supabase from '@/lib/supabaseClient';
 import { generateUUID } from '@/lib/utils';
 
@@ -36,6 +36,14 @@ export async function getNovel(id: string, userId?: string): Promise<Novel | nul
         novel_ratings!left (
           rating,
           profile_id
+        ),
+        categories:categories_on_novels (
+          category:category_id (
+            id,
+            name,
+            created_at,
+            updated_at
+          )
         )
       `)
       .eq(isNumericId ? 'id' : 'slug', isNumericId ? Number(id) : id)
@@ -69,6 +77,9 @@ export async function getNovel(id: string, userId?: string): Promise<Novel | nul
     // Calculate bookmark count
     const bookmarkCount = data.bookmarks?.length || 0;
 
+    // Process categories
+    const categories = data.categories?.map((item: { category: NovelCategory }) => item.category) || [];
+
     return {
       ...data,
       translator: data.translator ? {
@@ -85,7 +96,8 @@ export async function getNovel(id: string, userId?: string): Promise<Novel | nul
       rating: averageRating,
       ratingCount,
       bookmarkCount,
-      chapters
+      chapters,
+      categories
     };
   } catch (error) {
     console.error('Error fetching novel:', error);
@@ -169,6 +181,14 @@ export async function getNovels(): Promise<Novel[]> {
           patreon_url,
           custom_url,
           custom_url_label
+        ),
+        categories:categories_on_novels (
+          category:category_id (
+            id,
+            name,
+            created_at,
+            updated_at
+          )
         )
       `)
       .order('created_at', { ascending: false })
@@ -186,7 +206,8 @@ export async function getNovels(): Promise<Novel[]> {
         customUrl: novel.translator.custom_url,
         customUrlLabel: novel.translator.custom_url_label
       } : null,
-      coverImageUrl: novel.cover_image_url
+      coverImageUrl: novel.cover_image_url,
+      categories: novel.categories?.map((item: { category: NovelCategory }) => item.category) || []
     }));
   } catch (error) {
     console.error('Error in getNovels:', error);
