@@ -203,6 +203,17 @@ export default function ChapterProgressBar({
           </div>
         </div>
 
+        {/* Novel Details Section */}
+        <div className="bg-gray-50 rounded-md p-4">
+          <Link
+            href={`/novels/${novelId}`}
+            className="flex items-center justify-center gap-2 w-full py-2 bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200 transition-colors"
+          >
+            <Icon icon="mdi:book-open-variant" className="text-xl" />
+            <span>Novel Details</span>
+          </Link>
+        </div>
+
         {/* Text Customization Section */}
         <div className="bg-gray-50 rounded-md p-4">
           <TextCustomization

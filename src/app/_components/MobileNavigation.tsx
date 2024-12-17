@@ -8,7 +8,7 @@ export default function MobileNavigation() {
   const pathname = usePathname();
 
   // Don't render mobile navigation if we're on a chapter page
-  if (pathname?.includes('/chapters/')) {
+  if (pathname?.match(/\/novels\/[^/]+\/c\d+/)) {
     return null;
   }
 

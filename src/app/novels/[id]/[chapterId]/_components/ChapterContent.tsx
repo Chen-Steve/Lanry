@@ -117,17 +117,17 @@ export default function ChapterContent({
                   <span aria-hidden="true" className="select-all invisible absolute">{scrambleText(paragraph)}</span>
                   <span className="relative" dangerouslySetInnerHTML={{ __html: formatText(paragraph) }} />
                   <span className="inline-flex items-center">
-                    {!isMobile && paragraphComments.length > 0 && (
+                    {paragraphComments.length > 0 && (
                       <button
                         onClick={(e) => handleCommentClick(e, paragraphId)}
-                        className="transition-colors duration-200 ml-1 relative"
+                        className={`transition-colors duration-200 ml-1 relative ${isMobile ? 'text-gray-400' : ''}`}
                         aria-label="View comments"
                       >
                         <Icon 
                           icon="bx:comment" 
-                          className="w-5 h-5 text-gray-400 hover:text-blue-500 transition-colors"
+                          className={`w-5 h-5 ${isMobile ? 'text-gray-400' : 'text-gray-400 hover:text-blue-500'} transition-colors`}
                         />
-                        <span className="absolute top-[40%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-[10px] font-medium text-gray-400 hover:text-blue-500">
+                        <span className={`absolute ${isMobile ? 'top-[45%]' : 'top-[40%]'} left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-[10px] font-medium ${isMobile ? 'text-gray-400' : 'text-gray-400 hover:text-blue-500'}`}>
                           {paragraphComments.length}
                         </span>
                       </button>
