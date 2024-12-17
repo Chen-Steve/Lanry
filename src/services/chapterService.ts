@@ -188,4 +188,27 @@ export async function getTotalChapters(novelId: string): Promise<number> {
     console.error('Error getting total chapters:', error);
     return 0;
   }
+}
+
+export async function getTotalAllChapters(novelId: string): Promise<number> {
+  try {
+    const { data: novel, error: novelError } = await supabase
+      .from('novels')
+      .select('id')
+      .or(`id.eq.${novelId},slug.eq.${novelId}`)
+      .single();
+
+    if (novelError || !novel) return 0;
+
+    // Get total count of all chapters without filtering
+    const { count } = await supabase
+      .from('chapters')
+      .select('*', { count: 'exact', head: true })
+      .eq('novel_id', novel.id);
+
+    return count || 0;
+  } catch (error) {
+    console.error('Error getting total chapters:', error);
+    return 0;
+  }
 } 

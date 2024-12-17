@@ -3,7 +3,7 @@
 import { Novel } from '@/types/database';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { getTotalChapters } from '@/services/chapterService';
+import { getTotalAllChapters } from '@/services/chapterService';
 import { Icon } from '@iconify/react';
 import NovelCover from './NovelCover';
 
@@ -29,7 +29,7 @@ const NovelCard = ({ novel, isPriority = false }: NovelCardProps) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const total = await getTotalChapters(novel.id);
+        const total = await getTotalAllChapters(novel.id);
         setTotalChapters(total);
       } catch (err) {
         console.error('Failed to fetch chapter data:', err);
