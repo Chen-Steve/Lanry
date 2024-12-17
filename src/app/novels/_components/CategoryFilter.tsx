@@ -17,6 +17,7 @@ export default function CategoryFilter({
   const [categories, setCategories] = useState<NovelCategory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -26,6 +27,19 @@ export default function CategoryFilter({
     };
 
     fetchCategories();
+  }, []);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+    
+    // Check initially
+    checkMobile();
+
+    // Add resize listener
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   const handleCategoryToggle = (categoryName: string) => {
@@ -42,38 +56,37 @@ export default function CategoryFilter({
   return (
     <div className="mb-6">
       <div className="flex items-center justify-between mb-2">
-        <h2 className="text-lg font-semibold text-gray-900">Categories</h2>
         <button
           aria-label="Toggle category filter"
           onClick={() => setIsExpanded(!isExpanded)}
-          className="text-gray-500 hover:text-gray-700"
+          className="sm:hidden text-gray-500 hover:text-gray-700"
         >
           <Icon 
             icon={isExpanded ? "mdi:chevron-up" : "mdi:chevron-down"} 
-            className="w-6 h-6"
+            className="w-5 h-5"
           />
         </button>
       </div>
       
-      <div className={`grid gap-2 transition-all duration-300 ${
-        isExpanded ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4' : 'grid-cols-2 sm:grid-cols-3'
+      <div className={`grid gap-1.5 transition-all duration-300 ${
+        `grid-cols-3 sm:grid-cols-4 md:grid-cols-6`
       }`}>
         {categories
-          .slice(0, isExpanded ? categories.length : 5)
+          .slice(0, (!isExpanded && isMobile) ? 5 : categories.length)
           .map((category) => {
             const isSelected = selectedCategories.includes(category.name.toLowerCase());
             return (
               <button
                 key={category.id}
                 onClick={() => handleCategoryToggle(category.name)}
-                className={`flex items-center justify-between px-4 py-2 rounded-lg text-sm transition-colors ${
+                className={`flex items-center justify-between px-2 py-1 rounded-md text-xs transition-colors w-full ${
                   isSelected
                     ? 'bg-green-100 text-green-800 hover:bg-green-200'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
-                <span>{category.name}</span>
-                <span className="text-xs font-medium">
+                <span className="truncate mr-1">{category.name}</span>
+                <span className="text-[10px] font-medium flex-shrink-0">
                   {categoryCounts[category.name] || 0}
                 </span>
               </button>

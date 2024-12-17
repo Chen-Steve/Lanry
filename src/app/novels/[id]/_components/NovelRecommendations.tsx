@@ -81,7 +81,7 @@ export const NovelRecommendations = ({ novelId }: NovelRecommendationsProps) => 
             <div className="relative aspect-[2/3] bg-gray-100 rounded-sm">
               {novel.coverImageUrl ? (
                 <Image
-                  src={`/novel-covers/${novel.coverImageUrl}`}
+                  src={novel.coverImageUrl.startsWith('http') ? novel.coverImageUrl : `/novel-covers/${novel.coverImageUrl}`}
                   alt={`Cover for ${novel.title}`}
                   fill
                   className="object-cover rounded-sm"
