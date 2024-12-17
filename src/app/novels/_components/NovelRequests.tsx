@@ -17,6 +17,7 @@ const RequestCard = ({ request, onVote }: {
   const [isVoting, setIsVoting] = useState(false);
   const [localHasVoted, setLocalHasVoted] = useState(request.hasVoted);
   const [localVotes, setLocalVotes] = useState(request.voteCount);
+  const [isExpanded, setIsExpanded] = useState(false);
   const { isAuthenticated, userId } = useAuth();
 
   useEffect(() => {
@@ -118,9 +119,29 @@ const RequestCard = ({ request, onVote }: {
           </div>
         </div>
         
-        <p className="text-sm text-gray-600 leading-relaxed line-clamp-3 md:line-clamp-2 mt-2">
-          {request.description}
-        </p>
+        <div className="relative">
+          <p className={`text-sm text-gray-600 leading-relaxed mt-2 ${
+            isExpanded ? '' : 'line-clamp-3 md:line-clamp-2'
+          }`}>
+            {request.description}
+          </p>
+          {request.description.length > 150 && !isExpanded && (
+            <button
+              onClick={() => setIsExpanded(true)}
+              className="text-blue-600 text-sm hover:text-blue-700 mt-1"
+            >
+              Read more
+            </button>
+          )}
+          {isExpanded && (
+            <button
+              onClick={() => setIsExpanded(false)}
+              className="text-blue-600 text-sm hover:text-blue-700 mt-1"
+            >
+              Show less
+            </button>
+          )}
+        </div>
         
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs text-gray-500">
           <span className="inline-flex items-center gap-1">
