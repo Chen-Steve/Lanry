@@ -20,6 +20,7 @@ export default function ChapterManagementForm({ authorOnly = false }: ChapterMan
   const [isChapterListVisible, setIsChapterListVisible] = useState(false);
   const [formData, setFormData] = useState<ChapterFormData>({
     chapterNumber: '',
+    partNumber: '',
     title: '',
     content: '',
     slug: '',
@@ -73,6 +74,7 @@ export default function ChapterManagementForm({ authorOnly = false }: ChapterMan
 
       const chapterData = {
         chapter_number: parseInt(formData.chapterNumber),
+        part_number: formData.partNumber ? parseInt(formData.partNumber) : null,
         title: formData.title,
         content: formData.content,
         publish_at: formData.publishAt ? new Date(formData.publishAt).toISOString() : null,
@@ -96,6 +98,7 @@ export default function ChapterManagementForm({ authorOnly = false }: ChapterMan
 
       setFormData({
         chapterNumber: '',
+        partNumber: '',
         title: '',
         content: '',
         slug: '',
@@ -115,6 +118,7 @@ export default function ChapterManagementForm({ authorOnly = false }: ChapterMan
     setEditingChapter(chapter);
     setFormData({
       chapterNumber: chapter.chapter_number.toString(),
+      partNumber: chapter.part_number?.toString() || '',
       title: chapter.title,
       content: chapter.content,
       slug: chapter.slug,
@@ -127,6 +131,7 @@ export default function ChapterManagementForm({ authorOnly = false }: ChapterMan
     setEditingChapter(null);
     setFormData({
       chapterNumber: '',
+      partNumber: '',
       title: '',
       content: '',
       slug: '',
@@ -205,9 +210,10 @@ export default function ChapterManagementForm({ authorOnly = false }: ChapterMan
               </h3>
 
               <div className="flex gap-2 sm:gap-4">
-                <div className="w-1/3">
+                <div className="w-1/4">
                   <input
                     type="number"
+                    min="1"
                     placeholder="Ch. #"
                     value={formData.chapterNumber}
                     onChange={(e) => setFormData({ ...formData, chapterNumber: e.target.value })}
@@ -216,7 +222,18 @@ export default function ChapterManagementForm({ authorOnly = false }: ChapterMan
                   />
                 </div>
 
-                <div className="w-2/3">
+                <div className="w-1/4">
+                  <input
+                    type="number"
+                    min="1"
+                    placeholder="Part # (Optional)"
+                    value={formData.partNumber}
+                    onChange={(e) => setFormData({ ...formData, partNumber: e.target.value })}
+                    className="w-full text-black p-2 sm:p-3 border rounded-lg"
+                  />
+                </div>
+
+                <div className="w-2/4">
                   <input
                     type="text"
                     placeholder="Title (Optional)"

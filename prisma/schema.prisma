@@ -57,6 +57,7 @@ model Chapter {
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
   chapterNumber Int       @map("chapter_number")
+  partNumber    Int?      @map("part_number")
   title         String
   slug          String    
   content       String    @db.Text
@@ -66,9 +67,10 @@ model Chapter {
   novelId       String    @map("novel_id")
 
   @@unique([novelId, slug])
-  @@unique([novelId, chapterNumber])
+  @@unique([novelId, chapterNumber, partNumber])
   @@index([novelId])
   @@index([chapterNumber])
+  @@index([partNumber])
   @@index([slug])
   @@index([publishAt])
   @@map("chapters")

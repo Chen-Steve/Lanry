@@ -105,9 +105,9 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [navigation, setNavigation] = useState<{
-    prevChapter: { id: string; chapter_number: number; title: string } | null;
-    nextChapter: { id: string; chapter_number: number; title: string } | null;
-    availableChapters: number[];
+    prevChapter: { id: string; chapter_number: number; part_number?: number | null; title: string } | null;
+    nextChapter: { id: string; chapter_number: number; part_number?: number | null; title: string } | null;
+    availableChapters: Array<{ chapter_number: number; part_number?: number | null }>;
   }>({ prevChapter: null, nextChapter: null, availableChapters: [] });
   const [totalChapters, setTotalChapters] = useState(0);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -183,8 +183,9 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
     }
   }, [novelId, chapter]);
 
-  const handleChapterSelect = (chapterNum: number) => {
-    window.location.href = `/novels/${novelId}/c${chapterNum}`;
+  const handleChapterSelect = (chapterNum: number, partNum?: number | null) => {
+    const partSuffix = partNum ? `-p${partNum}` : '';
+    window.location.href = `/novels/${novelId}/c${chapterNum}${partSuffix}`;
   };
 
   if (isLoading) {
@@ -248,6 +249,7 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
           navigation={navigation}
           novelId={novelId}
           currentChapter={chapter.chapter_number}
+          currentPartNumber={chapter?.part_number}
           availableChapters={navigation.availableChapters}
           isDropdownOpen={isDropdownOpen}
           setIsDropdownOpen={setIsDropdownOpen}
@@ -259,6 +261,7 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
       <ChapterContent
         novelId={chapter.novel.id}
         chapterNumber={chapter.chapter_number}
+        partNumber={chapter.part_number}
         title={chapter.title}
         createdAt={chapter.created_at}
         content={chapter.content}
@@ -270,9 +273,13 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
       {/* Bottom Navigation */}
       <div className="border-t pt-4">
         <ChapterNavigation
-          navigation={navigation}
+          navigation={{
+            prevChapter: navigation.prevChapter,
+            nextChapter: navigation.nextChapter
+          }}
           novelId={novelId}
-          currentChapter={chapter.chapter_number}
+          currentChapter={chapter?.chapter_number || 0}
+          currentPartNumber={chapter?.part_number}
           availableChapters={navigation.availableChapters}
           isDropdownOpen={isDropdownOpen}
           setIsDropdownOpen={setIsDropdownOpen}

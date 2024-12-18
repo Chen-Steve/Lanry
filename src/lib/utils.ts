@@ -77,8 +77,8 @@ export const formatRelativeTime = (date: string | Date) => {
   }
 };
 
-export function generateChapterSlug(chapterNumber: number): string {
-  return `c${chapterNumber}`;
+export function generateChapterSlug(chapterNumber: number, partNumber?: number | null): string {
+  return `c${chapterNumber}${partNumber ? `-p${partNumber}` : ''}`;
 }
 
 export function generateNovelSlug(title: string): string {

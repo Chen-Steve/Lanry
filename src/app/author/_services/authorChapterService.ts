@@ -31,7 +31,19 @@ export async function fetchNovelChapters(novelId: string, userId: string, author
 
   const { data, error } = await supabase
     .from('chapters')
-    .select('*')
+    .select(`
+      id,
+      chapter_number,
+      part_number,
+      title,
+      content,
+      novel_id,
+      slug,
+      publish_at,
+      coins,
+      created_at,
+      updated_at
+    `)
     .eq('novel_id', novelId)
     .order('chapter_number', { ascending: true });
 
@@ -45,6 +57,7 @@ export async function updateChapter(
   userId: string,
   chapterData: {
     chapter_number: number;
+    part_number?: number | null;
     title: string;
     content: string;
     publish_at: string | null;
@@ -57,7 +70,7 @@ export async function updateChapter(
     .from('chapters')
     .update({
       ...chapterData,
-      slug: generateChapterSlug(chapterData.chapter_number),
+      slug: generateChapterSlug(chapterData.chapter_number, chapterData.part_number),
       updated_at: new Date().toISOString()
     })
     .eq('id', chapterId)
@@ -71,6 +84,7 @@ export async function createChapter(
   userId: string,
   chapterData: {
     chapter_number: number;
+    part_number?: number | null;
     title: string;
     content: string;
     publish_at: string | null;
@@ -85,7 +99,7 @@ export async function createChapter(
       id: generateUUID(),
       novel_id: novelId,
       ...chapterData,
-      slug: generateChapterSlug(chapterData.chapter_number),
+      slug: generateChapterSlug(chapterData.chapter_number, chapterData.part_number),
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     });

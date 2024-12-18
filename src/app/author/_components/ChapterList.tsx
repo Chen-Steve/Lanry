@@ -4,6 +4,7 @@ import { Icon } from '@iconify/react';
 interface Chapter {
   id: string;
   chapter_number: number;
+  part_number?: number | null;
   title: string;
   content: string;
   novel_id: string;
@@ -72,6 +73,11 @@ export default function ChapterList({
                   <div className="flex-1">
                     <h4 className="font-medium text-gray-900">
                       Chapter {chapter.chapter_number}
+                      {chapter.part_number && (
+                        <span className="text-gray-700">
+                          {" "}Part {chapter.part_number}
+                        </span>
+                      )}
                       {chapter.title && (
                         <span className="text-gray-700 ml-1">: {chapter.title}</span>
                       )}

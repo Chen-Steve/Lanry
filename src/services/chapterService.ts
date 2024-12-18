@@ -8,7 +8,23 @@ type ChapterWithNovel = Chapter & {
 
 export async function getChapter(novelId: string, chapterId: string): Promise<ChapterWithNovel | null> {
   try {
-    const chapterNumber = parseInt(chapterId.replace('c', ''));
+    // Parse chapter number and part number from the URL
+    const match = chapterId.match(/^c(\d+)(?:-p(\d+))?$/);
+    if (!match) {
+      console.error('Invalid chapter ID format');
+      return null;
+    }
+    
+    const chapterNumber = parseInt(match[1]);
+    const partNumber = match[2] ? parseInt(match[2]) : null;
+
+    console.log('Searching for chapter:', {
+      chapterId,
+      chapterNumber,
+      partNumber,
+      novelId
+    });
+
     if (isNaN(chapterNumber)) {
       console.error('Invalid chapter number format');
       return null;
@@ -26,11 +42,13 @@ export async function getChapter(novelId: string, chapterId: string): Promise<Ch
       return null;
     }
 
+    console.log('Found novel:', novel);
+
     // Get the user first
     const { data: { user } } = await supabase.auth.getUser();
 
     // First get the chapter
-    const { data: chapter, error: chapterError } = await supabase
+    let query = supabase
       .from('chapters')
       .select(`
         *,
@@ -38,6 +56,7 @@ export async function getChapter(novelId: string, chapterId: string): Promise<Ch
         title,
         content,
         chapter_number,
+        part_number,
         publish_at,
         coins,
         novel:novels!inner (
@@ -47,13 +66,56 @@ export async function getChapter(novelId: string, chapterId: string): Promise<Ch
         )
       `)
       .eq('novel_id', novel.id)
-      .eq('chapter_number', chapterNumber)
-      .single();
+      .eq('chapter_number', chapterNumber);
+
+    // Add part number to query if it exists
+    if (partNumber !== null) {
+      query = query.eq('part_number', partNumber);
+    }
+
+    // First try to get the exact match
+    let { data: chapter, error: chapterError } = await query.maybeSingle();
+
+    // If no exact match found and no part number was specified, try without part number condition
+    if (!chapter && partNumber === null) {
+      console.log('No exact match found, trying without part number condition');
+      query = supabase
+        .from('chapters')
+        .select(`
+          *,
+          id,
+          title,
+          content,
+          chapter_number,
+          part_number,
+          publish_at,
+          coins,
+          novel:novels!inner (
+            id,
+            title,
+            author
+          )
+        `)
+        .eq('novel_id', novel.id)
+        .eq('chapter_number', chapterNumber)
+        .order('part_number', { ascending: true })
+        .limit(1);
+
+      const result = await query;
+      chapter = result.data?.[0];
+      chapterError = result.error;
+    }
 
     if (chapterError || !chapter) {
       console.error('Chapter fetch error:', chapterError);
       return null;
     }
+
+    console.log('Found chapter:', {
+      id: chapter.id,
+      chapterNumber: chapter.chapter_number,
+      partNumber: chapter.part_number
+    });
 
     const isPublished = !chapter.publish_at || new Date(chapter.publish_at) <= new Date();
     let isUnlocked = false;
@@ -104,7 +166,7 @@ export async function getChapterNavigation(novelId: string, currentChapterNumber
     // Get all chapters
     const { data: chapters } = await supabase
       .from('chapters')
-      .select('id, chapter_number, title, publish_at, coins')
+      .select('id, chapter_number, part_number, title, publish_at, coins')
       .eq('novel_id', novel.id)
       .order('chapter_number');
 
@@ -136,7 +198,10 @@ export async function getChapterNavigation(novelId: string, currentChapterNumber
     return {
       prevChapter: currentIndex > 0 ? accessibleChapters[currentIndex - 1] : null,
       nextChapter: currentIndex < accessibleChapters.length - 1 ? accessibleChapters[currentIndex + 1] : null,
-      availableChapters: accessibleChapters.map(ch => ch.chapter_number)
+      availableChapters: accessibleChapters.map(ch => ({
+        chapter_number: ch.chapter_number,
+        part_number: ch.part_number
+      }))
     };
   } catch (error) {
     console.error('Error fetching chapter navigation:', error);

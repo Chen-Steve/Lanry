@@ -3,22 +3,24 @@ import { Icon } from '@iconify/react';
 
 interface ChapterNavigationProps {
   navigation: {
-    prevChapter: { chapter_number: number } | null;
-    nextChapter: { chapter_number: number } | null;
+    prevChapter: { chapter_number: number; part_number?: number | null } | null;
+    nextChapter: { chapter_number: number; part_number?: number | null } | null;
   };
   novelId: string;
   currentChapter: number;
-  availableChapters: number[];
+  currentPartNumber?: number | null;
+  availableChapters: Array<{ chapter_number: number; part_number?: number | null }>;
   isDropdownOpen: boolean;
   setIsDropdownOpen: (open: boolean) => void;
-  handleChapterSelect: (num: number) => void;
+  handleChapterSelect: (chapterNumber: number, partNumber?: number | null) => void;
   position?: 'top' | 'bottom';
 }
 
 export default function ChapterNavigation({ 
   navigation, 
   novelId, 
-  currentChapter, 
+  currentChapter,
+  currentPartNumber,
   availableChapters = [],
   isDropdownOpen, 
   setIsDropdownOpen, 
@@ -29,7 +31,9 @@ export default function ChapterNavigation({
     ? 'top-full left-1/2 -translate-x-1/2 mt-2' 
     : 'bottom-full left-1/2 -translate-x-1/2 mb-2';
 
-  const chapters = Array.isArray(availableChapters) ? availableChapters : [];
+  const formatChapterTitle = (chapterNumber: number, partNumber?: number | null) => {
+    return `Chapter ${chapterNumber}${partNumber ? ` Part ${partNumber}` : ''}`;
+  };
 
   return (
     <div className="flex items-center justify-center gap-2">
@@ -37,12 +41,14 @@ export default function ChapterNavigation({
       <div className="w-auto">
         {navigation.prevChapter ? (
           <Link
-            href={`/novels/${novelId}/c${navigation.prevChapter.chapter_number}`}
+            href={`/novels/${novelId}/c${navigation.prevChapter.chapter_number}${
+              navigation.prevChapter.part_number ? `-p${navigation.prevChapter.part_number}` : ''
+            }`}
             className="inline-flex items-center px-3 py-2 bg-[#F7F4ED] hover:bg-[#F2EEE5] rounded-lg text-black transition-colors text-sm whitespace-nowrap border border-gray-300"
           >
             <div className="flex items-center gap-1">
               <Icon icon="mdi:chevron-left" className="text-lg" />
-              <span>Ch.{navigation.prevChapter.chapter_number}</span>
+              <span>{formatChapterTitle(navigation.prevChapter.chapter_number, navigation.prevChapter.part_number)}</span>
             </div>
           </Link>
         ) : (
@@ -56,22 +62,22 @@ export default function ChapterNavigation({
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg flex items-center justify-center gap-1 bg-[#F7F4ED] hover:bg-[#F2EEE5] transition-colors text-black text-sm"
         >
-          <span>Chapter {currentChapter}</span>
+          <span>{formatChapterTitle(currentChapter, currentPartNumber)}</span>
           <Icon icon="mdi:chevron-down" className="text-lg" />
         </button>
 
         {isDropdownOpen && (
           <div className={`absolute ${dropdownPosition} w-full max-h-[60vh] overflow-y-auto bg-[#F7F4ED] border rounded-lg shadow-lg z-50`}>
-            {chapters.length > 0 ? (
-              chapters.map((num) => (
+            {availableChapters.length > 0 ? (
+              availableChapters.map((chapter) => (
                 <button
-                  key={num}
-                  onClick={() => handleChapterSelect(num)}
+                  key={`${chapter.chapter_number}-${chapter.part_number || ''}`}
+                  onClick={() => handleChapterSelect(chapter.chapter_number, chapter.part_number)}
                   className={`w-full px-3 py-2 text-left hover:bg-[#F2EEE5] transition-colors text-black text-sm ${
-                    num === currentChapter ? 'bg-[#F2EEE5]' : ''
+                    chapter.chapter_number === currentChapter && chapter.part_number === currentPartNumber ? 'bg-[#F2EEE5]' : ''
                   }`}
                 >
-                  Chapter {num}
+                  {formatChapterTitle(chapter.chapter_number, chapter.part_number)}
                 </button>
               ))
             ) : (
@@ -87,16 +93,20 @@ export default function ChapterNavigation({
       <div className="w-auto">
         {navigation.nextChapter ? (
           <Link
-            href={`/novels/${novelId}/c${navigation.nextChapter.chapter_number}`}
+            href={`/novels/${novelId}/c${navigation.nextChapter.chapter_number}${
+              navigation.nextChapter.part_number ? `-p${navigation.nextChapter.part_number}` : ''
+            }`}
             className="inline-flex items-center px-3 py-2 bg-[#F7F4ED] hover:bg-[#F2EEE5] rounded-lg text-black transition-colors text-sm whitespace-nowrap border border-gray-300"
           >
             <div className="flex items-center gap-1">
-              <span>Ch.{navigation.nextChapter.chapter_number}</span>
+              <span>{formatChapterTitle(navigation.nextChapter.chapter_number, navigation.nextChapter.part_number)}</span>
               <Icon icon="mdi:chevron-right" className="text-lg" />
             </div>
           </Link>
         ) : (
-          <div className="px-3 py-2 text-gray-400 text-sm text-right border border-gray-200 rounded-lg">Ch.{chapters.length}</div>
+          <div className="px-3 py-2 text-gray-400 text-sm text-right border border-gray-200 rounded-lg">
+            {formatChapterTitle(availableChapters[availableChapters.length - 1]?.chapter_number || 1)}
+          </div>
         )}
       </div>
     </div>

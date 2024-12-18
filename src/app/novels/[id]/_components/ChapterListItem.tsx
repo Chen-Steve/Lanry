@@ -23,17 +23,21 @@ export function ChapterListItem({
   isAuthenticated,
   novelAuthorId,
 }: ChapterListItemProps) {
-  //console.log('Chapter data:', {
-  //  chapterId: chapter.id,
-  //  novelId: chapter.novel_id,
-  //  chapterNumber: chapter.chapter_number,
-  //  userProfileId: userProfile?.id,
-  //  novelAuthorId: novelAuthorId
-  //});
+  console.log('Chapter data:', {
+    chapterNumber: chapter.chapter_number,
+    partNumber: chapter.part_number,
+    title: chapter.title
+  });
 
   const [isUnlocking, setIsUnlocking] = useState(false);
   const [isUnlocked, setIsUnlocked] = useState(false);
   const router = useRouter();
+
+  const chapterTitle = `Chapter ${chapter.chapter_number}${
+    chapter.part_number ? ` Part ${chapter.part_number}` : ''
+  }${chapter.title ? `: ${chapter.title}` : ''}`;
+
+  console.log('Formatted chapter title:', chapterTitle);
 
   useEffect(() => {
     const checkUnlockStatus = async () => {
@@ -227,8 +231,17 @@ export function ChapterListItem({
   const chapterContent = (
     <div className="flex flex-col sm:flex-row sm:items-center gap-2">
       <div className="flex items-center gap-2">
-        <span className="inline-block min-w-[3rem] text-sm sm:text-base">Ch. {chapter.chapter_number}</span>
-        {chapter.title && <div className="truncate max-w-[calc(100%-2rem)]">{chapter.title}</div>}
+        <span className="inline-block min-w-[3rem] text-sm sm:text-base">
+          Chapter {chapter.chapter_number}
+          {chapter.part_number && (
+            <span className="text-gray-700">
+              {" "}Part {chapter.part_number}
+            </span>
+          )}
+          {chapter.title && (
+            <span className="text-gray-700 ml-1">: {chapter.title}</span>
+          )}
+        </span>
       </div>
       {!isPublished && (
         <div className="flex items-center gap-2 bg-purple-50 text-purple-800 px-2 py-1 rounded-md text-xs sm:text-sm mt-1 sm:mt-0 sm:ml-auto">

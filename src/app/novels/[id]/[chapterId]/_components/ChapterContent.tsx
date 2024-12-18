@@ -11,6 +11,7 @@ import { useMediaQuery } from '@/hooks/useMediaQuery';
 interface ChapterContentProps {
   novelId: string;
   chapterNumber: number;
+  partNumber?: number | null;
   title: string;
   createdAt: string;
   content: string;
@@ -22,6 +23,7 @@ interface ChapterContentProps {
 export default function ChapterContent({
   novelId,
   chapterNumber,
+  partNumber,
   title,
   createdAt,
   content,
@@ -70,7 +72,9 @@ export default function ChapterContent({
       <div className="mb-4 max-w-2xl mx-auto">
         <div>
           <h2 className="text-lg md:text-xl font-semibold text-black">
-            Chapter {chapterNumber}: {title}
+            Chapter {chapterNumber}
+            {partNumber && <span> Part {partNumber}</span>}
+            {title && <span>: {title}</span>}
           </h2>
           <p className="text-xs md:text-sm text-gray-600">
             Published {formatDate(createdAt)}

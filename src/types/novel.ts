@@ -7,6 +7,7 @@ export interface Novel {
 export interface Chapter {
   id: string;
   chapter_number: number;
+  part_number?: number | null;
   title: string;
   content: string;
   novel_id: string;
@@ -19,6 +20,7 @@ export interface Chapter {
 
 export interface ChapterFormData {
   chapterNumber: string;
+  partNumber: string;
   title: string;
   content: string;
   slug: string;
