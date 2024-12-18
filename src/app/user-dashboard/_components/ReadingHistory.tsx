@@ -85,7 +85,7 @@ const ReadingHistorySection = ({ userId }: ReadingHistorySectionProps) => {
             className="hover:opacity-80 transition-opacity flex-shrink-0"
           >
             <Image
-              src={`/novel-covers/${item.novel.coverImageUrl}` || '/images/default-cover.jpg'}
+              src={item.novel.coverImageUrl?.startsWith('http') ? item.novel.coverImageUrl : item.novel.coverImageUrl ? `/novel-covers/${item.novel.coverImageUrl}` : '/images/default-cover.jpg'}
               alt={item.novel.title}
               width={120}
               priority
