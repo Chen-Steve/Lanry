@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Icon } from '@iconify/react';
 import type { NovelRequest } from '@/types/database';
 import { createNovelRequest } from '@/services/novelRequestService';
@@ -23,6 +23,7 @@ export const RequestForm = ({ onSubmit, onClose }: RequestFormProps) => {
   const [imagePreview, setImagePreview] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const { userId, isAuthenticated } = useAuth();
+  const formRef = useRef<HTMLDivElement>(null);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -88,6 +89,19 @@ export const RequestForm = ({ onSubmit, onClose }: RequestFormProps) => {
   };
 
   useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (formRef.current && !formRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [onClose]);
+
+  useEffect(() => {
     return () => {
       if (imagePreview) {
         URL.revokeObjectURL(imagePreview);
@@ -97,9 +111,9 @@ export const RequestForm = ({ onSubmit, onClose }: RequestFormProps) => {
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 md:relative md:bg-transparent">
-      <div className="fixed inset-x-0 bottom-0 bg-white rounded-t-xl p-4 md:relative md:rounded-lg md:p-6">
+      <div ref={formRef} className="fixed inset-x-0 bottom-0 bg-white rounded-t-xl p-4 md:relative md:rounded-lg md:p-6">
         <div className="flex items-center justify-between mb-4 md:hidden">
-          <h3 className="text-lg font-medium">New Request</h3>
+          <h3 className="text-lg font-medium text-black">New Request</h3>
           <button aria-label="Close" onClick={onClose} className="p-2 -mr-2">
             <Icon icon="mdi:close" className="text-xl" />
           </button>
@@ -135,7 +149,7 @@ export const RequestForm = ({ onSubmit, onClose }: RequestFormProps) => {
                 />
                 <label
                   htmlFor="cover-image-upload"
-                  className="flex-1 px-4 py-3 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors text-center"
+                  className="flex-1 px-4 py-3 text-black rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors text-center"
                 >
                   {imagePreview ? 'Change Image' : 'Upload Cover Image'}
                 </label>
@@ -186,7 +200,7 @@ export const RequestForm = ({ onSubmit, onClose }: RequestFormProps) => {
               value={originalLanguage}
               onChange={(e) => setOriginalLanguage(e.target.value)}
               required
-              className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-colors text-base bg-white"
+              className="w-full px-4 py-3 text-black rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-colors text-base bg-white"
             >
               <option value="">Select Language *</option>
               <option value="Chinese">Chinese</option>

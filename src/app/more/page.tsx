@@ -43,7 +43,7 @@ function MenuItem({ href, label, external, icon, bgColor }: MenuItemProps) {
 
 export default function MorePage() {
   return (
-    <main className="min-h-[calc(100vh-4rem)] bg-[#F2EEE5] px-4 py-6">
+    <main className="min-h-screen bg-[#F2EEE5] px-4 py-6">
       <div className="max-w-md mx-auto space-y-6">
         {/* Brand Section */}
         <section className="text-center pb-6">
@@ -76,9 +76,8 @@ export default function MorePage() {
             bgColor="bg-yellow-50"
           />
           <MenuItem 
-            href="https://forms.gle/dYXhMkxfTi3odiLc8" 
+            href="/novels/requests" 
             label="Request Novel"
-            external
             bgColor="bg-blue-50"
           />
         </section>

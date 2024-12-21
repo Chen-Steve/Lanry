@@ -42,7 +42,7 @@ export default function NovelTabs({ tabs }: NovelTabsProps) {
     return (
       <div className="mb-4">
         <div className="max-w-5xl mx-auto px-4">
-          <nav className="flex space-x-8" aria-label="Tabs">
+          <nav className="hidden md:flex space-x-8" aria-label="Tabs">
             {navigationTabs.map((tab) => {
               const isActive = 
                 tab.href === '/novels' 
@@ -77,7 +77,7 @@ export default function NovelTabs({ tabs }: NovelTabsProps) {
   return (
     <div className="max-w-5xl mx-auto px-4">
       {/* Tab Navigation */}
-      <nav className="flex space-x-8 border-b" aria-label="Tabs">
+      <nav className="hidden md:flex space-x-8 border-b" aria-label="Tabs">
         {tabs.map((tab) => (
           <button
             key={tab.id}
