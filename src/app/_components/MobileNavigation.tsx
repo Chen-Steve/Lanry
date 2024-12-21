@@ -7,8 +7,8 @@ import { usePathname } from 'next/navigation';
 export default function MobileNavigation() {
   const pathname = usePathname();
 
-  // Don't render mobile navigation if we're on a chapter page
-  if (pathname?.match(/\/novels\/[^/]+\/c\d+/)) {
+  // Don't render mobile navigation if we're on a chapter page or novel detail page
+  if (pathname?.match(/\/novels\/[^/]+\/c\d+/) || pathname?.match(/\/novels\/[^/]+$/)) {
     return null;
   }
 

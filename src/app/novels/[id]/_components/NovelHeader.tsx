@@ -6,6 +6,7 @@ import { TranslatorLinks } from './TranslatorLinks';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import supabase from '@/lib/supabaseClient';
+import { NovelActionButtons } from './NovelActionButtons';
 
 interface NovelHeaderProps {
   title: string;
@@ -43,58 +44,6 @@ const StatsItem = ({ icon, value, color = 'gray' }: { icon: string; value: strin
     />
     <span className="text-gray-700">{value}</span>
   </div>
-);
-
-const ReadButton = ({ firstChapterNumber, novelSlug }: { firstChapterNumber?: number; novelSlug: string }) => {
-  if (firstChapterNumber === undefined) return null;
-  
-  return (
-    <Link 
-      href={`/novels/${novelSlug}/c${firstChapterNumber}`}
-      className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 transition-colors text-white font-medium"
-    >
-      <Icon icon="pepicons-print:book" className="text-lg" />
-      <span>Start Reading</span>
-    </Link>
-  );
-};
-
-const BookmarkButton = ({
-  isAuthenticated,
-  isBookmarked,
-  isBookmarkLoading,
-  onBookmarkClick,
-}: {
-  isAuthenticated: boolean;
-  isBookmarked: boolean;
-  isBookmarkLoading: boolean;
-  onBookmarkClick: () => void;
-}) => (
-  <button 
-    onClick={(e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (!isBookmarkLoading) {
-        onBookmarkClick();
-      }
-    }}
-    type="button"
-    disabled={isBookmarkLoading}
-    aria-label={isBookmarked ? "Remove Bookmark" : "Add Bookmark"}
-    className={`flex items-center text-black justify-center gap-1.5 px-4 py-2 rounded-lg transition-colors touch-manipulation ${
-      !isAuthenticated 
-        ? 'bg-gray-100 hover:bg-gray-200'
-        : isBookmarked 
-          ? 'bg-amber-100 hover:bg-amber-200 text-amber-900'
-          : 'bg-gray-100 hover:bg-gray-200'
-    } ${isBookmarkLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-  >
-    <Icon 
-      icon={isBookmarked ? "pepicons-print:bookmark-filled" : "pepicons-print:bookmark"} 
-      className={`text-lg ${isBookmarkLoading ? 'animate-pulse' : ''}`}
-    />
-    <span className="font-medium text-black">{isBookmarked ? 'Bookmarked' : 'Bookmark'}</span>
-  </button>
 );
 
 export const NovelHeader = ({
@@ -200,125 +149,191 @@ export const NovelHeader = ({
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-4 mb-4">
-      {/* Left side with cover and main content */}
-      <div className="flex flex-col sm:flex-row gap-4 flex-1">
-        {/* Cover Image */}
-        <div className="w-48 sm:w-36 md:w-44 mx-auto sm:mx-0 flex-shrink-0">
-          <div className="relative aspect-[2/3] rounded-xl overflow-hidden shadow-lg">
-            {coverImageUrl ? (
-              <Image
-                src={coverImageUrl.startsWith('http') ? coverImageUrl : `/novel-covers/${coverImageUrl}`}
-                alt={title}
-                fill
-                priority
-                className="object-cover"
-                sizes="(max-width: 640px) 192px, (max-width: 768px) 144px, 176px"
-              />
-            ) : (
-              <div className="w-full h-full bg-gray-200" />
-            )}
-          </div>
-        </div>
+    <>
+      <div className="flex flex-col lg:flex-row gap-4 mb-4">
+        {/* Left side with cover and main content */}
+        <div className="flex flex-col gap-4 flex-1">
+          {/* Cover and Title Section */}
+          <div>
+            {/* Cover Image and Title Row */}
+            <div className="flex flex-row gap-4 mb-4">
+              {/* Cover Image */}
+              <div className="w-32 sm:w-36 md:w-44 mx-0 flex-shrink-0">
+                <div className="relative aspect-[2/3] rounded-xl overflow-hidden shadow-lg">
+                  {coverImageUrl ? (
+                    <Image
+                      src={coverImageUrl.startsWith('http') ? coverImageUrl : `/novel-covers/${coverImageUrl}`}
+                      alt={title}
+                      fill
+                      priority
+                      className="object-cover"
+                      sizes="(max-width: 640px) 192px, (max-width: 768px) 144px, 176px"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gray-200" />
+                  )}
+                </div>
+              </div>
 
-        {/* Title and Quick Stats */}
-        <div className="flex-1 text-center sm:text-left">
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 text-gray-900">{title}</h1>
-          <div className="text-sm text-gray-600 mb-3">
-            {isAuthorNameCustom ? (
-              <>
-                by {author}
-                {translator && (
-                  <> • TL: {translator.username ? (
-                    <Link 
-                      href={`/user-dashboard?id=${translator.profile_id}`}
+              {/* Title and Author Section */}
+              <div className="flex-1">
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 text-gray-900 text-left">{title}</h1>
+                <div className="text-sm text-gray-600 mb-4 text-left">
+                  {isAuthorNameCustom ? (
+                    <>
+                      by {author}
+                      {translator && (
+                        <> • TL: {translator.username ? (
+                          <Link 
+                            href={`/user-dashboard?id=${translator.profile_id}`}
+                            className="text-gray-700 hover:text-gray-900 hover:underline"
+                          >
+                            {translator.username}
+                          </Link>
+                        ) : (
+                          <span className="text-gray-700">Anonymous</span>
+                        )}</>
+                      )}
+                    </>
+                  ) : (
+                    <>Author: <Link 
+                      href={`/user-dashboard?id=${novelAuthorId}`}
                       className="text-gray-700 hover:text-gray-900 hover:underline"
                     >
-                      {translator.username}
-                    </Link>
-                  ) : (
-                    <span className="text-gray-700">Anonymous</span>
-                  )}</>
-                )}
-              </>
-            ) : (
-              <>Author: <Link 
-                href={`/user-dashboard?id=${novelAuthorId}`}
-                className="text-gray-700 hover:text-gray-900 hover:underline"
-              >
-                {author}
-              </Link></>
-            )}
-          </div>
-          
-          {/* Quick Stats */}
-          <div className="flex flex-wrap justify-center sm:justify-start gap-4 text-sm mb-4">
-            <StatsItem icon="pepicons-print:book" value={`${chaptersCount} Chapters`} color="blue" />
-            <StatsItem icon="pepicons-print:bookmark" value={`${bookmarkCount} Bookmarks`} />
-            <StatsItem icon="pepicons-print:eye" value={`${viewCount} Views`} color="purple" />
-          </div>
+                      {author}
+                    </Link></>
+                  )}
+                </div>
 
-          {/* Action Buttons */}
-          {showActionButtons && (
-            <div className="flex flex-col sm:flex-row gap-3 mb-4">
-              <ReadButton
-                firstChapterNumber={firstChapterNumber}
-                novelSlug={novelSlug}
-              />
-              <BookmarkButton
-                isAuthenticated={isAuthenticated}
-                isBookmarked={isBookmarked}
-                isBookmarkLoading={isBookmarkLoading}
-                onBookmarkClick={onBookmarkClick}
-              />
-            </div>
-          )}
+                {/* Desktop Stats and Rating */}
+                <div className="hidden sm:block">
+                  <div className="flex flex-col lg:flex-row gap-4">
+                    {/* Stats, Rating, and Categories */}
+                    <div className="flex-1">
+                      {/* Quick Stats */}
+                      <div className="flex flex-wrap gap-4 text-sm mb-4">
+                        <StatsItem icon="pepicons-print:book" value={`${chaptersCount} Chapters`} color="blue" />
+                        <StatsItem icon="pepicons-print:bookmark" value={`${bookmarkCount} Bookmarks`} />
+                        <StatsItem icon="pepicons-print:eye" value={`${viewCount} Views`} color="purple" />
+                      </div>
 
-          {/* Rating Section */}
-          <div className="flex flex-col sm:flex-row items-center gap-2 mb-4">
-            <div 
-              className="flex items-center gap-0.5"
-              onMouseEnter={() => setIsHovering(true)}
-              onMouseLeave={() => setIsHovering(false)}
-            >
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button
-                  aria-label={`Rate ${star} stars`}
-                  key={star}
-                  onClick={() => handleRate(star)}
-                  disabled={isRating}
-                  className={`p-1 transition-colors ${isRating ? 'opacity-50' : 'hover:text-amber-400'}`}
-                >
-                  <Icon 
-                    icon={
-                      (isHovering && localUserRating && star <= localUserRating) || 
-                      (!isHovering && star <= localRating)
-                        ? "pepicons-print:star-filled"
-                        : "pepicons-print:star"
-                    }
-                    className={`text-2xl sm:text-3xl ${
-                      (isHovering && localUserRating && star <= localUserRating) || 
-                      (!isHovering && star <= localRating)
-                        ? 'text-amber-400'
-                        : 'text-gray-400'
-                    }`}
-                  />
-                </button>
-              ))}
+                      {/* Rating Section */}
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 mb-4">
+                        <div 
+                          className="flex items-center gap-0.5"
+                          onMouseEnter={() => setIsHovering(true)}
+                          onMouseLeave={() => setIsHovering(false)}
+                        >
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <button
+                              aria-label={`Rate ${star} stars`}
+                              key={star}
+                              onClick={() => handleRate(star)}
+                              disabled={isRating}
+                              className={`p-1 transition-colors ${isRating ? 'opacity-50' : 'hover:text-amber-400'}`}
+                            >
+                              <Icon 
+                                icon={
+                                  (isHovering && localUserRating && star <= localUserRating) || 
+                                  (!isHovering && star <= localRating)
+                                    ? "pepicons-print:star-filled"
+                                    : "pepicons-print:star"
+                                }
+                                className={`text-2xl sm:text-3xl ${
+                                  (isHovering && localUserRating && star <= localUserRating) || 
+                                  (!isHovering && star <= localRating)
+                                    ? 'text-amber-400'
+                                    : 'text-gray-400'
+                                }`}
+                              />
+                            </button>
+                          ))}
+                        </div>
+                        <div className="flex flex-wrap items-center text-sm sm:text-base text-gray-600">
+                          <span>{localRating.toFixed(1)}</span>
+                          <span className="mx-1">•</span>
+                          <span>{localRatingCount} {localRatingCount === 1 ? 'rating' : 'ratings'}</span>
+                          {!isAuthenticated && (
+                            <span className="text-xs sm:text-sm text-gray-500 ml-2">(Sign in to rate)</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Translator Links Box */}
+                    {translator && (
+                      <div className="lg:w-64 flex-shrink-0">
+                        <TranslatorLinks translator={translator} />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="flex flex-wrap items-center text-sm sm:text-base text-gray-600 ml-1">
-              <span>{localRating.toFixed(1)}</span>
-              <span className="mx-1">•</span>
-              <span>{localRatingCount} {localRatingCount === 1 ? 'rating' : 'ratings'}</span>
-              {!isAuthenticated && (
-                <span className="text-xs sm:text-sm text-gray-500 ml-2">(Sign in to rate)</span>
+
+            {/* Mobile Stats and Rating */}
+            <div className="sm:hidden">
+              {/* Quick Stats */}
+              <div className="flex flex-wrap justify-center gap-4 text-sm mb-4">
+                <StatsItem icon="pepicons-print:book" value={`${chaptersCount} Chapters`} color="blue" />
+                <StatsItem icon="pepicons-print:bookmark" value={`${bookmarkCount} Bookmarks`} />
+                <StatsItem icon="pepicons-print:eye" value={`${viewCount} Views`} color="purple" />
+              </div>
+
+              {/* Mobile Translator Links */}
+              {translator && (
+                <div className="mb-4">
+                  <TranslatorLinks translator={translator} />
+                </div>
               )}
+
+              {/* Rating Section */}
+              <div className="flex flex-col items-center gap-2 mb-4">
+                <div 
+                  className="flex items-center gap-0.5"
+                  onMouseEnter={() => setIsHovering(true)}
+                  onMouseLeave={() => setIsHovering(false)}
+                >
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      aria-label={`Rate ${star} stars`}
+                      key={star}
+                      onClick={() => handleRate(star)}
+                      disabled={isRating}
+                      className={`p-1 transition-colors ${isRating ? 'opacity-50' : 'hover:text-amber-400'}`}
+                    >
+                      <Icon 
+                        icon={
+                          (isHovering && localUserRating && star <= localUserRating) || 
+                          (!isHovering && star <= localRating)
+                            ? "pepicons-print:star-filled"
+                            : "pepicons-print:star"
+                        }
+                        className={`text-2xl ${
+                          (isHovering && localUserRating && star <= localUserRating) || 
+                          (!isHovering && star <= localRating)
+                            ? 'text-amber-400'
+                            : 'text-gray-400'
+                        }`}
+                      />
+                    </button>
+                  ))}
+                </div>
+                <div className="flex flex-wrap items-center text-sm text-gray-600">
+                  <span>{localRating.toFixed(1)}</span>
+                  <span className="mx-1">•</span>
+                  <span>{localRatingCount} {localRatingCount === 1 ? 'rating' : 'ratings'}</span>
+                  {!isAuthenticated && (
+                    <span className="text-xs text-gray-500 ml-2">(Sign in to rate)</span>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Categories */}
+          {/* Categories - Show on all screen sizes */}
           {categories && categories.length > 0 && (
-            <div className="flex flex-wrap justify-center sm:justify-start gap-2 mb-4">
+            <div className="flex flex-wrap gap-2">
               {categories.map((category) => (
                 <Link
                   key={category.id}
@@ -333,8 +348,17 @@ export const NovelHeader = ({
         </div>
       </div>
 
-      {/* Translator Links Box */}
-      {translator && <TranslatorLinks translator={translator} />}
-    </div>
+      {/* Floating Action Buttons */}
+      {showActionButtons && (
+        <NovelActionButtons
+          firstChapterNumber={firstChapterNumber}
+          novelSlug={novelSlug}
+          isAuthenticated={isAuthenticated}
+          isBookmarked={isBookmarked}
+          isBookmarkLoading={isBookmarkLoading}
+          onBookmarkClick={onBookmarkClick}
+        />
+      )}
+    </>
   );
 }; 

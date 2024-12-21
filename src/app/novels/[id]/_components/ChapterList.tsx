@@ -21,7 +21,7 @@ export const ChapterList = ({
   return (
     <div className="max-w-5xl mx-auto">
       <div className="bg-white rounded-xl shadow-sm border p-4">
-        <div className="grid gap-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
           {chapters.map((chapter) => (
             <div key={chapter.id} className="max-w-full overflow-hidden">
               <ChapterListItem
