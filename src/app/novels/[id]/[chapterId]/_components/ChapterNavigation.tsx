@@ -32,6 +32,10 @@ export default function ChapterNavigation({
     : 'bottom-full left-1/2 -translate-x-1/2 mb-2';
 
   const formatChapterTitle = (chapterNumber: number, partNumber?: number | null) => {
+    return `Ch. ${chapterNumber}${partNumber ? ` Part ${partNumber}` : ''}`;
+  };
+
+  const formatDropdownTitle = (chapterNumber: number, partNumber?: number | null) => {
     return `Chapter ${chapterNumber}${partNumber ? ` Part ${partNumber}` : ''}`;
   };
 
@@ -52,7 +56,9 @@ export default function ChapterNavigation({
             </div>
           </Link>
         ) : (
-          <div className="px-3 py-2 text-gray-400 text-sm border border-gray-200 rounded-lg">Ch.1</div>
+          <div className="px-3 py-2 text-gray-400 text-sm border border-gray-200 rounded-lg">
+            {formatChapterTitle(availableChapters[0]?.chapter_number || 1, availableChapters[0]?.part_number)}
+          </div>
         )}
       </div>
 
@@ -62,7 +68,7 @@ export default function ChapterNavigation({
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg flex items-center justify-center gap-1 bg-[#F7F4ED] hover:bg-[#F2EEE5] transition-colors text-black text-sm"
         >
-          <span>{formatChapterTitle(currentChapter, currentPartNumber)}</span>
+          <span>{formatDropdownTitle(currentChapter, currentPartNumber)}</span>
           <Icon icon="mdi:chevron-down" className="text-lg" />
         </button>
 
@@ -77,7 +83,7 @@ export default function ChapterNavigation({
                     chapter.chapter_number === currentChapter && chapter.part_number === currentPartNumber ? 'bg-[#F2EEE5]' : ''
                   }`}
                 >
-                  {formatChapterTitle(chapter.chapter_number, chapter.part_number)}
+                  {formatDropdownTitle(chapter.chapter_number, chapter.part_number)}
                 </button>
               ))
             ) : (
@@ -105,7 +111,10 @@ export default function ChapterNavigation({
           </Link>
         ) : (
           <div className="px-3 py-2 text-gray-400 text-sm text-right border border-gray-200 rounded-lg">
-            {formatChapterTitle(availableChapters[availableChapters.length - 1]?.chapter_number || 1)}
+            {formatChapterTitle(
+              availableChapters[availableChapters.length - 1]?.chapter_number || 1,
+              availableChapters[availableChapters.length - 1]?.part_number
+            )}
           </div>
         )}
       </div>

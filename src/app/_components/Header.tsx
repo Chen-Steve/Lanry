@@ -29,7 +29,9 @@ const Header = () => {
   }, []);
 
   // Don't render header on more page or user dashboard on mobile
-  if (pathname === '/more' || (isMobile && pathname === '/user-dashboard')) {
+  if (pathname === '/more' || 
+      (isMobile && pathname === '/user-dashboard') || 
+      (isMobile && pathname.match(/^\/novels\/[^/]+\/[^/]+$/))) {
     return null;
   }
 
