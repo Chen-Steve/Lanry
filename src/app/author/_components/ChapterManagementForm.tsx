@@ -26,6 +26,7 @@ export default function ChapterManagementForm({ authorOnly = false }: ChapterMan
     slug: '',
     publishAt: '',
     coins: '0',
+    authorThoughts: '',
   });
   const [editingChapter, setEditingChapter] = useState<Chapter | null>(null);
 
@@ -79,6 +80,7 @@ export default function ChapterManagementForm({ authorOnly = false }: ChapterMan
         content: formData.content,
         publish_at: formData.publishAt ? new Date(formData.publishAt).toISOString() : null,
         coins: parseInt(formData.coins) || 0,
+        author_thoughts: formData.authorThoughts,
       };
 
       if (editingChapter) {
@@ -104,6 +106,7 @@ export default function ChapterManagementForm({ authorOnly = false }: ChapterMan
         slug: '',
         publishAt: '',
         coins: '0',
+        authorThoughts: '',
       });
       setEditingChapter(null);
       fetchChapters(selectedNovel);
@@ -124,6 +127,7 @@ export default function ChapterManagementForm({ authorOnly = false }: ChapterMan
       slug: chapter.slug,
       publishAt: chapter.publish_at ? new Date(chapter.publish_at).toISOString().slice(0, 16) : '',
       coins: chapter.coins?.toString() || '0',
+      authorThoughts: chapter.author_thoughts || '',
     });
   };
 
@@ -137,6 +141,7 @@ export default function ChapterManagementForm({ authorOnly = false }: ChapterMan
       slug: '',
       publishAt: '',
       coins: '0',
+      authorThoughts: '',
     });
   };
 
@@ -248,6 +253,8 @@ export default function ChapterManagementForm({ authorOnly = false }: ChapterMan
                 <ChapterEditor
                   value={formData.content}
                   onChange={(value) => setFormData(prev => ({ ...prev, content: value }))}
+                  authorThoughts={formData.authorThoughts}
+                  onAuthorThoughtsChange={(thoughts) => setFormData(prev => ({ ...prev, authorThoughts: thoughts }))}
                 />
               </div>
 

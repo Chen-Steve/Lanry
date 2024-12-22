@@ -12,6 +12,7 @@ export interface Chapter {
   novel?: Novel;
   isUnlocked?: boolean;
   author_profile_id: string;
+  author_thoughts?: string;
 }
 
 export interface Novel {

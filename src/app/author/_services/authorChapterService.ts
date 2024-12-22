@@ -42,7 +42,8 @@ export async function fetchNovelChapters(novelId: string, userId: string, author
       publish_at,
       coins,
       created_at,
-      updated_at
+      updated_at,
+      author_thoughts
     `)
     .eq('novel_id', novelId)
     .order('chapter_number', { ascending: true });
@@ -62,6 +63,7 @@ export async function updateChapter(
     content: string;
     publish_at: string | null;
     coins: number;
+    author_thoughts?: string;
   }
 ) {
   await verifyNovelAuthor(novelId, userId);
@@ -89,6 +91,7 @@ export async function createChapter(
     content: string;
     publish_at: string | null;
     coins: number;
+    author_thoughts?: string;
   }
 ) {
   await verifyNovelAuthor(novelId, userId);

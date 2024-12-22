@@ -17,6 +17,7 @@ interface ChapterContentProps {
   content: string;
   fontFamily: string;
   fontSize: number;
+  authorThoughts?: string;
   onCommentStateChange: (isOpen: boolean) => void;
 }
 
@@ -29,6 +30,7 @@ export default function ChapterContent({
   content,
   fontFamily,
   fontSize,
+  authorThoughts,
   onCommentStateChange,
 }: ChapterContentProps) {
   const [selectedParagraphId, setSelectedParagraphId] = useState<string | null>(null);
@@ -143,6 +145,23 @@ export default function ChapterContent({
           );
         })}
       </div>
+
+      {/* Author's Thoughts Section */}
+      {authorThoughts && authorThoughts.trim() !== '' && (
+        <div className="mt-12 max-w-2xl mx-auto border-t pt-8">
+          <div className="bg-gray-50 rounded-lg p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Icon icon="mdi:thought-bubble" className="w-6 h-6 text-gray-600" />
+              <h3 className="text-lg font-medium text-gray-700">Author&apos;s Thoughts</h3>
+            </div>
+            <div 
+              className="prose prose-sm md:prose-base text-gray-700"
+              style={getTextStyles(fontFamily, fontSize - 1)}
+              dangerouslySetInnerHTML={{ __html: formatText(authorThoughts) }}
+            />
+          </div>
+        </div>
+      )}
 
       {selectedParagraphId && (
         <CommentPopover

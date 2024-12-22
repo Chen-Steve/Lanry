@@ -16,6 +16,7 @@ export interface Chapter {
   coins?: number;
   created_at: string;
   updated_at: string;
+  author_thoughts?: string;
 }
 
 export interface ChapterFormData {
@@ -26,4 +27,5 @@ export interface ChapterFormData {
   slug: string;
   publishAt: string;
   coins: string;
+  authorThoughts: string;
 } 

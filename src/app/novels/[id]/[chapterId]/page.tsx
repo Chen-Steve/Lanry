@@ -267,6 +267,7 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
         content={chapter.content}
         fontFamily={fontFamily}
         fontSize={fontSize}
+        authorThoughts={chapter.author_thoughts}
         onCommentStateChange={setIsCommentOpen}
       />
 
