@@ -65,26 +65,26 @@ const RatingPopup = ({
     const x = e.clientX - rect.left;
     const starWidth = rect.width / 5;
     const rating = Math.ceil(x / starWidth);
-    console.log('Mouse move - calculated rating:', rating);
+    // console.log('Mouse move - calculated rating:', rating);
     setHoveredRating(rating);
   };
 
   const handleMouseLeave = () => {
-    console.log('Mouse leave - resetting hover');
+    // console.log('Mouse leave - resetting hover');
     setHoveredRating(0);
   };
 
   const handleClick = () => {
-    console.log('Click - current hover rating:', hoveredRating);
+    // console.log('Click - current hover rating:', hoveredRating);
     if (!isRating && hoveredRating > 0) {
-      console.log('Submitting rating:', hoveredRating);
+      // console.log('Submitting rating:', hoveredRating);
       onRate(hoveredRating);
     }
   };
 
   const renderStars = () => {
     const displayRating = hoveredRating || currentRating || 0;
-    console.log('Rendering stars with rating:', displayRating);
+    // console.log('Rendering stars with rating:', displayRating);
     
     return [...Array(5)].map((_, index) => (
       <Icon
@@ -159,10 +159,10 @@ export const NovelHeader = ({
   }, []);
 
   const handleRate = async (newRating: number) => {
-    console.log('handleRate called with rating:', newRating);
+    // console.log('handleRate called with rating:', newRating);
     
     if (!isAuthenticated) {
-      console.log('User not authenticated');
+      // console.log('User not authenticated');
       toast.error('Please sign in to rate', {
         duration: 3000,
         position: 'bottom-center',
@@ -172,14 +172,14 @@ export const NovelHeader = ({
     }
 
     if (isRating) {
-      console.log('Rating in progress, returning');
+      // console.log('Rating in progress, returning');
       return;
     }
 
     setIsRating(true);
     try {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
-      console.log('User data:', user, 'Error:', userError);
+      // console.log('User data:', user, 'Error:', userError);
       
       if (userError || !user) {
         throw new Error('Authentication error');
@@ -196,7 +196,7 @@ export const NovelHeader = ({
         .eq('profile_id', user.id)
         .single();
 
-      console.log('Existing rating:', existingRating);
+      // console.log('Existing rating:', existingRating);
 
       const { error } = await supabase
         .from('novel_ratings')
@@ -211,7 +211,7 @@ export const NovelHeader = ({
           onConflict: 'profile_id,novel_id'
         });
 
-      console.log('Upsert error:', error);
+      // console.log('Upsert error:', error);
 
       if (error) throw error;
 

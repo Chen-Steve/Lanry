@@ -18,12 +18,12 @@ export async function getChapter(novelId: string, chapterId: string): Promise<Ch
     const chapterNumber = parseInt(match[1]);
     const partNumber = match[2] ? parseInt(match[2]) : null;
 
-    console.log('Searching for chapter:', {
-      chapterId,
-      chapterNumber,
-      partNumber,
-      novelId
-    });
+    // console.log('Searching for chapter:', {
+    //   chapterId,
+    //   chapterNumber,
+    //   partNumber,
+    //   novelId
+    // });
 
     if (isNaN(chapterNumber)) {
       console.error('Invalid chapter number format');
@@ -42,7 +42,7 @@ export async function getChapter(novelId: string, chapterId: string): Promise<Ch
       return null;
     }
 
-    console.log('Found novel:', novel);
+    // console.log('Found novel:', novel);
 
     // Get the user first
     const { data: { user } } = await supabase.auth.getUser();
@@ -79,7 +79,7 @@ export async function getChapter(novelId: string, chapterId: string): Promise<Ch
 
     // If no exact match found and no part number was specified, try without part number condition
     if (!chapter && partNumber === null) {
-      console.log('No exact match found, trying without part number condition');
+      // console.log('No exact match found, trying without part number condition');
       query = supabase
         .from('chapters')
         .select(`
@@ -109,15 +109,15 @@ export async function getChapter(novelId: string, chapterId: string): Promise<Ch
     }
 
     if (chapterError || !chapter) {
-      console.error('Chapter fetch error:', chapterError);
+      // console.error('Chapter fetch error:', chapterError);
       return null;
     }
 
-    console.log('Found chapter:', {
-      id: chapter.id,
-      chapterNumber: chapter.chapter_number,
-      partNumber: chapter.part_number
-    });
+    // console.log('Found chapter:', {
+    //   id: chapter.id,
+    //   chapterNumber: chapter.chapter_number,
+    //   partNumber: chapter.part_number
+    // });
 
     const isPublished = !chapter.publish_at || new Date(chapter.publish_at) <= new Date();
     let isUnlocked = false;

@@ -23,21 +23,21 @@ export function ChapterListItem({
   isAuthenticated,
   novelAuthorId,
 }: ChapterListItemProps) {
-  console.log('Chapter data:', {
-    chapterNumber: chapter.chapter_number,
-    partNumber: chapter.part_number,
-    title: chapter.title
-  });
+  // console.log('Chapter data:', {
+  //   chapterNumber: chapter.chapter_number,
+  //   partNumber: chapter.part_number,
+  //   title: chapter.title
+  // });
 
   const [isUnlocking, setIsUnlocking] = useState(false);
   const [isUnlocked, setIsUnlocked] = useState(false);
   const router = useRouter();
 
-  const chapterTitle = `Chapter ${chapter.chapter_number}${
-    chapter.part_number ? ` Part ${chapter.part_number}` : ''
-  }${chapter.title ? `: ${chapter.title}` : ''}`;
+  // const chapterTitle = `Chapter ${chapter.chapter_number}${
+  //   chapter.part_number ? ` Part ${chapter.part_number}` : ''
+  // }${chapter.title ? `: ${chapter.title}` : ''}`;
 
-  console.log('Formatted chapter title:', chapterTitle);
+  // console.log('Formatted chapter title:', chapterTitle);
 
   useEffect(() => {
     const checkUnlockStatus = async () => {
@@ -74,20 +74,20 @@ export function ChapterListItem({
   ) => {
     try {
       // Log the input parameters for debugging
-      console.log('Purchase parameters:', {
-        p_novel_id: novelId,
-        p_author_id: authorId,
-        p_chapter_number: chapterNumber,
-        p_user_id: userProfileId,
-        p_cost: chapter.coins,
-        types: {
-          novelId: typeof novelId,
-          authorId: typeof authorId,
-          chapterNumber: typeof chapterNumber,
-          userProfileId: typeof userProfileId,
-          coins: typeof chapter.coins
-        }
-      });
+      //console.log('Purchase parameters:', {
+      //    p_novel_id: novelId,
+      //  p_author_id: authorId,
+      //  p_chapter_number: chapterNumber,
+      //  p_user_id: userProfileId,
+      //  p_cost: chapter.coins,
+      //  types: {
+      //      novelId: typeof novelId,
+      //    authorId: typeof authorId,
+      //    chapterNumber: typeof chapterNumber,
+      //    userProfileId: typeof userProfileId,
+      //    coins: typeof chapter.coins
+      //  }
+      //});
 
       // Start a Supabase transaction
       const { data, error: transactionError } = await supabase.rpc(
