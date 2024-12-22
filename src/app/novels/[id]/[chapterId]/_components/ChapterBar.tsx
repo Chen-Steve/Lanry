@@ -20,6 +20,7 @@ interface ChapterProgressBarProps {
   currentSize: number;
   isCommentOpen: boolean;
   isDropdownOpen: boolean;
+  firstChapter: number;
 }
 
 export default function ChapterProgressBar({
@@ -33,6 +34,7 @@ export default function ChapterProgressBar({
   currentSize,
   isCommentOpen,
   isDropdownOpen,
+  firstChapter,
 }: ChapterProgressBarProps) {
   const [scrollProgress, setScrollProgress] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
@@ -41,26 +43,38 @@ export default function ChapterProgressBar({
   const [touchStartY, setTouchStartY] = useState<number | null>(null);
   const [isTouching, setIsTouching] = useState(false);
 
-  // Calculate base progress (progress from completed chapters)
-  const baseProgress = ((currentChapter - 1) / totalChapters) * 100;
-
   useEffect(() => {
     const handleScroll = () => {
       const windowHeight = window.innerHeight;
       const documentHeight = document.documentElement.scrollHeight - windowHeight;
       const scrolled = window.scrollY;
       
+      // Calculate progress within current chapter (0 to 1)
       const chapterProgress = Math.min(scrolled / documentHeight, 1);
-      const chapterValue = 100 / totalChapters;
-      const totalProgress = baseProgress + (chapterProgress * chapterValue);
       
-      setScrollProgress(Math.min(totalProgress, 100));
+      // Calculate total chapters in range
+      const totalChaptersInRange = (firstChapter + totalChapters - 1) - firstChapter + 1;
+      
+      // Calculate completed chapters
+      const completedChapters = currentChapter - firstChapter;
+      
+      // Calculate base progress percentage
+      const baseProgress = (completedChapters / totalChaptersInRange) * 100;
+      
+      // Add current chapter progress
+      const currentChapterContribution = (chapterProgress / totalChaptersInRange) * 100;
+      
+      // Calculate final progress
+      const finalProgress = baseProgress + currentChapterContribution;
+      
+      // Ensure progress stays within 0-100 range
+      setScrollProgress(Math.min(Math.max(finalProgress, 0), 100));
     };
 
     handleScroll();
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [currentChapter, totalChapters, baseProgress]);
+  }, [currentChapter, totalChapters, firstChapter]);
 
   useEffect(() => {
     if (!isMobile) return;
@@ -149,7 +163,7 @@ export default function ChapterProgressBar({
           {/* Chapter info - centered */}
           <div className="mb-4 text-center">
             <div className="text-sm text-gray-600">
-              {Math.round(scrollProgress)}% - Chapter {currentChapter} of {totalChapters}
+              Chapter {currentChapter}/{firstChapter + totalChapters - 1} - {Math.round(scrollProgress)}%
             </div>
           </div>
 

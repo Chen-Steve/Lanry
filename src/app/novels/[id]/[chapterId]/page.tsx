@@ -300,6 +300,7 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
         currentSize={fontSize}
         isCommentOpen={isCommentOpen}
         isDropdownOpen={isDropdownOpen}
+        firstChapter={Math.min(...navigation.availableChapters.map(ch => ch.chapter_number))}
       />
       
       <ChapterSidebar
