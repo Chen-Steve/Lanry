@@ -108,21 +108,29 @@ const Header = () => {
 
             {/* Desktop Navigation */}
             <nav className="hidden md:block">
-              <ul className="flex items-center space-x-6">
+              <ul className="flex items-center space-x-4">
                 <li>
                   <Link 
                     href="/forum"
-                    className="text-gray-600 hover:text-gray-800 transition-colors cursor-pointer py-1.5 inline-block"
+                    className="text-gray-600 hover:text-gray-800 transition-colors cursor-pointer py-1 inline-block"
                   >
                     Forum
                   </Link>
                 </li>
                 <li>
                   <Link 
-                    href="/shop" 
-                    className="bg-amber-100 text-amber-800 px-3 py-1.5 rounded-md hover:bg-amber-200 transition-colors flex items-center gap-2 h-[34px]"
+                    href="/novels/requests"
+                    className="text-gray-600 hover:text-gray-800 transition-colors cursor-pointer py-1 inline-block flex items-center gap-1"
                   >
-                    <Icon icon="ph:coins" className="text-amber-600" />
+                    <Icon icon="mdi:thumb-up-outline" className="text-lg" />
+                    <span>Requests</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link 
+                    href="/shop" 
+                    className="bg-amber-100 text-amber-800 px-2.5 py-1 rounded-md hover:bg-amber-200 transition-colors flex items-center gap-1.5 h-[32px]"
+                  >
                     <span>Coins</span>
                     {userProfile && (
                       <span className="rounded-md text-sm">
