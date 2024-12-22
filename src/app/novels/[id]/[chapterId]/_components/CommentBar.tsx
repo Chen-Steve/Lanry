@@ -14,7 +14,9 @@ interface ChapterComment extends Omit<BaseChapterComment, 'profile'> {
   profile?: {
     username: string | null;
     avatar_url?: string;
+    id?: string;
   };
+  isAuthor?: boolean;
 }
 
 interface CommentBarProps {
@@ -27,6 +29,7 @@ interface CommentBarProps {
   isLoading: boolean;
   userId: string | null;
   novelId: string;
+  authorId: string | null;
 }
 
 export default function CommentBar({
@@ -38,6 +41,7 @@ export default function CommentBar({
   isAuthenticated,
   isLoading,
   userId,
+  authorId,
 }: CommentBarProps) {
   const [newComment, setNewComment] = useState('');
   const barRef = useRef<HTMLDivElement>(null);
@@ -129,28 +133,35 @@ export default function CommentBar({
                   </Link>
 
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
                         {comment.profile?.username ? (
-                          <Link 
-                            href={`/user-dashboard?id=${comment.profile_id}`}
-                            className="text-sm font-medium text-black hover:text-blue-600 transition-colors"
-                          >
-                            {comment.profile.username}
-                          </Link>
+                          <div className="flex items-center gap-2 min-w-0">
+                            <Link 
+                              href={`/user-dashboard?id=${comment.profile_id}`}
+                              className="text-sm font-medium text-black hover:text-blue-600 transition-colors truncate"
+                            >
+                              {comment.profile.username}
+                            </Link>
+                            {comment.profile.id === authorId && (
+                              <span className="px-1 py-0.5 text-xs font-medium bg-yellow-100 text-black rounded inline-flex items-center flex-shrink-0">
+                                Author
+                              </span>
+                            )}
+                          </div>
                         ) : (
                           <span className="text-sm font-medium text-black">
                             Anonymous
                           </span>
                         )}
-                        <span className="text-xs text-gray-600">
+                        <span className="text-xs text-gray-600 flex-shrink-0">
                           {formatDate(comment.created_at)}
                         </span>
                       </div>
                       {userId === comment.profile_id && (
                         <button
                           onClick={() => onDeleteComment(comment.id)}
-                          className="p-1 hover:bg-[#F2EEE5] rounded-full transition-colors"
+                          className="p-1 hover:bg-[#F2EEE5] rounded-full transition-colors flex-shrink-0"
                           aria-label="Delete comment"
                         >
                           <Icon icon="mdi:delete-outline" className="text-gray-500 hover:text-red-500 w-4 h-4" />

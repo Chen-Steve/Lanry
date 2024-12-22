@@ -122,7 +122,6 @@ const Header = () => {
                     href="/novels/requests"
                     className="text-gray-600 hover:text-gray-800 transition-colors cursor-pointer py-1 inline-block flex items-center gap-1"
                   >
-                    <Icon icon="mdi:thumb-up-outline" className="text-lg" />
                     <span>Requests</span>
                   </Link>
                 </li>

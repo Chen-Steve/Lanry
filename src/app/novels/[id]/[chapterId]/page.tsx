@@ -269,6 +269,7 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
         fontSize={fontSize}
         authorThoughts={chapter.author_thoughts}
         onCommentStateChange={setIsCommentOpen}
+        authorId={chapter.novel.author_profile_id}
       />
 
       {/* Bottom Navigation */}

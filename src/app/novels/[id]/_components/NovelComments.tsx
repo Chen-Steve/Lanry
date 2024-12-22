@@ -14,6 +14,7 @@ interface NovelComment extends Omit<BaseNovelComment, 'profile'> {
     username: string | null;
     avatar_url?: string;
   };
+  isAuthor: boolean;
 }
 
 interface SupabaseComment {
@@ -24,8 +25,12 @@ interface SupabaseComment {
   novel_id: string;
   updated_at: string;
   profile: {
+    id: string;
     username: string | null;
     avatar_url?: string;
+  };
+  novel: {
+    author_profile_id: string | null;
   };
 }
 
@@ -58,7 +63,8 @@ export const NovelComments = ({ novelId, isAuthenticated }: NovelCommentsProps) 
       created_at: comment.created_at,
       profile_id: comment.profile_id,
       novel_id: novelId,
-      profile: comment.profile
+      profile: comment.profile,
+      isAuthor: comment.profile.id === comment.novel.author_profile_id
     };
   }, [novelId]);
 
@@ -70,7 +76,11 @@ export const NovelComments = ({ novelId, isAuthenticated }: NovelCommentsProps) 
           *,
           profile:profiles (
             username,
-            avatar_url
+            avatar_url,
+            id
+          ),
+          novel:novels (
+            author_profile_id
           )
         `)
         .eq('novel_id', novelId)
@@ -328,16 +338,23 @@ const CommentItem = ({
       <div className="flex-grow min-w-0">
         <div className="flex items-start justify-between gap-x-2">
           <div>
-            <Link 
-              href={`/user-dashboard?id=${comment.profile_id}`}
-              className="font-medium text-gray-900 hover:text-gray-600 transition-colors"
-            >
-              {comment.profile.username || 'Unknown User'}
-            </Link>
-            <span className="mx-2 text-gray-300">•</span>
-            <span className="text-sm text-gray-500">
-              {formatRelativeDate(comment.created_at)}
-            </span>
+            <div className="flex items-center">
+              <Link 
+                href={`/user-dashboard?id=${comment.profile_id}`}
+                className="font-medium text-gray-900 hover:text-gray-600 transition-colors"
+              >
+                {comment.profile.username || 'Unknown User'}
+              </Link>
+              {comment.isAuthor && (
+                <span className="ml-2 px-1 py-0.5 text-xs font-medium bg-yellow-100 text-black rounded inline-flex items-center">
+                  Author
+                </span>
+              )}
+              <span className="mx-2 text-gray-300">•</span>
+              <span className="text-sm text-gray-500">
+                {formatRelativeDate(comment.created_at)}
+              </span>
+            </div>
           </div>
           {isOwnComment && !isEditing && (
             <div className="flex items-center gap-2">
@@ -394,4 +411,4 @@ const CommentItem = ({
       </div>
     </div>
   );
-}; 
+};
