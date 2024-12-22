@@ -18,13 +18,6 @@ export async function getChapter(novelId: string, chapterId: string): Promise<Ch
     const chapterNumber = parseInt(match[1]);
     const partNumber = match[2] ? parseInt(match[2]) : null;
 
-    // console.log('Searching for chapter:', {
-    //   chapterId,
-    //   chapterNumber,
-    //   partNumber,
-    //   novelId
-    // });
-
     if (isNaN(chapterNumber)) {
       console.error('Invalid chapter number format');
       return null;
@@ -112,12 +105,6 @@ export async function getChapter(novelId: string, chapterId: string): Promise<Ch
       // console.error('Chapter fetch error:', chapterError);
       return null;
     }
-
-    // console.log('Found chapter:', {
-    //   id: chapter.id,
-    //   chapterNumber: chapter.chapter_number,
-    //   partNumber: chapter.part_number
-    // });
 
     const isPublished = !chapter.publish_at || new Date(chapter.publish_at) <= new Date();
     let isUnlocked = false;

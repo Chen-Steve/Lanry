@@ -73,22 +73,6 @@ export function ChapterListItem({
     userProfileId: string
   ) => {
     try {
-      // Log the input parameters for debugging
-      //console.log('Purchase parameters:', {
-      //    p_novel_id: novelId,
-      //  p_author_id: authorId,
-      //  p_chapter_number: chapterNumber,
-      //  p_user_id: userProfileId,
-      //  p_cost: chapter.coins,
-      //  types: {
-      //      novelId: typeof novelId,
-      //    authorId: typeof authorId,
-      //    chapterNumber: typeof chapterNumber,
-      //    userProfileId: typeof userProfileId,
-      //    coins: typeof chapter.coins
-      //  }
-      //});
-
       // Start a Supabase transaction
       const { data, error: transactionError } = await supabase.rpc(
         'process_chapter_purchase',
@@ -228,6 +212,15 @@ export function ChapterListItem({
 
   const isPublished = !chapter.publish_at || new Date(chapter.publish_at) <= new Date();
 
+  const formatPublishDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
   const chapterContent = (
     <div className="flex flex-col sm:flex-row sm:items-center gap-2">
       <div className="flex items-center gap-2">
@@ -244,18 +237,25 @@ export function ChapterListItem({
         </span>
       </div>
       {!isPublished && (
-        <div className="flex items-center gap-2 bg-purple-50 text-purple-800 px-2 py-1 rounded-md text-xs sm:text-sm mt-1 sm:mt-0 sm:ml-auto">
-          {isUnlocked ? (
-            <span className="text-green-600">Unlocked</span>
-          ) : (
-            <>
-              {isUnlocking ? (
-                <Icon icon="pepicons-print:spinner" className="text-black sm:text-lg animate-spin" />
-              ) : (
-                <Icon icon="pepicons-print:lock" className="text-base sm:text-lg" />
-              )}
-              <span className="font-medium">{chapter.coins} coins</span>
-            </>
+        <div className="flex flex-col gap-1 bg-purple-50 text-purple-800 px-2 py-1 rounded-md text-[0.6rem] sm:text-[0.6rem] mt-1 sm:mt-0 sm:ml-auto">
+          <div className="flex items-center gap-1 justify-center">
+            {isUnlocked ? (
+              <span className="text-green-600">Unlocked</span>
+            ) : (
+              <>
+                {isUnlocking ? (
+                  <Icon icon="pepicons-print:spinner" className="text-black text-xs animate-spin" />
+                ) : (
+                  <Icon icon="pepicons-print:lock" className="text-xs" />
+                )}
+                <span className="font-medium">{chapter.coins} coins</span>
+              </>
+            )}
+          </div>
+          {chapter.publish_at && (
+            <div className="flex items-center gap-1 text-gray-600 justify-center">
+              <span>{formatPublishDate(chapter.publish_at)}</span>
+            </div>
           )}
         </div>
       )}
