@@ -261,7 +261,7 @@ export const NovelHeader = ({
 
   return (
     <>
-      <div className="flex flex-col lg:flex-row gap-4 mb-4">
+      <div className="flex flex-col lg:flex-row gap-4 mb-2">
         {/* Left side with cover and main content */}
         <div className="flex flex-col gap-4 flex-1">
           {/* Cover and Title Section */}
@@ -284,6 +284,8 @@ export const NovelHeader = ({
                     <div className="w-full h-full bg-gray-200" />
                   )}
                 </div>
+                {/* Translator Links for mobile */}
+                {translator && <div className="mt-3 sm:hidden"><TranslatorLinks translator={translator} /></div>}
               </div>
 
               {/* Title and Author Section */}
@@ -316,50 +318,38 @@ export const NovelHeader = ({
                   )}
                 </div>
 
-                {/* Stats, Rating, and Categories */}
-                <div className="flex flex-col lg:flex-row gap-4">
-                  <div className="flex-1">
-                    {/* Quick Stats */}
-                    <div className="flex flex-wrap justify-center sm:justify-start gap-2 text-sm mb-4">
-                      <StatsItem icon="pepicons-print:book" value={`${chaptersCount}`} color="blue" withGap />
-                      <StatsItem icon="pepicons-print:bookmark" value={`${bookmarkCount}`} />
-                      <div className="relative">
-                        <button
-                          ref={ratingButtonRef}
-                          className="flex items-center gap-1 transition-colors hover:text-amber-400"
-                          onClick={() => setShowRatingPopup(!showRatingPopup)}
-                          aria-label="Rate novel"
-                        >
-                          <Icon 
-                            icon={localUserRating ? "pepicons-print:star-filled" : "pepicons-print:star"}
-                            className={`text-lg ${localUserRating ? 'text-amber-400' : 'text-gray-400'}`}
-                          />
-                          <span className="text-gray-700">{localRating.toFixed(1)}</span>
-                          <span className="text-gray-700 mx-1">•</span>
-                          <span className="text-gray-700">{localRatingCount}</span>
-                        </button>
-                        {showRatingPopup && (
-                          <RatingPopup
-                            onRate={handleRate}
-                            currentRating={localUserRating}
-                            isRating={isRating}
-                          />
-                        )}
-                      </div>
-                      {!isAuthenticated && (
-                        <span className="text-xs text-gray-500">(Sign in to rate)</span>
+                {/* Stats and Rating */}
+                <div className="flex flex-col gap-4">
+                  {/* Quick Stats */}
+                  <div className="flex flex-wrap gap-2 text-sm">
+                    <StatsItem icon="pepicons-print:book" value={`${chaptersCount}`} color="blue" withGap />
+                    <StatsItem icon="pepicons-print:bookmark" value={`${bookmarkCount}`} />
+                    <div className="relative">
+                      <button
+                        ref={ratingButtonRef}
+                        className="flex items-center gap-1 transition-colors hover:text-amber-400"
+                        onClick={() => setShowRatingPopup(!showRatingPopup)}
+                        aria-label="Rate novel"
+                      >
+                        <Icon 
+                          icon={localUserRating ? "pepicons-print:star-filled" : "pepicons-print:star"}
+                          className={`text-lg ${localUserRating ? 'text-amber-400' : 'text-gray-400'}`}
+                        />
+                        <span className="text-gray-700">{localRating.toFixed(1)}</span>
+                        <span className="text-gray-500">({localRatingCount})</span>
+                      </button>
+                      {showRatingPopup && (
+                        <RatingPopup
+                          onRate={handleRate}
+                          currentRating={localUserRating}
+                          isRating={isRating}
+                        />
                       )}
-                      {/* TODO: Implement view count functionality later */}
-                      {/* <StatsItem icon="pepicons-print:eye" value={`${viewCount} Views`} color="purple" /> */}
                     </div>
                   </div>
 
-                  {/* Translator Links Box */}
-                  {translator && (
-                    <div className="lg:w-64 flex-shrink-0">
-                      <TranslatorLinks translator={translator} />
-                    </div>
-                  )}
+                  {/* Translator Links for non-mobile */}
+                  {translator && <div className="hidden sm:block"><TranslatorLinks translator={translator} /></div>}
                 </div>
               </div>
             </div>
