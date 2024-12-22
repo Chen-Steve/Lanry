@@ -3,7 +3,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { NovelCategory } from '@/types/database';
 import { TranslatorLinks } from './TranslatorLinks';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import supabase from '@/lib/supabaseClient';
 import { NovelActionButtons } from './NovelActionButtons';
@@ -36,8 +36,8 @@ interface NovelHeaderProps {
   novelId: string;
 }
 
-const StatsItem = ({ icon, value, color = 'gray' }: { icon: string; value: string; color?: string }) => (
-  <div className="flex items-center gap-1.5">
+const StatsItem = ({ icon, value, color = 'gray', withGap = false }: { icon: string; value: string; color?: string; withGap?: boolean }) => (
+  <div className={`flex items-center ${withGap ? 'gap-1' : ''}`}>
     <Icon 
       icon={icon} 
       className={`text-lg ${color === 'blue' ? 'text-blue-600' : color === 'purple' ? 'text-purple-600' : 'text-gray-600'}`} 
@@ -46,13 +46,81 @@ const StatsItem = ({ icon, value, color = 'gray' }: { icon: string; value: strin
   </div>
 );
 
+const RatingPopup = ({ 
+  onRate, 
+  currentRating,
+  isRating,
+}: { 
+  onRate: (rating: number) => void;
+  currentRating?: number;
+  isRating: boolean;
+}) => {
+  const [hoveredRating, setHoveredRating] = useState(0);
+  const ratingContainerRef = useRef<HTMLDivElement>(null);
+  
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!ratingContainerRef.current) return;
+    
+    const rect = ratingContainerRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const starWidth = rect.width / 5;
+    const rating = Math.ceil(x / starWidth);
+    console.log('Mouse move - calculated rating:', rating);
+    setHoveredRating(rating);
+  };
+
+  const handleMouseLeave = () => {
+    console.log('Mouse leave - resetting hover');
+    setHoveredRating(0);
+  };
+
+  const handleClick = () => {
+    console.log('Click - current hover rating:', hoveredRating);
+    if (!isRating && hoveredRating > 0) {
+      console.log('Submitting rating:', hoveredRating);
+      onRate(hoveredRating);
+    }
+  };
+
+  const renderStars = () => {
+    const displayRating = hoveredRating || currentRating || 0;
+    console.log('Rendering stars with rating:', displayRating);
+    
+    return [...Array(5)].map((_, index) => (
+      <Icon
+        key={index}
+        icon={index < displayRating ? "pepicons-print:star-filled" : "pepicons-print:star"}
+        className={`text-2xl ${index < displayRating ? 'text-amber-400' : 'text-gray-300'}`}
+      />
+    ));
+  };
+
+  return (
+    <div className="absolute top-full mt-2 bg-white rounded-lg shadow-lg p-3 border border-gray-200 z-50 rating-popup-container">
+      <div 
+        ref={ratingContainerRef}
+        className="flex cursor-pointer gap-1"
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+        onClick={handleClick}
+        style={{ minWidth: '130px' }}
+      >
+        {renderStars()}
+      </div>
+      <div className="text-xs text-center text-gray-500 mt-1">
+        {hoveredRating || currentRating || 0} stars
+      </div>
+    </div>
+  );
+};
+
 export const NovelHeader = ({
   title,
   author,
   translator,
   chaptersCount,
   bookmarkCount,
-  viewCount,
+  // viewCount,
   coverImageUrl,
   novelAuthorId,
   isAuthorNameCustom = true,
@@ -73,27 +141,53 @@ export const NovelHeader = ({
   const [localRating, setLocalRating] = useState(rating);
   const [localRatingCount, setLocalRatingCount] = useState(ratingCount);
   const [localUserRating, setLocalUserRating] = useState(userRating);
-  const [isHovering, setIsHovering] = useState(false);
+  const [showRatingPopup, setShowRatingPopup] = useState(false);
+  const ratingButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (ratingButtonRef.current && 
+          !ratingButtonRef.current.contains(target) && 
+          !target.closest('.rating-popup-container')) {
+        setShowRatingPopup(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleRate = async (newRating: number) => {
+    console.log('handleRate called with rating:', newRating);
+    
     if (!isAuthenticated) {
+      console.log('User not authenticated');
       toast.error('Please sign in to rate', {
         duration: 3000,
         position: 'bottom-center',
       });
+      setShowRatingPopup(false);
       return;
     }
 
-    if (isRating) return;
+    if (isRating) {
+      console.log('Rating in progress, returning');
+      return;
+    }
 
     setIsRating(true);
     try {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
+      console.log('User data:', user, 'Error:', userError);
       
       if (userError || !user) {
         throw new Error('Authentication error');
       }
 
+      // Update local state optimistically
+      setLocalUserRating(newRating);
+      
       // First, check if user has already rated
       const { data: existingRating } = await supabase
         .from('novel_ratings')
@@ -101,6 +195,8 @@ export const NovelHeader = ({
         .eq('novel_id', novelId)
         .eq('profile_id', user.id)
         .single();
+
+      console.log('Existing rating:', existingRating);
 
       const { error } = await supabase
         .from('novel_ratings')
@@ -114,6 +210,8 @@ export const NovelHeader = ({
         }, {
           onConflict: 'profile_id,novel_id'
         });
+
+      console.log('Upsert error:', error);
 
       if (error) throw error;
 
@@ -131,13 +229,25 @@ export const NovelHeader = ({
         setLocalRatingCount(novelData.rating_count);
       }
 
-      setLocalUserRating(newRating);
-      toast.success('Rating updated!', {
-        duration: 2000,
-        position: 'bottom-center',
-      });
+      toast.success(
+        <div className="flex items-center gap-2">
+          <Icon icon="pepicons-print:star-filled" className="text-amber-400 text-lg" />
+          <span>Rated {newRating.toFixed(1)} stars!</span>
+        </div>,
+        {
+          duration: 2000,
+          position: 'bottom-center',
+          style: {
+            background: '#fff',
+            color: '#374151',
+            padding: '12px',
+          },
+        }
+      );
 
     } catch (error) {
+      // Revert optimistic update on error
+      setLocalUserRating(userRating);
       console.error('Error rating novel:', error);
       toast.error('Failed to update rating', {
         duration: 3000,
@@ -145,6 +255,7 @@ export const NovelHeader = ({
       });
     } finally {
       setIsRating(false);
+      setShowRatingPopup(false);
     }
   };
 
@@ -155,7 +266,7 @@ export const NovelHeader = ({
         <div className="flex flex-col gap-4 flex-1">
           {/* Cover and Title Section */}
           <div>
-            {/* Cover Image and Title Row */}
+            {/* Cover and Title Row */}
             <div className="flex flex-row gap-4 mb-4">
               {/* Cover Image */}
               <div className="w-32 sm:w-36 md:w-44 mx-0 flex-shrink-0">
@@ -205,133 +316,56 @@ export const NovelHeader = ({
                   )}
                 </div>
 
-                {/* Desktop Stats and Rating */}
-                <div className="hidden sm:block">
-                  <div className="flex flex-col lg:flex-row gap-4">
-                    {/* Stats, Rating, and Categories */}
-                    <div className="flex-1">
-                      {/* Quick Stats */}
-                      <div className="flex flex-wrap gap-4 text-sm mb-4">
-                        <StatsItem icon="pepicons-print:book" value={`${chaptersCount} Chapters`} color="blue" />
-                        <StatsItem icon="pepicons-print:bookmark" value={`${bookmarkCount} Bookmarks`} />
-                        <StatsItem icon="pepicons-print:eye" value={`${viewCount} Views`} color="purple" />
-                      </div>
-
-                      {/* Rating Section */}
-                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 mb-4">
-                        <div 
-                          className="flex items-center gap-0.5"
-                          onMouseEnter={() => setIsHovering(true)}
-                          onMouseLeave={() => setIsHovering(false)}
+                {/* Stats, Rating, and Categories */}
+                <div className="flex flex-col lg:flex-row gap-4">
+                  <div className="flex-1">
+                    {/* Quick Stats */}
+                    <div className="flex flex-wrap justify-center sm:justify-start gap-2 text-sm mb-4">
+                      <StatsItem icon="pepicons-print:book" value={`${chaptersCount}`} color="blue" withGap />
+                      <StatsItem icon="pepicons-print:bookmark" value={`${bookmarkCount}`} />
+                      <div className="relative">
+                        <button
+                          ref={ratingButtonRef}
+                          className="flex items-center gap-1 transition-colors hover:text-amber-400"
+                          onClick={() => setShowRatingPopup(!showRatingPopup)}
+                          aria-label="Rate novel"
                         >
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <button
-                              aria-label={`Rate ${star} stars`}
-                              key={star}
-                              onClick={() => handleRate(star)}
-                              disabled={isRating}
-                              className={`p-1 transition-colors ${isRating ? 'opacity-50' : 'hover:text-amber-400'}`}
-                            >
-                              <Icon 
-                                icon={
-                                  (isHovering && localUserRating && star <= localUserRating) || 
-                                  (!isHovering && star <= localRating)
-                                    ? "pepicons-print:star-filled"
-                                    : "pepicons-print:star"
-                                }
-                                className={`text-2xl sm:text-3xl ${
-                                  (isHovering && localUserRating && star <= localUserRating) || 
-                                  (!isHovering && star <= localRating)
-                                    ? 'text-amber-400'
-                                    : 'text-gray-400'
-                                }`}
-                              />
-                            </button>
-                          ))}
-                        </div>
-                        <div className="flex flex-wrap items-center text-sm sm:text-base text-gray-600">
-                          <span>{localRating.toFixed(1)}</span>
-                          <span className="mx-1">•</span>
-                          <span>{localRatingCount} {localRatingCount === 1 ? 'rating' : 'ratings'}</span>
-                          {!isAuthenticated && (
-                            <span className="text-xs sm:text-sm text-gray-500 ml-2">(Sign in to rate)</span>
-                          )}
-                        </div>
+                          <Icon 
+                            icon={localUserRating ? "pepicons-print:star-filled" : "pepicons-print:star"}
+                            className={`text-lg ${localUserRating ? 'text-amber-400' : 'text-gray-400'}`}
+                          />
+                          <span className="text-gray-700">{localRating.toFixed(1)}</span>
+                          <span className="text-gray-700 mx-1">•</span>
+                          <span className="text-gray-700">{localRatingCount}</span>
+                        </button>
+                        {showRatingPopup && (
+                          <RatingPopup
+                            onRate={handleRate}
+                            currentRating={localUserRating}
+                            isRating={isRating}
+                          />
+                        )}
                       </div>
+                      {!isAuthenticated && (
+                        <span className="text-xs text-gray-500">(Sign in to rate)</span>
+                      )}
+                      {/* TODO: Implement view count functionality later */}
+                      {/* <StatsItem icon="pepicons-print:eye" value={`${viewCount} Views`} color="purple" /> */}
                     </div>
-
-                    {/* Translator Links Box */}
-                    {translator && (
-                      <div className="lg:w-64 flex-shrink-0">
-                        <TranslatorLinks translator={translator} />
-                      </div>
-                    )}
                   </div>
-                </div>
-              </div>
-            </div>
 
-            {/* Mobile Stats and Rating */}
-            <div className="sm:hidden">
-              {/* Quick Stats */}
-              <div className="flex flex-wrap justify-center gap-4 text-sm mb-4">
-                <StatsItem icon="pepicons-print:book" value={`${chaptersCount} Chapters`} color="blue" />
-                <StatsItem icon="pepicons-print:bookmark" value={`${bookmarkCount} Bookmarks`} />
-                <StatsItem icon="pepicons-print:eye" value={`${viewCount} Views`} color="purple" />
-              </div>
-
-              {/* Mobile Translator Links */}
-              {translator && (
-                <div className="mb-4">
-                  <TranslatorLinks translator={translator} />
-                </div>
-              )}
-
-              {/* Rating Section */}
-              <div className="flex flex-col items-center gap-2 mb-4">
-                <div 
-                  className="flex items-center gap-0.5"
-                  onMouseEnter={() => setIsHovering(true)}
-                  onMouseLeave={() => setIsHovering(false)}
-                >
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      aria-label={`Rate ${star} stars`}
-                      key={star}
-                      onClick={() => handleRate(star)}
-                      disabled={isRating}
-                      className={`p-1 transition-colors ${isRating ? 'opacity-50' : 'hover:text-amber-400'}`}
-                    >
-                      <Icon 
-                        icon={
-                          (isHovering && localUserRating && star <= localUserRating) || 
-                          (!isHovering && star <= localRating)
-                            ? "pepicons-print:star-filled"
-                            : "pepicons-print:star"
-                        }
-                        className={`text-2xl ${
-                          (isHovering && localUserRating && star <= localUserRating) || 
-                          (!isHovering && star <= localRating)
-                            ? 'text-amber-400'
-                            : 'text-gray-400'
-                        }`}
-                      />
-                    </button>
-                  ))}
-                </div>
-                <div className="flex flex-wrap items-center text-sm text-gray-600">
-                  <span>{localRating.toFixed(1)}</span>
-                  <span className="mx-1">•</span>
-                  <span>{localRatingCount} {localRatingCount === 1 ? 'rating' : 'ratings'}</span>
-                  {!isAuthenticated && (
-                    <span className="text-xs text-gray-500 ml-2">(Sign in to rate)</span>
+                  {/* Translator Links Box */}
+                  {translator && (
+                    <div className="lg:w-64 flex-shrink-0">
+                      <TranslatorLinks translator={translator} />
+                    </div>
                   )}
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Categories - Show on all screen sizes */}
+          {/* Categories */}
           {categories && categories.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {categories.map((category) => (
