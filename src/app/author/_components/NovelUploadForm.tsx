@@ -1,9 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { generateNovelSlug } from '@/lib/utils';
-import supabase from '@/lib/supabaseClient';
-import { uploadImage } from '@/services/uploadService';
 import { toast } from 'react-hot-toast';
 import NovelList from './NovelList';
 import NovelCoverUpload from './NovelCoverUpload';
@@ -11,6 +8,7 @@ import NovelFormFields from './NovelFormFields';
 import { NovelCategory } from '@/types/database';
 import { Icon } from '@iconify/react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { fetchNovels, fetchUserRole, submitNovel, deleteNovel } from '../_services/novelUploadService';
 
 interface NovelUploadFormProps {
   authorOnly?: boolean;
@@ -28,10 +26,6 @@ interface Novel {
   author_profile_id: string;
   cover_image_url?: string;
   categories?: NovelCategory[];
-}
-
-interface CategoryData {
-  category: NovelCategory;
 }
 
 type FormStep = 'cover' | 'details' | 'categories';
@@ -55,68 +49,14 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
   const [isNovelListVisible, setIsNovelListVisible] = useState(true);
 
   useEffect(() => {
-    fetchNovels();
-    fetchUserRole();
-  }, []);
-
-  const fetchNovels = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) return;
-
-      let query = supabase
-        .from('novels')
-        .select(`
-          *,
-          categories:categories_on_novels (
-            category:category_id (
-              id,
-              name,
-              created_at,
-              updated_at
-            )
-          )
-        `)
-        .order('created_at', { ascending: false });
-
-      if (authorOnly) {
-        query = query.eq('author_profile_id', session.user.id);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      
-      const novelsWithCategories = data?.map(novel => ({
-        ...novel,
-        categories: novel.categories?.map((c: CategoryData) => c.category) || []
-      })) || [];
-
-      setNovels(novelsWithCategories);
-    } catch (error) {
-      console.error('Error fetching novels:', error);
-      toast.error('Failed to fetch novels');
-    }
-  };
-
-  const fetchUserRole = async () => {
-    try {
-      const { data } = await supabase.auth.getUser();
-      if (!data.user) return;
-
-      const { data: profileData, error } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', data.user.id)
-        .single();
-
-      if (error) throw error;
-      setUserRole(profileData.role);
-    } catch (error) {
-      console.error('Error fetching user role:', error);
-      toast.error('Failed to fetch user role');
-    }
-  };
+    const init = async () => {
+      const novels = await fetchNovels(authorOnly);
+      setNovels(novels);
+      const role = await fetchUserRole();
+      setUserRole(role);
+    };
+    init();
+  }, [authorOnly]);
 
   const handleImageChange = (file: File) => {
     const reader = new FileReader();
@@ -136,88 +76,10 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
     const toastId = toast.loading('Uploading novel...');
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) {
-        throw new Error('You must be logged in to create or edit a novel');
-      }
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('username')
-        .eq('id', session.user.id)
-        .single();
-
-      const slug = generateNovelSlug(formData.title);
-      const isTranslator = userRole === 'TRANSLATOR';
-      const authorName = isTranslator ? formData.author.trim() : (profile?.username || 'Anonymous');
-      const novelId = editingNovel?.id || crypto.randomUUID();
-
-      let coverImageUrl = editingNovel?.cover_image_url;
-      if (imageFile) {
-        try {
-          coverImageUrl = await uploadImage(imageFile, session.user.id);
-        } catch (error) {
-          console.error('Error uploading image:', error);
-          toast.error('Failed to upload cover image', { id: toastId });
-          return;
-        }
-      }
-
-      const novelData = {
-        id: novelId,
-        ...formData,
-        author: authorName,
-        slug,
-        author_profile_id: session.user.id,
-        is_author_name_custom: isTranslator,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        translator_id: isTranslator ? session.user.id : null,
-        cover_image_url: coverImageUrl,
-      };
-
-      let error;
-
-      if (editingNovel) {
-        const { error: updateError } = await supabase
-          .from('novels')
-          .update({
-            ...novelData,
-            id: editingNovel.id
-          })
-          .eq('id', editingNovel.id);
-        error = updateError;
-      } else {
-        const { error: insertError } = await supabase
-          .from('novels')
-          .insert([novelData]);
-        error = insertError;
-      }
-
-      if (error) throw error;
-
-      if (selectedCategories.length > 0) {
-        const categoryLinks = selectedCategories.map(category => ({
-          novel_id: novelId,
-          category_id: category.id
-        }));
-
-        if (editingNovel) {
-          await supabase
-            .from('categories_on_novels')
-            .delete()
-            .eq('novel_id', novelId);
-        }
-
-        const { error: categoryError } = await supabase
-          .from('categories_on_novels')
-          .insert(categoryLinks);
-
-        if (categoryError) throw categoryError;
-      }
-
+      await submitNovel(formData, imageFile, selectedCategories, editingNovel, userRole);
       handleCancelEdit();
-      fetchNovels();
+      const updatedNovels = await fetchNovels(authorOnly);
+      setNovels(updatedNovels);
       toast.success(`Novel ${editingNovel ? 'updated' : 'created'} successfully!`, { id: toastId });
     } catch (error) {
       console.error(`Error ${editingNovel ? 'updating' : 'creating'} novel:`, error);
@@ -266,22 +128,12 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
           <button
             onClick={async () => {
               try {
-                const { data: { session } } = await supabase.auth.getSession();
-                if (!session?.user) throw new Error('Not authenticated');
-
-                const { error } = await supabase
-                  .from('novels')
-                  .delete()
-                  .eq('id', novelId)
-                  .eq('author_profile_id', session.user.id);
-
-                if (error) throw error;
-
+                await deleteNovel(novelId);
                 if (editingNovel?.id === novelId) {
                   handleCancelEdit();
                 }
-
-                fetchNovels();
+                const updatedNovels = await fetchNovels(authorOnly);
+                setNovels(updatedNovels);
                 toast.success('Novel deleted successfully!');
               } catch (error) {
                 console.error('Error deleting novel:', error);
