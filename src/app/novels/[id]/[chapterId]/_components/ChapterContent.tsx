@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { formatDate } from '@/lib/utils';
 import { scrambleText, getTextStyles, getParagraphStyles, formatText } from '@/lib/textFormatting';
 import CommentPopover from './CommentBar';
@@ -32,6 +32,70 @@ interface ChapterContentProps {
   onCommentStateChange: (isOpen: boolean) => void;
   authorId: string;
 }
+
+interface FootnoteProps {
+  number: number;
+  content: string;
+}
+
+function Footnote({ number, content }: FootnoteProps) {
+  const [isVisible, setIsVisible] = useState(false);
+  const popoverRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (popoverRef.current && !popoverRef.current.contains(event.target as Node) &&
+          triggerRef.current && !triggerRef.current.contains(event.target as Node)) {
+        setIsVisible(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsVisible(!isVisible);
+  };
+
+  return (
+    <div className="relative inline-block">
+      <button
+        ref={triggerRef}
+        onClick={handleClick}
+        className="text-xs text-gray-500 hover:text-blue-600 transition-colors inline-flex items-center gap-1"
+      >
+        Note {number}
+      </button>
+      {isVisible && (
+        <div
+          ref={popoverRef}
+          className="absolute z-50 bottom-full left-0 transform -translate-y-1
+                     bg-white border border-gray-200 p-2 min-w-[200px] max-w-sm rounded"
+        >
+          <p className="text-sm text-gray-700" dangerouslySetInnerHTML={{ __html: formatText(content) }} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface ParagraphFootnotes {
+  text: string;
+  footnotes: { number: number; content: string; }[];
+}
+
+const extractFootnotes = (text: string): ParagraphFootnotes => {
+  const footnotes: { number: number; content: string; }[] = [];
+  const cleanText = text.replace(/\[\^(\d+):\s*([^\]]+)\]/g, (_, number, content) => {
+    footnotes.push({ number: parseInt(number), content: content.trim() });
+    return '';
+  });
+  return { text: cleanText.trim(), footnotes };
+};
 
 export default function ChapterContent({
   novelId,
@@ -104,13 +168,14 @@ export default function ChapterContent({
         {paragraphs.map((paragraph, index) => {
           const paragraphId = `p-${index}`;
           const paragraphComments = comments[paragraphId] || [];
+          const { text, footnotes } = extractFootnotes(paragraph);
           
           return (
             <div key={`${chapterNumber}-${paragraphId}`} className="relative group">
               <div className="relative">
                 <div 
                   id={paragraphId}
-                  className={`mb-4 leading-relaxed cursor-pointer active:underline active:decoration-dashed active:decoration-gray-400 active:underline-offset-4 transition-all duration-200 
+                  className={`leading-relaxed cursor-pointer active:underline active:decoration-dashed active:decoration-gray-400 active:underline-offset-4 transition-all duration-200 
                     ${isMobile ? 'touch-action-none' : ''} 
                     ${selectedParagraphId === paragraphId ? 'underline decoration-dashed decoration-gray-400 underline-offset-4' : ''}`}
                   style={getParagraphStyles()}
@@ -133,8 +198,8 @@ export default function ChapterContent({
                     document.addEventListener('touchmove', cleanup);
                   }}
                 >
-                  <span aria-hidden="true" className="select-all invisible absolute">{scrambleText(paragraph)}</span>
-                  <span className="relative" dangerouslySetInnerHTML={{ __html: formatText(paragraph) }} />
+                  <span aria-hidden="true" className="select-all invisible absolute">{scrambleText(text)}</span>
+                  <span className="relative" dangerouslySetInnerHTML={{ __html: formatText(text) }} />
                   <span className="inline-flex items-center">
                     {paragraphComments.length > 0 && (
                       <button
@@ -153,7 +218,19 @@ export default function ChapterContent({
                     )}
                   </span>
                 </div>
+                {footnotes.length > 0 && (
+                  <div className="flex flex-wrap gap-2 -mt-1">
+                    {footnotes.map((footnote) => (
+                      <Footnote 
+                        key={`footnote-${footnote.number}`} 
+                        number={footnote.number} 
+                        content={footnote.content} 
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
+              <div className="mb-4"></div>
             </div>
           );
         })}

@@ -144,6 +144,29 @@ export default function ChapterEditor({
         >
           <Icon icon="mdi:format-underline" className="w-5 h-5 text-black" />
         </button>
+        <button
+          onClick={() => {
+            if (!textareaRef) return;
+            const start = textareaRef.selectionStart;
+            const end = textareaRef.selectionEnd;
+            const footnoteNumber = (value.match(/\[\^\d+:/g) || []).length + 1;
+            const footnoteText = `[^${footnoteNumber}: Add footnote here]`;
+            const newText = value.substring(0, start) + footnoteText + value.substring(end);
+            onChange(newText);
+            setTimeout(() => {
+              const newStart = start + footnoteText.indexOf('Add');
+              const newEnd = newStart + 'Add footnote here'.length;
+              textareaRef.selectionStart = newStart;
+              textareaRef.selectionEnd = newEnd;
+              textareaRef.focus();
+            }, 0);
+          }}
+          className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+          title="Add Footnote (^)"
+          type="button"
+        >
+          <Icon icon="mdi:footnote" className="w-5 h-5 text-black" />
+        </button>
         <div className="flex-1 text-right px-2">
           <span className="text-sm text-gray-500">
             {value.length} characters
