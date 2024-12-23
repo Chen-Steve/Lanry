@@ -30,6 +30,7 @@ interface ChapterContentProps {
   fontSize: number;
   authorThoughts?: string;
   onCommentStateChange: (isOpen: boolean) => void;
+  authorId: string;
 }
 
 export default function ChapterContent({
@@ -43,6 +44,7 @@ export default function ChapterContent({
   fontSize,
   authorThoughts,
   onCommentStateChange,
+  authorId,
 }: ChapterContentProps) {
   const [selectedParagraphId, setSelectedParagraphId] = useState<string | null>(null);
   const { comments, addComment, deleteComment, isAuthenticated, isLoading, userId } = useComments(novelId, chapterNumber);
@@ -193,6 +195,7 @@ export default function ChapterContent({
           isLoading={isLoading}
           userId={userId}
           novelId={novelId}
+          authorId={authorId}
         />
       )}
     </div>

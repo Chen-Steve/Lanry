@@ -29,6 +29,7 @@ interface CommentBarProps {
   isLoading: boolean;
   userId: string | null;
   novelId: string;
+  authorId: string;
 }
 
 export default function CommentBar({
