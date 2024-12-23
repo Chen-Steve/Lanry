@@ -38,6 +38,7 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
   const [isUploading, setIsUploading] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -49,6 +50,7 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
 
   useEffect(() => {
     fetchNovels();
+    fetchUserRole();
   }, []);
 
   const fetchNovels = async () => {
@@ -91,6 +93,24 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
     }
   };
 
+  const fetchUserRole = async () => {
+    try {
+      const { data } = await supabase.auth.getUser();
+      if (!data.user) return;
+
+      const { data: profileData, error } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', data.user.id)
+        .single();
+
+      if (error) throw error;
+      setUserRole(profileData.role);
+    } catch (error) {
+      console.error('Error fetching user role:', error);
+    }
+  };
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -121,8 +141,8 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
         .single();
 
       const slug = generateNovelSlug(formData.title);
-      const isCustomAuthor = Boolean(formData.author.trim());
-      const authorName = isCustomAuthor ? formData.author.trim() : (profile?.username || 'Anonymous');
+      const isTranslator = userRole === 'TRANSLATOR';
+      const authorName = isTranslator ? formData.author.trim() : (profile?.username || 'Anonymous');
       const novelId = editingNovel?.id || crypto.randomUUID();
 
       let coverImageUrl = editingNovel?.cover_image_url;
@@ -142,10 +162,10 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
         author: authorName,
         slug,
         author_profile_id: session.user.id,
-        is_author_name_custom: isCustomAuthor,
+        is_author_name_custom: isTranslator,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        translator_id: isCustomAuthor ? session.user.id : null,
+        translator_id: isTranslator ? session.user.id : null,
         cover_image_url: coverImageUrl,
       };
 
@@ -363,13 +383,16 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
               required
             />
 
-            <input
-              type="text"
-              placeholder="Author (leave empty to use your username)"
-              value={formData.author}
-              onChange={(e) => setFormData({ ...formData, author: e.target.value })}
-              className="w-full p-2 border rounded"
-            />
+            {userRole === 'TRANSLATOR' && (
+              <input
+                type="text"
+                placeholder="Original Author's Name"
+                value={formData.author}
+                onChange={(e) => setFormData({ ...formData, author: e.target.value })}
+                className="w-full p-2 border rounded"
+                required
+              />
+            )}
 
             <select
               aria-label="Status"

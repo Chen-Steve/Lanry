@@ -7,7 +7,7 @@ import supabase from '@/lib/supabaseClient';
 interface User {
   id: string;
   username: string;
-  role: 'USER' | 'AUTHOR' | 'ADMIN' | 'SUPER_ADMIN';
+  role: 'USER' | 'AUTHOR' | 'TRANSLATOR' | 'ADMIN' | 'SUPER_ADMIN';
   created_at: string;
   updated_at: string;
   current_streak?: number;
@@ -90,6 +90,7 @@ export default function RoleManagement() {
                   >
                     <option value="USER">User</option>
                     <option value="AUTHOR">Author</option>
+                    <option value="TRANSLATOR">Translator</option>
                     <option value="ADMIN">Admin</option>
                     <option value="SUPER_ADMIN">Super Admin</option>
                   </select>

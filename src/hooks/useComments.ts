@@ -18,6 +18,7 @@ interface DatabaseComment {
   profile?: {
     username: string;
     avatar_url: string;
+    role: 'USER' | 'AUTHOR' | 'TRANSLATOR' | 'ADMIN' | 'SUPER_ADMIN';
   };
 }
 
@@ -97,7 +98,8 @@ export function useComments(novelId: string, chapterNumber: number) {
                   novel_id: novelId,
                   profile: {
                     username: newComment.profile?.username ?? 'Anonymous',
-                    avatar_url: newComment.profile?.avatar_url
+                    avatar_url: newComment.profile?.avatar_url,
+                    role: newComment.profile?.role ?? 'USER'
                   }
                 } as ChapterComment
               ]
@@ -114,7 +116,8 @@ export function useComments(novelId: string, chapterNumber: number) {
           *,
           profile:profiles (
             username,
-            avatar_url
+            avatar_url,
+            role
           )
         `)
         .eq('novel_id', novelId)
@@ -136,7 +139,8 @@ export function useComments(novelId: string, chapterNumber: number) {
           ...comment,
           profile: {
             username: comment.profile?.username ?? 'Anonymous',
-            avatar_url: comment.profile?.avatar_url
+            avatar_url: comment.profile?.avatar_url,
+            role: comment.profile?.role ?? 'USER'
           }
         } as ChapterComment;
         
@@ -179,7 +183,8 @@ export function useComments(novelId: string, chapterNumber: number) {
           *,
           profile:profiles (
             username,
-            avatar_url
+            avatar_url,
+            role
           )
         `)
         .single();
@@ -197,7 +202,8 @@ export function useComments(novelId: string, chapterNumber: number) {
             ...data,
             profile: {
               username: data.profile?.username ?? 'Anonymous',
-              avatar_url: data.profile?.avatar_url
+              avatar_url: data.profile?.avatar_url,
+              role: data.profile?.role ?? 'USER'
             }
           } as ChapterComment
         ]

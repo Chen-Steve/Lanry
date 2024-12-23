@@ -15,8 +15,8 @@ interface ChapterComment extends Omit<BaseChapterComment, 'profile'> {
     username: string | null;
     avatar_url?: string;
     id?: string;
+    role: 'USER' | 'AUTHOR' | 'TRANSLATOR' | 'ADMIN' | 'SUPER_ADMIN';
   };
-  isAuthor?: boolean;
 }
 
 interface CommentBarProps {
@@ -29,7 +29,6 @@ interface CommentBarProps {
   isLoading: boolean;
   userId: string | null;
   novelId: string;
-  authorId: string | null;
 }
 
 export default function CommentBar({
@@ -41,7 +40,6 @@ export default function CommentBar({
   isAuthenticated,
   isLoading,
   userId,
-  authorId,
 }: CommentBarProps) {
   const [newComment, setNewComment] = useState('');
   const barRef = useRef<HTMLDivElement>(null);
@@ -141,11 +139,17 @@ export default function CommentBar({
                               href={`/user-dashboard?id=${comment.profile_id}`}
                               className="text-sm font-medium text-black hover:text-blue-600 transition-colors truncate"
                             >
-                              {comment.profile.username}
+                              {comment.profile?.username}
                             </Link>
-                            {comment.profile.id === authorId && (
-                              <span className="px-1 py-0.5 text-xs font-medium bg-yellow-100 text-black rounded inline-flex items-center flex-shrink-0">
-                                Author
+                            {comment.profile?.role && comment.profile.role !== 'USER' && (
+                              <span className={`px-1 py-0.5 text-xs font-medium rounded inline-flex items-center flex-shrink-0 ${
+                                comment.profile.role === 'AUTHOR' ? 'bg-yellow-100' :
+                                comment.profile.role === 'TRANSLATOR' ? 'bg-blue-100' :
+                                comment.profile.role === 'ADMIN' ? 'bg-red-100' :
+                                comment.profile.role === 'SUPER_ADMIN' ? 'bg-purple-100' :
+                                'bg-gray-100'
+                              } text-black`}>
+                                {comment.profile.role.charAt(0) + comment.profile.role.slice(1).toLowerCase()}
                               </span>
                             )}
                           </div>

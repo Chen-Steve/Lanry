@@ -13,8 +13,8 @@ interface NovelComment extends Omit<BaseNovelComment, 'profile'> {
   profile: {
     username: string | null;
     avatar_url?: string;
+    role: 'USER' | 'AUTHOR' | 'TRANSLATOR' | 'ADMIN' | 'SUPER_ADMIN';
   };
-  isAuthor: boolean;
 }
 
 interface SupabaseComment {
@@ -28,9 +28,7 @@ interface SupabaseComment {
     id: string;
     username: string | null;
     avatar_url?: string;
-  };
-  novel: {
-    author_profile_id: string | null;
+    role: 'USER' | 'AUTHOR' | 'TRANSLATOR' | 'ADMIN' | 'SUPER_ADMIN';
   };
 }
 
@@ -63,8 +61,7 @@ export const NovelComments = ({ novelId, isAuthenticated }: NovelCommentsProps) 
       created_at: comment.created_at,
       profile_id: comment.profile_id,
       novel_id: novelId,
-      profile: comment.profile,
-      isAuthor: comment.profile.id === comment.novel.author_profile_id
+      profile: comment.profile
     };
   }, [novelId]);
 
@@ -77,10 +74,8 @@ export const NovelComments = ({ novelId, isAuthenticated }: NovelCommentsProps) 
           profile:profiles (
             username,
             avatar_url,
-            id
-          ),
-          novel:novels (
-            author_profile_id
+            id,
+            role
           )
         `)
         .eq('novel_id', novelId)
@@ -345,9 +340,15 @@ const CommentItem = ({
               >
                 {comment.profile.username || 'Unknown User'}
               </Link>
-              {comment.isAuthor && (
-                <span className="ml-2 px-1 py-0.5 text-xs font-medium bg-yellow-100 text-black rounded inline-flex items-center">
-                  Author
+              {comment.profile.role !== 'USER' && (
+                <span className={`ml-2 px-1 py-0.5 text-xs font-medium rounded inline-flex items-center ${
+                  comment.profile.role === 'AUTHOR' ? 'bg-yellow-100' :
+                  comment.profile.role === 'TRANSLATOR' ? 'bg-blue-100' :
+                  comment.profile.role === 'ADMIN' ? 'bg-red-100' :
+                  comment.profile.role === 'SUPER_ADMIN' ? 'bg-purple-100' :
+                  'bg-gray-100'
+                } text-black`}>
+                  {comment.profile.role.charAt(0) + comment.profile.role.slice(1).toLowerCase()}
                 </span>
               )}
               <span className="mx-2 text-gray-300">•</span>

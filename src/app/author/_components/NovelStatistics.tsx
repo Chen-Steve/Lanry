@@ -7,7 +7,6 @@ import { Icon } from '@iconify/react';
 interface NovelStats {
   id: string;
   title: string;
-  views: number;
   bookmarks: number;
   total_chapters: number;
   total_comments: number;
@@ -17,7 +16,6 @@ interface NovelStats {
 interface NovelData {
   id: string;
   title: string;
-  views: number;
   bookmark_count: number;
   chapters: { count: number }[];
   chapter_comments: { count: number }[];
@@ -39,7 +37,6 @@ export default function NovelStatistics() {
         .select(`
           id,
           title,
-          views,
           bookmark_count,
           chapters(count),
           chapter_comments(count)
@@ -54,7 +51,6 @@ export default function NovelStatistics() {
       const formattedStats = (data as NovelData[]).map(novel => ({
         id: novel.id,
         title: novel.title,
-        views: novel.views,
         bookmarks: novel.bookmark_count,
         total_chapters: novel.chapters[0]?.count || 0,
         total_comments: novel.chapter_comments[0]?.count || 0
@@ -69,44 +65,43 @@ export default function NovelStatistics() {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center">
-        <Icon icon="mdi:loading" className="animate-spin text-3xl text-gray-500" />
-      </div>
+      <section aria-busy="true" className="flex justify-center p-4">
+        <Icon icon="mdi:loading" className="animate-spin text-4xl text-primary/60" />
+      </section>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-800">Novel Statistics</h2>
+    <section className="p-4">
+      <h2 className="text-2xl font-bold mb-6">Novel Statistics</h2>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <ul className="grid gap-4 sm:grid-cols-2">
         {stats.map((novel) => (
-          <div 
+          <li 
             key={novel.id}
-            className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow"
+            className="bg-white rounded-lg p-4 shadow-sm hover:shadow-md transition-all"
           >
-            <h3 className="text-xl font-semibold text-gray-700 mb-4">{novel.title}</h3>
-            <div className="grid grid-cols-4 gap-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">{novel.views}</div>
-                <div className="text-sm text-gray-500">Views</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-purple-600">{novel.bookmarks}</div>
-                <div className="text-sm text-gray-500">Bookmarks</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">{novel.total_chapters}</div>
-                <div className="text-sm text-gray-500">Chapters</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-orange-600">{novel.total_comments}</div>
-                <div className="text-sm text-gray-500">Comments</div>
-              </div>
-            </div>
-          </div>
+            <h3 className="text-lg font-semibold mb-4 line-clamp-1">{novel.title}</h3>
+            <ul className="grid grid-cols-3 gap-2">
+              <li className="flex flex-col items-center">
+                <Icon icon="mdi:bookmark" className="text-2xl text-primary mb-1" />
+                <span className="text-xl font-bold">{novel.bookmarks}</span>
+                <span className="text-xs text-gray-600">Bookmarks</span>
+              </li>
+              <li className="flex flex-col items-center">
+                <Icon icon="mdi:book-open" className="text-2xl text-primary mb-1" />
+                <span className="text-xl font-bold">{novel.total_chapters}</span>
+                <span className="text-xs text-gray-600">Chapters</span>
+              </li>
+              <li className="flex flex-col items-center">
+                <Icon icon="mdi:comment" className="text-2xl text-primary mb-1" />
+                <span className="text-xl font-bold">{novel.total_comments}</span>
+                <span className="text-xs text-gray-600">Comments</span>
+              </li>
+            </ul>
+          </li>
         ))}
-      </div>
-    </div>
+      </ul>
+    </section>
   );
 } 
