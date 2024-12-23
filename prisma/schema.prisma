@@ -363,6 +363,7 @@ enum NovelStatus {
 enum UserRole {
   USER
   AUTHOR
+  TRANSLATOR
   ADMIN
   SUPER_ADMIN
 }
