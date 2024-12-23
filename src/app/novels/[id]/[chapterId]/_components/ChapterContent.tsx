@@ -7,6 +7,17 @@ import CommentPopover from './CommentBar';
 import { useComments } from '@/hooks/useComments';
 import { Icon } from '@iconify/react';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
+import type { ChapterComment as BaseChapterComment } from '@/types/database';
+
+// Extend the base type to include avatar_url
+interface ChapterComment extends Omit<BaseChapterComment, 'profile'> {
+  profile?: {
+    username: string | null;
+    avatar_url?: string;
+    id?: string;
+    role: 'USER' | 'AUTHOR' | 'TRANSLATOR' | 'ADMIN' | 'SUPER_ADMIN';
+  };
+}
 
 interface ChapterContentProps {
   novelId: string;
@@ -19,7 +30,6 @@ interface ChapterContentProps {
   fontSize: number;
   authorThoughts?: string;
   onCommentStateChange: (isOpen: boolean) => void;
-  authorId: string | null;
 }
 
 export default function ChapterContent({
@@ -33,7 +43,6 @@ export default function ChapterContent({
   fontSize,
   authorThoughts,
   onCommentStateChange,
-  authorId,
 }: ChapterContentProps) {
   const [selectedParagraphId, setSelectedParagraphId] = useState<string | null>(null);
   const { comments, addComment, deleteComment, isAuthenticated, isLoading, userId } = useComments(novelId, chapterNumber);
@@ -170,8 +179,13 @@ export default function ChapterContent({
           paragraphId={selectedParagraphId}
           comments={(comments[selectedParagraphId] || []).map(comment => ({
             ...comment,
-            profile: comment.profile || { username: 'Anonymous', id: comment.profile_id }
-          }))}
+            profile: comment.profile || { 
+              username: null,
+              avatar_url: undefined,
+              id: comment.profile_id,
+              role: 'USER' as const
+            }
+          } as ChapterComment))}
           onClose={handleCloseComment}
           onAddComment={(content) => handleAddComment(selectedParagraphId, content)}
           onDeleteComment={deleteComment}
@@ -179,7 +193,6 @@ export default function ChapterContent({
           isLoading={isLoading}
           userId={userId}
           novelId={novelId}
-          authorId={authorId}
         />
       )}
     </div>
