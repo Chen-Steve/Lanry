@@ -130,7 +130,9 @@ const Bookmarks = ({ userId, isOwnProfile = false }: BookmarksProps) => {
             className="hover:opacity-80 transition-opacity flex-shrink-0"
           >
             <Image
-              src={`/novel-covers/${bookmark.novel.cover_image_url}` || '/images/default-cover.jpg'}
+              src={bookmark.novel.cover_image_url?.startsWith('http') 
+                ? bookmark.novel.cover_image_url 
+                : `/novel-covers/${bookmark.novel.cover_image_url}` || '/images/default-cover.jpg'}
               alt={bookmark.novel.title}
               width={120}
               height={120}
