@@ -3,12 +3,14 @@
 import { useState, useEffect } from 'react';
 import { generateNovelSlug } from '@/lib/utils';
 import supabase from '@/lib/supabaseClient';
-import { Icon } from '@iconify/react';
-import Image from 'next/image';
 import { uploadImage } from '@/services/uploadService';
 import { toast } from 'react-hot-toast';
-import CategorySelect from './CategorySelect';
+import NovelList from './NovelList';
+import NovelCoverUpload from './NovelCoverUpload';
+import NovelFormFields from './NovelFormFields';
 import { NovelCategory } from '@/types/database';
+import { Icon } from '@iconify/react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface NovelUploadFormProps {
   authorOnly?: boolean;
@@ -32,6 +34,8 @@ interface CategoryData {
   category: NovelCategory;
 }
 
+type FormStep = 'cover' | 'details' | 'categories';
+
 export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormProps) {
   const [novels, setNovels] = useState<Novel[]>([]);
   const [editingNovel, setEditingNovel] = useState<Novel | null>(null);
@@ -39,6 +43,8 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
   const [imagePreview, setImagePreview] = useState<string>('');
   const [isUploading, setIsUploading] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [currentStep, setCurrentStep] = useState<FormStep>('cover');
+  const [selectedCategories, setSelectedCategories] = useState<NovelCategory[]>([]);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -81,7 +87,6 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
 
       if (error) throw error;
       
-      // Transform the nested category data
       const novelsWithCategories = data?.map(novel => ({
         ...novel,
         categories: novel.categories?.map((c: CategoryData) => c.category) || []
@@ -90,6 +95,7 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
       setNovels(novelsWithCategories);
     } catch (error) {
       console.error('Error fetching novels:', error);
+      toast.error('Failed to fetch novels');
     }
   };
 
@@ -108,14 +114,11 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
       setUserRole(profileData.role);
     } catch (error) {
       console.error('Error fetching user role:', error);
+      toast.error('Failed to fetch user role');
     }
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Preview
+  const handleImageChange = (file: File) => {
     const reader = new FileReader();
     reader.onloadend = () => {
       setImagePreview(reader.result as string);
@@ -124,9 +127,13 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
     setImageFile(file);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
+    }
+    
     setIsUploading(true);
+    const toastId = toast.loading('Uploading novel...');
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -151,7 +158,7 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
           coverImageUrl = await uploadImage(imageFile, session.user.id);
         } catch (error) {
           console.error('Error uploading image:', error);
-          toast.error('Failed to upload cover image');
+          toast.error('Failed to upload cover image', { id: toastId });
           return;
         }
       }
@@ -189,22 +196,32 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
 
       if (error) throw error;
 
-      // Reset form and refresh novels
-      setFormData({
-        title: '',
-        description: '',
-        author: '',
-        status: 'ONGOING',
-        slug: '',
-      });
-      setEditingNovel(null);
-      setImageFile(null);
-      setImagePreview('');
+      if (selectedCategories.length > 0) {
+        const categoryLinks = selectedCategories.map(category => ({
+          novel_id: novelId,
+          category_id: category.id
+        }));
+
+        if (editingNovel) {
+          await supabase
+            .from('categories_on_novels')
+            .delete()
+            .eq('novel_id', novelId);
+        }
+
+        const { error: categoryError } = await supabase
+          .from('categories_on_novels')
+          .insert(categoryLinks);
+
+        if (categoryError) throw categoryError;
+      }
+
+      handleCancelEdit();
       fetchNovels();
-      toast.success(`Novel ${editingNovel ? 'updated' : 'created'} successfully!`);
+      toast.success(`Novel ${editingNovel ? 'updated' : 'created'} successfully!`, { id: toastId });
     } catch (error) {
       console.error(`Error ${editingNovel ? 'updating' : 'creating'} novel:`, error);
-      toast.error(`Failed to ${editingNovel ? 'update' : 'create'} novel`);
+      toast.error(`Failed to ${editingNovel ? 'update' : 'create'} novel`, { id: toastId });
     } finally {
       setIsUploading(false);
     }
@@ -219,12 +236,18 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
       status: novel.status,
       slug: novel.slug,
     });
+    setSelectedCategories(novel.categories || []);
+    setCurrentStep('cover');
+    if (novel.cover_image_url) {
+      setImagePreview(novel.cover_image_url);
+    }
   };
 
   const handleCancelEdit = () => {
     setEditingNovel(null);
     setImageFile(null);
     setImagePreview('');
+    setSelectedCategories([]);
     setFormData({
       title: '',
       description: '',
@@ -232,211 +255,279 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
       status: 'ONGOING',
       slug: '',
     });
+    setCurrentStep('cover');
   };
 
   const handleDelete = async (novelId: string) => {
-    if (!confirm('Are you sure you want to delete this novel? This action cannot be undone.')) {
-      return;
+    toast((t) => (
+      <div className="flex flex-col gap-2">
+        <p>Are you sure you want to delete this novel?</p>
+        <div className="flex gap-2">
+          <button
+            onClick={async () => {
+              try {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (!session?.user) throw new Error('Not authenticated');
+
+                const { error } = await supabase
+                  .from('novels')
+                  .delete()
+                  .eq('id', novelId)
+                  .eq('author_profile_id', session.user.id);
+
+                if (error) throw error;
+
+                if (editingNovel?.id === novelId) {
+                  handleCancelEdit();
+                }
+
+                fetchNovels();
+                toast.success('Novel deleted successfully!');
+              } catch (error) {
+                console.error('Error deleting novel:', error);
+                toast.error('Failed to delete novel');
+              }
+              toast.dismiss(t.id);
+            }}
+            className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+          >
+            Delete
+          </button>
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="px-3 py-1 bg-gray-500 text-white rounded hover:bg-gray-600"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    ), { duration: Infinity });
+  };
+
+  const handleNextStep = () => {
+    const steps: FormStep[] = ['cover', 'details', 'categories'];
+    const currentIndex = steps.indexOf(currentStep);
+    if (currentIndex < steps.length - 1) {
+      setCurrentStep(steps[currentIndex + 1]);
     }
+  };
 
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) throw new Error('Not authenticated');
-
-      const { error } = await supabase
-        .from('novels')
-        .delete()
-        .eq('id', novelId)
-        .eq('author_profile_id', session.user.id);
-
-      if (error) throw error;
-
-      if (editingNovel?.id === novelId) {
-        handleCancelEdit();
-      }
-
-      fetchNovels();
-      alert('Novel deleted successfully!');
-    } catch (error) {
-      console.error('Error deleting novel:', error);
-      alert('Failed to delete novel');
+  const handlePrevStep = () => {
+    const steps: FormStep[] = ['cover', 'details', 'categories'];
+    const currentIndex = steps.indexOf(currentStep);
+    if (currentIndex > 0) {
+      setCurrentStep(steps[currentIndex - 1]);
     }
+  };
+
+  const renderStepIndicator = () => {
+    const steps = [
+      { id: 'cover' as FormStep, label: 'Cover', icon: 'mdi:image' },
+      { id: 'details' as FormStep, label: 'Details', icon: 'mdi:form-textbox' },
+      { id: 'categories' as FormStep, label: 'Categories', icon: 'mdi:tag-multiple' }
+    ];
+
+    return (
+      <div className="flex justify-center mb-8">
+        {steps.map((step, index) => (
+          <div key={step.id} className="flex items-center">
+            <button
+              type="button"
+              onClick={() => setCurrentStep(step.id)}
+              className={`flex flex-col items-center ${
+                currentStep === step.id
+                  ? 'text-blue-500'
+                  : steps.indexOf(steps.find(s => s.id === currentStep)!) > index
+                  ? 'text-green-500'
+                  : 'text-gray-400'
+              }`}
+            >
+              <div className={`
+                w-10 h-10 rounded-full flex items-center justify-center
+                ${currentStep === step.id
+                  ? 'bg-blue-100 border-2 border-blue-500'
+                  : steps.indexOf(steps.find(s => s.id === currentStep)!) > index
+                  ? 'bg-green-100 border-2 border-green-500'
+                  : 'bg-gray-100 border-2 border-gray-300'}
+                hover:bg-opacity-80 transition-colors
+              `}>
+                <Icon icon={step.icon} className="w-5 h-5" />
+              </div>
+              <span className="text-xs mt-1">{step.label}</span>
+            </button>
+            {index < steps.length - 1 && (
+              <div className={`w-16 h-0.5 mx-2 ${
+                steps.indexOf(steps.find(s => s.id === currentStep)!) > index
+                  ? 'bg-green-500'
+                  : 'bg-gray-300'
+              }`} />
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const renderFormStep = () => {
+    const formContent = {
+      cover: (
+        <NovelCoverUpload
+          imagePreview={imagePreview}
+          coverImageUrl={editingNovel?.cover_image_url}
+          onImageChange={handleImageChange}
+          onImageRemove={() => {
+            setImageFile(null);
+            setImagePreview('');
+          }}
+        />
+      ),
+      details: (
+        <NovelFormFields
+          formData={formData}
+          onFormDataChange={setFormData}
+          userRole={userRole}
+          editingNovel={editingNovel}
+          onCategoriesChange={undefined}
+        />
+      ),
+      categories: (
+        <NovelFormFields
+          formData={formData}
+          onFormDataChange={setFormData}
+          userRole={userRole}
+          editingNovel={editingNovel ? editingNovel : { id: crypto.randomUUID() }}
+          section="categories"
+          onCategoriesChange={(categories) => {
+            setSelectedCategories(categories);
+            if (editingNovel) {
+              setEditingNovel(prev => prev ? {
+                ...prev,
+                categories
+              } : null);
+            }
+          }}
+        />
+      )
+    };
+
+    return (
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={currentStep}
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -20 }}
+          transition={{ duration: 0.2 }}
+        >
+          {formContent[currentStep]}
+        </motion.div>
+      </AnimatePresence>
+    );
   };
 
   return (
     <div className="space-y-6">
-      {/* Novel List Section */}
-      <section>
-        <button
-          onClick={() => setIsNovelListVisible(!isNovelListVisible)}
-          className="w-full flex justify-between items-center p-3 bg-gray-100 rounded-lg"
-        >
-          <h3 className="font-medium text-black">My Novels</h3>
-          <Icon 
-            icon={isNovelListVisible ? 'mdi:chevron-up' : 'mdi:chevron-down'} 
-            className="w-6 h-6 text-black"
-          />
-        </button>
-        
-        <div className={`space-y-2 transition-all duration-300 overflow-hidden ${
-          isNovelListVisible ? 'max-h-[1000px] mt-4' : 'max-h-0'
-        }`}>
-          {novels.map((novel) => (
-            <div
-              key={novel.id}
-              className={`p-3 border rounded hover:bg-gray-100 cursor-pointer ${
-                editingNovel?.id === novel.id ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-gray-50'
-              }`}
-            >
-              <div className="flex justify-between items-start">
-                <div onClick={() => handleNovelClick(novel)}>
-                  <h4 className="text-black">{novel.title}</h4>
-                  <p className="text-black">by {novel.author}</p>
-                  <span className="bg-gray-200 px-2 py-1 rounded mt-2 inline-block text-black">
-                    {novel.status}
-                  </span>
-                </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDelete(novel.id);
-                  }}
-                  className="text-black hover:text-red-700 p-1"
-                  title="Delete novel"
-                >
-                  <Icon icon="mdi:delete" className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+      <NovelList
+        novels={novels}
+        isVisible={isNovelListVisible}
+        onToggleVisibility={() => setIsNovelListVisible(!isNovelListVisible)}
+        onNovelClick={handleNovelClick}
+        onNovelDelete={handleDelete}
+        editingNovelId={editingNovel?.id}
+      />
 
-      {/* Form Section */}
       <section>
-        <div className="bg-white rounded-lg p-6 shadow-sm border">
-          <h3 className="text-lg font-semibold mb-6">
+        <div className="bg-white rounded-lg p-8 shadow-lg border">
+          <h3 className="text-2xl font-bold text-center mb-6">
             {editingNovel ? 'Edit Novel' : 'Upload New Novel'}
           </h3>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Image Upload */}
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
-                Cover Image
-              </label>
-              <div className="flex items-center space-x-4">
-                {(imagePreview || editingNovel?.cover_image_url) && (
-                  <div className="relative w-32 h-48 border rounded overflow-hidden">
-                    <Image
-                      src={imagePreview || (editingNovel?.cover_image_url?.startsWith('http') 
-                        ? editingNovel.cover_image_url 
-                        : `/novel-covers/${editingNovel?.cover_image_url}`
-                      ) || ''}
-                      alt="Cover preview"
-                      fill
-                      className="object-cover"
-                      sizes="128px"
-                    />
-                    <button
-                      title="Remove cover image"
-                      type="button"
-                      onClick={() => {
-                        setImageFile(null);
-                        setImagePreview('');
-                      }}
-                      className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full hover:bg-red-600"
-                    >
-                      <Icon icon="mdi:close" className="w-4 h-4" />
-                    </button>
-                  </div>
-                )}
-                <div className="flex-1">
-                  <label className="flex flex-col items-center px-4 py-6 bg-white text-blue-500 rounded-lg border-2 border-blue-500 border-dashed cursor-pointer hover:bg-blue-50">
-                    <Icon icon="mdi:cloud-upload" className="w-8 h-8" />
-                    <span className="mt-2 text-sm">Click to upload cover image</span>
-                    <input
-                      type="file"
-                      className="hidden"
-                      accept="image/*"
-                      onChange={handleImageChange}
-                    />
-                  </label>
-                </div>
-              </div>
-            </div>
+          {renderStepIndicator()}
 
-            <input
-              type="text"
-              placeholder="Title"
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full p-2 border rounded"
-              required
-            />
+          <form onSubmit={handleSubmit} className="max-w-3xl mx-auto">
+            {renderFormStep()}
 
-            <textarea
-              placeholder="Description"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full p-2 border rounded min-h-[100px]"
-              required
-            />
-
-            {userRole === 'TRANSLATOR' && (
-              <input
-                type="text"
-                placeholder="Original Author's Name"
-                value={formData.author}
-                onChange={(e) => setFormData({ ...formData, author: e.target.value })}
-                className="w-full p-2 border rounded"
-                required
-              />
-            )}
-
-            <select
-              aria-label="Status"
-              value={formData.status}
-              onChange={(e) => setFormData({ ...formData, status: e.target.value as Novel['status'] })}
-              className="w-full p-2 border rounded text-black"
-              required
-            >
-              <option value="ONGOING">Ongoing</option>
-              <option value="COMPLETED">Completed</option>
-              <option value="HIATUS">Hiatus</option>
-            </select>
-
-            {/* Categories - Only show when editing a novel */}
-            {editingNovel && (
-              <CategorySelect
-                novelId={editingNovel.id}
-                initialCategories={editingNovel.categories}
-                onCategoriesChange={(categories) => {
-                  setEditingNovel(prev => prev ? {
-                    ...prev,
-                    categories
-                  } : null);
-                }}
-              />
-            )}
-
-            <div className="flex gap-4">
+            <div className="flex justify-between mt-8">
               <button
-                type="submit"
-                disabled={isUploading}
-                className="flex-1 bg-blue-500 py-2 px-4 rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                type="button"
+                onClick={handlePrevStep}
+                className={`px-6 py-2 rounded flex items-center gap-2 ${
+                  currentStep === 'cover'
+                    ? 'invisible'
+                    : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+                }`}
               >
-                {isUploading ? 'Uploading...' : (editingNovel ? 'Update Novel' : 'Add Novel')}
+                <Icon icon="mdi:arrow-left" />
+                Previous
               </button>
-              {editingNovel && (
-                <button
-                  type="button"
-                  onClick={handleCancelEdit}
-                  className="flex-1 bg-gray-500 py-2 px-4 rounded hover:bg-gray-600"
-                >
-                  Cancel Edit
-                </button>
-              )}
+
+              <div className="flex gap-4">
+                {editingNovel && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleCancelEdit}
+                      className="px-6 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 flex items-center gap-2"
+                    >
+                      <Icon icon="mdi:close" />
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSubmit()}
+                      disabled={isUploading}
+                      className="px-6 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    >
+                      {isUploading ? (
+                        <>
+                          <Icon icon="mdi:loading" className="animate-spin" />
+                          Uploading...
+                        </>
+                      ) : (
+                        <>
+                          <Icon icon="mdi:check" />
+                          Update Novel
+                        </>
+                      )}
+                    </button>
+                    {currentStep !== 'categories' && (
+                      <button
+                        type="button"
+                        onClick={() => handleNextStep()}
+                        className="px-6 py-2 bg-blue-100 text-blue-800 rounded hover:bg-blue-200 flex items-center gap-2"
+                      >
+                        Next
+                        <Icon icon="mdi:arrow-right" />
+                      </button>
+                    )}
+                  </>
+                )}
+                {!editingNovel && (
+                  <button
+                    type="button"
+                    onClick={() => currentStep === 'categories' ? handleSubmit() : handleNextStep()}
+                    disabled={isUploading}
+                    className="px-6 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  >
+                    {isUploading ? (
+                      <>
+                        <Icon icon="mdi:loading" className="animate-spin" />
+                        Uploading...
+                      </>
+                    ) : currentStep === 'categories' ? (
+                      <>
+                        <Icon icon="mdi:check" />
+                        Create Novel
+                      </>
+                    ) : (
+                      <>
+                        Next
+                        <Icon icon="mdi:arrow-right" />
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
             </div>
           </form>
         </div>
