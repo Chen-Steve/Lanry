@@ -149,15 +149,21 @@ export default function ChapterContent({
   return (
     <div className="mb-6 md:mb-8">
       <div className="mb-4 max-w-2xl mx-auto">
-        <div>
-          <h2 className="text-lg md:text-xl font-semibold text-black">
-            Chapter {chapterNumber}
-            {partNumber && <span> Part {partNumber}</span>}
-            {title && <span>: {title}</span>}
-          </h2>
-          <p className="text-xs md:text-sm text-gray-600">
-            Published {formatDate(createdAt)}
-          </p>
+        <div className="flex justify-between items-start">
+          <div>
+            <h2 className="text-lg md:text-xl font-semibold text-black">
+              Chapter {chapterNumber}
+              {partNumber && <span> Part {partNumber}</span>}
+              {title && <span>: {title}</span>}
+            </h2>
+            <p className="text-xs md:text-sm text-gray-600">
+              Published {formatDate(createdAt)}
+            </p>
+          </div>
+          <div className="md:hidden text-xs text-gray-500 flex items-center gap-1">
+            <Icon icon="mdi:gesture-tap-hold" className="w-4 h-4" />
+            <span>Hold text to comment</span>
+          </div>
         </div>
       </div>
       
