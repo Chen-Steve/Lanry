@@ -1,4 +1,5 @@
 import { formatDateMDY } from '@/lib/utils';
+import { formatText } from '@/lib/textFormatting';
 import { useState } from 'react';
 import { ChapterList } from './ChapterList';
 import { Chapter, UserProfile, NovelCategory } from '@/types/database';
@@ -38,6 +39,7 @@ interface SynopsisSectionProps {
   translatorId?: string;
   isAuthorNameCustom?: boolean;
   categories?: NovelCategory[];
+  showHeader?: boolean;
 }
 
 const TabButton = ({ 
@@ -89,35 +91,38 @@ export const SynopsisSection = ({
   userRating,
   isAuthorNameCustom = true,
   categories,
+  showHeader = true,
 }: SynopsisSectionProps) => {
   const [activeTab, setActiveTab] = useState<'synopsis' | 'chapters' | 'recommendations' | 'comments'>('synopsis');
 
   return (
   <div className="max-w-5xl mx-auto px-4 py-4">
     {/* Header Section */}
-    <NovelHeader
-      title={title}
-      author={author}
-      translator={translator}
-      chaptersCount={chaptersCount}
-      bookmarkCount={bookmarkCount}
-      viewCount={viewCount}
-      coverImageUrl={coverImageUrl}
-      novelAuthorId={novelAuthorId}
-      isAuthorNameCustom={isAuthorNameCustom}
-      categories={categories}
-      showActionButtons={showActionButtons}
-      firstChapterNumber={firstChapterNumber}
-      novelSlug={novelSlug}
-      isAuthenticated={isAuthenticated}
-      isBookmarked={isBookmarked}
-      isBookmarkLoading={isBookmarkLoading}
-      onBookmarkClick={onBookmarkClick}
-      rating={rating}
-      ratingCount={ratingCount}
-      userRating={userRating}
-      novelId={novelId}
-    />
+    {showHeader && (
+      <NovelHeader
+        title={title}
+        author={author}
+        translator={translator}
+        chaptersCount={chaptersCount}
+        bookmarkCount={bookmarkCount}
+        viewCount={viewCount}
+        coverImageUrl={coverImageUrl}
+        novelAuthorId={novelAuthorId}
+        isAuthorNameCustom={isAuthorNameCustom}
+        categories={categories}
+        showActionButtons={showActionButtons}
+        firstChapterNumber={firstChapterNumber}
+        novelSlug={novelSlug}
+        isAuthenticated={isAuthenticated}
+        isBookmarked={isBookmarked}
+        isBookmarkLoading={isBookmarkLoading}
+        onBookmarkClick={onBookmarkClick}
+        rating={rating}
+        ratingCount={ratingCount}
+        userRating={userRating}
+        novelId={novelId}
+      />
+    )}
 
     {/* Tab Navigation */}
     <div className="flex overflow-x-auto scrollbar-hide border-b mb-4">
@@ -151,8 +156,8 @@ export const SynopsisSection = ({
         {/* Description Card */}
         <div className="bg-white rounded-xl shadow-sm border p-4 mb-4">
           <div 
-            className="prose prose-sm max-w-none text-gray-600"
-            dangerouslySetInnerHTML={{ __html: description }}
+            className="prose prose-sm max-w-none text-gray-600 [&>p]:mb-4 [&>p:last-child]:mb-0 whitespace-pre-line"
+            dangerouslySetInnerHTML={{ __html: formatText(description) }}
           />
         </div>
 

@@ -31,7 +31,8 @@ const Header = () => {
   // Don't render header on more page or user dashboard on mobile
   if (pathname === '/more' || 
       (isMobile && pathname === '/user-dashboard') || 
-      (isMobile && pathname.match(/^\/novels\/[^/]+\/[^/]+$/))) {
+      (isMobile && pathname.match(/^\/novels\/[^/]+\/[^/]+$/)) ||
+      pathname.startsWith('/author/dashboard')) {
     return null;
   }
 
