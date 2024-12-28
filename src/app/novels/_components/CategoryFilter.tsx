@@ -7,12 +7,14 @@ interface CategoryFilterProps {
   selectedCategories: string[];
   onCategoriesChange: (categoryNames: string[]) => void;
   categoryCounts: Record<string, number>;
+  className?: string;
 }
 
 export default function CategoryFilter({
   selectedCategories,
   onCategoriesChange,
-  categoryCounts
+  categoryCounts,
+  className = ''
 }: CategoryFilterProps) {
   const [categories, setCategories] = useState<NovelCategory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -54,8 +56,8 @@ export default function CategoryFilter({
   }
 
   return (
-    <div className="mb-6">
-      <div className="flex items-center justify-between mb-2">
+    <div className={className}>
+      <div className="flex items-center justify-between mb-1">
         <button
           aria-label="Toggle category filter"
           onClick={() => setIsExpanded(!isExpanded)}

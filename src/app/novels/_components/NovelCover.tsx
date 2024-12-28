@@ -40,7 +40,7 @@ const NovelCover = ({
     )}
     
     {showRating && (
-      <div className="absolute bottom-0 left-0 bg-black/70 flex items-center justify-center gap-0.5 h-5 w-10 rounded-tr-lg">
+      <div className="absolute bottom-0 left-0 bg-black/70 flex items-center justify-center gap-1 h-5 w-10 rounded-tr-lg">
         <Icon icon="pepicons-print:star-filled" className="text-amber-400 text-[10px]" />
         <span className="text-white text-[10px] font-medium">
           {rating > 0 ? rating.toFixed(1) : 'N/A'}

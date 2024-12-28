@@ -261,15 +261,15 @@ export const NovelHeader = ({
 
   return (
     <>
-      <div className="flex flex-col lg:flex-row gap-4 mb-2">
+      <div className="flex flex-col lg:flex-row gap-3 -mt-4 sm:-mt-6 lg:-mt-8">
         {/* Left side with cover and main content */}
-        <div className="flex flex-col gap-4 flex-1">
+        <div className="flex flex-col gap-3 flex-1">
           {/* Cover and Title Section */}
           <div>
             {/* Cover and Title Row */}
-            <div className="flex flex-row gap-4 mb-4">
+            <div className="flex flex-row gap-4 mb-2">
               {/* Cover Image */}
-              <div className="w-32 sm:w-36 md:w-44 mx-0 flex-shrink-0">
+              <div className="w-28 sm:w-32 md:w-40 lg:w-48 mx-0 flex-shrink-0">
                 <div className="relative aspect-[2/3] rounded-xl overflow-hidden shadow-lg">
                   {coverImageUrl ? (
                     <Image
@@ -284,34 +284,32 @@ export const NovelHeader = ({
                     <div className="w-full h-full bg-gray-200" />
                   )}
                 </div>
-                {/* Translator Links for mobile */}
-                {translator && <div className="mt-3 sm:hidden"><TranslatorLinks translator={translator} /></div>}
               </div>
 
               {/* Title and Author Section */}
               <div className="flex-1">
-                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 text-gray-900 text-left">{title}</h1>
-                <div className="text-sm text-gray-600 mb-4 text-left">
+                <h1 className="text-base sm:text-xl md:text-3xl lg:text-4xl font-bold mb-1 text-gray-900 text-left">{title}</h1>
+                <div className="text-xs sm:text-sm md:text-base lg:text-lg text-gray-600 mb-2 text-left">
                   {isAuthorNameCustom ? (
                     <>
-                      by {author}
+                      by <span className="bg-green-100 px-1.5 py-0.5 rounded">{author}</span>
                       {translator && (
                         <> • TL: {translator.username ? (
                           <Link 
                             href={`/user-dashboard?id=${translator.profile_id}`}
-                            className="text-gray-700 hover:text-gray-900 hover:underline"
+                            className="bg-green-100 px-1.5 py-0.5 rounded text-gray-700 hover:text-gray-900 hover:underline"
                           >
                             {translator.username}
                           </Link>
                         ) : (
-                          <span className="text-gray-700">Anonymous</span>
+                          <span className="bg-green-100 px-1.5 py-0.5 rounded text-gray-700">Anonymous</span>
                         )}</>
                       )}
                     </>
                   ) : (
                     <>Author: <Link 
                       href={`/user-dashboard?id=${novelAuthorId}`}
-                      className="text-gray-700 hover:text-gray-900 hover:underline"
+                      className="bg-green-50 px-1.5 py-0.5 rounded text-gray-700 hover:text-gray-900 hover:underline"
                     >
                       {author}
                     </Link></>
@@ -319,9 +317,9 @@ export const NovelHeader = ({
                 </div>
 
                 {/* Stats and Rating */}
-                <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-2">
                   {/* Quick Stats */}
-                  <div className="flex flex-wrap gap-2 text-sm">
+                  <div className="flex flex-wrap gap-2 text-sm md:text-base lg:text-lg">
                     <StatsItem icon="pepicons-print:book" value={`${chaptersCount}`} color="blue" withGap />
                     <StatsItem icon="pepicons-print:bookmark" value={`${bookmarkCount}`} />
                     <div className="relative">
@@ -332,8 +330,8 @@ export const NovelHeader = ({
                         aria-label="Rate novel"
                       >
                         <Icon 
-                          icon={localUserRating ? "pepicons-print:star-filled" : "pepicons-print:star"}
-                          className={`text-lg ${localUserRating ? 'text-amber-400' : 'text-gray-400'}`}
+                          icon="pepicons-print:star-filled"
+                          className="text-lg text-amber-400"
                         />
                         <span className="text-gray-700">{localRating.toFixed(1)}</span>
                         <span className="text-gray-500">({localRatingCount})</span>
@@ -348,8 +346,8 @@ export const NovelHeader = ({
                     </div>
                   </div>
 
-                  {/* Translator Links for non-mobile */}
-                  {translator && <div className="hidden sm:block"><TranslatorLinks translator={translator} /></div>}
+                  {/* Translator Links */}
+                  {translator && <TranslatorLinks translator={translator} />}
                 </div>
               </div>
             </div>

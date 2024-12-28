@@ -13,7 +13,10 @@ const NovelListing = () => {
   const [isLoading, setIsLoading] = useState(true);
   const searchParams = useSearchParams();
   const router = useRouter();
-  const selectedCategories = searchParams.get('categories')?.split(',').filter(Boolean) || [];
+  const selectedCategories = useMemo(() => 
+    searchParams.get('categories')?.split(',').filter(Boolean) || [], 
+    [searchParams]
+  );
 
   useEffect(() => {
     const fetchNovels = async () => {
@@ -67,11 +70,12 @@ const NovelListing = () => {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4">
+    <div className="max-w-5xl mx-auto px-4 -mt-6">
       <CategoryFilter
         selectedCategories={selectedCategories}
         onCategoriesChange={handleCategoriesChange}
         categoryCounts={categoryCounts}
+        className="mb-6"
       />
       
       {filteredNovels.length === 0 ? (
