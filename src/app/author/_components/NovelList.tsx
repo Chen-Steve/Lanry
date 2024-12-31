@@ -65,7 +65,7 @@ export default function NovelList({
         >
           <div className="flex items-center gap-2">
             <Icon icon="mdi:book-multiple" className="w-5 h-5 text-gray-600" />
-            <h3 className="font-medium">My Novels</h3>
+            <h3 className="font-medium text-black">My Novels</h3>
             <span className="text-sm text-gray-500">({novels.length})</span>
           </div>
           <Icon 
@@ -90,7 +90,7 @@ export default function NovelList({
                   className="flex-1 min-w-0 cursor-pointer"
                 >
                   <div className="flex items-center gap-1.5">
-                    <h4 className="font-medium text-sm truncate">{novel.title}</h4>
+                    <h4 className="font-medium text-sm truncate text-black">{novel.title}</h4>
                   </div>
                   <p className="text-xs text-gray-600 truncate">by {novel.author}</p>
                   <div className="flex flex-wrap gap-1.5 mt-1">

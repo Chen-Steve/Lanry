@@ -80,7 +80,7 @@ export default function AuthorDashboard() {
         isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
         <div className="p-6 pt-16 lg:pt-6">
-          <a href="https://lanry.vercel.app/" className="text-2xl font-bold mb-6 block text-center">
+          <a href="https://lanry.space/" className="text-2xl font-bold mb-6 block text-center">
             Lanry
           </a>
           <nav className="flex flex-col gap-2">
