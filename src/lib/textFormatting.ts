@@ -17,6 +17,40 @@ export const formatText = (text: string): string => {
   // Replace _text_ with <u>text</u> for underline
   text = text.replace(/_(.*?)_/g, '<u>$1</u>');
   
+  // Replace horizontal lines (---)
+  text = text.replace(/^---$/gm, '<div class="border-t border-gray-300 leading-[1em] my-[1em]"></div>');
+  
+  // Replace [text](url) with <a> links
+  text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_match, linkText, url) => {
+    // Validate URL
+    let safeUrl = url;
+    try {
+      const urlObj = new URL(url);
+      if (!urlObj.protocol.startsWith('http')) {
+        safeUrl = `https://${url}`;
+      }
+    } catch {
+      safeUrl = `https://${url}`;
+    }
+    
+    return `<span class="link-wrapper inline-block relative pointer-events-auto">
+      <a href="${safeUrl}" 
+        target="_blank" 
+        rel="noopener noreferrer" 
+        class="text-blue-600 hover:text-blue-800 transition-colors"
+        onclick="event.stopPropagation()"
+      >${linkText}</a>
+      <div class="link-preview opacity-0 invisible absolute z-50 bg-white border border-gray-200 p-3 rounded-lg shadow-lg transition-all duration-200 text-sm text-gray-700 pointer-events-none min-w-[200px] max-w-sm">
+        <div class="flex items-start gap-2">
+          <div>
+            <div class="font-medium">${linkText}</div>
+            <div class="text-xs text-gray-500 break-all">${safeUrl}</div>
+          </div>
+        </div>
+      </div>
+    </span>`;
+  });
+  
   // Replace [^number: content] with inline footnote popups
   text = text.replace(/\[\^(\d+):\s*(.*?)\]/g, (_match, num, content) => {
     console.log('Creating footnote:', { num, content });

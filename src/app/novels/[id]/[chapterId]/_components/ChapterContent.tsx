@@ -99,123 +99,122 @@ export default function ChapterContent({
     .filter(p => p.trim());
 
   useEffect(() => {
-    // Use event delegation for footnote interactions
-    const handleFootnoteInteraction = (e: Event) => {
-      console.log('Footnote interaction:', e.type);
-      
-      const target = e.target as Element;
+    // Use event delegation for footnote and link interactions
+    const handleInteractions = (e: Event) => {
+      const target = e.target instanceof Element ? e.target : (e.target as { parentElement?: Element })?.parentElement;
+      if (!target) return;
+
+      // Handle footnotes
       const footnote = target.closest('.footnote');
-      if (!footnote) {
-        console.log('No footnote found in event target');
-        return;
-      }
-      
-      e.preventDefault();
-      e.stopPropagation();
-      
-      console.log('Found footnote:', {
-        footnote,
-        dataset: footnote.getAttribute('data-footnote'),
-        content: footnote.getAttribute('data-content')
-      });
-      
-      const wrapper = footnote.closest('.footnote-wrapper');
-      if (!wrapper) {
-        console.log('No wrapper found');
-        return;
-      }
-      
-      const tooltip = wrapper.querySelector('.footnote-tooltip') as HTMLElement;
-      if (!tooltip) {
-        console.log('No tooltip found');
-        return;
+      if (footnote) {
+        console.log('Footnote interaction:', e.type);
+        
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const wrapper = footnote.closest('.footnote-wrapper');
+        if (!wrapper) {
+          console.log('No wrapper found');
+          return;
+        }
+        
+        const tooltip = wrapper.querySelector('.footnote-tooltip') as HTMLElement;
+        if (!tooltip) {
+          console.log('No tooltip found');
+          return;
+        }
+
+        if (e.type === 'click') {
+          console.log('Processing click event');
+          
+          // Remove pinned class from all other tooltips
+          document.querySelectorAll('.footnote-tooltip.pinned').forEach(t => {
+            if (t !== tooltip) {
+              console.log('Unpinning other tooltip');
+              t.classList.remove('pinned', 'opacity-100', 'visible');
+              t.classList.add('opacity-0', 'invisible');
+            }
+          });
+          
+          // Toggle pinned state for this tooltip
+          const wasPinned = tooltip.classList.contains('pinned');
+          console.log('Tooltip was pinned:', wasPinned);
+          
+          if (wasPinned) {
+            console.log('Hiding tooltip');
+            tooltip.classList.remove('pinned', 'opacity-100', 'visible');
+            tooltip.classList.add('opacity-0', 'invisible');
+          } else {
+            console.log('Showing pinned tooltip');
+            tooltip.classList.add('pinned', 'opacity-100', 'visible');
+            tooltip.classList.remove('opacity-0', 'invisible');
+            
+            // Position the tooltip
+            const rect = wrapper.getBoundingClientRect();
+            const viewportHeight = window.innerHeight;
+            const spaceAbove = rect.top;
+            const spaceBelow = viewportHeight - rect.bottom;
+            
+            tooltip.style.minWidth = '200px';
+            tooltip.style.left = '50%';
+            tooltip.style.transform = 'translateX(-50%)';
+            
+            if (spaceBelow >= 100 || spaceBelow > spaceAbove) {
+              tooltip.style.top = 'calc(100% + 5px)';
+              tooltip.style.bottom = 'auto';
+            } else {
+              tooltip.style.bottom = 'calc(100% + 5px)';
+              tooltip.style.top = 'auto';
+            }
+          }
+        }
       }
 
-      if (e.type === 'click') {
-        console.log('Processing click event');
-        
-        // Remove pinned class from all other tooltips
-        document.querySelectorAll('.footnote-tooltip.pinned').forEach(t => {
-          if (t !== tooltip) {
-            console.log('Unpinning other tooltip');
-            t.classList.remove('pinned', 'opacity-100', 'visible');
-            t.classList.add('opacity-0', 'invisible');
-          }
-        });
-        
-        // Toggle pinned state for this tooltip
-        const wasPinned = tooltip.classList.contains('pinned');
-        console.log('Tooltip was pinned:', wasPinned);
-        
-        if (wasPinned) {
-          console.log('Hiding tooltip');
-          tooltip.classList.remove('pinned', 'opacity-100', 'visible');
-          tooltip.classList.add('opacity-0', 'invisible');
-        } else {
-          console.log('Showing pinned tooltip');
-          tooltip.classList.add('pinned', 'opacity-100', 'visible');
-          tooltip.classList.remove('opacity-0', 'invisible');
-          
-          // Position the tooltip
-          const rect = wrapper.getBoundingClientRect();
+      // Handle link previews
+      const linkWrapper = target.closest('.link-wrapper');
+      if (linkWrapper && (e.type === 'mouseenter' || e.type === 'mouseleave')) {
+        const preview = linkWrapper.querySelector('.link-preview') as HTMLElement;
+        if (!preview) return;
+
+        if (e.type === 'mouseenter') {
+          preview.classList.remove('opacity-0', 'invisible');
+          preview.classList.add('opacity-100', 'visible');
+
+          // Position the preview
+          const rect = linkWrapper.getBoundingClientRect();
           const viewportHeight = window.innerHeight;
           const spaceAbove = rect.top;
           const spaceBelow = viewportHeight - rect.bottom;
-          
-          console.log('Positioning tooltip:', {
-            spaceAbove,
-            spaceBelow,
-            viewportHeight,
-            rect
-          });
-          
-          tooltip.style.minWidth = '200px';
-          tooltip.style.left = '50%';
-          tooltip.style.transform = 'translateX(-50%)';
-          
+
+          preview.style.minWidth = '200px';
+          preview.style.left = '50%';
+          preview.style.transform = 'translateX(-50%)';
+
           if (spaceBelow >= 100 || spaceBelow > spaceAbove) {
-            console.log('Positioning below');
-            tooltip.style.top = 'calc(100% + 5px)';
-            tooltip.style.bottom = 'auto';
+            preview.style.top = 'calc(100% + 5px)';
+            preview.style.bottom = 'auto';
           } else {
-            console.log('Positioning above');
-            tooltip.style.bottom = 'calc(100% + 5px)';
-            tooltip.style.top = 'auto';
+            preview.style.bottom = 'calc(100% + 5px)';
+            preview.style.top = 'auto';
           }
+        } else {
+          preview.classList.remove('opacity-100', 'visible');
+          preview.classList.add('opacity-0', 'invisible');
         }
       }
     };
 
-    // Close pinned tooltips when clicking outside
-    const handleClickOutside = (e: MouseEvent) => {
-      console.log('Click outside check');
-      const target = e.target as Element;
-      const footnoteWrapper = target.closest('.footnote-wrapper');
-      
-      // If we have any pinned tooltips and we're clicking outside of any footnote wrapper
-      if (!footnoteWrapper && document.querySelector('.footnote-tooltip.pinned')) {
-        console.log('Closing all pinned tooltips');
-        e.preventDefault();
-        e.stopPropagation();
-        
-        document.querySelectorAll('.footnote-tooltip.pinned').forEach(tooltip => {
-          tooltip.classList.remove('pinned', 'opacity-100', 'visible');
-          tooltip.classList.add('opacity-0', 'invisible');
-        });
-      }
-    };
-
-    console.log('Setting up footnote event listeners');
     // Add event listeners
-    document.addEventListener('click', handleFootnoteInteraction);
-    document.addEventListener('click', handleClickOutside);
+    document.addEventListener('click', handleInteractions);
+    document.addEventListener('mouseenter', handleInteractions, true);
+    document.addEventListener('mouseleave', handleInteractions, true);
     
     return () => {
-      console.log('Cleaning up footnote event listeners');
-      document.removeEventListener('click', handleFootnoteInteraction);
-      document.removeEventListener('click', handleClickOutside);
+      document.removeEventListener('click', handleInteractions);
+      document.removeEventListener('mouseenter', handleInteractions, true);
+      document.removeEventListener('mouseleave', handleInteractions, true);
     };
-  }, []); // No dependencies needed since we're using event delegation
+  }, []);
 
   return (
     <div className="mb-6 md:mb-8">

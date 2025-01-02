@@ -27,7 +27,7 @@ export default function ChapterEditor({
 }: ChapterEditorProps) {
   const [textareaRef, setTextareaRef] = useState<HTMLTextAreaElement | null>(null);
 
-  type FormatType = 'bold' | 'italic' | 'underline' | 'footnote';
+  type FormatType = 'bold' | 'italic' | 'underline' | 'footnote' | 'link' | 'divider';
   
   interface FormatConfig {
     mark: string;
@@ -58,6 +58,20 @@ export default function ChapterEditor({
           const newNumber = highestNumber + 1;
           return `[^${newNumber}: ${selectedText || 'Enter footnote text'}]`;
         }
+      },
+      link: {
+        mark: '',
+        check: (text: string) => /\[.*?\]\(.*?\)/.test(text),
+        apply: () => {
+          return `[${selectedText || 'Enter link text'}](Enter URL)`;
+        }
+      },
+      divider: {
+        mark: '',
+        check: (text: string) => text === '---',
+        apply: () => {
+          return '---';
+        }
       }
     };
 
@@ -65,10 +79,10 @@ export default function ChapterEditor({
     let newText = '';
     let offset = 0;
 
-    if (format === 'footnote') {
-      const footnoteText = apply!();
-      newText = textareaRef.value.substring(0, start) + footnoteText + textareaRef.value.substring(end);
-      offset = footnoteText.length;
+    if (format === 'footnote' || format === 'link' || format === 'divider') {
+      const formattedText = apply!();
+      newText = textareaRef.value.substring(0, start) + formattedText + textareaRef.value.substring(end);
+      offset = formattedText.length;
     } else if (check(selectedText)) {
       newText = textareaRef.value.substring(0, start) + selectedText.slice(mark.length, -mark.length) + textareaRef.value.substring(end);
       offset = -mark.length * 2;
@@ -81,7 +95,7 @@ export default function ChapterEditor({
     
     // Restore selection
     setTimeout(() => {
-      if (selectedText && format !== 'footnote') {
+      if (selectedText && format !== 'footnote' && format !== 'link' && format !== 'divider') {
         textareaRef.selectionStart = start;
         textareaRef.selectionEnd = end + offset;
       } else {
@@ -111,6 +125,10 @@ export default function ChapterEditor({
         case 'f':
           e.preventDefault();
           applyFormatting('footnote');
+          break;
+        case 'k':
+          e.preventDefault();
+          applyFormatting('link');
           break;
       }
     } else if (e.key === 'Enter') {
@@ -180,6 +198,23 @@ export default function ChapterEditor({
           type="button"
         >
           <Icon icon="mdi:format-superscript" className="w-5 h-5 text-black" />
+        </button>
+        <button
+          onClick={() => applyFormatting('link')}
+          className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+          title="Add Link (Ctrl+K)"
+          type="button"
+        >
+          <Icon icon="mdi:link" className="w-5 h-5 text-black" />
+        </button>
+        <div className="w-px h-5 bg-gray-300 mx-1" /> {/* Separator */}
+        <button
+          onClick={() => applyFormatting('divider')}
+          className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+          title="Insert Horizontal Line"
+          type="button"
+        >
+          <Icon icon="mdi:minus" className="w-5 h-5 text-black" />
         </button>
         <div className="flex-1 text-right px-2">
           <span className="text-sm text-gray-500">
