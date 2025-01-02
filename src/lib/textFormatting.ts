@@ -17,6 +17,21 @@ export const formatText = (text: string): string => {
   // Replace _text_ with <u>text</u> for underline
   text = text.replace(/_(.*?)_/g, '<u>$1</u>');
   
+  // Replace [^number: content] with inline footnote popups
+  text = text.replace(/\[\^(\d+):\s*(.*?)\]/g, (_match, num, content) => {
+    console.log('Creating footnote:', { num, content });
+    return `<span class="footnote-wrapper inline-block relative pointer-events-auto">
+      <button type="button" 
+        class="footnote inline-block text-blue-600 hover:text-blue-800 transition-colors" 
+        data-footnote="${num}" 
+        data-content="${content.replace(/"/g, '&quot;')}"
+      ><sup>[${num}]</sup></button>
+      <div class="footnote-tooltip opacity-0 invisible absolute z-50 bg-white border border-gray-200 p-3 rounded-lg shadow-lg transition-all duration-200 max-w-sm text-sm text-gray-700">
+        ${content}
+      </div>
+    </span>`;
+  });
+  
   return text;
 };
 

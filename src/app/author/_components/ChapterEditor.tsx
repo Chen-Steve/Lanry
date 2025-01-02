@@ -27,24 +27,49 @@ export default function ChapterEditor({
 }: ChapterEditorProps) {
   const [textareaRef, setTextareaRef] = useState<HTMLTextAreaElement | null>(null);
 
-  const applyFormatting = (format: 'bold' | 'italic' | 'underline') => {
+  type FormatType = 'bold' | 'italic' | 'underline' | 'footnote';
+  
+  interface FormatConfig {
+    mark: string;
+    check: (text: string) => boolean;
+    apply?: () => string;
+  }
+
+  const applyFormatting = (format: FormatType) => {
     if (!textareaRef) return;
 
     const start = textareaRef.selectionStart;
     const end = textareaRef.selectionEnd;
     const selectedText = textareaRef.value.substring(start, end);
     
-    const formatMap = {
+    const formatMap: Record<FormatType, FormatConfig> = {
       bold: { mark: '**', check: (text: string) => text.startsWith('**') && text.endsWith('**') },
       italic: { mark: '*', check: (text: string) => text.startsWith('*') && text.endsWith('*') && !(text.startsWith('**') && text.endsWith('**')) },
-      underline: { mark: '_', check: (text: string) => text.startsWith('_') && text.endsWith('_') }
+      underline: { mark: '_', check: (text: string) => text.startsWith('_') && text.endsWith('_') },
+      footnote: { 
+        mark: '', 
+        check: (text: string) => /\[\^\d+:.*?\]/.test(text),
+        apply: () => {
+          // Find the highest footnote number in the text
+          const footnotes = [...textareaRef.value.matchAll(/\[\^(\d+):/g)];
+          const highestNumber = footnotes.length > 0 
+            ? Math.max(...footnotes.map(match => parseInt(match[1])))
+            : 0;
+          const newNumber = highestNumber + 1;
+          return `[^${newNumber}: ${selectedText || 'Enter footnote text'}]`;
+        }
+      }
     };
 
-    const { mark, check } = formatMap[format];
+    const { mark, check, apply } = formatMap[format];
     let newText = '';
     let offset = 0;
 
-    if (check(selectedText)) {
+    if (format === 'footnote') {
+      const footnoteText = apply!();
+      newText = textareaRef.value.substring(0, start) + footnoteText + textareaRef.value.substring(end);
+      offset = footnoteText.length;
+    } else if (check(selectedText)) {
       newText = textareaRef.value.substring(0, start) + selectedText.slice(mark.length, -mark.length) + textareaRef.value.substring(end);
       offset = -mark.length * 2;
     } else {
@@ -56,7 +81,7 @@ export default function ChapterEditor({
     
     // Restore selection
     setTimeout(() => {
-      if (selectedText) {
+      if (selectedText && format !== 'footnote') {
         textareaRef.selectionStart = start;
         textareaRef.selectionEnd = end + offset;
       } else {
@@ -82,6 +107,10 @@ export default function ChapterEditor({
         case 'u':
           e.preventDefault();
           applyFormatting('underline');
+          break;
+        case 'f':
+          e.preventDefault();
+          applyFormatting('footnote');
           break;
       }
     } else if (e.key === 'Enter') {
@@ -145,27 +174,12 @@ export default function ChapterEditor({
           <Icon icon="mdi:format-underline" className="w-5 h-5 text-black" />
         </button>
         <button
-          onClick={() => {
-            if (!textareaRef) return;
-            const start = textareaRef.selectionStart;
-            const end = textareaRef.selectionEnd;
-            const footnoteNumber = (value.match(/\[\^\d+:/g) || []).length + 1;
-            const footnoteText = `[^${footnoteNumber}: Add footnote here]`;
-            const newText = value.substring(0, start) + footnoteText + value.substring(end);
-            onChange(newText);
-            setTimeout(() => {
-              const newStart = start + footnoteText.indexOf('Add');
-              const newEnd = newStart + 'Add footnote here'.length;
-              textareaRef.selectionStart = newStart;
-              textareaRef.selectionEnd = newEnd;
-              textareaRef.focus();
-            }, 0);
-          }}
+          onClick={() => applyFormatting('footnote')}
           className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
-          title="Add Footnote (^)"
+          title="Add Footnote (Ctrl+F)"
           type="button"
         >
-          <Icon icon="mdi:footnote" className="w-5 h-5 text-black" />
+          <Icon icon="mdi:format-superscript" className="w-5 h-5 text-black" />
         </button>
         <div className="flex-1 text-right px-2">
           <span className="text-sm text-gray-500">
