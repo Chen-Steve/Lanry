@@ -3,9 +3,11 @@
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
 import { usePathname } from 'next/navigation';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function MobileNavigation() {
   const pathname = usePathname();
+  const { isAuthenticated } = useAuth();
 
   // Don't render mobile navigation if we're on a chapter page or novel detail page
   if (pathname?.match(/\/novels\/[^/]+\/c\d+/) || pathname?.match(/\/novels\/[^/]+$/)) {
@@ -38,12 +40,15 @@ export default function MobileNavigation() {
           <span className="text-xs">Forum</span>
         </Link>
         
-        <Link href="/user-dashboard" className={`flex flex-col items-center p-2 ${isActive('/user-dashboard')}`}>
+        <Link 
+          href={isAuthenticated ? "/user-dashboard" : "/auth"} 
+          className={`flex flex-col items-center p-2 ${isActive(isAuthenticated ? '/user-dashboard' : '/auth')}`}
+        >
           <Icon 
             icon="pepicons-print:person" 
             className="w-6 h-6" 
           />
-          <span className="text-xs">Profile</span>
+          <span className="text-xs">{isAuthenticated ? 'Profile' : 'Sign in'}</span>
         </Link>
         
         <Link href="/more" className={`flex flex-col items-center p-2 ${isActive('/more')}`}>

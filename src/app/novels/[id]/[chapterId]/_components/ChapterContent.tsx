@@ -8,6 +8,7 @@ import { useComments } from '@/hooks/useComments';
 import { Icon } from '@iconify/react';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import type { ChapterComment as BaseChapterComment } from '@/types/database';
+import FootnoteTooltip from './FootnoteTooltip';
 
 // Extend the base type to include avatar_url
 interface ChapterComment extends Omit<BaseChapterComment, 'profile'> {
@@ -99,76 +100,10 @@ export default function ChapterContent({
     .filter(p => p.trim());
 
   useEffect(() => {
-    // Use event delegation for footnote and link interactions
+    // Use event delegation for link previews
     const handleInteractions = (e: Event) => {
       const target = e.target instanceof Element ? e.target : (e.target as { parentElement?: Element })?.parentElement;
       if (!target) return;
-
-      // Handle footnotes
-      const footnote = target.closest('.footnote');
-      if (footnote) {
-        console.log('Footnote interaction:', e.type);
-        
-        e.preventDefault();
-        e.stopPropagation();
-        
-        const wrapper = footnote.closest('.footnote-wrapper');
-        if (!wrapper) {
-          console.log('No wrapper found');
-          return;
-        }
-        
-        const tooltip = wrapper.querySelector('.footnote-tooltip') as HTMLElement;
-        if (!tooltip) {
-          console.log('No tooltip found');
-          return;
-        }
-
-        if (e.type === 'click') {
-          console.log('Processing click event');
-          
-          // Remove pinned class from all other tooltips
-          document.querySelectorAll('.footnote-tooltip.pinned').forEach(t => {
-            if (t !== tooltip) {
-              console.log('Unpinning other tooltip');
-              t.classList.remove('pinned', 'opacity-100', 'visible');
-              t.classList.add('opacity-0', 'invisible');
-            }
-          });
-          
-          // Toggle pinned state for this tooltip
-          const wasPinned = tooltip.classList.contains('pinned');
-          console.log('Tooltip was pinned:', wasPinned);
-          
-          if (wasPinned) {
-            console.log('Hiding tooltip');
-            tooltip.classList.remove('pinned', 'opacity-100', 'visible');
-            tooltip.classList.add('opacity-0', 'invisible');
-          } else {
-            console.log('Showing pinned tooltip');
-            tooltip.classList.add('pinned', 'opacity-100', 'visible');
-            tooltip.classList.remove('opacity-0', 'invisible');
-            
-            // Position the tooltip
-            const rect = wrapper.getBoundingClientRect();
-            const viewportHeight = window.innerHeight;
-            const spaceAbove = rect.top;
-            const spaceBelow = viewportHeight - rect.bottom;
-            
-            tooltip.style.minWidth = '200px';
-            tooltip.style.left = '50%';
-            tooltip.style.transform = 'translateX(-50%)';
-            
-            if (spaceBelow >= 100 || spaceBelow > spaceAbove) {
-              tooltip.style.top = 'calc(100% + 5px)';
-              tooltip.style.bottom = 'auto';
-            } else {
-              tooltip.style.bottom = 'calc(100% + 5px)';
-              tooltip.style.top = 'auto';
-            }
-          }
-        }
-      }
 
       // Handle link previews
       const linkWrapper = target.closest('.link-wrapper');
@@ -205,12 +140,10 @@ export default function ChapterContent({
     };
 
     // Add event listeners
-    document.addEventListener('click', handleInteractions);
     document.addEventListener('mouseenter', handleInteractions, true);
     document.addEventListener('mouseleave', handleInteractions, true);
     
     return () => {
-      document.removeEventListener('click', handleInteractions);
       document.removeEventListener('mouseenter', handleInteractions, true);
       document.removeEventListener('mouseleave', handleInteractions, true);
     };
@@ -344,6 +277,7 @@ export default function ChapterContent({
           authorId={authorId}
         />
       )}
+      <FootnoteTooltip />
     </div>
   );
 } 

@@ -17,14 +17,14 @@ export default function AuthPage() {
   } = useAuth();
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="w-full max-w-[min(100%,24rem)] space-y-6">
+    <div className="fixed inset-0 md:static h-[100dvh] md:h-[calc(100vh-28rem)] flex items-center justify-center px-4 overflow-hidden">
+      <div className="w-full max-w-[min(100%,24rem)] -mt-12 md:mt-0 space-y-4 md:space-y-6">
         <h1 className="text-2xl sm:text-3xl font-bold text-center text-black">
           {mode === 'signin' ? 'Sign In' : 'Create Account'}
         </h1>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-600 p-3 rounded-md text-sm animate-fadeIn">
+          <div className="bg-red-50 border border-red-200 text-red-600 p-2 rounded-md text-sm animate-fadeIn">
             {error}
           </div>
         )}
@@ -47,7 +47,7 @@ export default function AuthPage() {
         <button
           type="button"
           onClick={resetForm}
-          className="w-full text-center text-black hover:text-gray-600 text-sm sm:text-base py-2 font-medium"
+          className="w-full text-center text-black hover:text-gray-600 text-sm sm:text-base py-1 md:py-2 font-medium"
         >
           {mode === 'signin' 
             ? "Don't have an account? Sign up" 

@@ -19,14 +19,17 @@ const Header = () => {
 
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768); // 768px is the md breakpoint in Tailwind
+      setIsMobile(window.innerWidth < 768);
     };
-    
     checkMobile();
     window.addEventListener('resize', checkMobile);
-    
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  // Don't render header on auth page when on mobile
+  if (isMobile && pathname === '/auth') {
+    return null;
+  }
 
   // Don't render header on more page or user dashboard on mobile
   if (pathname === '/more' || 

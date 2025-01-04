@@ -52,11 +52,11 @@ export default function CategoryFilter({
   };
 
   if (isLoading) {
-    return <div className="animate-pulse h-12 bg-gray-200 rounded-lg mb-6"></div>;
+    return <div className="animate-pulse h-12 bg-gray-200 rounded-lg mb-6 mt-4 sm:mt-0"></div>;
   }
 
   return (
-    <div className={className}>
+    <div className={`mt-4 sm:mt-0 ${className}`}>
       <div className="flex items-center justify-between mb-1">
         <button
           aria-label="Toggle category filter"
