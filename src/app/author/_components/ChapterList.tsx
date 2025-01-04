@@ -37,8 +37,8 @@ export default function ChapterList({
   onDeleteChapter
 }: ChapterListProps) {
   return (
-    <div className="bg-white rounded-lg shadow-sm border">
-      <div className="p-2 sm:p-4 border-b">
+    <div className="bg-white rounded-lg shadow-sm border max-w-sm">
+      <div className="p-2 sm:p-3 border-b">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold text-gray-900">
             Chapters
@@ -67,11 +67,11 @@ export default function ChapterList({
             >
               <div 
                 onClick={() => onChapterClick(chapter)}
-                className="p-3 sm:p-5 cursor-pointer"
+                className="p-2 sm:p-3 cursor-pointer"
               >
-                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 pr-10">
+                <div className="flex flex-col gap-1 pr-8">
                   <div className="flex-1">
-                    <h4 className="font-medium text-gray-900">
+                    <h4 className="font-medium text-gray-900 text-sm">
                       Chapter {chapter.chapter_number}
                       {chapter.part_number && (
                         <span className="text-gray-700">
@@ -93,7 +93,7 @@ export default function ChapterList({
                   </div>
                   
                   {isAdvancedChapter(chapter) && (
-                    <span className="inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
                       <Icon icon="mdi:star" className="w-4 h-4 mr-1" />
                       Advanced
                     </span>
@@ -103,10 +103,10 @@ export default function ChapterList({
 
               <button
                 onClick={() => onDeleteChapter(chapter.id)}
-                className="absolute top-3 right-2 sm:top-4 sm:right-4 p-1.5 sm:p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
+                className="absolute top-2 right-1 sm:top-2 sm:right-2 p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
                 title="Delete chapter"
               >
-                <Icon icon="mdi:delete-outline" className="w-5 h-5" />
+                <Icon icon="mdi:delete-outline" className="w-4 h-4" />
               </button>
             </div>
           ))

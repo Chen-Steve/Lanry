@@ -87,8 +87,6 @@ export default function NovelFormFields({
         <ChapterEditor
           value={formData.description}
           onChange={(value) => onFormDataChange({ ...formData, description: value })}
-          authorThoughts=""
-          onAuthorThoughtsChange={() => {}}
           className="min-h-[200px]"
         />
       </div>
@@ -115,8 +113,9 @@ export default function NovelFormFields({
       )}
 
       <div>
-        <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
-          Status
+        <label htmlFor="status" className="block text-sm font-medium mb-1">
+          <span className="text-gray-700">Status</span>
+          <span className="text-gray-400 ml-2">(current status of translation)</span>
         </label>
         <div className="grid grid-cols-3 gap-4">
           {statusOptions.map(option => (

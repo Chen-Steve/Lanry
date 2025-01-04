@@ -4,8 +4,8 @@ import { Icon } from '@iconify/react';
 interface ChapterEditorProps {
   value: string;
   onChange: (value: string) => void;
-  authorThoughts: string;
-  onAuthorThoughtsChange: (thoughts: string) => void;
+  authorThoughts?: string;
+  onAuthorThoughtsChange?: (thoughts: string) => void;
   className?: string;
 }
 
@@ -235,18 +235,20 @@ export default function ChapterEditor({
       />
 
       {/* Author's Thoughts Section */}
-      <div className="mt-6 space-y-2">
-        <div className="flex items-center gap-2">
-          <Icon icon="mdi:thought-bubble" className="w-5 h-5 text-gray-600" />
-          <h3 className="text-lg font-medium text-gray-700">Author&apos;s Thoughts</h3>
+      {authorThoughts !== undefined && onAuthorThoughtsChange && (
+        <div className="mt-6 space-y-2">
+          <div className="flex items-center gap-2">
+            <Icon icon="mdi:thought-bubble" className="w-5 h-5 text-gray-600" />
+            <h3 className="text-lg font-medium text-gray-700">Author&apos;s Thoughts</h3>
+          </div>
+          <textarea
+            value={authorThoughts}
+            onChange={(e) => onAuthorThoughtsChange(e.target.value)}
+            className="w-full p-4 border border-gray-300 rounded-lg text-black min-h-[150px] focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y bg-gray-50"
+            placeholder="Share your thoughts about this chapter"
+          />
         </div>
-        <textarea
-          value={authorThoughts}
-          onChange={(e) => onAuthorThoughtsChange(e.target.value)}
-          className="w-full p-4 border border-gray-300 rounded-lg text-black min-h-[150px] focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y bg-gray-50"
-          placeholder="Share your thoughts about this chapter (only visible to you)..."
-        />
-      </div>
+      )}
     </div>
   );
 } 

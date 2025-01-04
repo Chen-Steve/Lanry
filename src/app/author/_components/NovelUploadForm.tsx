@@ -290,11 +290,9 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
 
       <section>
         <div className="bg-white rounded-lg p-8 shadow-lg border">
-          <h3 className="text-2xl font-bold text-center mb-6">
-            {editingNovel ? 'Edit Novel' : 'Upload New Novel'}
-          </h3>
-
-          {renderStepIndicator()}
+          <div className="mb-8">
+            {renderStepIndicator()}
+          </div>
 
           <form onSubmit={handleSubmit} className="max-w-3xl mx-auto">
             {renderFormStep()}

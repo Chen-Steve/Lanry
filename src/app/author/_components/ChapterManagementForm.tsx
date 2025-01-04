@@ -171,23 +171,28 @@ export default function ChapterManagementForm({ authorOnly = false }: ChapterMan
   return (
     <div className="max-w-5xl mx-auto px-2 sm:px-4">
       <div className="mb-4 sm:mb-6">
-        <select
-          title="Select a novel"
-          value={selectedNovel}
-          onChange={(e) => setSelectedNovel(e.target.value)}
-          className="w-full p-2 sm:p-3 border rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
-        >
-          <option value="" className="text-black">Select a novel...</option>
-          {novels.map((novel) => (
-            <option key={novel.id} value={novel.id} className="text-black">
-              {novel.title}
-            </option>
-          ))}
-        </select>
+        <div className="relative">
+          <select
+            title="Select a novel"
+            value={selectedNovel}
+            onChange={(e) => setSelectedNovel(e.target.value)}
+            className="w-full pl-4 pr-10 py-3 border rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black appearance-none shadow-sm"
+          >
+            <option value="" className="text-gray-500">Select a novel to manage chapters...</option>
+            {novels.map((novel) => (
+              <option key={novel.id} value={novel.id} className="text-black">
+                {novel.title}
+              </option>
+            ))}
+          </select>
+          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-500">
+            <Icon icon="mdi:chevron-down" className="w-5 h-5" />
+          </div>
+        </div>
       </div>
 
       {selectedNovel && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
           <button
             onClick={() => setIsChapterListVisible(!isChapterListVisible)}
             className="lg:hidden flex items-center gap-2 mb-2 px-3 py-2 text-black bg-gray-100 rounded-lg hover:bg-gray-200"
@@ -200,15 +205,17 @@ export default function ChapterManagementForm({ authorOnly = false }: ChapterMan
           </button>
 
           <div className={`lg:col-span-1 ${isChapterListVisible ? 'block' : 'hidden'} lg:block`}>
-            <ChapterList
-              chapters={chapters}
-              editingChapterId={editingChapter?.id || null}
-              onChapterClick={handleChapterClick}
-              onDeleteChapter={handleDeleteChapter}
-            />
+            <div className="lg:sticky lg:top-4">
+              <ChapterList
+                chapters={chapters}
+                editingChapterId={editingChapter?.id || null}
+                onChapterClick={handleChapterClick}
+                onDeleteChapter={handleDeleteChapter}
+              />
+            </div>
           </div>
 
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-3">
             <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
               <h3 className="text-lg font-semibold mb-2 sm:mb-4">
                 {editingChapter ? 'Edit Chapter' : 'Add New Chapter'}
