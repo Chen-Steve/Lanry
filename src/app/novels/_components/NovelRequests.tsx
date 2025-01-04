@@ -56,8 +56,8 @@ const RequestCard = ({ request, onVote }: {
   };
 
   return (
-    <div className="flex gap-4 py-6 border-b border-gray-100 last:border-0">
-      <div className="w-24 h-36 md:w-28 md:h-40 flex-shrink-0 rounded-lg overflow-hidden bg-gray-50">
+    <div className="flex gap-4 py-6 border-b border-border last:border-0">
+      <div className="w-24 h-36 md:w-28 md:h-40 flex-shrink-0 rounded-lg overflow-hidden bg-muted">
         {request.coverImage ? (
           <Image
             src={request.coverImage}
@@ -74,7 +74,7 @@ const RequestCard = ({ request, onVote }: {
             }}
           />
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 p-2">
+          <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground p-2">
             <Icon icon="mdi:book-outline" className="text-3xl mb-1" />
             <span className="text-xs text-center">No Cover</span>
           </div>
@@ -84,10 +84,10 @@ const RequestCard = ({ request, onVote }: {
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <h3 className="font-medium text-base text-gray-900 leading-tight">
+            <h3 className="font-medium text-base text-foreground leading-tight">
               {request.title}
             </h3>
-            <p className="text-sm text-gray-600 mt-0.5">by {request.author}</p>
+            <p className="text-sm text-muted-foreground mt-0.5">by {request.author}</p>
           </div>
           
           <div className="flex flex-col items-center gap-1">
@@ -96,8 +96,8 @@ const RequestCard = ({ request, onVote }: {
               disabled={isVoting}
               className={`relative p-2 rounded-lg transition-colors
                 ${localHasVoted 
-                  ? 'bg-red-50 text-red-500' 
-                  : 'active:bg-gray-100 text-gray-400'
+                  ? 'bg-red-50 dark:bg-red-950/50 text-red-500' 
+                  : 'active:bg-accent text-muted-foreground'
                 }`}
               title={isAuthenticated ? 'Vote for this novel' : 'Sign in to vote'}
             >
@@ -106,13 +106,13 @@ const RequestCard = ({ request, onVote }: {
                 className="text-xl transition-transform active:scale-90"
               />
               {isVoting && (
-                <div className="absolute inset-0 flex items-center justify-center bg-white/50 rounded-lg">
+                <div className="absolute inset-0 flex items-center justify-center bg-background/50 rounded-lg">
                   <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
                 </div>
               )}
             </button>
             <span className={`text-sm font-medium tabular-nums
-              ${localHasVoted ? 'text-red-500' : 'text-gray-500'}`}
+              ${localHasVoted ? 'text-red-500' : 'text-muted-foreground'}`}
             >
               {localVotes}
             </span>
@@ -120,7 +120,7 @@ const RequestCard = ({ request, onVote }: {
         </div>
         
         <div className="relative">
-          <p className={`text-sm text-gray-600 leading-relaxed mt-2 ${
+          <p className={`text-sm text-muted-foreground leading-relaxed mt-2 ${
             isExpanded ? '' : 'line-clamp-3 md:line-clamp-2'
           }`}>
             {request.description}
@@ -128,7 +128,7 @@ const RequestCard = ({ request, onVote }: {
           {request.description.length > 150 && !isExpanded && (
             <button
               onClick={() => setIsExpanded(true)}
-              className="text-blue-600 text-sm hover:text-blue-700 mt-1"
+              className="text-primary hover:text-primary/80 text-sm mt-1"
             >
               Read more
             </button>
@@ -136,14 +136,14 @@ const RequestCard = ({ request, onVote }: {
           {isExpanded && (
             <button
               onClick={() => setIsExpanded(false)}
-              className="text-blue-600 text-sm hover:text-blue-700 mt-1"
+              className="text-primary hover:text-primary/80 text-sm mt-1"
             >
               Show less
             </button>
           )}
         </div>
         
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs text-gray-500">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs text-muted-foreground">
           <span className="inline-flex items-center gap-1">
             <Icon icon="mdi:translate" className="text-base" />
             {request.originalLanguage}
@@ -190,11 +190,11 @@ export default function NovelRequests() {
   return (
     <main className="max-w-2xl mx-auto px-4 pb-20 md:pb-8">
       <header className="flex items-center justify-between pb-2">
-        <h2 className="text-lg font-medium text-gray-900 flex-1 text-center">Vote for Novels for us to Translate</h2>
+        <h2 className="text-lg font-medium text-foreground flex-1 text-center">Vote for Novels for us to Translate</h2>
         {isAuthenticated && (
           <button
             onClick={() => setShowForm(true)}
-            className="hidden md:block px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+            className="hidden md:block px-4 py-2 text-sm font-medium text-primary hover:bg-accent rounded-lg transition-colors"
           >
             + New Request
           </button>
@@ -202,7 +202,7 @@ export default function NovelRequests() {
       </header>
       
       {!isAuthenticated && (
-        <p className="text-sm text-blue-600 -mt-1 mb-2 text-center">
+        <p className="text-sm text-primary -mt-1 mb-2 text-center">
           Create account to request and vote!
         </p>
       )}
@@ -213,7 +213,7 @@ export default function NovelRequests() {
         </div>
       )}
 
-      <section className="divide-y divide-gray-100">
+      <section className="divide-y divide-border">
         {requests.map(request => (
           <RequestCard
             key={request.id}
@@ -224,8 +224,8 @@ export default function NovelRequests() {
 
         {requests.length === 0 && (
           <div className="flex flex-col items-center justify-center py-12 text-center">
-            <Icon icon="mdi:book-plus-outline" className="text-4xl text-gray-300 mb-2" />
-            <p className="text-sm text-gray-500">
+            <Icon icon="mdi:book-plus-outline" className="text-4xl text-muted-foreground mb-2" />
+            <p className="text-sm text-muted-foreground">
               No novel requests yet. {isAuthenticated ? 'Be the first to request a novel!' : 'Create an account to make the first request!'}
             </p>
           </div>
@@ -236,7 +236,7 @@ export default function NovelRequests() {
         <button
           aria-label="New Request"
           onClick={() => setShowForm(true)}
-          className="fixed right-4 bottom-4 md:hidden w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-transform"
+          className="fixed right-4 bottom-4 md:hidden w-14 h-14 bg-primary text-primary-foreground rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-transform"
         >
           <Icon icon="mdi:plus" className="text-2xl" />
         </button>

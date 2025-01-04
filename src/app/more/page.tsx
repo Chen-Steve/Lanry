@@ -12,8 +12,8 @@ interface MenuItemProps {
 
 function MenuItem({ href, label, external, icon, bgColor }: MenuItemProps) {
   const className = `flex items-center justify-between w-full p-4 rounded-lg ${
-    bgColor || 'bg-[#F7F4ED]'
-  } hover:brightness-95 transition-all border border-gray-300`;
+    bgColor || 'bg-background'
+  } hover:brightness-95 transition-all border border-border`;
   
   if (external) {
     return (
@@ -23,11 +23,11 @@ function MenuItem({ href, label, external, icon, bgColor }: MenuItemProps) {
         target="_blank"
         rel="noopener noreferrer"
       >
-        <span className="text-gray-700">{label}</span>
+        <span className="text-foreground">{label}</span>
         {icon ? (
-          <Icon icon={icon} className="text-xl text-gray-500" />
+          <Icon icon={icon} className="text-xl text-muted-foreground" />
         ) : (
-          <Icon icon="heroicons:arrow-up-right" className="text-xl text-gray-500" />
+          <Icon icon="heroicons:arrow-up-right" className="text-xl text-muted-foreground" />
         )}
       </a>
     );
@@ -35,15 +35,15 @@ function MenuItem({ href, label, external, icon, bgColor }: MenuItemProps) {
 
   return (
     <Link href={href} className={className}>
-      <span className="text-gray-700">{label}</span>
-      <Icon icon="heroicons:chevron-right" className="text-xl text-gray-500" />
+      <span className="text-foreground">{label}</span>
+      <Icon icon="heroicons:chevron-right" className="text-xl text-muted-foreground" />
     </Link>
   );
 }
 
 export default function MorePage() {
   return (
-    <main className="min-h-screen bg-[#F2EEE5] px-4 py-6">
+    <main className="min-h-screen bg-background px-4 py-6">
       <div className="max-w-md mx-auto space-y-6">
         {/* Brand Section */}
         <section className="text-center pb-6">
@@ -55,7 +55,7 @@ export default function MorePage() {
               height={80}
               className="rounded-full"
             />
-            <Link href="/" className="text-6xl font-bold text-gray-800">
+            <Link href="/" className="text-6xl font-bold text-foreground">
               Lanry
             </Link>
           </div>
@@ -63,8 +63,8 @@ export default function MorePage() {
 
         {/* Main Menu */}
         <section className="space-y-3">
-          <MenuItem href="/sponsors" label="Sponsors" bgColor="bg-[#F7F4ED]" />
-          <MenuItem href="/shop" label="Shop" bgColor="bg-[#F7F4ED]" />
+          <MenuItem href="/sponsors" label="Sponsors" bgColor="bg-background" />
+          <MenuItem href="/shop" label="Shop" bgColor="bg-background" />
         </section>
 
         {/* Support Section */}
@@ -73,12 +73,12 @@ export default function MorePage() {
             href="https://forms.gle/DV9X9C5wQjUxKece7" 
             label="Send Feedback"
             external
-            bgColor="bg-yellow-50"
+            bgColor="bg-yellow-500/10 dark:bg-yellow-500/5"
           />
           <MenuItem 
             href="/novels/requests" 
             label="Request Novel"
-            bgColor="bg-blue-50"
+            bgColor="bg-primary/10"
           />
         </section>
 
@@ -89,23 +89,23 @@ export default function MorePage() {
             label="Join our Discord"
             icon="mdi:discord"
             external
-            bgColor="bg-indigo-50"
+            bgColor="bg-indigo-500/10 dark:bg-indigo-500/5"
           />
         </section>
 
         {/* Legal Section */}
-        <section className="pt-6 border-t border-gray-300">
-          <p className="text-sm text-gray-500 text-center mb-4">
+        <section className="pt-6 border-t border-border">
+          <p className="text-sm text-muted-foreground text-center mb-4">
             © {new Date().getFullYear()} Lanry. All rights reserved.
           </p>
           <div className="flex justify-center space-x-6">
-            <Link href="/privacy" className="text-sm text-gray-600 hover:text-gray-800">
+            <Link href="/privacy" className="text-sm text-muted-foreground hover:text-foreground">
               Privacy
             </Link>
-            <Link href="/terms" className="text-sm text-gray-600 hover:text-gray-800">
+            <Link href="/terms" className="text-sm text-muted-foreground hover:text-foreground">
               Terms
             </Link>
-            <Link href="/translation-policy" className="text-sm text-gray-600 hover:text-gray-800">
+            <Link href="/translation-policy" className="text-sm text-muted-foreground hover:text-foreground">
               Translation
             </Link>
           </div>

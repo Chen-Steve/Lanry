@@ -205,7 +205,7 @@ export const NovelComments = ({ novelId, isAuthenticated }: NovelCommentsProps) 
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-8">
-        <Icon icon="mdi:loading" className="animate-spin text-3xl text-gray-500" />
+        <Icon icon="mdi:loading" className="animate-spin text-3xl text-primary" />
       </div>
     );
   }
@@ -219,7 +219,7 @@ export const NovelComments = ({ novelId, isAuthenticated }: NovelCommentsProps) 
           onChange={(e) => setNewComment(e.target.value)}
           placeholder={isAuthenticated ? "Write a comment..." : "Please sign in to comment"}
           disabled={!isAuthenticated || isSubmitting}
-          className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500 disabled:bg-gray-50"
+          className="w-full p-3 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-primary disabled:bg-muted disabled:text-muted-foreground"
           rows={3}
         />
         <div className="flex justify-end">
@@ -248,7 +248,7 @@ export const NovelComments = ({ novelId, isAuthenticated }: NovelCommentsProps) 
         {comments.length === 0 ? (
           <EmptyComments />
         ) : (
-          comments.map((comment) => (
+          comments.map(comment => (
             <CommentItem
               key={comment.id}
               comment={comment}
@@ -268,9 +268,9 @@ export const NovelComments = ({ novelId, isAuthenticated }: NovelCommentsProps) 
 };
 
 const EmptyComments = () => (
-  <div className="text-center py-8 text-gray-500">
-    <Icon icon="mdi:comment-text-outline" className="mx-auto text-4xl mb-2" />
-    <p>No comments yet. Be the first to comment!</p>
+  <div className="text-center py-8">
+    <Icon icon="mdi:comment-outline" className="mx-auto text-4xl text-muted-foreground mb-2" />
+    <p className="text-muted-foreground">No comments yet. Be the first to share your thoughts!</p>
   </div>
 );
 
@@ -299,115 +299,84 @@ const CommentItem = ({
   const isOwnComment = currentUserId === comment.profile_id;
 
   return (
-    <div className="flex gap-3 p-4 bg-white rounded-lg shadow-sm">
-      {/* Avatar */}
-      <Link href={`/user-dashboard?id=${comment.profile_id}`} className="flex-shrink-0">
-        <div className="w-10 h-10 rounded-full overflow-hidden bg-blue-500">
-          {comment.profile.avatar_url ? (
-            <Image
-              src={comment.profile.avatar_url}
-              alt={comment.profile.username || 'User avatar'}
-              width={40}
-              height={40}
-              className="w-full h-full object-cover"
-              unoptimized
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.style.display = 'none';
-                // Show initials fallback
-                const parent = target.parentElement;
-                if (parent) {
-                  parent.innerHTML = comment.profile.username?.[0]?.toUpperCase() || '?';
-                  parent.className = "w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm font-semibold";
-                }
-              }}
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-white text-sm font-semibold">
-              {comment.profile.username?.[0]?.toUpperCase() || '?'}
-            </div>
-          )}
-        </div>
-      </Link>
-
-      <div className="flex-grow min-w-0">
-        <div className="flex items-start justify-between gap-x-2">
-          <div>
-            <div className="flex items-center">
-              <Link 
-                href={`/user-dashboard?id=${comment.profile_id}`}
-                className="font-medium text-gray-900 hover:text-gray-600 transition-colors"
-              >
-                {comment.profile.username || 'Unknown User'}
-              </Link>
-              {comment.profile.role !== 'USER' && (
-                <span className={`ml-2 px-1 py-0.5 text-xs font-medium rounded inline-flex items-center ${
-                  comment.profile.role === 'AUTHOR' ? 'bg-yellow-100' :
-                  comment.profile.role === 'TRANSLATOR' ? 'bg-blue-100' :
-                  comment.profile.role === 'ADMIN' ? 'bg-red-100' :
-                  comment.profile.role === 'SUPER_ADMIN' ? 'bg-purple-100' :
-                  'bg-gray-100'
-                } text-black`}>
-                  {comment.profile.role.charAt(0) + comment.profile.role.slice(1).toLowerCase()}
-                </span>
-              )}
-              <span className="mx-2 text-gray-300">•</span>
-              <span className="text-sm text-gray-500">
-                {formatRelativeDate(comment.created_at)}
-              </span>
-            </div>
+    <div className="flex gap-3 p-4 rounded-lg bg-card border border-border">
+      <div className="flex-shrink-0 w-10 h-10 rounded-full overflow-hidden bg-primary">
+        {comment.profile.avatar_url ? (
+          <Image
+            src={comment.profile.avatar_url}
+            alt={comment.profile.username || 'User avatar'}
+            width={40}
+            height={40}
+            className="w-full h-full object-cover"
+            unoptimized
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-primary-foreground font-semibold">
+            {comment.profile.username?.[0]?.toUpperCase() || '?'}
           </div>
+        )}
+      </div>
+      <div className="flex-grow min-w-0">
+        <div className="flex items-center gap-2 mb-1">
+          <Link 
+            href={`/user-dashboard?id=${comment.profile_id}`}
+            className="font-medium text-foreground hover:text-primary transition-colors"
+          >
+            {comment.profile.username || 'Anonymous'}
+          </Link>
+          <span className="text-xs text-muted-foreground">
+            {formatRelativeDate(comment.created_at)}
+          </span>
           {isOwnComment && !isEditing && (
-            <div className="flex items-center gap-2">
+            <div className="ml-auto flex gap-2">
               <button
                 onClick={() => onEdit(comment.id)}
-                className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
-                title="Edit comment"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+                aria-label="Edit comment"
               >
                 <Icon icon="mdi:pencil" className="text-lg" />
               </button>
               <button
                 onClick={() => onDelete(comment.id)}
-                className="p-1 text-gray-400 hover:text-red-500 transition-colors"
-                title="Delete comment"
+                className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors"
+                aria-label="Delete comment"
               >
                 <Icon icon="mdi:delete" className="text-lg" />
               </button>
             </div>
           )}
         </div>
-
         {isEditing ? (
-          <div className="mt-2 space-y-2">
+          <div className="space-y-2">
             <textarea
-              placeholder="Edit your comment..."
               value={editedContent}
               onChange={(e) => setEditedContent(e.target.value)}
-              className="w-full p-2 border rounded-md"
+              className="w-full p-2 border border-border rounded-md bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-primary"
               rows={3}
+              aria-label="Edit comment"
+              placeholder="Edit your comment..."
             />
             <div className="flex justify-end gap-2">
-              <button
+              <Button
                 onClick={() => onSave(comment.id)}
-                className="px-3 py-1 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors"
+                disabled={!editedContent.trim()}
+                variant="default"
               >
                 Save
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={() => {
                   setEditedContent('');
                   onEdit('');
                 }}
-                className="px-3 py-1 bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 transition-colors"
+                variant="outline"
               >
                 Cancel
-              </button>
+              </Button>
             </div>
           </div>
         ) : (
-          <p className="mt-1 text-gray-600 whitespace-pre-wrap break-words">
-            {comment.content}
-          </p>
+          <p className="text-foreground whitespace-pre-wrap break-words">{comment.content}</p>
         )}
       </div>
     </div>

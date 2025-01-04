@@ -52,7 +52,7 @@ export default function CategoryFilter({
   };
 
   if (isLoading) {
-    return <div className="animate-pulse h-12 bg-gray-200 rounded-lg mb-6 mt-4 sm:mt-0"></div>;
+    return <div className="animate-pulse h-12 bg-muted rounded-lg mb-6 mt-4 sm:mt-0"></div>;
   }
 
   return (
@@ -61,7 +61,7 @@ export default function CategoryFilter({
         <button
           aria-label="Toggle category filter"
           onClick={() => setIsExpanded(!isExpanded)}
-          className="sm:hidden text-gray-500 hover:text-gray-700"
+          className="sm:hidden text-muted-foreground hover:text-foreground transition-colors"
         >
           <Icon 
             icon={isExpanded ? "mdi:chevron-up" : "mdi:chevron-down"} 
@@ -83,8 +83,8 @@ export default function CategoryFilter({
                 onClick={() => handleCategoryToggle(category.name)}
                 className={`flex items-center justify-between px-2 py-1 rounded-md text-xs transition-colors w-full ${
                   isSelected
-                    ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-emerald-100 dark:bg-emerald-400/20 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-400/30'
+                    : 'bg-secondary text-secondary-foreground hover:bg-accent'
                 }`}
               >
                 <span className="truncate mr-1">{category.name}</span>

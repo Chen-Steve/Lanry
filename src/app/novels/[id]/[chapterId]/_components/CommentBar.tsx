@@ -81,18 +81,18 @@ export default function CommentBar({
         animate={{ x: 0 }}
         exit={{ x: '100%' }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className="fixed right-0 top-0 bottom-0 w-full md:w-[400px] bg-[#F2EEE5] shadow-lg z-50 
+        className="fixed right-0 top-0 bottom-0 w-full md:w-[400px] bg-[#F2EEE5] dark:bg-gray-900 shadow-lg z-50 
                   overflow-hidden flex flex-col"
       >
         <div className="h-full flex flex-col">
-          <div className="flex justify-between items-center p-4 border-b">
+          <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
             <div>
-              <h3 className="font-semibold text-black">Comments</h3>
-              <p className="text-xs text-gray-600">Paragraph #{paragraphId}</p>
+              <h3 className="font-semibold text-black dark:text-white">Comments</h3>
+              <p className="text-xs text-gray-600 dark:text-gray-400">Paragraph #{paragraphId}</p>
             </div>
             <button 
               onClick={onClose} 
-              className="p-2 hover:bg-[#F7F4ED] rounded-full transition-colors text-black"
+              className="p-2 hover:bg-[#F7F4ED] dark:hover:bg-gray-800 rounded-full transition-colors text-black dark:text-white"
               aria-label="Close comments"
             >
               <Icon icon="mdi:close" className="text-xl" />
@@ -101,7 +101,7 @@ export default function CommentBar({
 
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {comments.map((comment) => (
-              <div key={comment.id} className="bg-[#F7F4ED] rounded-lg p-3">
+              <div key={comment.id} className="bg-[#F7F4ED] dark:bg-gray-800 rounded-lg p-3">
                 <div className="flex gap-3">
                   <Link href={`/user-dashboard?id=${comment.profile_id}`} className="flex-shrink-0">
                     <div className="w-8 h-8 rounded-full overflow-hidden bg-blue-500">
@@ -138,63 +138,65 @@ export default function CommentBar({
                           <div className="flex items-center gap-2 min-w-0">
                             <Link 
                               href={`/user-dashboard?id=${comment.profile_id}`}
-                              className="text-sm font-medium text-black hover:text-blue-600 transition-colors truncate"
+                              className="text-sm font-medium text-black dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors truncate"
                             >
                               {comment.profile?.username}
                             </Link>
                             {comment.profile?.role && comment.profile.role !== 'USER' && (
                               <span className={`px-1 py-0.5 text-xs font-medium rounded inline-flex items-center flex-shrink-0 ${
-                                comment.profile.role === 'AUTHOR' ? 'bg-yellow-100' :
-                                comment.profile.role === 'TRANSLATOR' ? 'bg-blue-100' :
-                                comment.profile.role === 'ADMIN' ? 'bg-red-100' :
-                                comment.profile.role === 'SUPER_ADMIN' ? 'bg-purple-100' :
-                                'bg-gray-100'
-                              } text-black`}>
+                                comment.profile.role === 'AUTHOR' ? 'bg-yellow-100 dark:bg-yellow-900/30' :
+                                comment.profile.role === 'TRANSLATOR' ? 'bg-blue-100 dark:bg-blue-900/30' :
+                                comment.profile.role === 'ADMIN' ? 'bg-red-100 dark:bg-red-900/30' :
+                                comment.profile.role === 'SUPER_ADMIN' ? 'bg-purple-100 dark:bg-purple-900/30' :
+                                'bg-gray-100 dark:bg-gray-800'
+                              } text-black dark:text-gray-200`}>
                                 {comment.profile.role.charAt(0) + comment.profile.role.slice(1).toLowerCase()}
                               </span>
                             )}
                           </div>
                         ) : (
-                          <span className="text-sm font-medium text-black">
+                          <span className="text-sm font-medium text-black dark:text-white">
                             Anonymous
                           </span>
                         )}
-                        <span className="text-xs text-gray-600 flex-shrink-0">
+                        <span className="text-xs text-gray-600 dark:text-gray-400 flex-shrink-0">
                           {formatDate(comment.created_at)}
                         </span>
                       </div>
                       {userId === comment.profile_id && (
                         <button
                           onClick={() => onDeleteComment(comment.id)}
-                          className="p-1 hover:bg-[#F2EEE5] rounded-full transition-colors flex-shrink-0"
+                          className="p-1 hover:bg-[#F2EEE5] dark:hover:bg-gray-700 rounded-full transition-colors flex-shrink-0"
                           aria-label="Delete comment"
                         >
-                          <Icon icon="mdi:delete-outline" className="text-gray-500 hover:text-red-500 w-4 h-4" />
+                          <Icon icon="mdi:delete-outline" className="text-gray-500 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 w-4 h-4" />
                         </button>
                       )}
                     </div>
-                    <p className="text-sm mt-1 text-black">{comment.content}</p>
+                    <p className="text-sm mt-1 text-black dark:text-gray-200">{comment.content}</p>
                   </div>
                 </div>
               </div>
             ))}
             {comments.length === 0 && (
-              <p className="text-sm text-gray-600 text-center py-4">No comments yet</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 text-center py-4">No comments yet</p>
             )}
           </div>
 
           {isLoading ? (
             <div className="text-center py-4">
-              <Icon icon="eos-icons:loading" className="animate-spin text-2xl text-gray-600" />
+              <Icon icon="eos-icons:loading" className="animate-spin text-2xl text-gray-600 dark:text-gray-400" />
             </div>
           ) : isAuthenticated ? (
-            <div className="p-4 border-t">
+            <div className="p-4 border-t border-gray-200 dark:border-gray-700">
               <form onSubmit={handleSubmit}>
                 <textarea
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
                   placeholder="Add a comment..."
-                  className="w-full p-3 border rounded-lg text-sm resize-none bg-[#F7F4ED] focus:ring-2 focus:ring-amber-500 focus:border-transparent text-black placeholder-gray-500"
+                  className="w-full p-3 border border-gray-200 dark:border-gray-700 rounded-lg text-sm resize-none 
+                           bg-[#F7F4ED] dark:bg-gray-800 focus:ring-2 focus:ring-amber-500 focus:border-transparent 
+                           text-black dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                   rows={3}
                 />
                 <button
@@ -208,8 +210,8 @@ export default function CommentBar({
               </form>
             </div>
           ) : (
-            <div className="p-4 border-t text-center">
-              <Link href="/auth" className="text-amber-600 hover:underline text-sm">
+            <div className="p-4 border-t border-gray-200 dark:border-gray-700 text-center">
+              <Link href="/auth" className="text-amber-600 dark:text-amber-500 hover:underline text-sm">
                 Sign in to comment
               </Link>
             </div>

@@ -64,35 +64,35 @@ export default function ChapterSidebar({
     <div className="hidden md:block fixed right-8 top-1/3 z-50" ref={sidebarRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="hover:opacity-80 transition-opacity"
+        className="hover:opacity-80 transition-opacity text-gray-800 dark:text-gray-200"
         aria-label="Chapter Settings"
       >
         <Icon icon="pepicons-print:gear" className="text-4xl" />
       </button>
 
       <div
-        className={`absolute right-full mr-4 top-0 w-64 bg-white border rounded-lg shadow-lg p-4 transition-transform duration-200 ${
+        className={`absolute right-full mr-4 top-0 w-64 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-4 transition-transform duration-200 ${
           isOpen ? 'translate-x-0' : 'translate-x-8 opacity-0 pointer-events-none'
         }`}
       >
-        <h3 className="font-semibold mb-4">Reading Settings</h3>
+        <h3 className="font-semibold mb-4 text-gray-900 dark:text-gray-100">Reading Settings</h3>
         
         <div className="mb-4">
-          <label className="text-sm text-gray-600 mb-2 block">Font Size</label>
+          <label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Font Size</label>
           <div className="flex items-center gap-3">
             <button
               aria-label="Decrease Font Size"
               onClick={() => handleSizeChange(currentSize - 1)}
-              className="p-2 hover:bg-gray-100 rounded"
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded text-gray-700 dark:text-gray-300"
               disabled={currentSize <= 12}
             >
               <Icon icon="mdi:minus" />
             </button>
-            <span className="text-sm">{currentSize}px</span>
+            <span className="text-sm text-gray-700 dark:text-gray-300">{currentSize}px</span>
             <button
               aria-label="Increase Font Size"
               onClick={() => handleSizeChange(currentSize + 1)}
-              className="p-2 hover:bg-gray-100 rounded"
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded text-gray-700 dark:text-gray-300"
               disabled={currentSize >= 24}
             >
               <Icon icon="mdi:plus" />
@@ -101,7 +101,7 @@ export default function ChapterSidebar({
         </div>
 
         <div>
-          <label className="text-sm text-gray-600 mb-2 block">Font Family</label>
+          <label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Font Family</label>
           <div className="space-y-2">
             {fontOptions.map((font) => (
               <button
@@ -109,8 +109,8 @@ export default function ChapterSidebar({
                 onClick={() => handleFontChange(font.value)}
                 className={`w-full text-left px-3 py-2 rounded text-sm ${
                   currentFont === font.value
-                    ? 'bg-blue-50 text-blue-600'
-                    : 'hover:bg-gray-50'
+                    ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+                    : 'hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'
                 }`}
               >
                 {font.label}

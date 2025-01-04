@@ -40,7 +40,7 @@ export default function PostItem({
   };
 
   return (
-    <div className="bg-white rounded p-4 hover:border-gray-300 border border-gray-200">
+    <div className="bg-background rounded p-4 hover:border-accent border border-border">
       <div className="flex">
         <VoteControls 
           score={post.score || 0}
@@ -49,20 +49,20 @@ export default function PostItem({
         />
         <div className="flex-1">
           {parentPost && (
-            <div className="mb-3 pl-3 border-l-2 border-gray-200">
-              <div className="text-xs text-gray-500 mb-1">
+            <div className="mb-3 pl-3 border-l-2 border-border">
+              <div className="text-xs text-muted-foreground mb-1">
                 <Icon icon="mdi:reply" className="w-3 h-3 inline mr-1" />
                 Replying to @{parentPost.author.username}
               </div>
-              <div className="text-sm text-gray-600 line-clamp-2">
+              <div className="text-sm text-muted-foreground line-clamp-2">
                 {parentPost.content}
               </div>
             </div>
           )}
-          <div className="prose max-w-none mb-2 text-gray-900">{post.content}</div>
+          <div className="prose dark:prose-invert max-w-none mb-2">{post.content}</div>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="text-xs text-gray-500">
+              <div className="text-xs text-muted-foreground">
                 <span className="font-medium">{post.author.username}</span>
                 {' • '}
                 {formatForumDateTime(post.created_at)}
@@ -71,7 +71,7 @@ export default function PostItem({
                 {!threadLocked && (
                   <button
                     onClick={handleReplyClick}
-                    className="text-blue-600 hover:text-blue-700 flex items-center"
+                    className="text-primary hover:text-primary/90 flex items-center"
                   >
                     <Icon icon="mdi:reply" className="w-4 h-4 mr-1" />
                     Reply
@@ -80,7 +80,7 @@ export default function PostItem({
                 {isAuthor && (
                   <button
                     onClick={handleDelete}
-                    className="text-red-600 hover:text-red-700 flex items-center"
+                    className="text-destructive hover:text-destructive/90 flex items-center"
                   >
                     Delete
                   </button>

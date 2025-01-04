@@ -20,7 +20,7 @@ export default function FootnoteTooltip() {
       const centerX = rect.left + (rect.width / 2);
       
       // Check if tooltip would overflow on either side
-      const wouldOverflowLeft = centerX - halfTooltipWidth < 16; // 16px padding
+      const wouldOverflowLeft = centerX - halfTooltipWidth < 16;
       const wouldOverflowRight = centerX + halfTooltipWidth > viewportWidth - 16;
 
       if (wouldOverflowLeft) {

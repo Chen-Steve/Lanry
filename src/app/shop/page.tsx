@@ -33,15 +33,15 @@ export default function ShopPage() {
     <div className="max-w-5xl mx-auto px-4 py-8">
       {/* Header Section */}
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold mb-4 text-black">Coin Shop</h1>
+        <h1 className="text-3xl font-bold mb-4 text-foreground">Coin Shop</h1>
       </div>
 
       {/* Instructions */}
-      <div className="bg-blue-50 p-4 rounded-lg mb-8">
-        <h2 className="font-semibold text-lg mb-2 text-blue-900">How to buy coins:</h2>
-        <ol className="list-decimal list-inside text-blue-800 space-y-2">
+      <div className="bg-primary/10 p-4 rounded-lg mb-8">
+        <h2 className="font-semibold text-lg mb-2 text-foreground">How to buy coins:</h2>
+        <ol className="list-decimal list-inside text-muted-foreground space-y-2">
           {!isAuthenticated && (
-            <li className="text-red-600 font-medium">First, please create an account or sign in</li>
+            <li className="text-red-500 dark:text-red-400 font-medium">First, please create an account or sign in</li>
           )}
           <li>Click on your preferred coin package below</li>
           <li>You&apos;ll be redirected to Ko-fi for payment</li>
@@ -55,14 +55,14 @@ export default function ShopPage() {
         {coinPackages.map((pkg) => (
           <div 
             key={pkg.id}
-            className="border border-gray-200 rounded-lg p-6 text-center hover:shadow-md transition-shadow"
+            className="border border-border rounded-lg p-6 text-center hover:shadow-md transition-shadow bg-background"
           >
             <div className="flex justify-center mb-4">
               <Icon icon="pepicons-print:coins" className="text-amber-500 text-4xl" />
             </div>
             
-            <h3 className="text-xl font-bold mb-2 text-black">{pkg.coins} Coins</h3>
-            <p className="text-2xl font-bold text-amber-600 mb-4">
+            <h3 className="text-xl font-bold mb-2 text-foreground">{pkg.coins} Coins</h3>
+            <p className="text-2xl font-bold text-amber-500 dark:text-amber-400 mb-4">
               ${pkg.price.toFixed(2)}
             </p>
 
@@ -72,7 +72,7 @@ export default function ShopPage() {
                 inline-flex items-center justify-center gap-2 w-full py-2 px-4 rounded-md font-medium
                 ${isAuthenticated 
                   ? 'bg-[#29abe0] hover:bg-[#228db8] text-white' 
-                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'}
+                  : 'bg-muted text-muted-foreground cursor-not-allowed'}
                 transition-colors
               `}
               disabled={!isAuthenticated}

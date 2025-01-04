@@ -126,7 +126,7 @@ const Settings = ({ profile }: SettingsProps) => {
   };
 
   if (isLoading) {
-    return <div className="p-4 text-center">Loading...</div>;
+    return <div className="p-4 text-center text-muted-foreground">Loading...</div>;
   }
 
   return (
@@ -135,7 +135,7 @@ const Settings = ({ profile }: SettingsProps) => {
         {/* Avatar Upload Section */}
         <div className="flex flex-col items-center space-y-4">
           <div className="relative">
-            <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-100">
+            <div className="w-24 h-24 rounded-full overflow-hidden bg-muted">
               {avatarPreview ? (
                 <Image
                   src={avatarPreview}
@@ -145,24 +145,20 @@ const Settings = ({ profile }: SettingsProps) => {
                   unoptimized
                   className="w-full h-full object-cover"
                   onError={() => {
-                    // console.log('Image failed to load:', avatarPreview);
                     setAvatarPreview(null);
-                  }}
-                  onLoad={() => {
-                    // console.log('Image loaded successfully:', avatarPreview);
                   }}
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center bg-blue-500 text-white text-2xl">
+                <div className="w-full h-full flex items-center justify-center bg-primary text-primary-foreground text-2xl">
                   {profileState.username?.[0]?.toUpperCase() || '?'}
                 </div>
               )}
             </div>
             <label 
               htmlFor="avatar-upload" 
-              className="absolute bottom-0 right-0 bg-blue-500 rounded-full p-2 cursor-pointer hover:bg-blue-600 transition-colors"
+              className="absolute bottom-0 right-0 bg-primary rounded-full p-2 cursor-pointer hover:bg-primary/90 transition-colors"
             >
-              <Icon icon="mdi:camera" className="w-4 h-4 text-white" />
+              <Icon icon="mdi:camera" className="w-4 h-4 text-primary-foreground" />
               <input
                 aria-label="Upload avatar"
                 type="file"
@@ -174,19 +170,19 @@ const Settings = ({ profile }: SettingsProps) => {
             </label>
           </div>
           {avatarFile && (
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted-foreground">
               New image selected: {avatarFile.name}
             </p>
           )}
           {avatarPreview && (
-            <a href={avatarPreview} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-500">
+            <a href={avatarPreview} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:text-primary/90">
               View direct image
             </a>
           )}
         </div>
 
         <div>
-          <label htmlFor="username" className="text-black block mb-1">
+          <label htmlFor="username" className="text-foreground block mb-1">
             Username
           </label>
           <input
@@ -194,7 +190,7 @@ const Settings = ({ profile }: SettingsProps) => {
             id="username"
             value={profileState.username || ''}
             onChange={(e) => setProfileState({ ...profileState, username: e.target.value })}
-            className="w-full p-2 text-black border rounded"
+            className="w-full p-2 text-foreground bg-background border border-border rounded focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
             placeholder="Enter username"
           />
         </div>
@@ -202,16 +198,16 @@ const Settings = ({ profile }: SettingsProps) => {
         <button
           type="submit"
           disabled={mutation.isPending || isUploading}
-          className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50 hover:bg-blue-700 transition-colors"
+          className="px-4 py-2 bg-primary text-primary-foreground rounded disabled:opacity-50 hover:bg-primary/90 transition-colors"
         >
           {mutation.isPending || isUploading ? 'Saving...' : 'Save'}
         </button>
       </form>
 
-      <div className="mt-8 pt-8 border-t">
+      <div className="mt-8 pt-8 border-t border-border">
         <button
           onClick={handleLogout}
-          className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+          className="px-4 py-2 bg-red-600 dark:bg-red-900 text-white rounded hover:bg-red-700 dark:hover:bg-red-800 transition-colors"
         >
           Logout
         </button>

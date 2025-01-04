@@ -151,7 +151,7 @@ export default function ChapterProgressBar({
   return (
     <div
       ref={progressBarRef}
-      className={`fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg transition-all duration-300 rounded-t-md ${
+      className={`fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t dark:border-gray-800 shadow-lg transition-all duration-300 rounded-t-md ${
         isVisible 
           ? 'translate-y-0 py-6 min-h-[180px]'
           : 'translate-y-full'
@@ -159,10 +159,10 @@ export default function ChapterProgressBar({
     >
       <div className="px-4 space-y-6">
         {/* Progress Section */}
-        <div className="bg-gray-50 rounded-md p-4">
+        <div className="bg-gray-50 dark:bg-gray-800 rounded-md p-4">
           {/* Chapter info - centered */}
           <div className="mb-4 text-center">
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-gray-600 dark:text-gray-400">
               Chapter {currentChapter}/{firstChapter + totalChapters - 1} - {Math.round(scrollProgress)}%
             </div>
           </div>
@@ -173,7 +173,7 @@ export default function ChapterProgressBar({
             {navigation.prevChapter ? (
               <Link
                 href={`/novels/${novelId}/c${navigation.prevChapter.chapter_number}`}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors text-black"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors text-black dark:text-white"
                 aria-label="Previous chapter"
               >
                 <Icon icon="mdi:chevron-left" className="text-xl" />
@@ -181,7 +181,7 @@ export default function ChapterProgressBar({
             ) : (
               <button
                 disabled
-                className="p-2 text-gray-300 cursor-not-allowed"
+                className="p-2 text-gray-300 dark:text-gray-600 cursor-not-allowed"
                 aria-label="No previous chapter"
               >
                 <Icon icon="mdi:chevron-left" className="text-xl" />
@@ -189,9 +189,9 @@ export default function ChapterProgressBar({
             )}
 
             {/* Progress bar */}
-            <div className="flex-1 h-1 bg-gray-200 rounded-full">
+            <div className="flex-1 h-1 bg-gray-200 dark:bg-gray-700 rounded-full">
               <div
-                className="h-full bg-purple-600 rounded-full transition-all duration-150"
+                className="h-full bg-purple-600 dark:bg-purple-500 rounded-full transition-all duration-150"
                 style={{ width: `${scrollProgress}%` }}
               />
             </div>
@@ -200,7 +200,7 @@ export default function ChapterProgressBar({
             {navigation.nextChapter ? (
               <Link
                 href={`/novels/${novelId}/c${navigation.nextChapter.chapter_number}`}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors text-black"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors text-black dark:text-white"
                 aria-label="Next chapter"
               >
                 <Icon icon="mdi:chevron-right" className="text-xl" />
@@ -208,7 +208,7 @@ export default function ChapterProgressBar({
             ) : (
               <button
                 disabled
-                className="p-2 text-gray-300 cursor-not-allowed"
+                className="p-2 text-gray-300 dark:text-gray-600 cursor-not-allowed"
                 aria-label="No next chapter"
               >
                 <Icon icon="mdi:chevron-right" className="text-xl" />
@@ -218,10 +218,10 @@ export default function ChapterProgressBar({
         </div>
 
         {/* Novel Details Section */}
-        <div className="bg-gray-50 rounded-md p-4">
+        <div className="bg-gray-50 dark:bg-gray-800 rounded-md p-4">
           <Link
             href={`/novels/${novelId}`}
-            className="flex items-center justify-center gap-2 w-full py-2 bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200 transition-colors"
+            className="flex items-center justify-center gap-2 w-full py-2 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-md hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors"
           >
             <Icon icon="mdi:book-open-variant" className="text-xl" />
             <span>Novel Details</span>
@@ -229,7 +229,7 @@ export default function ChapterProgressBar({
         </div>
 
         {/* Text Customization Section */}
-        <div className="bg-gray-50 rounded-md p-4">
+        <div className="bg-gray-50 dark:bg-gray-800 rounded-md p-4">
           <TextCustomization
             onFontChange={onFontChange}
             onSizeChange={onSizeChange}

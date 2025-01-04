@@ -5,6 +5,7 @@ import Footer from './_components/Footer';
 import Providers from './providers';
 import { Toaster } from 'react-hot-toast';
 import MobileNavigation from './_components/MobileNavigation';
+import { ThemeProvider } from '@/lib/ThemeContext';
 
 export const metadata: Metadata = {
   title: "Lanry",
@@ -32,20 +33,22 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className="bg-[#F2EEE5] min-h-screen relative">
+    <html lang="en" suppressHydrationWarning>
+      <body className="min-h-screen relative">
         <Providers>
-          <div className="flex flex-col min-h-screen">
-            <Header />
-            <main className="flex-grow pb-16 md:pb-0">
-              {children}
-            </main>
-            <div className="hidden md:block">
-              <Footer />
+          <ThemeProvider>
+            <div className="flex flex-col min-h-screen">
+              <Header />
+              <main className="flex-grow pb-16 md:pb-0">
+                {children}
+              </main>
+              <div className="hidden md:block">
+                <Footer />
+              </div>
             </div>
-          </div>
-          <Toaster position="bottom-right" />
-          <MobileNavigation />
+            <Toaster position="bottom-right" />
+            <MobileNavigation />
+          </ThemeProvider>
         </Providers>
       </body>
     </html>

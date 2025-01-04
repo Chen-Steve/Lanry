@@ -168,9 +168,9 @@ export function ChapterListItem({
       }
 
       toast.custom((t) => (
-        <div className="bg-white shadow-lg rounded-lg p-4 max-w-md mx-auto">
+        <div className="bg-background shadow-lg rounded-lg p-4 max-w-md mx-auto border border-border">
           <div className="flex flex-col gap-3">
-            <div className="font-medium text-gray-900">
+            <div className="font-medium text-foreground">
               Unlock Chapter {chapter.chapter_number} for {chapter.coins} coins?
             </div>
             <div className="flex gap-2">
@@ -179,7 +179,7 @@ export function ChapterListItem({
                   toast.dismiss(t.id);
                   await unlockChapter(chapter.novel_id, novelAuthorId, chapter.chapter_number, userProfile.id);
                 }}
-                className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors"
+                className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
               >
                 Confirm
               </button>
@@ -188,7 +188,7 @@ export function ChapterListItem({
                   toast.dismiss(t.id);
                   setIsUnlocking(false);
                 }}
-                className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors"
+                className="flex-1 px-4 py-2 bg-muted text-muted-foreground rounded-md hover:bg-accent transition-colors"
               >
                 Cancel
               </button>
@@ -224,63 +224,60 @@ export function ChapterListItem({
   const chapterContent = (
     <div className="flex flex-col sm:flex-row sm:items-center gap-2">
       <div className="flex items-center gap-2">
-        <span className="inline-block min-w-[3rem] text-sm sm:text-base">
+        <span className="inline-block min-w-[3rem] text-sm sm:text-base text-foreground">
           Chapter {chapter.chapter_number}
           {chapter.part_number && (
-            <span className="text-gray-700">
+            <span className="text-muted-foreground">
               {" "}Part {chapter.part_number}
             </span>
           )}
           {chapter.title && (
-            <span className="text-gray-700 ml-1">: {chapter.title}</span>
+            <span className="text-muted-foreground ml-1">: {chapter.title}</span>
           )}
         </span>
       </div>
-      {!isPublished && (
-        <div className="flex flex-col gap-1 bg-purple-50 text-purple-800 px-2 py-1 rounded-md text-[0.6rem] sm:text-[0.6rem] mt-1 sm:mt-0 sm:ml-auto">
+      {!isPublished && chapter.publish_at && (
+        <div className="flex flex-col gap-1 bg-primary/10 text-primary px-2 py-1 rounded-md text-[0.6rem] sm:text-[0.6rem] mt-1 sm:mt-0 sm:ml-auto">
           <div className="flex items-center gap-1 justify-center">
             {isUnlocked ? (
-              <span className="text-green-600">Unlocked</span>
+              <span className="text-emerald-600 dark:text-emerald-400">Unlocked</span>
             ) : (
               <>
                 {isUnlocking ? (
-                  <Icon icon="pepicons-print:spinner" className="text-black text-xs animate-spin" />
+                  <Icon icon="pepicons-print:spinner" className="text-foreground text-xs animate-spin" />
                 ) : (
                   <Icon icon="pepicons-print:lock" className="text-xs" />
                 )}
-                <span className="font-medium">{chapter.coins} coins</span>
+                <span>{chapter.coins} coins</span>
               </>
             )}
           </div>
-          {chapter.publish_at && (
-            <div className="flex items-center gap-1 text-gray-600 justify-center">
-              <span>{formatPublishDate(chapter.publish_at)}</span>
-            </div>
-          )}
+          <div>
+            Available {formatPublishDate(chapter.publish_at)}
+          </div>
         </div>
       )}
     </div>
   );
 
+  if (!isPublished && !isUnlocked) {
+    return (
+      <button
+        onClick={handleLockedChapterClick}
+        disabled={isUnlocking}
+        className="w-full text-left p-3 rounded-lg bg-muted hover:bg-accent transition-colors"
+      >
+        {chapterContent}
+      </button>
+    );
+  }
+
   return (
-    <div className={`flex flex-col border-b border-gray-100 py-2 sm:py-3 px-3 sm:px-4 ${
-      isPublished ? 'hover:bg-gray-50' : 'bg-gray-50/50'
-    } transition-colors rounded-lg`}>
-      {isPublished ? (
-        <Link 
-          href={`/novels/${novelSlug}/c${chapter.chapter_number}`}
-          className="flex-grow flex flex-col sm:flex-row sm:items-center text-gray-600 gap-1 hover:text-gray-900"
-        >
-          {chapterContent}
-        </Link>
-      ) : (
-        <div 
-          className={`text-gray-600 ${isUnlocking ? 'cursor-wait opacity-75' : 'cursor-pointer'}`}
-          onClick={!isUnlocking ? handleLockedChapterClick : undefined}
-        >
-          {chapterContent}
-        </div>
-      )}
-    </div>
+    <Link
+      href={`/novels/${novelSlug}/c${chapter.chapter_number}`}
+      className="block p-3 rounded-lg hover:bg-accent transition-colors"
+    >
+      {chapterContent}
+    </Link>
   );
 } 

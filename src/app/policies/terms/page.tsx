@@ -3,83 +3,72 @@ import React from 'react';
 const TermsOfService = () => {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">Terms of Service</h1>
+      <h1 className="text-3xl font-bold mb-8 text-foreground">Terms of Service</h1>
       
       <div className="space-y-8">
         <section>
-          <h2 className="text-xl font-semibold mb-4">1. Acceptance of Terms</h2>
-          <p className="text-gray-700">
-            By accessing and using Lanry, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our service.
+          <h2 className="text-xl font-semibold mb-4 text-foreground">Acceptance of Terms</h2>
+          <p className="text-muted-foreground">
+            By accessing and using Lanry, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our services.
           </p>
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold mb-4">2. User Accounts</h2>
-          <div className="prose">
-            <ul className="list-disc pl-5 space-y-2 text-gray-700">
-              <li>You must be at least 13 years old to use this service</li>
-              <li>You are responsible for maintaining the security of your account</li>
-              <li>You must provide accurate and complete information when creating an account</li>
-              <li>You may not share your account credentials with others</li>
+          <h2 className="text-xl font-semibold mb-4 text-foreground">User Accounts</h2>
+          <div className="prose dark:prose-invert">
+            <p className="mb-4 text-foreground">When creating an account, you agree to:</p>
+            <ul className="list-disc pl-5 space-y-2 text-foreground">
+              <li>Provide accurate and complete information</li>
+              <li>Maintain the security of your account credentials</li>
+              <li>Accept responsibility for all activities under your account</li>
+              <li>Notify us immediately of any unauthorized access</li>
             </ul>
           </div>
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold mb-4">3. Content Usage</h2>
-          <div className="prose">
-            <p className="mb-4 text-gray-700">Users agree to:</p>
-            <ul className="list-disc pl-5 space-y-2 text-gray-700">
-              <li>Use content for personal, non-commercial purposes only</li>
-              <li>Not redistribute or copy content without permission</li>
-              <li>Not attempt to circumvent any content protection systems</li>
-              <li>Respect intellectual property rights of content creators</li>
+          <h2 className="text-xl font-semibold mb-4 text-foreground">Content Guidelines</h2>
+          <div className="prose dark:prose-invert">
+            <p className="mb-4 text-foreground">Users must not:</p>
+            <ul className="list-disc pl-5 space-y-2 text-foreground">
+              <li>Post inappropriate, offensive, or illegal content</li>
+              <li>Violate intellectual property rights</li>
+              <li>Engage in harassment or bullying</li>
+              <li>Attempt to manipulate or abuse the platform</li>
             </ul>
           </div>
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold mb-4">4. Copyright and Licensing</h2>
-          <p className="text-gray-700">
-            All translations on Lanry are either original works translated with permission, works in the public domain, or works translated under fair use guidelines. Users may not copy, distribute, or create derivative works without explicit permission.
+          <h2 className="text-xl font-semibold mb-4 text-foreground">Service Modifications</h2>
+          <p className="text-muted-foreground">
+            We reserve the right to modify, suspend, or discontinue any part of our service at any time. We will provide notice when possible but are not obligated to do so.
           </p>
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold mb-4">5. Prohibited Activities</h2>
-          <div className="prose">
-            <ul className="list-disc pl-5 space-y-2 text-gray-700">
-              <li>Attempting to access restricted areas of the website</li>
-              <li>Using automated systems to access content</li>
-              <li>Sharing copyrighted content without permission</li>
-              <li>Engaging in any activity that disrupts our services</li>
-            </ul>
-          </div>
-        </section>
-
-        <section>
-          <h2 className="text-xl font-semibold mb-4">6. Service Modifications</h2>
-          <p className="text-gray-700">
-            We reserve the right to modify or discontinue any part of our service at any time. We will provide notice of significant changes when possible.
+          <h2 className="text-xl font-semibold mb-4 text-foreground">Intellectual Property</h2>
+          <p className="text-muted-foreground">
+            All content provided on Lanry, including but not limited to text, graphics, logos, and software, is the property of Lanry or its content suppliers and is protected by international copyright laws.
           </p>
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold mb-4">7. Termination</h2>
-          <p className="text-gray-700">
-            We reserve the right to terminate or suspend access to our service immediately, without prior notice, for any violation of these Terms of Service.
+          <h2 className="text-xl font-semibold mb-4 text-foreground">Limitation of Liability</h2>
+          <p className="text-muted-foreground">
+            Lanry is provided &quot;as is&quot; without any warranties. We are not liable for any damages arising from the use or inability to use our services.
           </p>
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold mb-4">8. Contact</h2>
-          <p className="text-gray-700">
-            For any questions regarding these Terms of Service, please contact us at terms@lanry.com
+          <h2 className="text-xl font-semibold mb-4 text-foreground">Changes to Terms</h2>
+          <p className="text-muted-foreground">
+            We may update these terms from time to time. Continued use of Lanry after changes constitutes acceptance of the new terms.
           </p>
         </section>
 
         <section>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-muted-foreground">
             Last updated: {new Date().toLocaleDateString()}
           </p>
         </section>

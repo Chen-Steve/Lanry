@@ -103,20 +103,20 @@ export default function ThreadList({ categoryId, onThreadListRef }: ThreadListPr
       {threads.map((thread) => (
         <div
           key={thread.id}
-          className="border rounded-lg p-4 hover:bg-gray-50 transition"
+          className="border border-border rounded-lg p-4 hover:bg-accent transition bg-background"
         >
           <Link href={`/forum/thread/${thread.id}`}>
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <h2 className="text-xl font-semibold text-black group-hover:text-blue-600 transition">
+                <h2 className="text-xl font-semibold text-foreground group-hover:text-primary transition">
                   {thread.title}
                 </h2>
-                <div className="mt-1 text-sm text-gray-500">
+                <div className="mt-1 text-sm text-muted-foreground">
                   <span className="flex items-center gap-1">
                     {thread.author.username}
                   </span>
                 </div>
-                <div className="flex items-center justify-between mt-2 text-sm text-gray-500">
+                <div className="flex items-center justify-between mt-2 text-sm text-muted-foreground">
                   <span className="flex items-center gap-1">
                     Replies: {thread.reply_count || 0}
                   </span>

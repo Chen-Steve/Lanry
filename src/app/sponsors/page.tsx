@@ -4,11 +4,11 @@ import Image from 'next/image';
 const SponsorsPage = () => {
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6 text-black">Our Sponsors</h1>
+      <h1 className="text-3xl font-bold mb-6 text-foreground">Our Sponsors</h1>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Sponsor card with logo */}
-        <div className="border rounded-lg p-6 shadow-sm">
+        <div className="border rounded-lg p-6 shadow-sm bg-background border-border">
           <a 
             aria-label="KARD"
             href="https://kard.space" 
@@ -28,32 +28,32 @@ const SponsorsPage = () => {
               />
             </div>
           </a>
-          <h2 className="text-2xl font-semibold mb-2 text-black">
+          <h2 className="text-2xl font-semibold mb-2 text-foreground">
             <a 
               href="https://kard.space" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="hover:text-gray-800 transition-colors"
+              className="hover:text-muted-foreground transition-colors"
             >
               KARD
             </a>
           </h2>
-          <p className="text-black mb-4">
+          <p className="text-muted-foreground mb-4">
             A flashcard study platform/Free Quizlet Alternative.
           </p>
         </div>
 
         {/* Become a Sponsor card */}
-        <div className="border rounded-lg p-6 shadow-sm">
-          <h2 className="text-xl font-semibold mb-2 text-black">Become a Sponsor</h2>
-          <p className="text-black mb-4">
+        <div className="border rounded-lg p-6 shadow-sm bg-background border-border">
+          <h2 className="text-xl font-semibold mb-2 text-foreground">Become a Sponsor</h2>
+          <p className="text-muted-foreground mb-4">
             Support our platform and reach our growing community of readers.
           </p>
           <a 
             href="https://forms.gle/BxaaGTJtjTvBq3bJ6" 
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-block bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
+            className="inline-block bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-primary/90 transition-colors"
           >
             Apply Now
           </a>

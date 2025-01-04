@@ -95,14 +95,14 @@ const Bookmarks = ({ userId, isOwnProfile = false }: BookmarksProps) => {
   });
 
   if (isLoading) {
-    return <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto" />;
+    return <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />;
   }
 
   if (error) {
     return (
       <>
-        <Icon icon="mdi:alert" className="w-12 h-12 mx-auto mb-2" />
-        <p className="text-center text-red-500">Error loading bookmarks</p>
+        <Icon icon="mdi:alert" className="w-12 h-12 mx-auto mb-2 text-red-500 dark:text-red-400" />
+        <p className="text-center text-red-500 dark:text-red-400">Error loading bookmarks</p>
       </>
     );
   }
@@ -110,8 +110,8 @@ const Bookmarks = ({ userId, isOwnProfile = false }: BookmarksProps) => {
   if (!bookmarks || bookmarks.length === 0) {
     return (
       <>
-        <Icon icon="mdi:bookmark-outline" className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-        <p className="text-center text-gray-500 text-lg">
+        <Icon icon="mdi:bookmark-outline" className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+        <p className="text-center text-muted-foreground text-lg">
           No bookmarks yet. Start bookmarking your favorite novels!
         </p>
       </>
@@ -123,7 +123,7 @@ const Bookmarks = ({ userId, isOwnProfile = false }: BookmarksProps) => {
       {bookmarks.map((bookmark) => (
         <article
           key={bookmark.id}
-          className="-mx-4 sm:mx-0 flex gap-2 sm:gap-4 items-center min-w-0 px-4 sm:px-0 border-b border-gray-200 last:border-b-0"
+          className="-mx-4 sm:mx-0 flex gap-2 sm:gap-4 items-center min-w-0 px-4 sm:px-0 border-b border-border last:border-b-0"
         >
           <Link 
             href={`/novels/${bookmark.novel.slug}`} 
@@ -143,25 +143,25 @@ const Bookmarks = ({ userId, isOwnProfile = false }: BookmarksProps) => {
           <div className="flex-grow min-w-0">
             <Link 
               href={`/novels/${bookmark.novel.slug}`}
-              className="text-black font-medium text-base sm:text-lg hover:text-blue-600 transition-colors block truncate"
+              className="text-foreground font-medium text-base sm:text-lg hover:text-primary transition-colors block truncate"
             >
               {bookmark.novel.title}
             </Link>
-            <p className="text-xs sm:text-sm text-black mt-0.5 sm:mt-1 truncate">
+            <p className="text-xs sm:text-sm text-foreground mt-0.5 sm:mt-1 truncate">
               by {bookmark.novel.author}
             </p>
           </div>
           <div className="flex gap-2 flex-shrink-0">
             <Link
               href={`/novels/${bookmark.novel.slug}`}
-              className="flex items-center gap-1.5 text-black px-3 py-1.5 border border-black rounded-md touch-action-manipulation whitespace-nowrap text-xs sm:text-base transition-colors hover:bg-gray-100"
+              className="flex items-center gap-1.5 text-foreground px-3 py-1.5 border border-border rounded-md touch-action-manipulation whitespace-nowrap text-xs sm:text-base transition-colors hover:bg-accent"
             >
               <span>Read</span>
             </Link>
             {isOwnProfile && (
               <button
                 onClick={() => removeMutation.mutate(bookmark.id)}
-                className="flex items-center gap-1.5 text-red-600 px-3 py-1.5 border border-red-600 rounded-md touch-action-manipulation whitespace-nowrap text-xs sm:text-base transition-colors hover:bg-red-50"
+                className="flex items-center gap-1.5 text-red-600 dark:text-red-400 px-3 py-1.5 border border-red-600 dark:border-red-400 rounded-md touch-action-manipulation whitespace-nowrap text-xs sm:text-base transition-colors hover:bg-red-50 dark:hover:bg-red-900/20"
                 aria-label="Remove bookmark"
               >
                 <span>Remove</span>

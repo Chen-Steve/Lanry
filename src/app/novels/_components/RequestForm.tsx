@@ -111,10 +111,10 @@ export const RequestForm = ({ onSubmit, onClose }: RequestFormProps) => {
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 md:relative md:bg-transparent">
-      <div ref={formRef} className="fixed inset-x-0 bottom-0 bg-white rounded-t-xl p-4 md:relative md:rounded-lg md:p-6">
+      <div ref={formRef} className="fixed inset-x-0 bottom-0 bg-background rounded-t-xl p-4 md:relative md:rounded-lg md:p-6">
         <div className="flex items-center justify-between mb-4 md:hidden">
-          <h3 className="text-lg font-medium text-black">New Request</h3>
-          <button aria-label="Close" onClick={onClose} className="p-2 -mr-2">
+          <h3 className="text-lg font-medium text-foreground">New Request</h3>
+          <button aria-label="Close" onClick={onClose} className="p-2 -mr-2 text-foreground">
             <Icon icon="mdi:close" className="text-xl" />
           </button>
         </div>
@@ -126,7 +126,7 @@ export const RequestForm = ({ onSubmit, onClose }: RequestFormProps) => {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
-              className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-colors text-base"
+              className="w-full px-4 py-3 rounded-lg border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors text-base bg-background text-foreground placeholder:text-muted-foreground"
             />
 
             <input
@@ -135,7 +135,7 @@ export const RequestForm = ({ onSubmit, onClose }: RequestFormProps) => {
               value={author}
               onChange={(e) => setAuthor(e.target.value)}
               required
-              className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-colors text-base"
+              className="w-full px-4 py-3 rounded-lg border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors text-base bg-background text-foreground placeholder:text-muted-foreground"
             />
 
             <div className="space-y-2">
@@ -149,7 +149,7 @@ export const RequestForm = ({ onSubmit, onClose }: RequestFormProps) => {
                 />
                 <label
                   htmlFor="cover-image-upload"
-                  className="flex-1 px-4 py-3 text-black rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors text-center"
+                  className="flex-1 px-4 py-3 text-foreground rounded-lg border border-border cursor-pointer hover:bg-accent transition-colors text-center"
                 >
                   {imagePreview ? 'Change Image' : 'Upload Cover Image'}
                 </label>
@@ -161,7 +161,7 @@ export const RequestForm = ({ onSubmit, onClose }: RequestFormProps) => {
                       setImageFile(null);
                       setImagePreview('');
                     }}
-                    className="p-2 text-gray-400 hover:text-gray-600"
+                    className="p-2 text-muted-foreground hover:text-foreground"
                   >
                     <Icon icon="mdi:close" className="text-xl" />
                   </button>
@@ -190,7 +190,7 @@ export const RequestForm = ({ onSubmit, onClose }: RequestFormProps) => {
                     setImagePreview('');
                   }}
                   disabled={!!imageFile}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-colors text-base disabled:bg-gray-50 disabled:text-gray-400"
+                  className="w-full px-4 py-3 rounded-lg border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors text-base bg-background text-foreground placeholder:text-muted-foreground disabled:bg-muted disabled:text-muted-foreground"
                 />
               </div>
             </div>
@@ -200,7 +200,7 @@ export const RequestForm = ({ onSubmit, onClose }: RequestFormProps) => {
               value={originalLanguage}
               onChange={(e) => setOriginalLanguage(e.target.value)}
               required
-              className="w-full px-4 py-3 text-black rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-colors text-base bg-white"
+              className="w-full px-4 py-3 text-foreground rounded-lg border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors text-base bg-background"
             >
               <option value="">Select Language *</option>
               <option value="Chinese">Chinese</option>
@@ -215,14 +215,14 @@ export const RequestForm = ({ onSubmit, onClose }: RequestFormProps) => {
               onChange={(e) => setDescription(e.target.value)}
               required
               rows={3}
-              className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-colors text-base resize-none"
+              className="w-full px-4 py-3 rounded-lg border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors text-base bg-background text-foreground placeholder:text-muted-foreground resize-none"
             />
           </div>
 
           <button
             type="submit"
             disabled={isSubmitting || isUploading}
-            className="w-full py-3 px-4 bg-blue-600 text-white rounded-lg font-medium disabled:opacity-50 transition-opacity"
+            className="w-full py-3 px-4 bg-primary text-primary-foreground rounded-lg font-medium disabled:opacity-50 transition-opacity"
           >
             {isUploading ? 'Uploading Image...' : isSubmitting ? 'Submitting...' : 'Submit Request'}
           </button>

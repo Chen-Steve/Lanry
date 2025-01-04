@@ -11,8 +11,8 @@ type ForumCategoriesProps = {
 function EmptyState() {
   return (
     <div className="text-center py-6">
-      <Icon icon="mdi:forum-outline" className="w-12 h-12 mx-auto text-black mb-2" />
-      <p className="text-black">No categories found.</p>
+      <Icon icon="mdi:forum-outline" className="w-12 h-12 mx-auto text-foreground mb-2" />
+      <p className="text-foreground">No categories found.</p>
     </div>
   );
 }
@@ -56,18 +56,18 @@ export default function ForumCategories({ categories }: ForumCategoriesProps) {
           <Link 
             key={category.id}
             href={`/forum/category/${category.id}`}
-            className="block py-3 hover:bg-gray-50 transition group"
+            className="block py-3 hover:bg-accent transition group"
           >
-            <div className="flex text-black items-center gap-3">
+            <div className="flex text-foreground items-center gap-3">
               <Icon 
                 icon="pepicons-print:text-bubbles" 
                 className="w-8 h-8 flex-shrink-0" 
               />
               <div className="flex-1 min-w-0">
-                <h2 className="text-lg font-medium text-black group-hover:text-blue-600 transition truncate">
+                <h2 className="text-lg font-medium text-foreground group-hover:text-primary transition truncate">
                   {category.name}
                 </h2>
-                <p className="hidden sm:block text-sm text-gray-600 line-clamp-1">
+                <p className="hidden sm:block text-sm text-muted-foreground line-clamp-1">
                   {category.description}
                 </p>
                 <CategoryStats 

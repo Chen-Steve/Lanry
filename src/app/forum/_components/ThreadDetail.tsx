@@ -153,7 +153,7 @@ export default function ThreadDetail({ threadId }: ThreadDetailProps) {
   if (loading) {
     return (
       <div className="flex justify-center items-center py-8">
-        <Icon icon="eos-icons:loading" className="w-8 h-8 animate-spin text-gray-500" />
+        <Icon icon="eos-icons:loading" className="w-8 h-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -161,8 +161,8 @@ export default function ThreadDetail({ threadId }: ThreadDetailProps) {
   if (!thread) {
     return (
       <div className="text-center py-8">
-        <Icon icon="mdi:alert" className="w-16 h-16 mx-auto text-red-400 mb-4" />
-        <p className="text-gray-500">Thread not found.</p>
+        <Icon icon="mdi:alert" className="w-16 h-16 mx-auto text-destructive mb-4" />
+        <p className="text-muted-foreground">Thread not found.</p>
       </div>
     );
   }
@@ -171,16 +171,16 @@ export default function ThreadDetail({ threadId }: ThreadDetailProps) {
     <div className="max-w-5xl mx-auto">
       {/* Thread Header */}
       <div className="mb-4">
-        <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-          <Link href="/forum" className="hover:text-gray-700">Forum</Link>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+          <Link href="/forum" className="hover:text-foreground transition-colors">Forum</Link>
           <Icon icon="mdi:chevron-right" className="w-4 h-4" />
-          <Link href={`/forum/category/${thread.category_id}`} className="hover:text-gray-700">
+          <Link href={`/forum/category/${thread.category_id}`} className="hover:text-foreground transition-colors">
             {categoryName}
           </Link>
           <Icon icon="mdi:chevron-right" className="w-4 h-4" />
-          <span className="text-gray-700 truncate">{thread.title}</span>
+          <span className="text-foreground truncate">{thread.title}</span>
         </div>
-        <div className="bg-white rounded p-4 hover:border-gray-300 border border-gray-200">
+        <div className="bg-background rounded p-4 hover:border-accent border border-border">
           <div className="flex">
             <VoteControls 
               score={thread.score || 0}
@@ -189,28 +189,28 @@ export default function ThreadDetail({ threadId }: ThreadDetailProps) {
             />
             <div className="flex-1">
               <div className="flex items-start justify-between mb-2">
-                <h1 className="text-xl font-medium text-gray-900">
+                <h1 className="text-xl font-medium text-foreground">
                   {thread.is_pinned && (
-                    <span className="text-green-600 mr-2" title="Pinned">
+                    <span className="text-emerald-500 dark:text-emerald-400 mr-2" title="Pinned">
                       <Icon icon="mdi:pin" className="inline-block w-4 h-4" />
                     </span>
                   )}
                   {thread.title}
                 </h1>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-500" title="Replies">
+                  <span className="text-sm text-muted-foreground" title="Replies">
                     <Icon icon="mdi:comment-outline" className="inline-block w-4 h-4 mr-1" />
                     {posts.length}
                   </span>
                   {thread.is_locked && (
-                    <span className="text-red-500" title="Locked">
+                    <span className="text-destructive" title="Locked">
                       <Icon icon="mdi:lock" className="w-4 h-4" />
                     </span>
                   )}
                 </div>
               </div>
-              <div className="prose max-w-none mb-2 text-gray-900">{thread.content}</div>
-              <div className="text-xs text-gray-500">
+              <div className="prose dark:prose-invert max-w-none mb-2">{thread.content}</div>
+              <div className="text-xs text-muted-foreground">
                 Posted by {thread.author.username} • {formatForumDateTime(thread.created_at)}
               </div>
             </div>

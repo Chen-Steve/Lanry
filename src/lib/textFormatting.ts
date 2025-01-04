@@ -37,14 +37,14 @@ export const formatText = (text: string): string => {
       <a href="${safeUrl}" 
         target="_blank" 
         rel="noopener noreferrer" 
-        class="text-blue-600 hover:text-blue-800 transition-colors"
+        class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
         onclick="event.stopPropagation()"
       >${linkText}</a>
-      <div class="link-preview opacity-0 invisible absolute z-50 bg-white border border-gray-200 p-3 rounded-lg shadow-lg transition-all duration-200 text-sm text-gray-700 pointer-events-none min-w-[200px] max-w-sm">
+      <div class="link-preview opacity-0 invisible absolute z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-3 rounded-lg shadow-lg transition-all duration-200 text-sm text-gray-700 dark:text-gray-200 pointer-events-none min-w-[200px] max-w-sm">
         <div class="flex items-start gap-2">
           <div>
             <div class="font-medium">${linkText}</div>
-            <div class="text-xs text-gray-500 break-all">${safeUrl}</div>
+            <div class="text-xs text-gray-500 dark:text-gray-400 break-all">${safeUrl}</div>
           </div>
         </div>
       </div>
@@ -56,11 +56,11 @@ export const formatText = (text: string): string => {
     console.log('Creating footnote:', { num, content });
     return `<span class="footnote-wrapper inline-block relative pointer-events-auto">
       <button type="button" 
-        class="footnote inline-block text-blue-600 hover:text-blue-800 transition-colors" 
+        class="footnote inline-block text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors" 
         data-footnote="${num}" 
         data-content="${content.replace(/"/g, '&quot;')}"
       ><sup>[${num}]</sup></button>
-      <div class="footnote-tooltip opacity-0 invisible absolute z-50 bg-white border border-gray-200 p-3 rounded-lg shadow-lg transition-all duration-200 max-w-sm text-sm text-gray-700">
+      <div class="footnote-tooltip opacity-0 invisible absolute z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-3 rounded-lg shadow-lg transition-all duration-200 max-w-sm text-sm text-gray-700 dark:text-gray-200">
         ${content}
       </div>
     </span>`;

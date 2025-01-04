@@ -40,9 +40,15 @@ const StatsItem = ({ icon, value, color = 'gray', withGap = false }: { icon: str
   <div className={`flex items-center ${withGap ? 'gap-1' : ''}`}>
     <Icon 
       icon={icon} 
-      className={`text-lg ${color === 'blue' ? 'text-blue-600' : color === 'purple' ? 'text-purple-600' : 'text-gray-600'}`} 
+      className={`text-lg ${
+        color === 'blue' 
+          ? 'text-blue-600 dark:text-blue-400' 
+          : color === 'purple' 
+            ? 'text-purple-600 dark:text-purple-400' 
+            : 'text-gray-600 dark:text-gray-400'
+      }`} 
     />
-    <span className="text-gray-700">{value}</span>
+    <span className="text-gray-700 dark:text-gray-200">{value}</span>
   </div>
 );
 
@@ -96,7 +102,7 @@ const RatingPopup = ({
   };
 
   return (
-    <div className="absolute top-full mt-2 bg-white rounded-lg shadow-lg p-3 border border-gray-200 z-50 rating-popup-container">
+    <div className="absolute top-full mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-3 border border-gray-200 dark:border-gray-700 z-50 rating-popup-container">
       <div 
         ref={ratingContainerRef}
         className="flex cursor-pointer gap-1"
@@ -107,7 +113,7 @@ const RatingPopup = ({
       >
         {renderStars()}
       </div>
-      <div className="text-xs text-center text-gray-500 mt-1">
+      <div className="text-xs text-center text-gray-500 dark:text-gray-400 mt-1">
         {hoveredRating || currentRating || 0} stars
       </div>
     </div>
@@ -288,28 +294,28 @@ export const NovelHeader = ({
 
               {/* Title and Author Section */}
               <div className="flex-1">
-                <h1 className="text-base sm:text-xl md:text-3xl lg:text-4xl font-bold mb-1 text-gray-900 text-left">{title}</h1>
-                <div className="text-xs sm:text-sm md:text-base lg:text-lg text-gray-600 mb-2 text-left">
+                <h1 className="text-base sm:text-xl md:text-3xl lg:text-4xl font-bold mb-1 text-gray-900 dark:text-gray-50 text-left">{title}</h1>
+                <div className="text-xs sm:text-sm md:text-base lg:text-lg text-gray-600 dark:text-gray-300 mb-2 text-left">
                   {isAuthorNameCustom ? (
                     <>
-                      by <span className="bg-green-100 px-1.5 py-0.5 rounded">{author}</span>
+                      by <span className="bg-green-100 dark:bg-green-900/30 px-1.5 py-0.5 rounded">{author}</span>
                       {translator && (
                         <> • TL: {translator.username ? (
                           <Link 
                             href={`/user-dashboard?id=${translator.profile_id}`}
-                            className="bg-green-100 px-1.5 py-0.5 rounded text-gray-700 hover:text-gray-900 hover:underline"
+                            className="bg-green-100 dark:bg-green-900/30 px-1.5 py-0.5 rounded text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white hover:underline"
                           >
                             {translator.username}
                           </Link>
                         ) : (
-                          <span className="bg-green-100 px-1.5 py-0.5 rounded text-gray-700">Anonymous</span>
+                          <span className="bg-green-100 dark:bg-green-900/30 px-1.5 py-0.5 rounded text-gray-700 dark:text-gray-200">Anonymous</span>
                         )}</>
                       )}
                     </>
                   ) : (
                     <>Author: <Link 
                       href={`/user-dashboard?id=${novelAuthorId}`}
-                      className="bg-green-50 px-1.5 py-0.5 rounded text-gray-700 hover:text-gray-900 hover:underline"
+                      className="bg-green-50 dark:bg-green-900/30 px-1.5 py-0.5 rounded text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white hover:underline"
                     >
                       {author}
                     </Link></>
@@ -333,8 +339,8 @@ export const NovelHeader = ({
                           icon="pepicons-print:star-filled"
                           className="text-lg text-amber-400"
                         />
-                        <span className="text-gray-700">{localRating.toFixed(1)}</span>
-                        <span className="text-gray-500">({localRatingCount})</span>
+                        <span className="text-gray-700 dark:text-gray-200">{localRating.toFixed(1)}</span>
+                        <span className="text-gray-500 dark:text-gray-400">({localRatingCount})</span>
                       </button>
                       {showRatingPopup && (
                         <RatingPopup
@@ -360,7 +366,7 @@ export const NovelHeader = ({
                 <Link
                   key={category.id}
                   href={`/novels?category=${category.name.toLowerCase()}`}
-                  className="px-3 py-1 text-sm rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
+                  className="px-3 py-1 text-sm rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors"
                 >
                   {category.name}
                 </Link>

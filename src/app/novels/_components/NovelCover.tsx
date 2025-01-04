@@ -22,7 +22,7 @@ const NovelCover = ({
   status = '',
   showStatus = false
 }: NovelCoverProps) => (
-  <div className="relative aspect-[2/3] w-full rounded overflow-hidden bg-gray-200">
+  <div className="relative aspect-[2/3] w-full rounded overflow-hidden bg-muted">
     {coverUrl ? (
       <Image
         src={coverUrl.startsWith('http') ? coverUrl : `/novel-covers/${coverUrl}`}
@@ -34,13 +34,13 @@ const NovelCover = ({
         sizes="(max-width: 640px) 33vw, (max-width: 768px) 25vw, 16vw"
       />
     ) : (
-      <div className="w-full h-full flex items-center justify-center bg-gray-200">
-        <Icon icon="pepicons-print:book" className="text-3xl text-gray-400" />
+      <div className="w-full h-full flex items-center justify-center bg-muted">
+        <Icon icon="pepicons-print:book" className="text-3xl text-muted-foreground" />
       </div>
     )}
     
     {showRating && (
-      <div className="absolute bottom-0 left-0 bg-black/70 flex items-center justify-center gap-1 h-5 w-10 rounded-tr-lg">
+      <div className="absolute bottom-0 left-0 bg-black/80 dark:bg-black/60 flex items-center justify-center gap-1 h-5 w-10 rounded-tr-lg backdrop-blur-[2px]">
         <Icon icon="pepicons-print:star-filled" className="text-amber-400 text-[10px]" />
         <span className="text-white text-[10px] font-medium">
           {rating > 0 ? rating.toFixed(1) : 'N/A'}
@@ -49,7 +49,7 @@ const NovelCover = ({
     )}
 
     {showStatus && status && (
-      <div className="absolute bottom-0 right-0 bg-black/70 flex items-center justify-center h-5 w-12 rounded-tl-lg">
+      <div className="absolute bottom-0 right-0 bg-black/80 dark:bg-black/60 flex items-center justify-center h-5 w-12 rounded-tl-lg backdrop-blur-[2px]">
         <span className="text-white text-[10px] font-medium capitalize">
           {status.toLowerCase()}
         </span>

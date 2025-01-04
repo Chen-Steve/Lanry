@@ -154,16 +154,16 @@ export default function ChapterContent({
       <div className="mb-4 max-w-2xl mx-auto">
         <div className="flex justify-between items-start">
           <div>
-            <h2 className="text-lg md:text-xl font-semibold text-black">
+            <h2 className="text-lg md:text-xl font-semibold text-black dark:text-white">
               Chapter {chapterNumber}
               {partNumber && <span> Part {partNumber}</span>}
               {title && <span>: {title}</span>}
             </h2>
-            <p className="text-xs md:text-sm text-gray-600">
+            <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400">
               Published {formatDate(createdAt)}
             </p>
           </div>
-          <div className="md:hidden text-xs text-gray-500 flex items-center gap-1">
+          <div className="md:hidden text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
             <Icon icon="mdi:gesture-tap-hold" className="w-4 h-4" />
             <span>Hold text to comment</span>
           </div>
@@ -171,7 +171,7 @@ export default function ChapterContent({
       </div>
       
       <div 
-        className="prose prose-sm md:prose-base max-w-2xl mx-auto text-black chapter-content select-none"
+        className="prose prose-sm md:prose-base max-w-2xl mx-auto text-black dark:text-white chapter-content select-none dark:prose-invert"
         style={getTextStyles(fontFamily, fontSize)}
       >
         {paragraphs.map((paragraph, index) => {
@@ -183,9 +183,9 @@ export default function ChapterContent({
               <div className="relative">
                 <div 
                   id={paragraphId}
-                  className={`leading-relaxed cursor-pointer pointer-events-none active:underline active:decoration-dashed active:decoration-gray-400 active:underline-offset-4 transition-all duration-200 
+                  className={`leading-relaxed cursor-pointer pointer-events-none active:underline active:decoration-dashed active:decoration-gray-400 dark:active:decoration-gray-500 active:underline-offset-4 transition-all duration-200 
                     ${isMobile ? 'touch-action-none' : ''} 
-                    ${selectedParagraphId === paragraphId ? 'underline decoration-dashed decoration-gray-400 underline-offset-4' : ''}`}
+                    ${selectedParagraphId === paragraphId ? 'underline decoration-dashed decoration-gray-400 dark:decoration-gray-500 underline-offset-4' : ''}`}
                   style={getParagraphStyles()}
                   onClick={(e) => handleParagraphClick(e, paragraphId)}
                   onContextMenu={(e) => isMobile && handleParagraphLongPress(e, paragraphId)}
@@ -217,14 +217,22 @@ export default function ChapterContent({
                     {paragraphComments.length > 0 && (
                       <button
                         onClick={(e) => handleCommentClick(e, paragraphId)}
-                        className={`transition-colors duration-200 ml-1 relative ${isMobile ? 'text-gray-400' : ''}`}
+                        className={`transition-colors duration-200 ml-1 relative ${isMobile ? 'text-gray-400 dark:text-gray-500' : ''}`}
                         aria-label="View comments"
                       >
                         <Icon 
                           icon="bx:comment" 
-                          className={`w-5 h-5 ${isMobile ? 'text-gray-400' : 'text-gray-400 hover:text-blue-500'} transition-colors`}
+                          className={`w-5 h-5 ${
+                            isMobile 
+                              ? 'text-gray-400 dark:text-gray-500' 
+                              : 'text-gray-400 dark:text-gray-500 hover:text-blue-500 dark:hover:text-blue-400'
+                          } transition-colors`}
                         />
-                        <span className={`absolute ${isMobile ? 'top-[45%]' : 'top-[40%]'} left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-[10px] font-medium ${isMobile ? 'text-gray-400' : 'text-gray-400 hover:text-blue-500'}`}>
+                        <span className={`absolute ${isMobile ? 'top-[45%]' : 'top-[40%]'} left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-[10px] font-medium ${
+                          isMobile 
+                            ? 'text-gray-400 dark:text-gray-500' 
+                            : 'text-gray-400 dark:text-gray-500 hover:text-blue-500 dark:hover:text-blue-400'
+                        }`}>
                           {paragraphComments.length}
                         </span>
                       </button>
@@ -240,14 +248,14 @@ export default function ChapterContent({
 
       {/* Author's Thoughts Section */}
       {authorThoughts && authorThoughts.trim() !== '' && (
-        <div className="mt-12 max-w-2xl mx-auto border-t pt-8">
-          <div className="bg-gray-50 rounded-lg p-6">
+        <div className="mt-12 max-w-2xl mx-auto border-t border-gray-200 dark:border-gray-700 pt-8">
+          <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-6">
             <div className="flex items-center gap-2 mb-4">
-              <Icon icon="mdi:thought-bubble" className="w-6 h-6 text-gray-600" />
-              <h3 className="text-lg font-medium text-gray-700">Author&apos;s Thoughts</h3>
+              <Icon icon="mdi:thought-bubble" className="w-6 h-6 text-gray-600 dark:text-gray-400" />
+              <h3 className="text-lg font-medium text-gray-700 dark:text-gray-200">Author&apos;s Thoughts</h3>
             </div>
             <div 
-              className="prose prose-sm md:prose-base text-gray-700"
+              className="prose prose-sm md:prose-base text-gray-700 dark:text-gray-300 dark:prose-invert"
               style={getTextStyles(fontFamily, fontSize - 1)}
               dangerouslySetInnerHTML={{ __html: formatText(authorThoughts) }}
             />

@@ -36,9 +36,9 @@ const Settings = lazy(() =>
 const TabSkeleton = () => (
   <div className="p-3 sm:p-4">
     <div className="animate-pulse space-y-2 sm:space-y-3">
-      <div className="h-5 sm:h-6 bg-gray-100 rounded-md w-2/3"></div>
-      <div className="h-4 bg-gray-100 rounded-md w-1/2"></div>
-      <div className="h-4 bg-gray-100 rounded-md w-1/3"></div>
+      <div className="h-5 sm:h-6 bg-muted rounded-md w-2/3"></div>
+      <div className="h-4 bg-muted rounded-md w-1/2"></div>
+      <div className="h-4 bg-muted rounded-md w-1/3"></div>
     </div>
   </div>
 );
@@ -48,12 +48,12 @@ const ErrorFallback = ({ error, resetErrorBoundary }: {
   error: Error; 
   resetErrorBoundary: () => void;
 }) => (
-  <div className="p-4 bg-red-50 rounded-lg">
-    <p className="text-red-600 font-medium mb-2">Error loading content</p>
-    <p className="text-sm text-red-500 mb-3">{error.message}</p>
+  <div className="p-4 bg-red-100 dark:bg-red-900/20 rounded-lg">
+    <p className="text-red-600 dark:text-red-400 font-medium mb-2">Error loading content</p>
+    <p className="text-sm text-red-500 dark:text-red-300 mb-3">{error.message}</p>
     <button
       onClick={resetErrorBoundary}
-      className="text-sm px-3 py-1.5 bg-white border border-red-200 text-red-600 rounded-md hover:bg-red-50 transition-colors"
+      className="text-sm px-3 py-1.5 bg-background border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 rounded-md hover:bg-accent transition-colors"
     >
       Retry
     </button>
@@ -76,8 +76,8 @@ const TabButton = ({
     className={`
       px-3 py-1.5 text-sm rounded-md transition-colors
       ${active 
-        ? 'bg-blue-50 text-blue-600 font-medium' 
-        : 'text-gray-600 hover:bg-gray-50'
+        ? 'bg-primary/10 text-primary font-medium' 
+        : 'text-muted-foreground hover:bg-accent'
       }
     `}
   >
@@ -183,7 +183,7 @@ export default function UserDashboard() {
   if (isAuthChecking || isProfileLoading) {
     return (
       <div className="flex justify-center items-center min-h-[50vh]">
-        <Icon icon="eos-icons:loading" className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 animate-spin" />
+        <Icon icon="eos-icons:loading" className="w-5 h-5 sm:w-6 sm:h-6 text-primary animate-spin" />
       </div>
     );
   }
@@ -192,11 +192,11 @@ export default function UserDashboard() {
   if (profileError) {
     return (
       <div className="p-4 sm:p-6">
-        <div className="text-center bg-red-50 rounded-lg p-4 sm:p-6">
-          <p className="text-red-600 mb-3">Unable to load profile</p>
+        <div className="text-center bg-red-100 dark:bg-red-900/20 rounded-lg p-4 sm:p-6">
+          <p className="text-red-600 dark:text-red-400 mb-3">Unable to load profile</p>
           <button
             onClick={() => router.push('/auth')}
-            className="px-3 py-1.5 sm:px-4 sm:py-2 bg-white border border-red-200 text-red-600 rounded-md hover:bg-red-50 transition-colors"
+            className="px-3 py-1.5 sm:px-4 sm:py-2 bg-background border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 rounded-md hover:bg-accent transition-colors"
           >
             Back to Login
           </button>
@@ -209,11 +209,11 @@ export default function UserDashboard() {
   if (!profile && !isProfileLoading) {
     return (
       <div className="p-4 sm:p-6">
-        <div className="text-center bg-red-50 rounded-lg p-4 sm:p-6">
-          <p className="text-red-600 mb-3">Profile not found</p>
+        <div className="text-center bg-red-100 dark:bg-red-900/20 rounded-lg p-4 sm:p-6">
+          <p className="text-red-600 dark:text-red-400 mb-3">Profile not found</p>
           <button
             onClick={() => router.push('/')}
-            className="px-3 py-1.5 sm:px-4 sm:py-2 bg-white border border-red-200 text-red-600 rounded-md hover:bg-red-50 transition-colors"
+            className="px-3 py-1.5 sm:px-4 sm:py-2 bg-background border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 rounded-md hover:bg-accent transition-colors"
           >
             Back to Home
           </button>
@@ -226,7 +226,7 @@ export default function UserDashboard() {
     <div className="max-w-5xl mx-auto px-4 py-6">
       {/* Profile Header */}
       <div className="flex items-center gap-4 mb-6">
-        <div className="w-16 h-16 rounded-full overflow-hidden bg-blue-500">
+        <div className="w-16 h-16 rounded-full overflow-hidden bg-primary">
           {profile?.avatar_url ? (
             <Image
               src={profile.avatar_url}
@@ -242,25 +242,25 @@ export default function UserDashboard() {
                 const parent = target.parentElement;
                 if (parent) {
                   parent.innerHTML = profile?.username?.[0]?.toUpperCase() || 'U';
-                  parent.className = "w-16 h-16 rounded-full bg-blue-500 flex items-center justify-center text-white text-xl font-semibold";
+                  parent.className = "w-16 h-16 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xl font-semibold";
                 }
               }}
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-white text-xl font-semibold">
+            <div className="w-full h-full flex items-center justify-center text-primary-foreground text-xl font-semibold">
               {profile?.username?.[0]?.toUpperCase() || 'U'}
             </div>
           )}
         </div>
         <div className="flex-grow">
           <div className="flex items-center gap-3 mb-2">
-            <h1 className="text-xl font-bold text-gray-900">
+            <h1 className="text-xl font-bold text-foreground">
               {profile?.username || 'User'}
             </h1>
             {isOwnProfile && (
               <Link
                 href="/author/dashboard"
-                className="text-gray-600 hover:text-gray-800 transition-colors flex items-center gap-1"
+                className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
               >
                 <Icon icon="mdi:pencil" className="text-lg" />
                 <span>Author</span>
@@ -268,13 +268,13 @@ export default function UserDashboard() {
             )}
           </div>
           <div className="flex gap-2">
-            <div className="flex items-center gap-1.5 bg-amber-50 px-2.5 py-1 rounded-md">
+            <div className="flex items-center gap-1.5 bg-amber-100 dark:bg-amber-500/10 px-2.5 py-1 rounded-md">
               <Icon icon="ph:coin-fill" className="w-4 h-4 text-amber-500" />
-              <span className="text-sm text-amber-700 font-medium">{profile?.coins || 0}</span>
+              <span className="text-sm text-amber-700 dark:text-amber-300 font-medium">{profile?.coins || 0}</span>
             </div>
-            <div className="flex items-center gap-1.5 bg-blue-50 px-2.5 py-1 rounded-md">
+            <div className="flex items-center gap-1.5 bg-blue-100 dark:bg-blue-500/10 px-2.5 py-1 rounded-md">
               <Icon icon="heroicons:star" className="w-4 h-4 text-blue-500" />
-              <span className="text-sm text-blue-700 font-medium">Level {calculateLevel(profile?.reading_time?.total_minutes || 0)}</span>
+              <span className="text-sm text-blue-700 dark:text-blue-300 font-medium">Level {calculateLevel(profile?.reading_time?.total_minutes || 0)}</span>
             </div>
           </div>
         </div>
@@ -293,7 +293,7 @@ export default function UserDashboard() {
       />
 
       {/* Navigation Tabs */}
-      <nav className="border-b border-gray-100 p-1">
+      <nav className="border-b border-border p-1">
         <div className="flex gap-1">
           <TabButton 
             active={activeTab === 'reading'} 

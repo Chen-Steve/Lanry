@@ -50,14 +50,14 @@ const ReadingHistorySection = ({ userId }: ReadingHistorySectionProps) => {
   });
 
   if (isLoading) {
-    return <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto" />;
+    return <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />;
   }
 
   if (error) {
     return (
       <>
-        <Icon icon="mdi:alert" className="w-12 h-12 mx-auto mb-2" />
-        <p className="text-center text-red-500">Error loading reading history</p>
+        <Icon icon="mdi:alert" className="w-12 h-12 mx-auto mb-2 text-red-500 dark:text-red-400" />
+        <p className="text-center text-red-500 dark:text-red-400">Error loading reading history</p>
       </>
     );
   }
@@ -65,8 +65,8 @@ const ReadingHistorySection = ({ userId }: ReadingHistorySectionProps) => {
   if (!history || history.length === 0) {
     return (
       <>
-        <Icon icon="mdi:book-open-page-variant" className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-        <p className="text-center text-gray-500 text-lg">
+        <Icon icon="mdi:book-open-page-variant" className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+        <p className="text-center text-muted-foreground text-lg">
           No reading history yet. Start reading some novels!
         </p>
       </>
@@ -78,7 +78,7 @@ const ReadingHistorySection = ({ userId }: ReadingHistorySectionProps) => {
       {history.map((item) => (
         <article
           key={item.id}
-          className="-mx-4 sm:mx-0 flex gap-2 sm:gap-4 items-center min-w-0 px-4 sm:px-0 border-b border-gray-200 last:border-b-0"
+          className="-mx-4 sm:mx-0 flex gap-2 sm:gap-4 items-center min-w-0 px-4 sm:px-0 border-b border-border last:border-b-0"
         >
           <Link 
             href={`/novels/${item.novel.slug}`} 
@@ -96,20 +96,20 @@ const ReadingHistorySection = ({ userId }: ReadingHistorySectionProps) => {
           <div className="flex-grow min-w-0">
             <Link 
               href={`/novels/${item.novel.slug}`}
-              className="text-black font-medium text-base sm:text-lg hover:text-blue-600 transition-colors block truncate"
+              className="text-foreground font-medium text-base sm:text-lg hover:text-primary transition-colors block truncate"
             >
               {item.novel.title}
             </Link>
-            <p className="text-xs sm:text-sm text-black mt-0.5 sm:mt-1 truncate">
+            <p className="text-xs sm:text-sm text-foreground mt-0.5 sm:mt-1 truncate">
               by {item.novel.author}
             </p>
-            <p className="text-xs sm:text-sm text-gray-600 mt-1 sm:mt-2 truncate">
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1 sm:mt-2 truncate">
               Last read: {formatRelativeDate(item.last_read)}
             </p>
           </div>
           <Link
             href={`/novels/${item.novel.slug}/c${item.last_chapter}`}
-            className="flex flex-col items-center gap-0.5 text-black px-1 sm:px-2 border border-black rounded-md touch-action-manipulation whitespace-nowrap flex-shrink-0 text-xs sm:text-base transition-colors hover:bg-gray-100"
+            className="flex flex-col items-center gap-0.5 text-foreground px-1 sm:px-2 border border-border rounded-md touch-action-manipulation whitespace-nowrap flex-shrink-0 text-xs sm:text-base transition-colors hover:bg-accent"
           >
             <span>Continue</span>
             <span>Ch.{item.last_chapter}</span>

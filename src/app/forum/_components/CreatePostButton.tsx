@@ -75,24 +75,24 @@ export default function CreatePostButton({
   return !isOpen ? (
     <button 
       onClick={() => setIsOpen(true)}
-      className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
+      className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
     >
       <Icon icon="mdi:reply" className="w-4 h-4" />
       Reply
     </button>
   ) : (
-    <div className="mt-4 bg-gray-50 rounded-md p-3 border border-gray-200">
-      <div className="text-sm text-gray-600 mb-2 flex items-center gap-2">
+    <div className="mt-4 bg-accent/50 rounded-md p-3 border border-border">
+      <div className="text-sm text-muted-foreground mb-2 flex items-center gap-2">
         <Icon icon="mdi:reply" className="w-4 h-4" />
         Replying to {replyToUsername ? (
-          <span className="font-medium text-gray-900">@{replyToUsername}</span>
+          <span className="font-medium text-foreground">@{replyToUsername}</span>
         ) : (
           'thread'
         )}
       </div>
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="p-3 text-sm text-red-500 bg-red-50 border border-red-200 rounded-md">
+          <div className="p-3 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
             {error}
           </div>
         )}
@@ -103,21 +103,21 @@ export default function CreatePostButton({
             required
             rows={3}
             placeholder="Write your reply..."
-            className="w-full rounded-md border border-gray-300 p-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-black placeholder:text-gray-400"
+            className="w-full rounded-md border border-border bg-background p-2 focus:border-primary focus:ring-1 focus:ring-primary text-foreground placeholder:text-muted-foreground transition-colors"
           />
         </div>
         <div className="flex justify-end gap-2">
           <button 
             type="button" 
             onClick={() => setIsOpen(false)}
-            className="px-3 py-1.5 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors text-sm"
+            className="px-3 py-1.5 border border-border text-foreground rounded-md hover:bg-accent transition-colors text-sm"
           >
             Cancel
           </button>
           <button 
             type="submit" 
             disabled={isSubmitting}
-            className="px-3 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:bg-blue-400 text-sm"
+            className="px-3 py-1.5 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors disabled:opacity-50 text-sm"
           >
             {isSubmitting ? 'Submitting...' : 'Submit'}
           </button>
