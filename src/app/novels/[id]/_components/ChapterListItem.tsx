@@ -23,21 +23,9 @@ export function ChapterListItem({
   isAuthenticated,
   novelAuthorId,
 }: ChapterListItemProps) {
-  // console.log('Chapter data:', {
-  //   chapterNumber: chapter.chapter_number,
-  //   partNumber: chapter.part_number,
-  //   title: chapter.title
-  // });
-
   const [isUnlocking, setIsUnlocking] = useState(false);
   const [isUnlocked, setIsUnlocked] = useState(false);
   const router = useRouter();
-
-  // const chapterTitle = `Chapter ${chapter.chapter_number}${
-  //   chapter.part_number ? ` Part ${chapter.part_number}` : ''
-  // }${chapter.title ? `: ${chapter.title}` : ''}`;
-
-  // console.log('Formatted chapter title:', chapterTitle);
 
   useEffect(() => {
     const checkUnlockStatus = async () => {
@@ -73,7 +61,6 @@ export function ChapterListItem({
     userProfileId: string
   ) => {
     try {
-      // Start a Supabase transaction
       const { data, error: transactionError } = await supabase.rpc(
         'process_chapter_purchase',
         {
@@ -85,10 +72,7 @@ export function ChapterListItem({
         }
       );
 
-      console.log('Transaction response:', { data, error: transactionError });
-
       if (transactionError) {
-        console.error('Transaction error:', transactionError);
         throw new Error(transactionError.message || 'Failed to process purchase');
       }
 
@@ -96,7 +80,6 @@ export function ChapterListItem({
         throw new Error(data.message || 'Failed to process purchase');
       }
 
-      // After successful transaction, update local state and redirect
       setIsUnlocked(true);
       toast.success('Chapter unlocked successfully!');
       router.push(`/novels/${novelSlug}/c${chapterNumber}`);
@@ -107,7 +90,6 @@ export function ChapterListItem({
         if (error.message.includes('Insufficient coins')) {
           toast.error('You don\'t have enough coins to unlock this chapter');
         } else if (error.message.includes('Invalid UUID')) {
-          console.error('Invalid UUID error:', { novelId, authorId, userProfileId });
           toast.error('Invalid data format. Please try again.');
         } else {
           toast.error(error.message || 'Failed to unlock chapter. Please try again.');
@@ -120,14 +102,6 @@ export function ChapterListItem({
   };
 
   const handleLockedChapterClick = async () => {
-    // console.log('Chapter clicked:', {
-    //   isPublished: !chapter.publish_at || new Date(chapter.publish_at) <= new Date(),
-    //   isAuthenticated,
-    //   userProfile: userProfile?.id,
-    //   chapterId: chapter.id,
-    //   publishAt: chapter.publish_at
-    // });
-    
     if (!isAuthenticated) {
       toast.error('Please create an account to unlock advance chapters', {
         duration: 3000,
@@ -214,47 +188,38 @@ export function ChapterListItem({
 
   const formatPublishDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
+    return `${date.getMonth() + 1}/${date.getDate()}/${String(date.getFullYear()).slice(2)}`;
   };
 
   const chapterContent = (
-    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-      <div className="flex items-center gap-2">
-        <span className="inline-block min-w-[3rem] text-sm sm:text-base text-foreground">
-          Chapter {chapter.chapter_number}
-          {chapter.part_number && (
-            <span className="text-muted-foreground">
-              {" "}Part {chapter.part_number}
-            </span>
-          )}
-          {chapter.title && (
-            <span className="text-muted-foreground ml-1">: {chapter.title}</span>
-          )}
+    <div className="flex items-center justify-between w-full">
+      <div className="flex items-center gap-2 min-w-0">
+        <span className="font-medium whitespace-nowrap">
+          Ch. {chapter.chapter_number}
         </span>
+        {chapter.title && (
+          <span className="text-sm text-muted-foreground truncate">
+            {chapter.title}
+          </span>
+        )}
       </div>
       {!isPublished && chapter.publish_at && (
-        <div className="flex flex-col gap-1 bg-primary/10 text-primary px-2 py-1 rounded-md text-[0.6rem] sm:text-[0.6rem] mt-1 sm:mt-0 sm:ml-auto">
-          <div className="flex items-center gap-1 justify-center">
-            {isUnlocked ? (
-              <span className="text-emerald-600 dark:text-emerald-400">Unlocked</span>
-            ) : (
-              <>
-                {isUnlocking ? (
-                  <Icon icon="pepicons-print:spinner" className="text-foreground text-xs animate-spin" />
-                ) : (
-                  <Icon icon="pepicons-print:lock" className="text-xs" />
-                )}
-                <span>{chapter.coins} coins</span>
-              </>
-            )}
-          </div>
-          <div>
-            Available {formatPublishDate(chapter.publish_at)}
-          </div>
+        <div className="flex items-center gap-1.5 text-xs whitespace-nowrap">
+          {isUnlocked ? (
+            <span className="text-emerald-600 dark:text-emerald-400">Unlocked</span>
+          ) : (
+            <>
+              {isUnlocking ? (
+                <Icon icon="pepicons-print:spinner" className="text-foreground animate-spin" />
+              ) : (
+                <Icon icon="pepicons-print:lock" />
+              )}
+              <span>{chapter.coins}c</span>
+              <span className="text-muted-foreground">
+                · unlocks {formatPublishDate(chapter.publish_at)}
+              </span>
+            </>
+          )}
         </div>
       )}
     </div>
@@ -265,7 +230,7 @@ export function ChapterListItem({
       <button
         onClick={handleLockedChapterClick}
         disabled={isUnlocking}
-        className="w-full text-left p-3 rounded-lg bg-muted hover:bg-accent transition-colors"
+        className="w-full text-left"
       >
         {chapterContent}
       </button>
@@ -275,7 +240,7 @@ export function ChapterListItem({
   return (
     <Link
       href={`/novels/${novelSlug}/c${chapter.chapter_number}`}
-      className="block p-3 rounded-lg hover:bg-accent transition-colors"
+      className="w-full hover:bg-accent/50 transition-colors"
     >
       {chapterContent}
     </Link>

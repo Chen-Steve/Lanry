@@ -1,3 +1,5 @@
+import { Volume } from './novel';
+
 export interface Chapter {
   id: string;
   title: string;
@@ -13,6 +15,7 @@ export interface Chapter {
   isUnlocked?: boolean;
   author_profile_id: string;
   author_thoughts?: string;
+  volume_id?: string;
 }
 
 export interface Novel {
@@ -26,6 +29,7 @@ export interface Novel {
   updated_at: string;
   slug: string;
   chapters: Chapter[];
+  volumes?: Volume[];
   bookmarkCount: number;
   views: number;
   rating: number;

@@ -181,6 +181,7 @@ export default function NovelPage({ params }: { params: { id: string } }) {
         showActionButtons={true}
         coverImageUrl={novel.coverImageUrl}
         chapters={novel.chapters}
+        volumes={novel.volumes}
         novelId={novel.id}
         userProfile={userProfile}
         novelAuthorId={novel.author_profile_id}

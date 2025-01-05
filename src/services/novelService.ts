@@ -24,7 +24,14 @@ export async function getNovel(id: string, userId?: string): Promise<Novel | nul
           chapter_number,
           part_number,
           publish_at,
-          coins
+          coins,
+          volume_id
+        ),
+        volumes (
+          id,
+          title,
+          volume_number,
+          description
         ),
         bookmarks!left (
           id,
@@ -98,6 +105,7 @@ export async function getNovel(id: string, userId?: string): Promise<Novel | nul
       ratingCount,
       bookmarkCount,
       chapters,
+      volumes: data.volumes || [],
       categories
     };
   } catch (error) {

@@ -3,6 +3,7 @@ import { formatText } from '@/lib/textFormatting';
 import { useState } from 'react';
 import { ChapterList } from './ChapterList';
 import { Chapter, UserProfile, NovelCategory } from '@/types/database';
+import { Volume } from '@/types/novel';
 import { NovelRecommendations } from './NovelRecommendations';
 import { NovelComments } from './NovelComments';
 import { NovelHeader } from './NovelHeader';
@@ -30,6 +31,7 @@ interface SynopsisSectionProps {
   showActionButtons: boolean;
   coverImageUrl?: string;
   chapters: Chapter[];
+  volumes?: Volume[];
   novelId: string;
   userProfile: UserProfile | null;
   novelAuthorId: string;
@@ -83,6 +85,7 @@ export const SynopsisSection = ({
   showActionButtons,
   coverImageUrl,
   chapters,
+  volumes = [],
   novelId,
   userProfile,
   novelAuthorId,
@@ -174,6 +177,7 @@ export const SynopsisSection = ({
       ) : activeTab === 'chapters' ? (
         <ChapterList
           chapters={chapters}
+          volumes={volumes}
           novelId={novelId}
           novelSlug={novelSlug}
           userProfile={userProfile}
@@ -192,6 +196,7 @@ export const SynopsisSection = ({
       ) : (
         <ChapterList
           chapters={chapters}
+          volumes={volumes}
           novelId={novelId}
           novelSlug={novelSlug}
           userProfile={userProfile}

@@ -61,16 +61,29 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const chapters = await prisma.chapter.findMany({
-      where: {
-        novelId: params.id,
-      },
-      orderBy: {
-        chapterNumber: 'asc',
-      },
-    });
+    const [chapters, volumes] = await Promise.all([
+      prisma.chapter.findMany({
+        where: {
+          novelId: params.id,
+        },
+        include: {
+          volume: true,
+        },
+        orderBy: {
+          chapterNumber: 'asc',
+        },
+      }),
+      prisma.volume.findMany({
+        where: {
+          novelId: params.id,
+        },
+        orderBy: {
+          volumeNumber: 'asc',
+        },
+      }),
+    ]);
 
-    return NextResponse.json(chapters);
+    return NextResponse.json({ chapters, volumes });
   } catch (error) {
     console.error('Error fetching chapters:', error);
     return NextResponse.json(
