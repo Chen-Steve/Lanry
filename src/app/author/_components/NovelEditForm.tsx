@@ -153,13 +153,13 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
     <main className="space-y-4">
       <button
         onClick={onCancel}
-        className="flex items-center gap-2 text-gray-600 hover:text-gray-900 bg-white hover:bg-gray-50 rounded-lg px-4 py-2 border border-gray-200 shadow-sm transition-colors"
+        className="flex items-center gap-2 text-muted-foreground hover:text-foreground bg-background hover:bg-accent rounded-lg px-4 py-2 border border-border shadow-sm transition-colors"
       >
         <Icon icon="mdi:arrow-left" className="w-4 h-4" />
         <span className="font-medium">Novel List</span>
       </button>
 
-      <div className="bg-white rounded-lg shadow-sm p-6">
+      <div className="bg-background rounded-lg shadow-sm p-6 border border-border">
         <div className="space-y-4">
           <div className="flex justify-between items-start">
             <div className="flex gap-6 items-start">
@@ -168,8 +168,8 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
                 onClick={handleCoverImageClick}
               >
                 {isUploadingCover ? (
-                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                    <Icon icon="mdi:loading" className="w-8 h-8 text-white animate-spin" />
+                  <div className="absolute inset-0 bg-foreground/50 flex items-center justify-center">
+                    <Icon icon="mdi:loading" className="w-8 h-8 text-background animate-spin" />
                   </div>
                 ) : (
                   <>
@@ -183,12 +183,12 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
                         priority
                       />
                     ) : (
-                      <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                        <span className="text-gray-500 text-sm font-medium">Cover image</span>
+                      <div className="w-full h-full bg-accent flex items-center justify-center">
+                        <span className="text-muted-foreground text-sm font-medium">Cover image</span>
                       </div>
                     )}
-                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Icon icon="mdi:camera" className="w-8 h-8 text-white" />
+                    <div className="absolute inset-0 bg-foreground/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Icon icon="mdi:camera" className="w-8 h-8 text-background" />
                     </div>
                   </>
                 )}
@@ -208,7 +208,7 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
                       type="text"
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
-                      className="text-xl font-semibold text-gray-900 px-2 py-1 border-b border-gray-800 hover:border-gray-300 focus:border-indigo-500 focus:ring-0 focus:outline-none w-fit min-w-[200px] truncate"
+                      className="text-xl font-semibold text-foreground px-2 py-1 border-b border-border hover:border-muted-foreground focus:border-primary focus:ring-0 focus:outline-none w-fit min-w-[200px] truncate bg-background"
                       placeholder="Novel Title"
                       title={title}
                     />
@@ -220,14 +220,14 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
                         value={author}
                         onChange={(e) => setAuthor(e.target.value)}
                         placeholder="Original Author"
-                        className="px-3 py-1 text-sm border-b border-gray-800 hover:border-gray-300 focus:border-indigo-500 focus:ring-0 focus:outline-none w-fit min-w-[150px]"
+                        className="px-3 py-1 text-sm border-b border-border hover:border-muted-foreground focus:border-primary focus:ring-0 focus:outline-none w-fit min-w-[150px] bg-background text-foreground"
                       />
                     </div>
                   </div>
                   <div className="mt-3 flex gap-2">
                     <button
                       type="button"
-                      className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded transition-colors"
+                      className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-muted-foreground bg-accent hover:bg-accent/80 rounded transition-colors"
                       onClick={() => {/* TODO: Implement tags modal */}}
                     >
                       <Icon icon="mdi:tag-multiple" className="w-3.5 h-3.5" />
@@ -235,7 +235,7 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
                     </button>
                     <button
                       type="button"
-                      className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded transition-colors"
+                      className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-muted-foreground bg-accent hover:bg-accent/80 rounded transition-colors"
                       onClick={() => {/* TODO: Implement categories modal */}}
                     >
                       <Icon icon="mdi:folder-multiple" className="w-3.5 h-3.5" />
@@ -248,18 +248,14 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
                         <button
                           key={option.value}
                           type="button"
+                          className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                            status === option.value
+                              ? 'bg-primary text-primary-foreground'
+                              : 'bg-accent text-muted-foreground hover:text-foreground'
+                          }`}
                           onClick={() => setStatus(option.value)}
-                          className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-colors
-                            ${status === option.value
-                              ? option.value === 'ONGOING'
-                                ? 'bg-green-100 text-green-800'
-                                : option.value === 'COMPLETED'
-                                  ? 'bg-blue-100 text-blue-800'
-                                  : 'bg-yellow-100 text-yellow-800'
-                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                            }`}
                         >
-                          <Icon icon={option.icon} className="w-3.5 h-3.5" />
+                          <Icon icon={option.icon} className="w-4 h-4" />
                           {option.label}
                         </button>
                       ))}
@@ -268,7 +264,7 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
                 </div>
                 <div className="flex-grow flex flex-col justify-end">
                   <div className="relative group flex items-start gap-2">
-                    <div className="flex-grow min-h-[100px] text-sm text-gray-600 whitespace-pre-wrap">
+                    <div className="flex-grow min-h-[100px] text-sm text-muted-foreground whitespace-pre-wrap">
                       {description.length > 300 
                         ? `${description.slice(0, 300)}...`
                         : description || 'No description available.'
@@ -280,7 +276,7 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
                         setIsDescriptionModalOpen(true);
                       }}
                       aria-label="Edit Synopsis"
-                      className="flex-shrink-0 p-1.5 text-white bg-indigo-500 hover:bg-indigo-700 rounded-md transition-all shadow-sm border border-indigo-500 hover:border-indigo-700"
+                      className="flex-shrink-0 p-1.5 text-primary-foreground bg-primary hover:bg-primary/90 rounded-md transition-all shadow-sm border border-primary"
                     >
                       <Icon icon="mdi:pencil" className="w-4 h-4" />
                     </button>
@@ -291,7 +287,7 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
             <button
               disabled={isSubmitting}
               onClick={handleSave}
-              className="px-2 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+              className="px-2 py-2 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
             >
               {isSubmitting ? 'Saving...' : novel.id ? 'Save Changes' : 'Create Novel'}
             </button>
@@ -300,12 +296,12 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
           {/* Description Edit Modal */}
           {isDescriptionModalOpen && (
             <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg w-[700px] shadow-xl">
-                <div className="flex items-center justify-between border-b p-3">
-                  <h3 className="text-lg font-medium">Edit Description</h3>
+              <div className="bg-background rounded-lg w-[700px] shadow-xl">
+                <div className="flex items-center justify-between border-b border-border p-3">
+                  <h3 className="text-lg font-medium text-foreground">Edit Description</h3>
                   <button
                     onClick={() => setIsDescriptionModalOpen(false)}
-                    className="text-gray-400 hover:text-gray-600"
+                    className="text-muted-foreground hover:text-foreground"
                     aria-label="Close dialog"
                   >
                     <Icon icon="mdi:close" className="w-5 h-5" />
@@ -315,15 +311,15 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
                   <textarea
                     value={editingDescription}
                     onChange={(e) => setEditingDescription(e.target.value)}
-                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none h-[150px]"
+                    className="w-full px-2 py-1.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary resize-none h-[150px] bg-background text-foreground"
                     placeholder="Synopsis"
                   />
                 </div>
-                <div className="flex justify-end gap-3 border-t p-3">
+                <div className="flex justify-end gap-3 border-t border-border p-3">
                   <button
                     type="button"
                     onClick={() => setIsDescriptionModalOpen(false)}
-                    className="px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+                    className="px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground bg-accent hover:bg-accent/80 rounded-md transition-colors"
                   >
                     Cancel
                   </button>
@@ -333,7 +329,7 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
                       setDescription(editingDescription);
                       setIsDescriptionModalOpen(false);
                     }}
-                    className="px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md transition-colors"
+                    className="px-3 py-1.5 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 rounded-md transition-colors"
                   >
                     Save
                   </button>
@@ -347,7 +343,7 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
             <div>
               {isLoadingChapters ? (
                 <div className="text-center py-8">
-                  <Icon icon="mdi:loading" className="w-6 h-6 animate-spin mx-auto text-gray-400" />
+                  <Icon icon="mdi:loading" className="w-6 h-6 animate-spin mx-auto text-muted-foreground" />
                 </div>
               ) : (
                 <ChapterList
@@ -371,4 +367,33 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
       </div>
     </main>
   );
+}
+
+// Add custom scrollbar styles
+const styles = `
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--accent);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--muted-foreground);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--foreground);
+  }
+`;
+
+// Add style tag to the document
+if (typeof document !== 'undefined') {
+  const styleTag = document.createElement('style');
+  styleTag.textContent = styles;
+  document.head.appendChild(styleTag);
 }

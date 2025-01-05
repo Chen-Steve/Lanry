@@ -113,9 +113,9 @@ export default function NovelManagement() {
   return (
     <main className="space-y-6">
       <header className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-800">Novel Management</h1>
+        <h1 className="text-2xl font-bold text-foreground">Novel Management</h1>
         <button
-          className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
           onClick={() => {
             setNovelToEdit(emptyNovel);
             setView('edit');
@@ -130,14 +130,14 @@ export default function NovelManagement() {
         <div className="relative flex-1">
           <Icon 
             icon="mdi:magnify" 
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
           />
           <input
             type="text"
             placeholder="Search novels..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full pl-10 pr-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 bg-background"
           />
         </div>
       </section>
@@ -145,13 +145,13 @@ export default function NovelManagement() {
       <section>
         {isLoading ? (
           <div className="py-12 text-center">
-            <Icon icon="mdi:loading" className="animate-spin text-3xl text-gray-500" />
+            <Icon icon="mdi:loading" className="animate-spin text-3xl text-muted-foreground" />
           </div>
         ) : filteredNovels.length > 0 ? (
           filteredNovels.map((novel) => (
-            <article key={novel.id} className="flex gap-4 bg-white py-2 px-4 border-b last:border-b-0 relative">
+            <article key={novel.id} className="flex gap-4 bg-accent py-2 px-4 border-b border-border last:border-b-0 relative">
               <button 
-                className="absolute top-2 right-4 p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full"
+                className="absolute top-2 right-4 p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-full"
                 aria-label="Delete novel"
                 onClick={() => setNovelToDelete(novel)}
               >
@@ -171,10 +171,10 @@ export default function NovelManagement() {
 
               <div className="flex-1 min-w-0 flex flex-col justify-between">
                 <div>
-                  <h2 className="font-medium text-lg text-gray-900 mb-1 pr-8">{novel.title}</h2>
+                  <h2 className="font-medium text-lg text-foreground mb-1 pr-8">{novel.title}</h2>
 
                   <div className="flex items-center gap-3">
-                    <span className="text-sm text-gray-600">
+                    <span className="text-sm text-muted-foreground">
                       {novel.chapterCount} Chapters
                     </span>
 
@@ -194,7 +194,7 @@ export default function NovelManagement() {
 
                 <div className="flex gap-2">
                   <button 
-                    className="px-4 py-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-md transition-colors"
+                    className="px-4 py-1.5 text-sm font-medium text-primary bg-primary/10 hover:bg-primary/20 rounded-md transition-colors"
                     aria-label="Edit novel"
                     onClick={() => handleEditClick(novel)}
                   >
@@ -205,7 +205,7 @@ export default function NovelManagement() {
             </article>
           ))
         ) : (
-          <p className="py-12 text-center text-gray-500">
+          <p className="py-12 text-center text-muted-foreground">
             No novels found. Click &quot;Add New Novel&quot; to create one.
           </p>
         )}
@@ -213,15 +213,15 @@ export default function NovelManagement() {
 
       {/* Delete Confirmation Modal */}
       {novelToDelete && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-sm w-full mx-4 shadow-xl">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Delete Novel</h3>
-            <p className="text-gray-600 mb-6">
+        <div className="fixed inset-0 bg-foreground/50 flex items-center justify-center z-50">
+          <div className="bg-background rounded-lg p-6 max-w-sm w-full mx-4 shadow-xl">
+            <h3 className="text-lg font-medium text-foreground mb-4">Delete Novel</h3>
+            <p className="text-muted-foreground mb-6">
               Are you sure you want to delete &quot;{novelToDelete.title}&quot;? This action cannot be undone.
             </p>
             <div className="flex justify-end gap-3">
               <button
-                className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                className="px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-accent rounded-md transition-colors"
                 onClick={() => setNovelToDelete(null)}
               >
                 Cancel
@@ -239,17 +239,17 @@ export default function NovelManagement() {
 
       <footer className="flex justify-center items-center gap-2">
         <button 
-          className="p-2 rounded-lg hover:bg-gray-100"
+          className="p-2 rounded-lg hover:bg-accent"
           aria-label="Previous page"
         >
-          <Icon icon="mdi:chevron-left" className="text-xl" />
+          <Icon icon="mdi:chevron-left" className="text-xl text-foreground" />
         </button>
-        <span className="px-4 py-2">Page 1 of 1</span>
+        <span className="px-4 py-2 text-foreground">Page 1 of 1</span>
         <button 
-          className="p-2 rounded-lg hover:bg-gray-100"
+          className="p-2 rounded-lg hover:bg-accent"
           aria-label="Next page"
         >
-          <Icon icon="mdi:chevron-right" className="text-xl" />
+          <Icon icon="mdi:chevron-right" className="text-xl text-foreground" />
         </button>
       </footer>
     </main>

@@ -91,8 +91,8 @@ export default function ChapterList({
       key={chapter.id}
       className={`relative group ${
         editingChapterId === chapter.id 
-          ? 'bg-blue-50 hover:bg-blue-100' 
-          : 'hover:bg-gray-50'
+          ? 'bg-primary/10 hover:bg-primary/20' 
+          : 'hover:bg-accent'
       }`}
     >
       <div 
@@ -101,28 +101,28 @@ export default function ChapterList({
       >
         <div className="flex flex-col gap-1 pr-8">
           <div className="flex-1">
-            <h4 className="font-medium text-gray-900 text-sm">
+            <h4 className="font-medium text-foreground text-sm">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   onChapterClick(chapter);
                 }}
-                className="mr-2 px-2 py-0.5 text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded"
+                className="mr-2 px-2 py-0.5 text-xs bg-primary/10 hover:bg-primary/20 text-primary rounded"
               >
                 Edit
               </button>
               Chapter {chapter.chapter_number}
               {chapter.part_number && (
-                <span className="text-gray-700">
+                <span className="text-muted-foreground">
                   {" "}Part {chapter.part_number}
                 </span>
               )}
               {chapter.title && (
-                <span className="text-gray-700 ml-1">: {chapter.title}</span>
+                <span className="text-muted-foreground ml-1">: {chapter.title}</span>
               )}
             </h4>
             {chapter.publish_at && (
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-muted-foreground">
                 {new Date(chapter.publish_at) > new Date() 
                   ? `Scheduled: ${new Date(chapter.publish_at).toLocaleDateString()}`
                   : `Published: ${new Date(chapter.publish_at).toLocaleDateString()}`
@@ -132,7 +132,7 @@ export default function ChapterList({
           </div>
           
           {isAdvancedChapter(chapter) && (
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
               <Icon icon="mdi:star" className="w-4 h-4 mr-1" />
               Advanced
             </span>
@@ -145,7 +145,7 @@ export default function ChapterList({
           e.stopPropagation();
           handleDeleteClick(chapter.id);
         }}
-        className="absolute top-2 right-1 sm:top-2 sm:right-2 p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
+        className="absolute top-2 right-1 sm:top-2 sm:right-2 p-1 text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
         title="Delete chapter"
       >
         <Icon icon="mdi:delete-outline" className="w-4 h-4" />
@@ -157,20 +157,20 @@ export default function ChapterList({
     const volumeChapters = chaptersGroupedByVolume.volumeChapters.get(volume.id) || [];
 
     return (
-      <div key={volume.id} className="border-t first:border-t-0">
-        <div className="bg-gray-50 px-3 py-2 flex justify-between items-center sticky top-12 z-[5]">
-          <h3 className="text-sm font-medium text-gray-700">
+      <div key={volume.id} className="border-t border-border first:border-t-0">
+        <div className="bg-accent px-3 py-2 flex justify-between items-center sticky top-12 z-[5]">
+          <h3 className="text-sm font-medium text-foreground">
             Volume {volume.volumeNumber}: {volume.title}
           </h3>
           <button
             onClick={() => handleCreateChapter(volume.id)}
-            className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded transition-colors"
+            className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-primary hover:text-primary/90 bg-primary/10 hover:bg-primary/20 rounded transition-colors"
           >
             <Icon icon="mdi:plus" className="w-3.5 h-3.5" />
             Add Chapter
           </button>
         </div>
-        <div className="divide-y">
+        <div className="divide-y divide-border">
           {volumeChapters
             .sort((a, b) => a.chapter_number - b.chapter_number)
             .map(renderChapter)}
@@ -180,7 +180,7 @@ export default function ChapterList({
   };
 
   return (
-    <div className="border rounded-lg overflow-hidden flex flex-col h-[calc(100vh-16rem)]">
+    <div className="border border-border rounded-lg overflow-hidden flex flex-col h-[calc(100vh-16rem)]">
       {showChapterForm ? (
         <ChapterEditForm
           novelId={novelId}
@@ -195,12 +195,12 @@ export default function ChapterList({
         />
       ) : (
         <div className="flex flex-col h-full">
-          <div className="bg-gray-50 p-2 sm:p-3 border-b sticky top-0 z-10">
+          <div className="bg-accent p-2 sm:p-3 border-b border-border sticky top-0 z-10">
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => handleCreateChapter()}
-                  className="inline-flex items-center px-2.5 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  className="inline-flex items-center px-2.5 py-1.5 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-accent focus:outline-none focus:ring-2 focus:ring-primary/50"
                 >
                   Add Chapter
                 </button>
@@ -212,22 +212,22 @@ export default function ChapterList({
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search chapters..."
-                    className="w-full pl-8 pr-3 py-1 text-sm bg-white border rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    className="w-full pl-8 pr-3 py-1 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
                   />
                   <Icon 
                     icon="mdi:magnify"
-                    className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
+                    className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground"
                   />
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setIsVolumeModalOpen(true)}
-                  className="inline-flex items-center px-2.5 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  className="inline-flex items-center px-2.5 py-1.5 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-accent focus:outline-none focus:ring-2 focus:ring-primary/50"
                 >
                   Add Volume
                 </button>
-                <span className="text-sm text-gray-500 ml-2 whitespace-nowrap">
+                <span className="text-sm text-muted-foreground ml-2 whitespace-nowrap">
                   {chapters.length} {chapters.length === 1 ? 'chapter' : 'chapters'}
                 </span>
               </div>
@@ -237,7 +237,7 @@ export default function ChapterList({
           <div className="overflow-y-auto scrollbar-hide flex-1">
             {/* Render chapters not in any volume */}
             {chaptersGroupedByVolume.noVolumeChapters.length > 0 && (
-              <div className="divide-y">
+              <div className="divide-y divide-border">
                 {chaptersGroupedByVolume.noVolumeChapters
                   .sort((a, b) => a.chapter_number - b.chapter_number)
                   .map(renderChapter)}
@@ -250,13 +250,13 @@ export default function ChapterList({
 
           {/* Volume Creation Modal */}
           {isVolumeModalOpen && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg p-6 w-full max-w-md">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Create New Volume</h3>
+            <div className="fixed inset-0 bg-foreground/50 flex items-center justify-center z-50">
+              <div className="bg-background rounded-lg p-6 w-full max-w-md">
+                <h3 className="text-lg font-medium text-foreground mb-4">Create New Volume</h3>
                 <form onSubmit={handleVolumeSubmit}>
                   <div className="space-y-4">
                     <div>
-                      <label htmlFor="volumeNumber" className="block text-sm font-medium text-gray-700 mb-1">
+                      <label htmlFor="volumeNumber" className="block text-sm font-medium text-foreground mb-1">
                         Volume Number
                       </label>
                       <input
@@ -264,14 +264,14 @@ export default function ChapterList({
                         id="volumeNumber"
                         value={volumeNumber}
                         onChange={(e) => setVolumeNumber(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 bg-background text-foreground"
                         placeholder="Enter volume number"
                         required
                         min="1"
                       />
                     </div>
                     <div>
-                      <label htmlFor="volumeName" className="block text-sm font-medium text-gray-700 mb-1">
+                      <label htmlFor="volumeName" className="block text-sm font-medium text-foreground mb-1">
                         Volume Title
                       </label>
                       <input
@@ -279,7 +279,7 @@ export default function ChapterList({
                         id="volumeName"
                         value={volumeName}
                         onChange={(e) => setVolumeName(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 bg-background text-foreground"
                         placeholder="Enter volume title"
                         required
                       />
@@ -289,13 +289,13 @@ export default function ChapterList({
                     <button
                       type="button"
                       onClick={() => setIsVolumeModalOpen(false)}
-                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                      className="px-4 py-2 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-accent"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
-                      className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md"
+                      className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 rounded-md"
                     >
                       Create Volume
                     </button>
@@ -307,22 +307,22 @@ export default function ChapterList({
 
           {/* Delete Confirmation Modal */}
           {deleteConfirmation.isOpen && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg p-6 w-full max-w-sm">
-                <h3 className="text-lg font-medium text-gray-900 mb-3">Delete Chapter</h3>
-                <p className="text-sm text-gray-600 mb-6">
+            <div className="fixed inset-0 bg-foreground/50 flex items-center justify-center z-50">
+              <div className="bg-background rounded-lg p-6 w-full max-w-sm">
+                <h3 className="text-lg font-medium text-foreground mb-3">Delete Chapter</h3>
+                <p className="text-sm text-muted-foreground mb-6">
                   Are you sure you want to delete this chapter? This action cannot be undone.
                 </p>
                 <div className="flex justify-end gap-3">
                   <button
                     onClick={() => setDeleteConfirmation({ isOpen: false, chapterId: null })}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                    className="px-4 py-2 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-accent"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleConfirmDelete}
-                    className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md"
+                    className="px-4 py-2 text-sm font-medium text-primary-foreground bg-red-600 hover:bg-red-700 rounded-md"
                   >
                     Delete
                   </button>

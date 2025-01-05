@@ -111,21 +111,21 @@ export default function ChapterEditForm({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[200px]">
-        <Icon icon="mdi:loading" className="w-8 h-8 animate-spin text-gray-400" />
+        <Icon icon="mdi:loading" className="w-8 h-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   return (
     <form onSubmit={handleSave} className="flex flex-col h-full">
-      <div className="flex justify-between items-center bg-white py-2 sticky top-0 z-10 px-4">
-        <h3 className="text-lg font-semibold">
+      <div className="flex justify-between items-center bg-background py-2 sticky top-0 z-10 px-4 border-b border-border">
+        <h3 className="text-lg font-semibold text-foreground">
           {chapterId ? 'Edit Chapter' : 'Add New Chapter'}
         </h3>
         <button
           type="button"
           onClick={onCancel}
-          className="text-gray-500 hover:text-gray-700"
+          className="text-muted-foreground hover:text-foreground"
           title="Close"
           aria-label="Close chapter editor"
         >
@@ -133,7 +133,7 @@ export default function ChapterEditForm({
         </button>
       </div>
 
-      <div className="flex gap-3 sticky z-10 bg-white py-2 px-4 border-b">
+      <div className="flex gap-3 sticky z-10 bg-background py-2 px-4 border-b border-border">
         <div className="w-24">
           <input
             id="chapterNumber"
@@ -141,7 +141,7 @@ export default function ChapterEditForm({
             min="1"
             value={formData.chapterNumber}
             onChange={(e) => setFormData({ ...formData, chapterNumber: e.target.value })}
-            className="w-full text-black py-2 px-3 border rounded-lg"
+            className="w-full text-foreground py-2 px-3 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
             placeholder="Ch #"
             required
           />
@@ -154,7 +154,7 @@ export default function ChapterEditForm({
             min="1"
             value={formData.partNumber}
             onChange={(e) => setFormData({ ...formData, partNumber: e.target.value })}
-            className="w-full text-black py-2 px-3 border rounded-lg"
+            className="w-full text-foreground py-2 px-3 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
             placeholder="Part #"
           />
         </div>
@@ -165,7 +165,7 @@ export default function ChapterEditForm({
             type="text"
             value={formData.title}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            className="w-full py-2 px-3 border rounded-lg"
+            className="w-full text-foreground py-2 px-3 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
             placeholder="Title (Optional)"
           />
         </div>
@@ -188,12 +188,12 @@ export default function ChapterEditForm({
         </div>
       </div>
 
-      <div className="flex gap-4 bg-white py-2 px-4 sticky bottom-0 z-10 border-t">
+      <div className="flex gap-4 bg-background py-2 px-4 sticky bottom-0 z-10 border-t border-border">
         <button
           type="button"
           onClick={handleSave}
           disabled={isSaving}
-          className="flex-1 bg-blue-500 text-white py-3 px-4 rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex-1 bg-primary text-primary-foreground py-3 px-4 rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSaving ? (
             <span className="inline-flex items-center gap-2">
@@ -207,7 +207,7 @@ export default function ChapterEditForm({
         <button
           type="button"
           onClick={onCancel}
-          className="flex-1 bg-gray-100 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-200"
+          className="flex-1 bg-accent text-muted-foreground hover:text-foreground py-3 px-4 rounded-lg hover:bg-accent/80"
         >
           Cancel
         </button>

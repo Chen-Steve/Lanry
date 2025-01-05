@@ -164,58 +164,58 @@ export default function ChapterEditor({
   return (
     <div className="space-y-2 w-full">
       {/* Formatting Toolbar */}
-      <div className="flex flex-wrap items-center gap-1 p-1 bg-gray-50 border rounded-lg">
+      <div className="flex flex-wrap items-center gap-1 p-1 bg-accent border border-border rounded-lg">
         <button
           onClick={() => applyFormatting('bold')}
-          className="p-1.5 md:p-2 hover:bg-gray-200 rounded-lg transition-colors"
+          className="p-1.5 md:p-2 hover:bg-accent/80 rounded-lg transition-colors"
           title="Bold (Ctrl+B)"
           type="button"
         >
-          <Icon icon="mdi:format-bold" className="w-4 h-4 md:w-5 md:h-5 text-black" />
+          <Icon icon="mdi:format-bold" className="w-4 h-4 md:w-5 md:h-5 text-foreground" />
         </button>
         <button
           onClick={() => applyFormatting('italic')}
-          className="p-1.5 md:p-2 hover:bg-gray-200 rounded-lg transition-colors"
+          className="p-1.5 md:p-2 hover:bg-accent/80 rounded-lg transition-colors"
           title="Italic (Ctrl+I)"
           type="button"
         >
-          <Icon icon="mdi:format-italic" className="w-4 h-4 md:w-5 md:h-5 text-black" />
+          <Icon icon="mdi:format-italic" className="w-4 h-4 md:w-5 md:h-5 text-foreground" />
         </button>
         <button
           onClick={() => applyFormatting('underline')}
-          className="p-1.5 md:p-2 hover:bg-gray-200 rounded-lg transition-colors"
+          className="p-1.5 md:p-2 hover:bg-accent/80 rounded-lg transition-colors"
           title="Underline (Ctrl+U)"
           type="button"
         >
-          <Icon icon="mdi:format-underline" className="w-4 h-4 md:w-5 md:h-5 text-black" />
+          <Icon icon="mdi:format-underline" className="w-4 h-4 md:w-5 md:h-5 text-foreground" />
         </button>
         <button
           onClick={() => applyFormatting('footnote')}
-          className="p-1.5 md:p-2 hover:bg-gray-200 rounded-lg transition-colors"
+          className="p-1.5 md:p-2 hover:bg-accent/80 rounded-lg transition-colors"
           title="Add Footnote (Ctrl+F)"
           type="button"
         >
-          <Icon icon="mdi:format-superscript" className="w-4 h-4 md:w-5 md:h-5 text-black" />
+          <Icon icon="mdi:format-superscript" className="w-4 h-4 md:w-5 md:h-5 text-foreground" />
         </button>
         <button
           onClick={() => applyFormatting('link')}
-          className="p-1.5 md:p-2 hover:bg-gray-200 rounded-lg transition-colors"
+          className="p-1.5 md:p-2 hover:bg-accent/80 rounded-lg transition-colors"
           title="Add Link (Ctrl+K)"
           type="button"
         >
-          <Icon icon="mdi:link" className="w-4 h-4 md:w-5 md:h-5 text-black" />
+          <Icon icon="mdi:link" className="w-4 h-4 md:w-5 md:h-5 text-foreground" />
         </button>
-        <div className="w-px h-4 md:h-5 bg-gray-300 mx-1" /> {/* Separator */}
+        <div className="w-px h-4 md:h-5 bg-border mx-1" /> {/* Separator */}
         <button
           onClick={() => applyFormatting('divider')}
-          className="p-1.5 md:p-2 hover:bg-gray-200 rounded-lg transition-colors"
+          className="p-1.5 md:p-2 hover:bg-accent/80 rounded-lg transition-colors"
           title="Insert Horizontal Line"
           type="button"
         >
-          <Icon icon="mdi:minus" className="w-4 h-4 md:w-5 md:h-5 text-black" />
+          <Icon icon="mdi:minus" className="w-4 h-4 md:w-5 md:h-5 text-foreground" />
         </button>
         <div className="flex-1 text-right px-2">
-          <span className="text-xs md:text-sm text-gray-500">
+          <span className="text-xs md:text-sm text-muted-foreground">
             {value.length} characters
           </span>
         </div>
@@ -228,7 +228,7 @@ export default function ChapterEditor({
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={handleKeyDown}
         onPaste={handlePaste}
-        className={`w-full p-3 md:p-4 border rounded-lg text-black min-h-[400px] focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y ${className}`}
+        className={`w-full p-3 md:p-4 border border-border rounded-lg text-foreground min-h-[400px] focus:outline-none focus:ring-2 focus:ring-primary bg-background resize-y ${className}`}
         placeholder="Write your chapter here..."
       />
 
@@ -236,13 +236,13 @@ export default function ChapterEditor({
       {authorThoughts !== undefined && onAuthorThoughtsChange && (
         <div className="mt-4 md:mt-6 space-y-2">
           <div className="flex items-center gap-2">
-            <Icon icon="mdi:thought-bubble" className="w-4 h-4 md:w-5 md:h-5 text-gray-600" />
-            <h3 className="text-base md:text-lg font-medium text-gray-700">Author&apos;s Thoughts</h3>
+            <Icon icon="mdi:thought-bubble" className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
+            <h3 className="text-base md:text-lg font-medium text-foreground">Author&apos;s Thoughts</h3>
           </div>
           <textarea
             value={authorThoughts}
             onChange={(e) => onAuthorThoughtsChange(e.target.value)}
-            className="w-full p-3 md:p-4 border border-gray-300 rounded-lg text-black min-h-[150px] focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y bg-gray-50"
+            className="w-full p-3 md:p-4 border border-border rounded-lg text-foreground min-h-[150px] focus:outline-none focus:ring-2 focus:ring-primary resize-y bg-accent"
             placeholder="Share your thoughts about this chapter (it will be visible at the bottom of the chapter)"
           />
         </div>
