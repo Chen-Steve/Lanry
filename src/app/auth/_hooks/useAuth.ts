@@ -157,7 +157,7 @@ export function useAuth() {
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
-          },
+          }
         }
       });
 

@@ -5,68 +5,63 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || requestUrl.origin;
+  const code = requestUrl.searchParams.get('code');
+
+  if (!code) {
+    return NextResponse.redirect(new URL('/auth?error=no_code', requestUrl.origin));
+  }
 
   try {
-    const code = requestUrl.searchParams.get('code');
-
-    if (!code) {
-      console.error('No code provided in callback');
-      return NextResponse.redirect(new URL('/auth?error=no_code', baseUrl));
-    }
-
     const supabase = createRouteHandlerClient({ cookies });
-    
-    // Exchange code for session
-    const { data: { session }, error: authError } = await supabase.auth.exchangeCodeForSession(code);
-    
-    if (authError) {
-      console.error('Auth error:', authError);
-      return NextResponse.redirect(new URL('/auth?error=auth_failed', baseUrl));
-    }
+    await supabase.auth.exchangeCodeForSession(code);
 
-    if (!session?.user) {
-      console.error('No user in session after code exchange');
-      return NextResponse.redirect(new URL('/auth?error=no_session', baseUrl));
-    }
+    // Get the user after successful sign in
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-    // Wait a bit to ensure auth is properly set up
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    if (userError || !user) {
+      console.error('Error getting user:', userError);
+      return NextResponse.redirect(new URL('/auth?error=user_fetch_failed', requestUrl.origin));
+    }
 
     // Check if profile exists using Prisma
     const existingProfile = await prisma.profile.findUnique({
-      where: {
-        id: session.user.id
-      }
+      where: { id: user.id }
     });
 
     if (!existingProfile) {
       // Get username from user metadata or email
-      const username = session.user.user_metadata?.full_name || 
-                      session.user.user_metadata?.name ||
-                      session.user.email?.split('@')[0] || '';
+      const username = user.user_metadata?.full_name || 
+                      user.user_metadata?.name ||
+                      user.email?.split('@')[0] || '';
 
       try {
         // Create profile using Prisma
         await prisma.profile.create({
           data: {
-            id: session.user.id,
+            id: user.id,
             username: username,
+            currentStreak: 0,
+            lastVisit: new Date(),
             role: 'USER',
+            coins: 0,
             createdAt: new Date(),
             updatedAt: new Date(),
+            avatarUrl: user.user_metadata?.avatar_url || null,
+            kofiUrl: null,
+            patreonUrl: null,
+            customUrl: null,
+            customUrlLabel: null
           }
         });
       } catch (error) {
         console.error('Profile creation error:', error);
-        return NextResponse.redirect(new URL('/auth?error=profile_creation_failed', baseUrl));
+        return NextResponse.redirect(new URL('/auth?error=profile_creation_failed', requestUrl.origin));
       }
     }
 
-    // Redirect to the origin URL
-    return NextResponse.redirect(new URL('/', baseUrl));
+    return NextResponse.redirect(new URL('/', requestUrl.origin));
   } catch (error) {
-    console.error('Callback error:', error);
-    return NextResponse.redirect(new URL('/auth?error=callback_failed', baseUrl));
+    console.error('Auth callback error:', error);
+    return NextResponse.redirect(new URL('/auth?error=callback_failed', requestUrl.origin));
   }
 } 
