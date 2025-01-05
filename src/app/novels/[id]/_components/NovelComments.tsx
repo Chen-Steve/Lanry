@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Icon } from '@iconify/react';
-import { formatRelativeDate } from '@/lib/utils';
+import { formatRelativeDate, generateUUID } from '@/lib/utils';
 import toast from 'react-hot-toast';
 import supabase from '@/lib/supabaseClient';
 import type { NovelComment as BaseNovelComment } from '@/types/database';
@@ -116,7 +116,7 @@ export const NovelComments = ({ novelId, isAuthenticated }: NovelCommentsProps) 
       const { data, error } = await supabase
         .from('novel_comments')
         .insert({
-          id: crypto.randomUUID(),
+          id: generateUUID(),
           novel_id: novelId,
           content: newComment.trim(),
           created_at: new Date().toISOString(),

@@ -9,6 +9,7 @@ import { NovelCategory } from '@/types/database';
 import { Icon } from '@iconify/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { fetchNovels, fetchUserRole, submitNovel, deleteNovel } from '../_services/novelUploadService';
+import { generateUUID } from '@/lib/utils';
 
 interface NovelUploadFormProps {
   authorOnly?: boolean;
@@ -247,7 +248,7 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
           formData={formData}
           onFormDataChange={setFormData}
           userRole={userRole}
-          editingNovel={editingNovel ? editingNovel : { id: crypto.randomUUID() }}
+          editingNovel={editingNovel ? editingNovel : { id: generateUUID() }}
           section="categories"
           onCategoriesChange={(categories) => {
             setSelectedCategories(categories);

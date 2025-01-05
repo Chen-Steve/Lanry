@@ -7,6 +7,7 @@ import { useState, useRef, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import supabase from '@/lib/supabaseClient';
 import { NovelActionButtons } from './NovelActionButtons';
+import { generateUUID } from '@/lib/utils';
 
 interface NovelHeaderProps {
   title: string;
@@ -207,7 +208,7 @@ export const NovelHeader = ({
       const { error } = await supabase
         .from('novel_ratings')
         .upsert({
-          id: existingRating?.id || crypto.randomUUID(),
+          id: existingRating?.id || generateUUID(),
           novel_id: novelId,
           profile_id: user.id,
           rating: newRating,

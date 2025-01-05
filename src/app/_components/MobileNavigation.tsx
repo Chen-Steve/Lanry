@@ -9,8 +9,12 @@ export default function MobileNavigation() {
   const pathname = usePathname();
   const { isAuthenticated } = useAuth();
 
-  // Don't render mobile navigation if we're on a chapter page or novel detail page
-  if (pathname?.match(/\/novels\/[^/]+\/c\d+/) || pathname?.match(/\/novels\/[^/]+$/)) {
+  // Don't render mobile navigation if we're on a chapter page, novel detail page, or author dashboard
+  if (
+    pathname?.match(/\/novels\/[^/]+\/c\d+/) || 
+    pathname?.match(/\/novels\/[^/]+$/) ||
+    pathname?.startsWith('/author')
+  ) {
     return null;
   }
 

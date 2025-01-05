@@ -1,7 +1,7 @@
 import supabase from '@/lib/supabaseClient';
 import { toast } from 'react-hot-toast';
 import { uploadImage } from '@/services/uploadService';
-import { generateNovelSlug } from '@/lib/utils';
+import { generateNovelSlug, generateUUID } from '@/lib/utils';
 import { NovelCategory } from '@/types/database';
 
 interface Novel {
@@ -109,7 +109,7 @@ export const submitNovel = async (
     const slug = generateNovelSlug(formData.title);
     const isTranslator = userRole === 'TRANSLATOR';
     const authorName = isTranslator ? formData.author.trim() : (profile?.username || 'Anonymous');
-    const novelId = editingNovel?.id || crypto.randomUUID();
+    const novelId = editingNovel?.id || generateUUID();
 
     let coverImageUrl = editingNovel?.cover_image_url;
     if (imageFile) {

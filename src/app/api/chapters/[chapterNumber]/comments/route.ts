@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
+import { generateUUID } from '@/lib/utils';
 
 export async function GET(
   request: Request,
@@ -52,7 +53,7 @@ export async function POST(
     const { paragraphId, content, novelId } = await request.json();
 
     // Generate a UUID using globalThis.crypto
-    const commentId = globalThis.crypto.randomUUID();
+    const commentId = generateUUID();
 
     const { data: comment, error } = await supabase
       .from('chapter_comments')

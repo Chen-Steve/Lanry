@@ -1,3 +1,5 @@
+import { nanoid } from 'nanoid';
+
 export const formatDate = (date: string | Date) => {
   const d = new Date(date);
   const dateStr = d.toLocaleDateString('en-US', {
@@ -91,17 +93,7 @@ export function generateNovelSlug(title: string): string {
 }
 
 export function generateUUID(): string {
-  // Check if crypto.randomUUID is available
-  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-    return crypto.randomUUID();
-  }
-  
-  // Fallback implementation
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    const r = Math.random() * 16 | 0;
-    const v = c === 'x' ? r : (r & 0x3 | 0x8);
-    return v.toString(16);
-  });
+  return nanoid();
 }
 
 export const formatForumDateTime = (date: string | Date) => {
