@@ -4,7 +4,13 @@ import { generateChapterSlug, generateUUID } from '@/lib/utils';
 export async function fetchAuthorNovels(userId: string, authorOnly: boolean) {
   let query = supabase
     .from('novels')
-    .select('id, title, author_profile_id')
+    .select(`
+      id,
+      title,
+      author_profile_id,
+      cover_image_url,
+      chapters (count)
+    `)
     .order('created_at', { ascending: false });
 
   if (authorOnly) {
@@ -13,7 +19,11 @@ export async function fetchAuthorNovels(userId: string, authorOnly: boolean) {
 
   const { data, error } = await query;
   if (error) throw error;
-  return data;
+  
+  return data?.map(novel => ({
+    ...novel,
+    chaptersCount: novel.chapters[0].count
+  }));
 }
 
 export async function fetchNovelChapters(novelId: string, userId: string, authorOnly: boolean) {

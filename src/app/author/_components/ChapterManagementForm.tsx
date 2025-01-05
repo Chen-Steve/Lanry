@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import supabase from '@/lib/supabaseClient';
 import { Novel, Chapter, ChapterFormData } from '@/types/novel';
 import * as authorChapterService from '../_services/authorChapterService';
@@ -170,26 +171,52 @@ export default function ChapterManagementForm({ authorOnly = false }: ChapterMan
 
   return (
     <div className="max-w-5xl mx-auto px-2 sm:px-4">
-      <div className="mb-4 sm:mb-6">
-        <div className="relative">
-          <select
-            title="Select a novel"
-            value={selectedNovel}
-            onChange={(e) => setSelectedNovel(e.target.value)}
-            className="w-full pl-4 pr-10 py-3 border rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black appearance-none shadow-sm"
-          >
-            <option value="" className="text-gray-500">Select a novel to manage chapters...</option>
-            {novels.map((novel) => (
-              <option key={novel.id} value={novel.id} className="text-black">
-                {novel.title}
-              </option>
-            ))}
-          </select>
-          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-500">
-            <Icon icon="mdi:chevron-down" className="w-5 h-5" />
-          </div>
+      {!selectedNovel && (
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2 mb-4">
+          {novels.map((novel) => (
+            <button
+              key={novel.id}
+              onClick={() => setSelectedNovel(novel.id)}
+              className="flex flex-col items-start p-1.5 border rounded-lg hover:border-blue-500 transition-colors bg-white shadow-sm"
+            >
+              <div className="w-full aspect-[2/3] mb-1 rounded-md bg-gray-100 overflow-hidden relative">
+                {novel.cover_image_url ? (
+                  <Image 
+                    src={novel.cover_image_url.startsWith('http') ? novel.cover_image_url : `/novel-covers/${novel.cover_image_url}`}
+                    alt={novel.title}
+                    fill
+                    sizes="(max-width: 640px) 33vw, (max-width: 768px) 16vw, 12vw"
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                    <Icon icon="mdi:book-outline" className="w-6 h-6 text-gray-400" />
+                  </div>
+                )}
+              </div>
+              <h3 className="text-xs font-medium text-left line-clamp-1 w-full">{novel.title}</h3>
+              <p className="text-[10px] text-gray-500 mt-0.5">
+                {novel.chaptersCount} chapters
+              </p>
+            </button>
+          ))}
         </div>
-      </div>
+      )}
+
+      {selectedNovel && (
+        <div className="mb-4 flex items-center gap-2">
+          <button
+            onClick={() => setSelectedNovel('')}
+            className="inline-flex items-center gap-1 text-blue-500 hover:text-blue-600"
+          >
+            <Icon icon="mdi:arrow-left" className="w-5 h-5" />
+            Back to Novels
+          </button>
+          <h2 className="text-lg font-semibold">
+            {novels.find(n => n.id === selectedNovel)?.title}
+          </h2>
+        </div>
+      )}
 
       {selectedNovel && (
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">

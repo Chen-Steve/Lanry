@@ -2,6 +2,8 @@ export interface Novel {
   id: string;
   title: string;
   author_profile_id?: string;
+  cover_image_url?: string;
+  chaptersCount?: number;
 }
 
 export interface Chapter {
