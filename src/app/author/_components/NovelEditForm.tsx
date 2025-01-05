@@ -1,13 +1,15 @@
 'use client';
 
 import { Icon } from '@iconify/react';
-import Image from 'next/image';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-hot-toast';
 import ChapterList from './ChapterList';
+import NovelCoverImage from './NovelCoverImage';
+import CategorySelectionModal from './CategorySelectionModal';
 import * as authorChapterService from '../_services/authorChapterService';
+import * as categoryService from '../_services/categoryService';
 import { useAuth } from '@/hooks/useAuth';
-import { ChapterListChapter, NovelEditFormProps, Volume } from '../_types/authorTypes';
+import { ChapterListChapter, NovelEditFormProps, Volume, NovelCategory } from '../_types/authorTypes';
 
 export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFormProps) {
   const { userId, isLoading: isAuthLoading } = useAuth();
@@ -21,8 +23,8 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
   const [chapters, setChapters] = useState<ChapterListChapter[]>([]);
   const [volumes, setVolumes] = useState<Volume[]>([]);
   const [isLoadingChapters, setIsLoadingChapters] = useState(true);
-  const [isUploadingCover, setIsUploadingCover] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [selectedCategories, setSelectedCategories] = useState<NovelCategory[]>([]);
 
   const loadChapters = useCallback(async () => {
     if (!userId || !novel.id) {
@@ -59,6 +61,21 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
     }
   }, [isAuthLoading, loadChapters, novel.id]);
 
+  useEffect(() => {
+    const loadCategories = async () => {
+      if (!novel.id) return;
+      try {
+        const categories = await categoryService.getNovelCategories(novel.id);
+        setSelectedCategories(categories);
+      } catch (error) {
+        console.error('Error loading novel categories:', error);
+        toast.error('Failed to load categories');
+      }
+    };
+
+    loadCategories();
+  }, [novel.id]);
+
   const handleSave = async () => {
     setIsSubmitting(true);
     try {
@@ -78,64 +95,13 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
     }
   };
 
-  const statusOptions = [
-    { value: 'ONGOING', label: 'Ongoing', icon: 'mdi:pencil' },
-    { value: 'COMPLETED', label: 'Completed', icon: 'mdi:check-circle' },
-    { value: 'HIATUS', label: 'Hiatus', icon: 'mdi:pause-circle' }
-  ] as const;
-
-  const handleCoverImageClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Only allow image files
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please select an image file');
-      return;
-    }
-
-    // Max file size: 5MB
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image size should be less than 5MB');
-      return;
-    }
-
-    setIsUploadingCover(true);
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Upload failed');
-      }
-
-      const data = await response.json();
-      const updatedNovel = {
-        ...novel,
-        coverImageUrl: data.url,
-      };
-      await onUpdate(updatedNovel);
-      novel.coverImageUrl = data.url;
-      toast.success('Cover image updated successfully');
-    } catch (error) {
-      console.error('Error uploading cover:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to upload cover image');
-    } finally {
-      setIsUploadingCover(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-    }
+  const handleCoverUpdate = async (coverImageUrl: string) => {
+    const updatedNovel = {
+      ...novel,
+      coverImageUrl,
+    };
+    await onUpdate(updatedNovel);
+    novel.coverImageUrl = coverImageUrl;
   };
 
   const handleDeleteChapter = async (chapterId: string) => {
@@ -160,6 +126,12 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
     }
   };
 
+  const statusOptions = [
+    { value: 'ONGOING', label: 'Ongoing', icon: 'mdi:pencil' },
+    { value: 'COMPLETED', label: 'Completed', icon: 'mdi:check-circle' },
+    { value: 'HIATUS', label: 'Hiatus', icon: 'mdi:pause-circle' }
+  ] as const;
+
   return (
     <main className="space-y-4">
       <button
@@ -174,44 +146,10 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
         <div className="space-y-4">
           <div className="flex justify-between items-start">
             <div className="flex gap-6 items-start">
-              <div 
-                className="w-[180px] h-[270px] relative rounded-lg overflow-hidden shadow-md flex-shrink-0 group cursor-pointer"
-                onClick={handleCoverImageClick}
-              >
-                {isUploadingCover ? (
-                  <div className="absolute inset-0 bg-foreground/50 flex items-center justify-center">
-                    <Icon icon="mdi:loading" className="w-8 h-8 text-background animate-spin" />
-                  </div>
-                ) : (
-                  <>
-                    {novel.coverImageUrl ? (
-                      <Image
-                        src={novel.coverImageUrl}
-                        alt={novel.title}
-                        fill
-                        sizes="180px"
-                        className="object-cover"
-                        priority
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-accent flex items-center justify-center">
-                        <span className="text-muted-foreground text-sm font-medium">Cover image</span>
-                      </div>
-                    )}
-                    <div className="absolute inset-0 bg-foreground/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Icon icon="mdi:camera" className="w-8 h-8 text-background" />
-                    </div>
-                  </>
-                )}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className="hidden"
-                  aria-label="Upload cover image"
-                />
-              </div>
+              <NovelCoverImage 
+                coverImageUrl={novel.coverImageUrl}
+                onUpdate={handleCoverUpdate}
+              />
               <div className="flex flex-col flex-grow h-[270px]">
                 <div>
                   <div className="flex items-center gap-2 max-w-[500px]">
@@ -239,18 +177,10 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
                     <button
                       type="button"
                       className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-muted-foreground bg-accent hover:bg-accent/80 rounded transition-colors"
-                      onClick={() => {/* TODO: Implement tags modal */}}
+                      onClick={() => setIsCategoryModalOpen(true)}
                     >
                       <Icon icon="mdi:tag-multiple" className="w-3.5 h-3.5" />
-                      Add Tags
-                    </button>
-                    <button
-                      type="button"
-                      className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-muted-foreground bg-accent hover:bg-accent/80 rounded transition-colors"
-                      onClick={() => {/* TODO: Implement categories modal */}}
-                    >
-                      <Icon icon="mdi:folder-multiple" className="w-3.5 h-3.5" />
-                      Add Categories
+                      {selectedCategories.length > 0 ? `${selectedCategories.length} Categories` : 'Add Categories'}
                     </button>
                   </div>
                   <div className="mt-2">
@@ -374,6 +304,15 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
           )}
         </div>
       </div>
+
+      {/* Category Selection Modal */}
+      <CategorySelectionModal
+        isOpen={isCategoryModalOpen}
+        onClose={() => setIsCategoryModalOpen(false)}
+        novelId={novel.id}
+        selectedCategories={selectedCategories}
+        onCategoriesChange={setSelectedCategories}
+      />
     </main>
   );
 }

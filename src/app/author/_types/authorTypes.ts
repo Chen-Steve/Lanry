@@ -105,4 +105,11 @@ export interface NovelFormData {
   status: 'ONGOING' | 'COMPLETED' | 'HIATUS';
   categories?: string[];
   coverImage?: File;
+}
+
+export interface NovelCategory {
+  id: string;
+  name: string;
+  created_at: string;
+  updated_at: string;
 } 
