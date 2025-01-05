@@ -3,15 +3,14 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import supabase from '@/lib/supabaseClient';
-import NovelUploadForm from '@/app/author/_components/NovelUploadForm';
-import ChapterManagementForm from '@/app/author/_components/ChapterManagementForm';
 import ChapterPurchaseHistory from '@/app/author/_components/ChapterPurchaseHistory';
 import NovelStatistics from '@/app/author/_components/NovelStatistics';
 import TranslatorLinks from '@/app/author/_components/TranslatorLinks';
+import NovelManagement from '@/app/author/_components/NovelManagement';
 import { Icon } from '@iconify/react';
 
 export default function AuthorDashboard() {
-  const [activeTab, setActiveTab] = useState('novels');
+  const [activeTab, setActiveTab] = useState('manage-novels');
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const router = useRouter();
   const [isAuthorized, setIsAuthorized] = useState(false);
@@ -85,29 +84,16 @@ export default function AuthorDashboard() {
           </a>
           <nav className="flex flex-col gap-2">
             <button
-              onClick={() => setActiveTab('novels')}
+              onClick={() => setActiveTab('manage-novels')}
               className={`w-full py-2 px-4 rounded-lg transition-colors text-left ${
-                activeTab === 'novels'
+                activeTab === 'manage-novels'
                   ? 'bg-[#E5E1D8] text-indigo-700'
                   : 'text-gray-600 hover:bg-[#E5E1D8]/50'
               }`}
             >
               <span className="flex items-center gap-2">
-                <Icon icon="mdi:book-open-variant" />
-                My Novels
-              </span>
-            </button>
-            <button
-              onClick={() => setActiveTab('chapters')}
-              className={`w-full py-2 px-4 rounded-lg transition-colors text-left ${
-                activeTab === 'chapters'
-                  ? 'bg-[#E5E1D8] text-indigo-700'
-                  : 'text-gray-600 hover:bg-[#E5E1D8]/50'
-              }`}
-            >
-              <span className="flex items-center gap-2">
-                <Icon icon="mdi:file-document-outline" />
-                Manage Chapters
+                <Icon icon="mdi:bookshelf" />
+                Manage Novels
               </span>
             </button>
             <button
@@ -156,11 +142,8 @@ export default function AuthorDashboard() {
       {/* Main Content */}
       <div className="lg:ml-64 flex-1 p-8 pt-16 lg:pt-8">
         <div className="max-w-5xl mx-auto">
-          {activeTab === 'novels' && (
-            <NovelUploadForm authorOnly={true} />
-          )}
-          {activeTab === 'chapters' && (
-            <ChapterManagementForm authorOnly={true} />
+          {activeTab === 'manage-novels' && (
+            <NovelManagement />
           )}
           {activeTab === 'purchases' && (
             <ChapterPurchaseHistory />

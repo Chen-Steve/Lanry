@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import supabase from '@/lib/supabaseClient';
 import NovelUploadForm from '@/app/admin/_components/NovelUploadForm';
-import ChapterManagementForm from '@/app/admin/_components/ChapterManagementForm';
 import RoleManagement from '@/app/admin/_components/RoleManagement';
 import { Icon } from '@iconify/react';
 
@@ -69,16 +68,6 @@ export default function AdminDashboard() {
               All Novels
             </button>
             <button
-              onClick={() => setActiveTab('chapters')}
-              className={`ml-4 lg:ml-8 py-2 px-4 ${
-                activeTab === 'chapters'
-                  ? 'border-b-2 border-blue-500 text-blue-600'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              All Chapters
-            </button>
-            <button
               onClick={() => setActiveTab('roles')}
               className={`ml-4 lg:ml-8 py-2 px-4 ${
                 activeTab === 'roles'
@@ -95,7 +84,6 @@ export default function AdminDashboard() {
       <div className="flex-1 overflow-auto bg-gray-50">
         <div className="min-h-full pb-8">
           {activeTab === 'novels' && <NovelUploadForm />}
-          {activeTab === 'chapters' && <ChapterManagementForm />}
           {activeTab === 'roles' && <RoleManagement />}
         </div>
       </div>

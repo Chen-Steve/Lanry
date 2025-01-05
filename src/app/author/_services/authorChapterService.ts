@@ -48,6 +48,7 @@ export async function fetchNovelChapters(novelId: string, userId: string, author
       title,
       content,
       novel_id,
+      volume_id,
       slug,
       publish_at,
       coins,
@@ -102,6 +103,7 @@ export async function createChapter(
     publish_at: string | null;
     coins: number;
     author_thoughts?: string;
+    volumeId?: string;
   }
 ) {
   await verifyNovelAuthor(novelId, userId);
@@ -112,6 +114,7 @@ export async function createChapter(
       id: generateUUID(),
       novel_id: novelId,
       ...chapterData,
+      volume_id: chapterData.volumeId,
       slug: generateChapterSlug(chapterData.chapter_number, chapterData.part_number),
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
@@ -127,6 +130,87 @@ export async function deleteChapter(chapterId: string, novelId: string, userId: 
     .from('chapters')
     .delete()
     .eq('id', chapterId)
+    .eq('novel_id', novelId);
+
+  if (error) throw error;
+}
+
+export async function fetchNovelVolumes(novelId: string, userId: string) {
+  await verifyNovelAuthor(novelId, userId);
+
+  const { data, error } = await supabase
+    .from('volumes')
+    .select(`
+      id,
+      volume_number,
+      title,
+      description,
+      created_at,
+      updated_at
+    `)
+    .eq('novel_id', novelId)
+    .order('volume_number', { ascending: true });
+
+  if (error) throw error;
+  return data;
+}
+
+export async function createVolume(
+  novelId: string,
+  userId: string,
+  volumeData: {
+    volumeNumber: number;
+    title: string;
+    description?: string;
+  }
+) {
+  await verifyNovelAuthor(novelId, userId);
+
+  const { error } = await supabase
+    .from('volumes')
+    .insert({
+      id: generateUUID(),
+      novel_id: novelId,
+      volume_number: volumeData.volumeNumber,
+      title: volumeData.title,
+      description: volumeData.description,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    });
+
+  if (error) throw error;
+}
+
+export async function updateVolume(
+  volumeId: string,
+  novelId: string,
+  userId: string,
+  volumeData: {
+    title: string;
+    description?: string;
+  }
+) {
+  await verifyNovelAuthor(novelId, userId);
+
+  const { error } = await supabase
+    .from('volumes')
+    .update({
+      ...volumeData,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', volumeId)
+    .eq('novel_id', novelId);
+
+  if (error) throw error;
+}
+
+export async function deleteVolume(volumeId: string, novelId: string, userId: string) {
+  await verifyNovelAuthor(novelId, userId);
+
+  const { error } = await supabase
+    .from('volumes')
+    .delete()
+    .eq('id', volumeId)
     .eq('novel_id', novelId);
 
   if (error) throw error;

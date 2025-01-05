@@ -82,7 +82,7 @@ export interface UserProfile {
   username: string | null;
   current_streak: number;
   last_visit: string | null;
-  role: 'USER' | 'AUTHOR' | 'ADMIN' | 'SUPER_ADMIN';
+  role: 'USER' | 'AUTHOR' | 'TRANSLATOR' | 'ADMIN' | 'SUPER_ADMIN';
   coins: number;
   avatar_url?: string;
   created_at: string;

@@ -30,6 +30,8 @@ model Novel {
   ratingCount    Int       @default(0) @map("rating_count")
   isAuthorNameCustom Boolean @default(true) @map("is_author_name_custom")
   chapters       Chapter[]
+  volumes        Volume[]
+  arcs           Arc[]
   bookmarks      Bookmark[]
   readingHistory ReadingHistory[]
   chapterUnlocks ChapterUnlock[]
@@ -52,6 +54,42 @@ model Novel {
   @@map("novels")
 }
 
+model Volume {
+  id            String    @id @default(uuid())
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  volumeNumber  Int       @map("volume_number")
+  title         String
+  description   String?
+  novel         Novel     @relation(fields: [novelId], references: [id], onDelete: Cascade)
+  novelId       String    @map("novel_id")
+  chapters      Chapter[]
+  arcs          Arc[]
+
+  @@unique([novelId, volumeNumber])
+  @@index([novelId])
+  @@map("volumes")
+}
+
+model Arc {
+  id            String    @id @default(uuid())
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  arcNumber     Int       @map("arc_number")
+  title         String
+  description   String?
+  novel         Novel     @relation(fields: [novelId], references: [id], onDelete: Cascade)
+  novelId       String    @map("novel_id")
+  volume        Volume?   @relation(fields: [volumeId], references: [id])
+  volumeId      String?   @map("volume_id")
+  chapters      Chapter[]
+
+  @@unique([novelId, arcNumber])
+  @@index([novelId])
+  @@index([volumeId])
+  @@map("arcs")
+}
+
 model Chapter {
   id            String    @id @default(uuid())
   createdAt     DateTime  @default(now()) @map("created_at")
@@ -66,12 +104,17 @@ model Chapter {
   authorThoughts String?  @map("author_thoughts") @db.Text
   novel         Novel     @relation(fields: [novelId], references: [id], onDelete: Cascade)
   novelId       String    @map("novel_id")
+  volume        Volume?   @relation(fields: [volumeId], references: [id])
+  volumeId      String?   @map("volume_id")
+  arc           Arc?      @relation(fields: [arcId], references: [id])
+  arcId         String?   @map("arc_id")
 
   @@unique([novelId, slug])
-  @@unique([novelId, chapterNumber, partNumber])
   @@index([novelId])
   @@index([chapterNumber])
   @@index([partNumber])
+  @@index([volumeId])
+  @@index([arcId])
   @@index([slug])
   @@index([publishAt])
   @@map("chapters")

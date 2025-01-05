@@ -79,8 +79,16 @@ export const formatRelativeTime = (date: string | Date) => {
   }
 };
 
-export function generateChapterSlug(chapterNumber: number, partNumber?: number | null): string {
-  return `c${chapterNumber}${partNumber ? `-p${partNumber}` : ''}`;
+export function generateChapterSlug(
+  chapterNumber: number, 
+  partNumber?: number | null,
+  volumeNumber?: number | null
+): string {
+  const parts = [];
+  if (volumeNumber) parts.push(`v${volumeNumber}`);
+  parts.push(`c${chapterNumber}`);
+  if (partNumber) parts.push(`p${partNumber}`);
+  return parts.join('-');
 }
 
 export function generateNovelSlug(title: string): string {

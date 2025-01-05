@@ -10,6 +10,7 @@ interface UserProfile {
   last_visit: string | null;
   coins: number;
   avatar_url?: string;
+  role?: 'USER' | 'AUTHOR' | 'TRANSLATOR' | 'ADMIN' | 'SUPER_ADMIN';
 }
 
 export function useStreak(userId: string | null, checkStreak: boolean = false) {
@@ -26,7 +27,7 @@ export function useStreak(userId: string | null, checkStreak: boolean = false) {
       
       const { data, error } = await supabase
         .from('profiles')
-        .select('username, current_streak, last_visit, coins, avatar_url')
+        .select('username, current_streak, last_visit, coins, avatar_url, role')
         .eq('id', userId)
         .single();
       
