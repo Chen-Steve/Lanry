@@ -26,17 +26,39 @@ export function useAuth() {
   // Check and create profile if needed
   useEffect(() => {
     const checkAndCreateProfile = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('id', session.user.id)
-          .single();
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
 
-        if (!profile) {
-          await createUserProfile(session.user.id);
+          if (profileError) {
+            console.error('Error fetching profile:', profileError);
+          }
+
+          if (!profile) {
+            const { error: createError } = await supabase
+              .from('profiles')
+              .insert([{
+                id: session.user.id,
+                username: generateUsername(),
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+                current_streak: 0,
+                last_visit: new Date().toISOString(),
+                coins: 0
+              }]);
+
+            if (createError) {
+              console.error('Error creating profile:', createError);
+            }
+          }
         }
+      } catch (error) {
+        console.error('Profile check error:', error);
       }
     };
 
@@ -151,14 +173,7 @@ export function useAuth() {
     try {
       setGoogleLoading(true);
       const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${process.env.NEXT_PUBLIC_BASE_URL || window.location.origin}/auth/callback`,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          }
-        }
+        provider: 'google'
       });
 
       if (error) throw error;
