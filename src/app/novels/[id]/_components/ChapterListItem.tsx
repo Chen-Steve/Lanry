@@ -142,7 +142,7 @@ export function ChapterListItem({
       }
 
       toast.custom((t) => (
-        <div className="bg-background shadow-lg rounded-lg p-4 max-w-md mx-auto border border-border">
+        <div className="bg-background shadow-lg rounded-lg p-4 max-w-md mx-auto border-2 border-primary">
           <div className="flex flex-col gap-3">
             <div className="font-medium text-foreground">
               Unlock Chapter {chapter.chapter_number} for {chapter.coins} coins?
@@ -194,7 +194,10 @@ export function ChapterListItem({
   const chapterContent = (
     <div className="flex items-center justify-between w-full">
       <div className="flex items-center gap-2 min-w-0">
-        <span className="font-medium whitespace-nowrap">
+        <span className="font-medium whitespace-nowrap flex items-center gap-1">
+          {!isPublished && !isUnlocked && (
+            <Icon icon="material-symbols:lock" className="text-xs" />
+          )}
           Ch. {chapter.chapter_number}
         </span>
         {chapter.title && (
@@ -210,9 +213,9 @@ export function ChapterListItem({
           ) : (
             <>
               {isUnlocking ? (
-                <Icon icon="pepicons-print:spinner" className="text-foreground animate-spin" />
+                <Icon icon="material-symbols:progress-activity" className="text-foreground animate-spin" />
               ) : (
-                <Icon icon="pepicons-print:lock" />
+                null
               )}
               <span>{chapter.coins}c</span>
               <span className="text-muted-foreground">

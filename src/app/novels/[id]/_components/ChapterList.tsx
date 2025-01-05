@@ -99,17 +99,13 @@ export const ChapterList = ({
         )}
 
         {/* Chapter List */}
-        <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 divide-border">
+        <div className="grid grid-cols-1 md:grid-cols-2">
           {(volumes.length === 0 ? chapters : currentChapters)
             .sort((a, b) => a.chapter_number - b.chapter_number)
-            .map((chapter, index, array) => (
+            .map(chapter => (
               <div 
                 key={chapter.id} 
-                className={`${
-                  index % 2 === 0 && index < array.length - 1
-                    ? 'md:border-r'
-                    : ''
-                } border-border h-10`}
+                className="h-10"
               >
                 {renderChapter(chapter)}
               </div>
