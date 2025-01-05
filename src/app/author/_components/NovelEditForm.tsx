@@ -138,6 +138,17 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
     }
   };
 
+  const handleDeleteChapter = async (chapterId: string) => {
+    try {
+      await authorChapterService.deleteChapter(chapterId, novel.id, userId || '');
+      await loadChapters(); // Refresh the chapters list
+      toast.success('Chapter deleted successfully');
+    } catch (error) {
+      console.error('Error deleting chapter:', error);
+      toast.error('Failed to delete chapter');
+    }
+  };
+
   return (
     <main className="space-y-4">
       <button
@@ -347,7 +358,7 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
                     // TODO: Implement chapter editing navigation
                     console.log('Edit chapter:', chapter);
                   }}
-                  onDeleteChapter={() => {}}
+                  onDeleteChapter={handleDeleteChapter}
                   onCreateVolume={() => {}}
                   onCreateChapter={() => {}}
                   novelId={novel.id}

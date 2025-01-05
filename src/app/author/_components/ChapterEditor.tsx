@@ -228,7 +228,7 @@ export default function ChapterEditor({
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={handleKeyDown}
         onPaste={handlePaste}
-        className={`w-full p-3 md:p-4 border rounded-lg text-black min-h-[120px] md:min-h-[150px] focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none md:resize-y ${className}`}
+        className={`w-full p-3 md:p-4 border rounded-lg text-black min-h-[400px] focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y ${className}`}
         placeholder="Write your chapter here..."
       />
 
@@ -242,7 +242,7 @@ export default function ChapterEditor({
           <textarea
             value={authorThoughts}
             onChange={(e) => onAuthorThoughtsChange(e.target.value)}
-            className="w-full p-3 md:p-4 border border-gray-300 rounded-lg text-black min-h-[100px] md:min-h-[120px] focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none md:resize-y bg-gray-50"
+            className="w-full p-3 md:p-4 border border-gray-300 rounded-lg text-black min-h-[150px] focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y bg-gray-50"
             placeholder="Share your thoughts about this chapter (it will be visible at the bottom of the chapter)"
           />
         </div>

@@ -31,6 +31,10 @@ export default function ChapterList({
   const [volumeNumber, setVolumeNumber] = useState('');
   const [showChapterForm, setShowChapterForm] = useState(false);
   const [selectedVolumeId, setSelectedVolumeId] = useState<string | undefined>();
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{ isOpen: boolean; chapterId: string | null }>({
+    isOpen: false,
+    chapterId: null
+  });
 
   const chaptersGroupedByVolume = useMemo(() => {
     const noVolumeChapters = chapters.filter(chapter => !chapter.volumeId);
@@ -69,6 +73,17 @@ export default function ChapterList({
   const handleCreateChapter = (volumeId?: string) => {
     setSelectedVolumeId(volumeId);
     setShowChapterForm(true);
+  };
+
+  const handleDeleteClick = (chapterId: string) => {
+    setDeleteConfirmation({ isOpen: true, chapterId });
+  };
+
+  const handleConfirmDelete = () => {
+    if (deleteConfirmation.chapterId) {
+      onDeleteChapter(deleteConfirmation.chapterId);
+      setDeleteConfirmation({ isOpen: false, chapterId: null });
+    }
   };
 
   const renderChapter = (chapter: ChapterListChapter) => (
@@ -126,7 +141,10 @@ export default function ChapterList({
       </div>
 
       <button
-        onClick={() => onDeleteChapter(chapter.id)}
+        onClick={(e) => {
+          e.stopPropagation();
+          handleDeleteClick(chapter.id);
+        }}
         className="absolute top-2 right-1 sm:top-2 sm:right-2 p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
         title="Delete chapter"
       >
@@ -162,23 +180,21 @@ export default function ChapterList({
   };
 
   return (
-    <div className="border rounded-lg overflow-hidden flex flex-col h-[calc(100vh-24rem)]">
+    <div className="border rounded-lg overflow-hidden flex flex-col h-[calc(100vh-16rem)]">
       {showChapterForm ? (
-        <div className="p-4">
-          <ChapterEditForm
-            novelId={novelId}
-            userId={userId}
-            onCancel={() => setShowChapterForm(false)}
-            onSave={() => {
-              setShowChapterForm(false);
-              if (onCreateChapter) {
-                onCreateChapter(selectedVolumeId);
-              }
-            }}
-          />
-        </div>
+        <ChapterEditForm
+          novelId={novelId}
+          userId={userId}
+          onCancel={() => setShowChapterForm(false)}
+          onSave={() => {
+            setShowChapterForm(false);
+            if (onCreateChapter) {
+              onCreateChapter(selectedVolumeId);
+            }
+          }}
+        />
       ) : (
-        <>
+        <div className="flex flex-col h-full">
           <div className="bg-gray-50 p-2 sm:p-3 border-b sticky top-0 z-10">
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-2">
@@ -288,7 +304,33 @@ export default function ChapterList({
               </div>
             </div>
           )}
-        </>
+
+          {/* Delete Confirmation Modal */}
+          {deleteConfirmation.isOpen && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg p-6 w-full max-w-sm">
+                <h3 className="text-lg font-medium text-gray-900 mb-3">Delete Chapter</h3>
+                <p className="text-sm text-gray-600 mb-6">
+                  Are you sure you want to delete this chapter? This action cannot be undone.
+                </p>
+                <div className="flex justify-end gap-3">
+                  <button
+                    onClick={() => setDeleteConfirmation({ isOpen: false, chapterId: null })}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleConfirmDelete}
+                    className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

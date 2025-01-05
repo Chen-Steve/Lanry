@@ -69,35 +69,40 @@ export default function ChapterEditForm({
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault(); // Prevent form submission
+    setIsSaving(true);
     try {
-      setIsSaving(true);
-      const chapterData = {
-        chapter_number: parseInt(formData.chapterNumber),
-        part_number: formData.partNumber ? parseInt(formData.partNumber) : null,
-        title: formData.title,
-        content: formData.content,
-        publish_at: formData.publishAt ? new Date(formData.publishAt).toISOString() : null,
-        coins: parseInt(formData.coins),
-        author_thoughts: formData.authorThoughts,
-      };
-
       if (chapterId) {
-        await authorChapterService.updateChapter(chapterId, novelId, userId, chapterData);
-        toast.success('Chapter updated successfully');
+        await authorChapterService.updateChapter(chapterId, novelId, userId, {
+          chapter_number: parseInt(formData.chapterNumber),
+          part_number: formData.partNumber ? parseInt(formData.partNumber) : null,
+          title: formData.title,
+          content: formData.content,
+          publish_at: formData.publishAt || null,
+          coins: parseInt(formData.coins),
+          author_thoughts: formData.authorThoughts
+        });
       } else {
         await authorChapterService.createChapter(novelId, userId, {
-          ...chapterData,
-          volumeId: undefined
+          chapter_number: parseInt(formData.chapterNumber),
+          part_number: formData.partNumber ? parseInt(formData.partNumber) : null,
+          title: formData.title,
+          content: formData.content,
+          publish_at: formData.publishAt || null,
+          coins: parseInt(formData.coins),
+          author_thoughts: formData.authorThoughts
         });
-        toast.success('Chapter created successfully');
       }
+      toast.success(chapterId ? 'Chapter updated successfully' : 'Chapter created successfully');
       onSave();
     } catch (error) {
       console.error('Error saving chapter:', error);
-      toast.error('Failed to save chapter');
+      if (error instanceof Error && error.message.includes('already exists')) {
+        toast.error(error.message);
+      } else {
+        toast.error('Failed to save chapter');
+      }
     } finally {
       setIsSaving(false);
     }
@@ -112,8 +117,8 @@ export default function ChapterEditForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="flex justify-between items-center mb-4">
+    <form onSubmit={handleSave} className="flex flex-col h-full">
+      <div className="flex justify-between items-center bg-white py-2 sticky top-0 z-10 px-4">
         <h3 className="text-lg font-semibold">
           {chapterId ? 'Edit Chapter' : 'Add New Chapter'}
         </h3>
@@ -128,71 +133,65 @@ export default function ChapterEditForm({
         </button>
       </div>
 
-      <div className="flex gap-4">
-        <div className="w-1/4">
-          <label htmlFor="chapterNumber" className="block text-sm font-medium text-gray-700 mb-1">
-            Chapter Number
-          </label>
+      <div className="flex gap-3 sticky z-10 bg-white py-2 px-4 border-b">
+        <div className="w-24">
           <input
             id="chapterNumber"
             type="number"
             min="1"
             value={formData.chapterNumber}
             onChange={(e) => setFormData({ ...formData, chapterNumber: e.target.value })}
-            className="w-full text-black p-3 border rounded-lg"
+            className="w-full text-black py-2 px-3 border rounded-lg"
+            placeholder="Ch #"
             required
           />
         </div>
 
-        <div className="w-1/4">
-          <label htmlFor="partNumber" className="block text-sm font-medium text-gray-700 mb-1">
-            Part Number (Optional)
-          </label>
+        <div className="w-28">
           <input
             id="partNumber"
             type="number"
             min="1"
             value={formData.partNumber}
             onChange={(e) => setFormData({ ...formData, partNumber: e.target.value })}
-            className="w-full text-black p-3 border rounded-lg"
+            className="w-full text-black py-2 px-3 border rounded-lg"
+            placeholder="Part #"
           />
         </div>
 
-        <div className="w-2/4">
-          <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
-            Title (Optional)
-          </label>
+        <div className="flex-1">
           <input
             id="title"
             type="text"
             value={formData.title}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            className="w-full p-3 border rounded-lg"
+            className="w-full py-2 px-3 border rounded-lg"
+            placeholder="Title (Optional)"
           />
         </div>
       </div>
 
-      <div className="space-y-2">
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Chapter Content
-        </label>
-        <ChapterEditor
-          value={formData.content}
-          onChange={(value) => setFormData(prev => ({ ...prev, content: value }))}
-          authorThoughts={formData.authorThoughts}
-          onAuthorThoughtsChange={(thoughts) => setFormData(prev => ({ ...prev, authorThoughts: thoughts }))}
-        />
+      <div className="flex-1 overflow-y-auto px-4 py-4">
+        <div className="space-y-4">
+          <ChapterEditor
+            value={formData.content}
+            onChange={(value) => setFormData(prev => ({ ...prev, content: value }))}
+            authorThoughts={formData.authorThoughts}
+            onAuthorThoughtsChange={(thoughts) => setFormData(prev => ({ ...prev, authorThoughts: thoughts }))}
+          />
+
+          <ChapterPublishSettings
+            publishAt={formData.publishAt}
+            coins={formData.coins}
+            onSettingsChange={(settings) => setFormData(prev => ({ ...prev, ...settings }))}
+          />
+        </div>
       </div>
 
-      <ChapterPublishSettings
-        publishAt={formData.publishAt}
-        coins={formData.coins}
-        onSettingsChange={(settings) => setFormData(prev => ({ ...prev, ...settings }))}
-      />
-
-      <div className="flex gap-4">
+      <div className="flex gap-4 bg-white py-2 px-4 sticky bottom-0 z-10 border-t">
         <button
-          type="submit"
+          type="button"
+          onClick={handleSave}
           disabled={isSaving}
           className="flex-1 bg-blue-500 text-white py-3 px-4 rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
         >

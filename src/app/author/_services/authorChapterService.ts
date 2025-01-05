@@ -108,6 +108,26 @@ export async function createChapter(
 ) {
   await verifyNovelAuthor(novelId, userId);
 
+  // Check for existing chapter with same number
+  const { data: existingChapters } = await supabase
+    .from('chapters')
+    .select('chapter_number, part_number')
+    .eq('novel_id', novelId)
+    .eq('chapter_number', chapterData.chapter_number);
+
+  if (existingChapters && existingChapters.length > 0) {
+    // If checking for both chapter and part number
+    if (chapterData.part_number) {
+      const duplicatePart = existingChapters.some(ch => ch.part_number === chapterData.part_number);
+      if (duplicatePart) {
+        throw new Error(`Chapter ${chapterData.chapter_number} Part ${chapterData.part_number} already exists`);
+      }
+    } else if (!chapterData.part_number && existingChapters.some(ch => !ch.part_number)) {
+      // If no part number and a chapter with this number exists without a part number
+      throw new Error(`Chapter ${chapterData.chapter_number} already exists`);
+    }
+  }
+
   const { error } = await supabase
     .from('chapters')
     .insert({
