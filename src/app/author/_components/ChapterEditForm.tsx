@@ -11,6 +11,7 @@ interface ChapterEditFormProps {
   novelId: string;
   chapterId?: string;
   userId: string;
+  volumeId?: string;
   onCancel: () => void;
   onSave: () => void;
 }
@@ -19,6 +20,7 @@ export default function ChapterEditForm({
   novelId,
   chapterId,
   userId,
+  volumeId,
   onCancel,
   onSave
 }: ChapterEditFormProps) {
@@ -71,7 +73,7 @@ export default function ChapterEditForm({
   };
 
   const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault(); // Prevent form submission
+    e.preventDefault();
     setIsSaving(true);
     try {
       if (chapterId) {
@@ -92,7 +94,8 @@ export default function ChapterEditForm({
           content: formData.content,
           publish_at: formData.publishAt || null,
           coins: parseInt(formData.coins),
-          author_thoughts: formData.authorThoughts
+          author_thoughts: formData.authorThoughts,
+          volumeId: volumeId
         });
       }
       toast.success(chapterId ? 'Chapter updated successfully' : 'Chapter created successfully');

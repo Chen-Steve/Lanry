@@ -228,7 +228,7 @@ export default function ChapterEditor({
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={handleKeyDown}
         onPaste={handlePaste}
-        className={`w-full p-3 md:p-4 border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary bg-background ${
+        className={`w-full p-3 md:p-4 border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary bg-accent ${
           className.includes('flex-1') ? 'flex-1' : 'min-h-[400px] resize-y'
         }`}
         placeholder="Write your chapter here..."

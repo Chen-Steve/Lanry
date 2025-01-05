@@ -25,13 +25,14 @@ export interface Volume {
 export interface ChapterListProps {
   chapters: ChapterListChapter[];
   volumes: Volume[];
-  editingChapterId?: string | null;
+  editingChapterId?: string;
+  onChapterClick?: (chapter: ChapterListChapter) => void;
+  onDeleteChapter: (chapterId: string) => void;
+  onCreateVolume: (volumeData: { title: string; volumeNumber: number }) => void;
+  onCreateChapter: (volumeId?: string) => void;
   novelId: string;
   userId: string;
-  onChapterClick: (chapter: ChapterListChapter) => void;
-  onDeleteChapter: (chapterId: string) => void;
-  onCreateVolume?: (data: { title: string; volumeNumber: number }) => void;
-  onCreateChapter?: (volumeId?: string) => void;
+  onLoadChapters?: () => Promise<void>;
 }
 
 export interface AuthorNovel extends Pick<DatabaseNovel, 

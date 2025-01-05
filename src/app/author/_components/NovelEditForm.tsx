@@ -149,6 +149,17 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
     }
   };
 
+  const handleCreateVolume = async (volumeData: { title: string; volumeNumber: number }) => {
+    try {
+      await authorChapterService.createVolume(novel.id, userId || '', volumeData);
+      await loadChapters(); // Refresh the volumes list
+      toast.success('Volume created successfully');
+    } catch (error) {
+      console.error('Error creating volume:', error);
+      toast.error('Failed to create volume');
+    }
+  };
+
   return (
     <main className="space-y-4">
       <button
@@ -350,15 +361,13 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
                   chapters={chapters}
                   volumes={volumes}
                   editingChapterId={undefined}
-                  onChapterClick={(chapter) => {
-                    // TODO: Implement chapter editing navigation
-                    console.log('Edit chapter:', chapter);
-                  }}
+                  onChapterClick={() => {}}
                   onDeleteChapter={handleDeleteChapter}
-                  onCreateVolume={() => {}}
+                  onCreateVolume={handleCreateVolume}
                   onCreateChapter={() => {}}
                   novelId={novel.id}
                   userId={userId || ''}
+                  onLoadChapters={loadChapters}
                 />
               )}
             </div>
@@ -367,33 +376,4 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
       </div>
     </main>
   );
-}
-
-// Add custom scrollbar styles
-const styles = `
-  ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-
-  ::-webkit-scrollbar-track {
-    background: var(--accent);
-    border-radius: 4px;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background: var(--muted-foreground);
-    border-radius: 4px;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background: var(--foreground);
-  }
-`;
-
-// Add style tag to the document
-if (typeof document !== 'undefined') {
-  const styleTag = document.createElement('style');
-  styleTag.textContent = styles;
-  document.head.appendChild(styleTag);
 }

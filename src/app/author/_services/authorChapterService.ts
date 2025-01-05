@@ -236,6 +236,23 @@ export async function deleteVolume(volumeId: string, novelId: string, userId: st
   if (error) throw error;
 }
 
+export async function assignChaptersToVolume(
+  chapterIds: string[],
+  volumeId: string | null,
+  novelId: string,
+  userId: string
+) {
+  await verifyNovelAuthor(novelId, userId);
+
+  const { error } = await supabase
+    .from('chapters')
+    .update({ volume_id: volumeId, updated_at: new Date().toISOString() })
+    .in('id', chapterIds)
+    .eq('novel_id', novelId);
+
+  if (error) throw error;
+}
+
 async function verifyNovelAuthor(novelId: string, userId: string) {
   const { data: novel } = await supabase
     .from('novels')
