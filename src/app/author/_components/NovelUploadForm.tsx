@@ -181,9 +181,9 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
     ];
 
     return (
-      <div className="flex justify-center mb-8">
+      <div className="flex justify-center mb-4 md:mb-8 overflow-x-auto px-2 w-full">
         {steps.map((step, index) => (
-          <div key={step.id} className="flex items-center">
+          <div key={step.id} className="flex items-center min-w-fit">
             <button
               type="button"
               onClick={() => setCurrentStep(step.id)}
@@ -196,7 +196,7 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
               }`}
             >
               <div className={`
-                w-10 h-10 rounded-full flex items-center justify-center
+                w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center
                 ${currentStep === step.id
                   ? 'bg-blue-100 border-2 border-blue-500'
                   : steps.indexOf(steps.find(s => s.id === currentStep)!) > index
@@ -204,12 +204,12 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
                   : 'bg-gray-100 border-2 border-gray-300'}
                 hover:bg-opacity-80 transition-colors
               `}>
-                <Icon icon={step.icon} className="w-5 h-5" />
+                <Icon icon={step.icon} className="w-4 h-4 md:w-5 md:h-5" />
               </div>
-              <span className="text-xs mt-1">{step.label}</span>
+              <span className="text-[10px] md:text-xs mt-1">{step.label}</span>
             </button>
             {index < steps.length - 1 && (
-              <div className={`w-16 h-0.5 mx-2 ${
+              <div className={`w-8 md:w-16 h-0.5 mx-1 md:mx-2 ${
                 steps.indexOf(steps.find(s => s.id === currentStep)!) > index
                   ? 'bg-green-500'
                   : 'bg-gray-300'
@@ -290,97 +290,57 @@ export default function NovelUploadForm({ authorOnly = false }: NovelUploadFormP
       />
 
       <section>
-        <div className="bg-white rounded-lg p-8 shadow-lg border">
-          <div className="mb-8">
+        <div className="bg-white rounded-lg p-4 md:p-8 shadow-lg border">
+          <div className="mb-6 md:mb-8">
             {renderStepIndicator()}
           </div>
 
-          <form onSubmit={handleSubmit} className="max-w-3xl mx-auto">
-            {renderFormStep()}
+          <div className="max-w-2xl mx-auto">
+            <form onSubmit={handleSubmit}>
+              {renderFormStep()}
 
-            <div className="flex justify-between mt-8">
-              <button
-                type="button"
-                onClick={handlePrevStep}
-                className={`px-6 py-2 rounded flex items-center gap-2 ${
-                  currentStep === 'cover'
-                    ? 'invisible'
-                    : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
-                }`}
-              >
-                <Icon icon="mdi:arrow-left" />
-                Previous
-              </button>
-
-              <div className="flex gap-4">
-                {editingNovel && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={handleCancelEdit}
-                      className="px-6 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 flex items-center gap-2"
-                    >
-                      <Icon icon="mdi:close" />
-                      Cancel
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleSubmit()}
-                      disabled={isUploading}
-                      className="px-6 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                    >
-                      {isUploading ? (
-                        <>
-                          <Icon icon="mdi:loading" className="animate-spin" />
-                          Uploading...
-                        </>
-                      ) : (
-                        <>
-                          <Icon icon="mdi:check" />
-                          Update Novel
-                        </>
-                      )}
-                    </button>
-                    {currentStep !== 'categories' && (
-                      <button
-                        type="button"
-                        onClick={() => handleNextStep()}
-                        className="px-6 py-2 bg-blue-100 text-blue-800 rounded hover:bg-blue-200 flex items-center gap-2"
-                      >
-                        Next
-                        <Icon icon="mdi:arrow-right" />
-                      </button>
-                    )}
-                  </>
-                )}
-                {!editingNovel && (
+              <div className="flex flex-col md:flex-row justify-between items-center gap-4 mt-6">
+                <button
+                  type="button"
+                  onClick={handlePrevStep}
+                  className={`px-3 md:px-4 py-2 rounded flex items-center gap-2 w-full md:w-auto justify-center text-sm md:text-base text-gray-900
+                    ${currentStep === 'cover' ? 'invisible' : 'bg-gray-100 hover:bg-gray-200'}`}
+                  disabled={currentStep === 'cover'}
+                >
+                  <Icon icon="mdi:chevron-left" className="w-4 h-4 md:w-5 md:h-5" />
+                  Previous
+                </button>
+                {currentStep === 'categories' ? (
                   <button
-                    type="button"
-                    onClick={() => currentStep === 'categories' ? handleSubmit() : handleNextStep()}
+                    type="submit"
                     disabled={isUploading}
-                    className="px-6 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    className="px-3 md:px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center gap-2 w-full md:w-auto justify-center text-sm md:text-base"
                   >
                     {isUploading ? (
                       <>
-                        <Icon icon="mdi:loading" className="animate-spin" />
-                        Uploading...
-                      </>
-                    ) : currentStep === 'categories' ? (
-                      <>
-                        <Icon icon="mdi:check" />
-                        Create Novel
+                        <Icon icon="mdi:loading" className="animate-spin w-4 h-4 md:w-5 md:h-5" />
+                        {editingNovel ? 'Updating...' : 'Creating...'}
                       </>
                     ) : (
                       <>
-                        Next
-                        <Icon icon="mdi:arrow-right" />
+                        <Icon icon="mdi:check" className="w-4 h-4 md:w-5 md:h-5" />
+                        {editingNovel ? 'Update Novel' : 'Create Novel'}
                       </>
                     )}
                   </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleNextStep}
+                    className="px-3 md:px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center gap-2 w-full md:w-auto justify-center text-sm md:text-base"
+                  >
+                    Next
+                    <Icon icon="mdi:chevron-right" className="w-4 h-4 md:w-5 md:h-5" />
+                  </button>
                 )}
               </div>
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
       </section>
     </div>

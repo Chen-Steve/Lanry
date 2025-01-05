@@ -115,18 +115,18 @@ export default function NovelFormFields({
       <div>
         <label htmlFor="status" className="block text-sm font-medium mb-1">
           <span className="text-gray-700">Status</span>
-          <span className="text-gray-400 ml-2">(current status of translation)</span>
+          <span className="text-gray-400 text-xs md:text-sm ml-2">(current status of translation)</span>
         </label>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 md:gap-4">
           {statusOptions.map(option => (
             <label
               key={option.value}
               className={`
-                relative flex items-center justify-center gap-2 p-3 rounded-lg cursor-pointer
-                border-2 transition-all duration-200
+                relative flex items-center justify-center gap-2 p-2 md:p-3 rounded-lg cursor-pointer
+                border-2 transition-all duration-200 text-sm md:text-base
                 ${formData.status === option.value
                   ? 'border-blue-500 bg-blue-50 text-blue-700'
-                  : 'border-gray-200 hover:border-blue-200 hover:bg-gray-50'
+                  : 'border-gray-200 hover:border-blue-200 hover:bg-gray-50 text-gray-900'
                 }
               `}
             >
@@ -138,12 +138,12 @@ export default function NovelFormFields({
                 onChange={handleInputChange}
                 className="sr-only"
               />
-              <Icon icon={option.icon} className="w-5 h-5" />
+              <Icon icon={option.icon} className="w-4 h-4 md:w-5 md:h-5" />
               <span className="font-medium">{option.label}</span>
               {formData.status === option.value && (
                 <Icon
                   icon="mdi:check-circle"
-                  className="absolute top-1 right-1 w-4 h-4 text-blue-500"
+                  className="absolute top-1 right-1 w-3 h-3 md:w-4 md:h-4 text-blue-500"
                 />
               )}
             </label>
