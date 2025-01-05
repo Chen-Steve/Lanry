@@ -6,6 +6,7 @@ import { ChapterListProps, ChapterListChapter, Volume } from '../_types/authorTy
 import { toast } from 'react-hot-toast';
 import ChapterEditForm from './ChapterEditForm';
 import * as authorChapterService from '../_services/authorChapterService';
+import { VolumeModal, DeleteConfirmationModal, AssignChaptersModal } from './ChapterListModals';
 
 const isAdvancedChapter = (chapter: ChapterListChapter): boolean => {
   const now = new Date();
@@ -110,7 +111,7 @@ export default function ChapterList({
     try {
       await authorChapterService.deleteVolume(volumeId, novelId, userId);
       if (onLoadChapters) {
-        await onLoadChapters(); // Refresh the volumes list
+        await onLoadChapters();
       }
       toast.success('Volume deleted successfully');
     } catch (error) {
@@ -170,7 +171,7 @@ export default function ChapterList({
     try {
       await authorChapterService.assignChaptersToVolume(
         [chapterId],
-        null, // Setting volumeId to null unassigns the chapter
+        null,
         novelId,
         userId
       );
@@ -411,199 +412,48 @@ export default function ChapterList({
             )}
           </div>
 
-          {/* Volume Creation Modal */}
-          {isVolumeModalOpen && (
-            <div className="fixed inset-0 bg-foreground/50 flex items-center justify-center z-50">
-              <div className="bg-background rounded-lg p-6 w-full max-w-md border-2 border-gray-600">
-                <h3 className="text-lg font-medium text-foreground mb-4">Create New Volume</h3>
-                <form onSubmit={handleVolumeSubmit}>
-                  <div className="space-y-4">
-                    <div>
-                      <label htmlFor="volumeNumber" className="block text-sm font-medium text-foreground mb-1">
-                        Volume Number
-                      </label>
-                      <input
-                        type="number"
-                        id="volumeNumber"
-                        value={volumeNumber}
-                        onChange={(e) => setVolumeNumber(e.target.value)}
-                        className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 bg-background text-foreground"
-                        placeholder="Enter volume number"
-                        required
-                        min="1"
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="volumeName" className="block text-sm font-medium text-foreground mb-1">
-                        Volume Title
-                      </label>
-                      <input
-                        type="text"
-                        id="volumeName"
-                        value={volumeName}
-                        onChange={(e) => setVolumeName(e.target.value)}
-                        className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 bg-background text-foreground"
-                        placeholder="Enter volume title"
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div className="mt-6 flex justify-end gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setIsVolumeModalOpen(false)}
-                      className="px-4 py-2 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-accent"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 rounded-md"
-                    >
-                      Create Volume
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          )}
+          {/* Modals */}
+          <VolumeModal
+            isOpen={isVolumeModalOpen}
+            volumeName={volumeName}
+            volumeNumber={volumeNumber}
+            onClose={() => setIsVolumeModalOpen(false)}
+            onSubmit={handleVolumeSubmit}
+            onVolumeNameChange={setVolumeName}
+            onVolumeNumberChange={setVolumeNumber}
+          />
 
-          {/* Delete Confirmation Modal */}
-          {deleteConfirmation.isOpen && (
-            <div className="fixed inset-0 bg-foreground/50 flex items-center justify-center z-50">
-              <div className="bg-background rounded-lg p-6 w-full max-w-sm">
-                <h3 className="text-lg font-medium text-foreground mb-3">Delete Chapter</h3>
-                <p className="text-sm text-muted-foreground mb-6">
-                  Are you sure you want to delete this chapter? This action cannot be undone.
-                </p>
-                <div className="flex justify-end gap-3">
-                  <button
-                    onClick={() => setDeleteConfirmation({ isOpen: false, chapterId: null })}
-                    className="px-4 py-2 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-accent"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleConfirmDelete}
-                    className="px-4 py-2 text-sm font-medium text-primary-foreground bg-red-600 hover:bg-red-700 rounded-md"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
+          <DeleteConfirmationModal
+            isOpen={deleteConfirmation.isOpen}
+            onClose={() => setDeleteConfirmation({ isOpen: false, chapterId: null })}
+            onConfirm={handleConfirmDelete}
+            title="Delete Chapter"
+            message="Are you sure you want to delete this chapter? This action cannot be undone."
+          />
 
-          {/* Volume Delete Confirmation Modal */}
-          {deleteVolumeConfirmation.isOpen && (
-            <div className="fixed inset-0 bg-foreground/50 flex items-center justify-center z-50">
-              <div className="bg-background rounded-lg p-6 w-full max-w-sm">
-                <h3 className="text-lg font-medium text-foreground mb-3">Delete Volume</h3>
-                <p className="text-sm text-muted-foreground mb-6">
-                  Are you sure you want to delete this volume? All chapters in this volume will be unassigned. This action cannot be undone.
-                </p>
-                <div className="flex justify-end gap-3">
-                  <button
-                    onClick={() => setDeleteVolumeConfirmation({ isOpen: false, volumeId: null })}
-                    className="px-4 py-2 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-accent"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (deleteVolumeConfirmation.volumeId) {
-                        handleDeleteVolume(deleteVolumeConfirmation.volumeId);
-                        setDeleteVolumeConfirmation({ isOpen: false, volumeId: null });
-                      }
-                    }}
-                    className="px-4 py-2 text-sm font-medium text-primary-foreground bg-red-600 hover:bg-red-700 rounded-md"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
+          <DeleteConfirmationModal
+            isOpen={deleteVolumeConfirmation.isOpen}
+            onClose={() => setDeleteVolumeConfirmation({ isOpen: false, volumeId: null })}
+            onConfirm={() => {
+              if (deleteVolumeConfirmation.volumeId) {
+                handleDeleteVolume(deleteVolumeConfirmation.volumeId);
+                setDeleteVolumeConfirmation({ isOpen: false, volumeId: null });
+              }
+            }}
+            title="Delete Volume"
+            message="Are you sure you want to delete this volume? All chapters in this volume will be unassigned. This action cannot be undone."
+          />
 
-          {/* Assign Chapters Modal */}
-          {isAssignChaptersModalOpen && (
-            <div className="fixed inset-0 bg-foreground/50 flex items-center justify-center z-50">
-              <div className="bg-background rounded-lg p-6 w-full max-w-2xl border-2 border-gray-600">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-medium text-foreground">Assign Chapters to Volume</h3>
-                  <button
-                    onClick={() => setIsAssignChaptersModalOpen(false)}
-                    className="text-muted-foreground hover:text-foreground"
-                    aria-label="Close modal"
-                  >
-                    <Icon icon="mdi:close" className="w-5 h-5" />
-                  </button>
-                </div>
-                <div className="mb-4">
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search chapters..."
-                    className="w-full px-3 py-2 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  />
-                </div>
-                <div className="max-h-[400px] overflow-y-auto border border-border rounded-md divide-y divide-border">
-                  {chaptersGroupedByVolume.noVolumeChapters
-                    .sort((a, b) => a.chapter_number - b.chapter_number)
-                    .filter(chapter => 
-                      chapter.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                      `Chapter ${chapter.chapter_number}${chapter.part_number ? ` Part ${chapter.part_number}` : ''}`.toLowerCase().includes(searchQuery.toLowerCase())
-                    )
-                    .map(chapter => (
-                      <div
-                        key={chapter.id}
-                        className="flex items-center gap-3 p-3 hover:bg-accent cursor-pointer"
-                        onClick={() => toggleChapterSelection(chapter.id)}
-                      >
-                        <div className="flex-shrink-0">
-                          <input
-                            type="checkbox"
-                            checked={selectedChapterIds.has(chapter.id)}
-                            onChange={() => toggleChapterSelection(chapter.id)}
-                            className="w-4 h-4 text-primary border-border rounded focus:ring-primary"
-                            aria-label={`Select Chapter ${chapter.chapter_number}${chapter.part_number ? ` Part ${chapter.part_number}` : ''}`}
-                          />
-                        </div>
-                        <div>
-                          <h4 className="text-sm font-medium text-foreground">
-                            Chapter {chapter.chapter_number}
-                            {chapter.part_number && (
-                              <span className="text-muted-foreground">
-                                {" "}Part {chapter.part_number}
-                              </span>
-                            )}
-                            {chapter.title && (
-                              <span className="text-muted-foreground ml-1">: {chapter.title}</span>
-                            )}
-                          </h4>
-                        </div>
-                      </div>
-                    ))}
-                </div>
-                <div className="mt-6 flex justify-end gap-3">
-                  <button
-                    onClick={() => setIsAssignChaptersModalOpen(false)}
-                    className="px-4 py-2 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-accent"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleAssignChapters}
-                    disabled={selectedChapterIds.size === 0}
-                    className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Assign {selectedChapterIds.size} {selectedChapterIds.size === 1 ? 'Chapter' : 'Chapters'}
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
+          <AssignChaptersModal
+            isOpen={isAssignChaptersModalOpen}
+            onClose={() => setIsAssignChaptersModalOpen(false)}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            chapters={chaptersGroupedByVolume.noVolumeChapters}
+            selectedChapterIds={selectedChapterIds}
+            toggleChapterSelection={toggleChapterSelection}
+            onAssign={handleAssignChapters}
+          />
         </div>
       )}
     </div>
