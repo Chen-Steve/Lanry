@@ -2,6 +2,7 @@
 
 import { useAuth } from './_hooks/useAuth';
 import { AuthForm } from './_components/AuthForm';
+import { GoogleSignInButton } from './_components/GoogleSignInButton';
 
 export default function AuthPage() {
   const {
@@ -9,25 +10,41 @@ export default function AuthPage() {
     credentials,
     error,
     loading,
+    googleLoading,
     emailError,
     setCredentials,
     handleSubmit,
+    handleGoogleSignIn,
     resetForm,
     validateEmail
   } = useAuth();
 
   return (
-    <div className="fixed inset-0 md:static h-[100dvh] md:h-[calc(100vh-28rem)] flex items-center justify-center px-4 overflow-hidden">
-      <div className="w-full max-w-[min(100%,24rem)] -mt-12 md:mt-0 space-y-4 md:space-y-6">
-        <h1 className="text-2xl sm:text-3xl font-bold text-center text-black">
+    <div className="min-h-[calc(100vh-16rem)] flex flex-col items-center justify-center px-4">
+      <div className="w-full max-w-[min(100%,20rem)] space-y-3 md:space-y-4">
+        <h1 className="text-xl sm:text-2xl font-bold text-center text-foreground">
           {mode === 'signin' ? 'Sign In' : 'Create Account'}
         </h1>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-600 p-2 rounded-md text-sm animate-fadeIn">
+          <div className="bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-900 text-red-600 dark:text-red-400 p-2 rounded-md text-sm animate-fadeIn">
             {error}
           </div>
         )}
+
+        <GoogleSignInButton 
+          onClick={handleGoogleSignIn}
+          loading={googleLoading}
+        />
+
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-border"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-2 bg-background text-muted-foreground">or continue with email</span>
+          </div>
+        </div>
 
         <AuthForm
           mode={mode}
@@ -47,7 +64,7 @@ export default function AuthPage() {
         <button
           type="button"
           onClick={resetForm}
-          className="w-full text-center text-black hover:text-gray-600 text-sm sm:text-base py-1 md:py-2 font-medium"
+          className="w-full text-center text-foreground hover:text-muted-foreground text-sm py-1 font-medium"
         >
           {mode === 'signin' 
             ? "Don't have an account? Sign up" 

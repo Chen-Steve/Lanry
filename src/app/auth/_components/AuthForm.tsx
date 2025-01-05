@@ -46,13 +46,13 @@ export function AuthForm({
             onEmailChange(e.target.value);
             validateEmail(e.target.value);
           }}
-          className={`text-black w-full p-4 border rounded-lg focus:ring-2 focus:ring-black focus:border-black text-base
-            ${emailError ? 'border-red-500' : ''}`}
+          className={`w-full p-4 bg-background border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-foreground placeholder:text-muted-foreground text-base
+            ${emailError ? 'border-red-500 dark:border-red-400' : 'border-border'}`}
           placeholder="Email"
           required
         />
         {emailError && (
-          <p className="text-red-500 text-xs mt-1">{emailError}</p>
+          <p className="text-red-500 dark:text-red-400 text-xs mt-1">{emailError}</p>
         )}
       </div>
 
@@ -77,7 +77,7 @@ export function AuthForm({
       <button
         type="submit"
         disabled={loading}
-        className="w-full p-4 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 
+        className="w-full p-4 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 
           disabled:cursor-not-allowed text-base font-medium flex items-center justify-center gap-2 
           active:transform active:scale-[0.98] transition-transform"
       >

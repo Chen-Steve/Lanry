@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import supabase from '@/lib/supabaseClient';
 import { generateUsername } from '@/utils/username';
@@ -19,8 +19,29 @@ export function useAuth() {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [emailError, setEmailError] = useState('');
   const router = useRouter();
+
+  // Check and create profile if needed
+  useEffect(() => {
+    const checkAndCreateProfile = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('id', session.user.id)
+          .single();
+
+        if (!profile) {
+          await createUserProfile(session.user.id);
+        }
+      }
+    };
+
+    checkAndCreateProfile();
+  }, []);
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -126,6 +147,29 @@ export function useAuth() {
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    try {
+      setGoogleLoading(true);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${process.env.NEXT_PUBLIC_BASE_URL || window.location.origin}/auth/callback`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        }
+      });
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Google sign-in error:', error);
+      setError(error instanceof Error ? error.message : 'Google sign-in failed');
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
   const checkAndRedirect = async () => {
     await new Promise(resolve => setTimeout(resolve, 500));
     const { data: sessionCheck } = await supabase.auth.getSession();
@@ -148,9 +192,11 @@ export function useAuth() {
     credentials,
     error,
     loading,
+    googleLoading,
     emailError,
     setCredentials,
     handleSubmit,
+    handleGoogleSignIn,
     resetForm,
     validateEmail
   };
