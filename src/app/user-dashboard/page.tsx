@@ -147,19 +147,30 @@ export default function UserDashboard() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        // Only check auth if viewing own profile (no profileId in URL)
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session?.user) {
+          router.push('/auth');
+          return;
+        }
+
+        // Only proceed with profile check if we're viewing own profile
         if (!profileId) {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (!user) {
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('id', session.user.id)
+            .single();
+
+          if (profileError || !profile) {
+            console.error('Profile check error:', profileError);
             router.push('/auth');
             return;
           }
         }
       } catch (error) {
         console.error('Auth check error:', error);
-        if (!profileId) {
-          router.push('/auth');
-        }
+        router.push('/auth');
       } finally {
         setIsAuthChecking(false);
       }
@@ -167,8 +178,8 @@ export default function UserDashboard() {
 
     checkAuth();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (!profileId && event === 'SIGNED_OUT') {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT' || !session) {
         router.push('/auth');
       }
       setIsAuthChecking(false);

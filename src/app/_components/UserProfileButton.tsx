@@ -128,6 +128,10 @@ const UserProfileButton = ({
           <Link
             href="/user-dashboard"
             className="block px-4 py-2 text-sm text-foreground border-b border-border hover:bg-accent transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsProfileDropdownOpen(false);
+            }}
           >
             {userProfile?.username || 'Error loading profile'}
           </Link>

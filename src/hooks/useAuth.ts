@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import supabase from '@/lib/supabaseClient';
+import { useRouter } from 'next/navigation';
 
 export function useAuth() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   useEffect(() => {
     let mounted = true;
@@ -48,7 +50,6 @@ export function useAuth() {
   }, []);
 
   const handleSignOut = async () => {
-    // console.log('Sign out initiated');
     try {
       // Clear stored session data
       if (typeof window !== 'undefined') {
@@ -65,9 +66,8 @@ export function useAuth() {
       setUserId(null);
       queryClient.clear();
 
-      setTimeout(() => {
-        window.location.href = '/';
-      }, 100);
+      router.push('/auth');
+      router.refresh();
 
     } catch (err) {
       console.error('Unexpected error during sign out:', err);
@@ -79,7 +79,7 @@ export function useAuth() {
         });
       }
       queryClient.clear();
-      window.location.href = '/';
+      router.push('/auth');
     }
   };
 
