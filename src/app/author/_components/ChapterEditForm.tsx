@@ -24,6 +24,7 @@ export default function ChapterEditForm({
 }: ChapterEditFormProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [formData, setFormData] = useState({
     chapterNumber: '',
     partNumber: '',
@@ -141,7 +142,7 @@ export default function ChapterEditForm({
             min="1"
             value={formData.chapterNumber}
             onChange={(e) => setFormData({ ...formData, chapterNumber: e.target.value })}
-            className="w-full text-foreground py-2 px-3 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full text-foreground py-2 px-3 border-2 border-gray-600 rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
             placeholder="Ch #"
             required
           />
@@ -154,7 +155,7 @@ export default function ChapterEditForm({
             min="1"
             value={formData.partNumber}
             onChange={(e) => setFormData({ ...formData, partNumber: e.target.value })}
-            className="w-full text-foreground py-2 px-3 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full text-foreground py-2 px-3 border-2 border-gray-600 rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
             placeholder="Part #"
           />
         </div>
@@ -165,53 +166,68 @@ export default function ChapterEditForm({
             type="text"
             value={formData.title}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            className="w-full text-foreground py-2 px-3 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full text-foreground py-2 px-3 border-2 border-gray-600 rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
             placeholder="Title (Optional)"
           />
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 py-4">
-        <div className="space-y-4">
-          <ChapterEditor
-            value={formData.content}
-            onChange={(value) => setFormData(prev => ({ ...prev, content: value }))}
-            authorThoughts={formData.authorThoughts}
-            onAuthorThoughtsChange={(thoughts) => setFormData(prev => ({ ...prev, authorThoughts: thoughts }))}
-          />
+      <div className={`${isExpanded ? 'fixed inset-0 z-50 bg-background overflow-hidden' : 'flex-1 overflow-y-auto px-4 py-4'}`}>
+        <div className={`${isExpanded ? 'h-full p-4 flex flex-col' : 'space-y-4'}`}>
+          <div className={`relative ${isExpanded ? 'flex-1 flex flex-col' : ''}`}>
+            <button
+              type="button"
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="absolute right-2 top-2 p-1.5 text-muted-foreground hover:text-foreground rounded-lg hover:bg-accent z-10"
+              title={isExpanded ? "Exit fullscreen" : "Enter fullscreen"}
+            >
+              <Icon icon={isExpanded ? "mdi:fullscreen-exit" : "mdi:fullscreen"} className="w-4 h-4 md:w-5 md:h-5" />
+            </button>
+            <ChapterEditor
+              value={formData.content}
+              onChange={(value) => setFormData(prev => ({ ...prev, content: value }))}
+              authorThoughts={formData.authorThoughts}
+              onAuthorThoughtsChange={(thoughts) => setFormData(prev => ({ ...prev, authorThoughts: thoughts }))}
+              className={isExpanded ? 'flex-1' : ''}
+            />
+          </div>
 
-          <ChapterPublishSettings
-            publishAt={formData.publishAt}
-            coins={formData.coins}
-            onSettingsChange={(settings) => setFormData(prev => ({ ...prev, ...settings }))}
-          />
+          {!isExpanded && (
+            <ChapterPublishSettings
+              publishAt={formData.publishAt}
+              coins={formData.coins}
+              onSettingsChange={(settings) => setFormData(prev => ({ ...prev, ...settings }))}
+            />
+          )}
         </div>
       </div>
 
-      <div className="flex gap-4 bg-background py-2 px-4 sticky bottom-0 z-10 border-t border-border">
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={isSaving}
-          className="flex-1 bg-primary text-primary-foreground py-3 px-4 rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isSaving ? (
-            <span className="inline-flex items-center gap-2">
-              <Icon icon="mdi:loading" className="w-5 h-5 animate-spin" />
-              Saving...
-            </span>
-          ) : (
-            chapterId ? 'Update Chapter' : 'Create Chapter'
-          )}
-        </button>
-        <button
-          type="button"
-          onClick={onCancel}
-          className="flex-1 bg-accent text-muted-foreground hover:text-foreground py-3 px-4 rounded-lg hover:bg-accent/80"
-        >
-          Cancel
-        </button>
-      </div>
+      {!isExpanded && (
+        <div className="flex gap-4 bg-background py-2 px-4 sticky bottom-0 z-10 border-t border-border">
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={isSaving}
+            className="flex-1 bg-primary text-primary-foreground py-3 px-4 rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSaving ? (
+              <span className="inline-flex items-center gap-2">
+                <Icon icon="mdi:loading" className="w-5 h-5 animate-spin" />
+                Saving...
+              </span>
+            ) : (
+              chapterId ? 'Update Chapter' : 'Create Chapter'
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={onCancel}
+            className="flex-1 bg-accent text-black hover:text-foreground py-3 px-4 rounded-lg hover:bg-accent/80"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
     </form>
   );
 } 

@@ -18,7 +18,6 @@ export default function ChapterList({
   chapters,
   volumes,
   editingChapterId,
-  onChapterClick,
   onDeleteChapter,
   onCreateVolume,
   onCreateChapter,
@@ -31,6 +30,7 @@ export default function ChapterList({
   const [volumeNumber, setVolumeNumber] = useState('');
   const [showChapterForm, setShowChapterForm] = useState(false);
   const [selectedVolumeId, setSelectedVolumeId] = useState<string | undefined>();
+  const [editingChapter, setEditingChapter] = useState<ChapterListChapter | null>(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState<{ isOpen: boolean; chapterId: string | null }>({
     isOpen: false,
     chapterId: null
@@ -72,6 +72,13 @@ export default function ChapterList({
 
   const handleCreateChapter = (volumeId?: string) => {
     setSelectedVolumeId(volumeId);
+    setEditingChapter(null);
+    setShowChapterForm(true);
+  };
+
+  const handleEditChapter = (chapter: ChapterListChapter) => {
+    setSelectedVolumeId(chapter.volumeId || undefined);
+    setEditingChapter(chapter);
     setShowChapterForm(true);
   };
 
@@ -96,7 +103,7 @@ export default function ChapterList({
       }`}
     >
       <div 
-        onClick={() => onChapterClick(chapter)}
+        onClick={() => handleEditChapter(chapter)}
         className="p-3 sm:p-4 cursor-pointer"
       >
         <div className="flex flex-col gap-1 pr-8">
@@ -105,7 +112,7 @@ export default function ChapterList({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  onChapterClick(chapter);
+                  handleEditChapter(chapter);
                 }}
                 className="mr-2 px-2 py-0.5 text-xs bg-primary/10 hover:bg-primary/20 text-primary rounded"
               >
@@ -185,10 +192,15 @@ export default function ChapterList({
         <ChapterEditForm
           novelId={novelId}
           userId={userId}
-          onCancel={() => setShowChapterForm(false)}
+          chapterId={editingChapter?.id}
+          onCancel={() => {
+            setShowChapterForm(false);
+            setEditingChapter(null);
+          }}
           onSave={() => {
             setShowChapterForm(false);
-            if (onCreateChapter) {
+            setEditingChapter(null);
+            if (onCreateChapter && !editingChapter) {
               onCreateChapter(selectedVolumeId);
             }
           }}

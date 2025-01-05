@@ -162,7 +162,7 @@ export default function ChapterEditor({
   };
 
   return (
-    <div className="space-y-2 w-full">
+    <div className={`${className.includes('flex-1') ? 'flex flex-col h-full' : 'space-y-2'} w-full`}>
       {/* Formatting Toolbar */}
       <div className="flex flex-wrap items-center gap-1 p-1 bg-accent border border-border rounded-lg">
         <button
@@ -214,7 +214,7 @@ export default function ChapterEditor({
         >
           <Icon icon="mdi:minus" className="w-4 h-4 md:w-5 md:h-5 text-foreground" />
         </button>
-        <div className="flex-1 text-right px-2">
+        <div className="flex-1 text-right px-2 mr-8">
           <span className="text-xs md:text-sm text-muted-foreground">
             {value.length} characters
           </span>
@@ -228,12 +228,15 @@ export default function ChapterEditor({
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={handleKeyDown}
         onPaste={handlePaste}
-        className={`w-full p-3 md:p-4 border border-border rounded-lg text-foreground min-h-[400px] focus:outline-none focus:ring-2 focus:ring-primary bg-background resize-y ${className}`}
+        className={`w-full p-3 md:p-4 border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary bg-background ${
+          className.includes('flex-1') ? 'flex-1' : 'min-h-[400px] resize-y'
+        }`}
         placeholder="Write your chapter here..."
+        style={className.includes('flex-1') ? { resize: 'none' } : undefined}
       />
 
       {/* Author's Thoughts Section */}
-      {authorThoughts !== undefined && onAuthorThoughtsChange && (
+      {authorThoughts !== undefined && onAuthorThoughtsChange && !className.includes('flex-1') && (
         <div className="mt-4 md:mt-6 space-y-2">
           <div className="flex items-center gap-2">
             <Icon icon="mdi:thought-bubble" className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />

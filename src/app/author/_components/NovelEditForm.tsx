@@ -153,7 +153,7 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
     <main className="space-y-4">
       <button
         onClick={onCancel}
-        className="flex items-center gap-2 text-muted-foreground hover:text-foreground bg-background hover:bg-accent rounded-lg px-4 py-2 border border-border shadow-sm transition-colors"
+        className="flex items-center gap-2 text-black hover:text-foreground bg-background hover:bg-accent rounded-lg px-4 py-2 border border-border shadow-sm transition-colors"
       >
         <Icon icon="mdi:arrow-left" className="w-4 h-4" />
         <span className="font-medium">Novel List</span>
