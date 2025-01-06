@@ -148,19 +148,26 @@ export async function getChapterNavigation(novelId: string, currentChapterNumber
       .or(`id.eq.${novelId},slug.eq.${novelId}`)
       .single();
 
-    if (novelError || !novel) return { prevChapter: null, nextChapter: null, availableChapters: [] };
+    if (novelError || !novel) return { prevChapter: null, nextChapter: null, availableChapters: [], volumes: [] };
 
     const { data: { user } } = await supabase.auth.getUser();
 
-    // Get all chapters
-    const { data: chapters } = await supabase
-      .from('chapters')
-      .select('id, chapter_number, part_number, title, publish_at, coins')
-      .eq('novel_id', novel.id)
-      .order('chapter_number');
+    // Get all chapters and volumes
+    const [{ data: chapters }, { data: volumes }] = await Promise.all([
+      supabase
+        .from('chapters')
+        .select('id, chapter_number, part_number, title, publish_at, coins, volume_id')
+        .eq('novel_id', novel.id)
+        .order('chapter_number'),
+      supabase
+        .from('volumes')
+        .select('id, title, volume_number')
+        .eq('novel_id', novel.id)
+        .order('volume_number')
+    ]);
 
     if (!chapters || chapters.length === 0) {
-      return { prevChapter: null, nextChapter: null, availableChapters: [] };
+      return { prevChapter: null, nextChapter: null, availableChapters: [], volumes: volumes || [] };
     }
 
     // If user is authenticated, get their unlocks
@@ -189,12 +196,14 @@ export async function getChapterNavigation(novelId: string, currentChapterNumber
       nextChapter: currentIndex < accessibleChapters.length - 1 ? accessibleChapters[currentIndex + 1] : null,
       availableChapters: accessibleChapters.map(ch => ({
         chapter_number: ch.chapter_number,
-        part_number: ch.part_number
-      }))
+        part_number: ch.part_number,
+        volume_id: ch.volume_id
+      })),
+      volumes: volumes || []
     };
   } catch (error) {
     console.error('Error fetching chapter navigation:', error);
-    return { prevChapter: null, nextChapter: null, availableChapters: [] };
+    return { prevChapter: null, nextChapter: null, availableChapters: [], volumes: [] };
   }
 }
 

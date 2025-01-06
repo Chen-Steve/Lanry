@@ -107,8 +107,9 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
   const [navigation, setNavigation] = useState<{
     prevChapter: { id: string; chapter_number: number; part_number?: number | null; title: string } | null;
     nextChapter: { id: string; chapter_number: number; part_number?: number | null; title: string } | null;
-    availableChapters: Array<{ chapter_number: number; part_number?: number | null }>;
-  }>({ prevChapter: null, nextChapter: null, availableChapters: [] });
+    availableChapters: Array<{ chapter_number: number; part_number?: number | null; volume_id?: string }>;
+    volumes: Array<{ id: string; title: string; volume_number: number }>;
+  }>({ prevChapter: null, nextChapter: null, availableChapters: [], volumes: [] });
   const [totalChapters, setTotalChapters] = useState(0);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [fontFamily, setFontFamily] = useLocalStorage(
@@ -248,9 +249,11 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
         <ChapterNavigation
           navigation={navigation}
           novelId={novelId}
-          currentChapter={chapter.chapter_number}
+          currentChapter={chapter?.chapter_number || 0}
           currentPartNumber={chapter?.part_number}
+          currentVolumeId={chapter?.volume_id}
           availableChapters={navigation.availableChapters}
+          volumes={navigation.volumes}
           isDropdownOpen={isDropdownOpen}
           setIsDropdownOpen={setIsDropdownOpen}
           handleChapterSelect={handleChapterSelect}
@@ -275,14 +278,13 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
       {/* Bottom Navigation */}
       <div className="border-t pt-4">
         <ChapterNavigation
-          navigation={{
-            prevChapter: navigation.prevChapter,
-            nextChapter: navigation.nextChapter
-          }}
+          navigation={navigation}
           novelId={novelId}
           currentChapter={chapter?.chapter_number || 0}
           currentPartNumber={chapter?.part_number}
+          currentVolumeId={chapter?.volume_id}
           availableChapters={navigation.availableChapters}
+          volumes={navigation.volumes}
           isDropdownOpen={isDropdownOpen}
           setIsDropdownOpen={setIsDropdownOpen}
           handleChapterSelect={handleChapterSelect}
