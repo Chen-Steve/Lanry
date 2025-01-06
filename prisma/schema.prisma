@@ -43,6 +43,7 @@ model Novel {
   translatorId   String?     @map("translator_id")
   ratings       NovelRating[]
   categories    CategoriesOnNovels[]
+  chapterLikes  ChapterLike[]
 
   @@index([title])
   @@index([author])
@@ -108,6 +109,8 @@ model Chapter {
   volumeId      String?   @map("volume_id")
   arc           Arc?      @relation(fields: [arcId], references: [id])
   arcId         String?   @map("arc_id")
+  likes         ChapterLike[]
+  likeCount     Int       @default(0) @map("like_count")
 
   @@unique([novelId, slug])
   @@index([novelId])
@@ -149,6 +152,7 @@ model Profile {
   novelRequests      NovelRequest[]
   novelRequestVotes  NovelRequestVote[]
   novelRatings       NovelRating[]
+  chapterLikes       ChapterLike[]
 
   @@map("profiles")
 }
@@ -409,4 +413,22 @@ enum UserRole {
   TRANSLATOR
   ADMIN
   SUPER_ADMIN
+}
+
+model ChapterLike {
+  id          String   @id @default(uuid())
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  chapter     Chapter  @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  chapterId   String   @map("chapter_id")
+  profile     Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  profileId   String   @map("profile_id")
+  novel       Novel    @relation(fields: [novelId], references: [id], onDelete: Cascade)
+  novelId     String   @map("novel_id")
+
+  @@unique([profileId, chapterId])
+  @@index([chapterId])
+  @@index([profileId])
+  @@index([novelId])
+  @@map("chapter_likes")
 }

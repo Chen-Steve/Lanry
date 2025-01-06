@@ -5,10 +5,12 @@ import { formatDate } from '@/lib/utils';
 import { scrambleText, getTextStyles, getParagraphStyles, formatText } from '@/lib/textFormatting';
 import CommentPopover from './CommentBar';
 import { useComments } from '@/hooks/useComments';
+import { useChapterLikes } from '@/hooks/useChapterLikes';
 import { Icon } from '@iconify/react';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import type { ChapterComment as BaseChapterComment } from '@/types/database';
 import FootnoteTooltip from './FootnoteTooltip';
+import { toast } from 'react-hot-toast';
 
 // Extend the base type to include avatar_url
 interface ChapterComment extends Omit<BaseChapterComment, 'profile'> {
@@ -149,6 +151,20 @@ export default function ChapterContent({
     };
   }, []);
 
+  const { likeCount, isLiked, toggleLike } = useChapterLikes({ chapterNumber });
+
+  const handleLikeClick = async () => {
+    try {
+      await toggleLike();
+    } catch (error) {
+      if (error instanceof Error && error.message === 'Must be logged in to like chapters') {
+        toast.error('Please log in to like chapters');
+      } else {
+        toast.error('Failed to like chapter');
+      }
+    }
+  };
+
   return (
     <div className="mb-6 md:mb-8">
       <div className="mb-4 max-w-2xl mx-auto">
@@ -262,6 +278,23 @@ export default function ChapterContent({
           </div>
         </div>
       )}
+
+      {/* Like Button Section */}
+      <div className="mt-12 max-w-2xl mx-auto flex justify-center items-center gap-3">
+        <button
+          onClick={handleLikeClick}
+          className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
+          aria-label={isLiked ? 'Unlike chapter' : 'Like chapter'}
+        >
+          <Icon 
+            icon={isLiked ? "mdi:heart" : "mdi:heart-outline"} 
+            className={`w-6 h-6 ${isLiked ? 'text-red-500' : 'text-gray-600 dark:text-gray-400'}`}
+          />
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            {likeCount} {likeCount === 1 ? 'Like' : 'Likes'}
+          </span>
+        </button>
+      </div>
 
       {selectedParagraphId && (
         <CommentPopover

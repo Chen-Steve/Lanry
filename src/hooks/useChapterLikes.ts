@@ -1,0 +1,71 @@
+import { useState, useEffect } from 'react';
+import supabase from '@/lib/supabaseClient';
+
+interface UseChapterLikesProps {
+  chapterNumber: number;
+}
+
+export function useChapterLikes({ chapterNumber }: UseChapterLikesProps) {
+  const [likeCount, setLikeCount] = useState(0);
+  const [isLiked, setIsLiked] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchLikes = async () => {
+      try {
+        const { data: session } = await supabase.auth.getSession();
+        const token = session?.session?.access_token;
+
+        const response = await fetch(`/api/chapters/${chapterNumber}/likes`, {
+          headers: token ? {
+            'Authorization': `Bearer ${token}`
+          } : {}
+        });
+
+        if (!response.ok) throw new Error('Failed to fetch likes');
+
+        const data = await response.json();
+        setLikeCount(data.likeCount);
+        setIsLiked(data.isLiked);
+      } catch (error) {
+        console.error('Error fetching likes:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchLikes();
+  }, [chapterNumber]);
+
+  const toggleLike = async () => {
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session) {
+        throw new Error('Must be logged in to like chapters');
+      }
+
+      const response = await fetch(`/api/chapters/${chapterNumber}/likes`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.session.access_token}`
+        }
+      });
+
+      if (!response.ok) throw new Error('Failed to toggle like');
+
+      const data = await response.json();
+      setLikeCount(data.likeCount);
+      setIsLiked(data.isLiked);
+    } catch (error) {
+      console.error('Error toggling like:', error);
+      throw error;
+    }
+  };
+
+  return {
+    likeCount,
+    isLiked,
+    isLoading,
+    toggleLike
+  };
+} 
