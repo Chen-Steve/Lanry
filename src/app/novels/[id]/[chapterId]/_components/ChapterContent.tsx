@@ -151,7 +151,10 @@ export default function ChapterContent({
     };
   }, []);
 
-  const { likeCount, isLiked, toggleLike } = useChapterLikes({ chapterNumber });
+  const { likeCount, isLiked, toggleLike } = useChapterLikes({ 
+    chapterNumber,
+    novelId
+  });
 
   const handleLikeClick = async () => {
     try {

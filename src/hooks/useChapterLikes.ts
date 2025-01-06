@@ -3,9 +3,10 @@ import supabase from '@/lib/supabaseClient';
 
 interface UseChapterLikesProps {
   chapterNumber: number;
+  novelId: string;
 }
 
-export function useChapterLikes({ chapterNumber }: UseChapterLikesProps) {
+export function useChapterLikes({ chapterNumber, novelId }: UseChapterLikesProps) {
   const [likeCount, setLikeCount] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -16,7 +17,7 @@ export function useChapterLikes({ chapterNumber }: UseChapterLikesProps) {
         const { data: session } = await supabase.auth.getSession();
         const token = session?.session?.access_token;
 
-        const response = await fetch(`/api/chapters/${chapterNumber}/likes`, {
+        const response = await fetch(`/api/chapters/${chapterNumber}/likes?novelId=${novelId}`, {
           headers: token ? {
             'Authorization': `Bearer ${token}`
           } : {}
@@ -35,7 +36,7 @@ export function useChapterLikes({ chapterNumber }: UseChapterLikesProps) {
     };
 
     fetchLikes();
-  }, [chapterNumber]);
+  }, [chapterNumber, novelId]);
 
   const toggleLike = async () => {
     try {
@@ -47,8 +48,10 @@ export function useChapterLikes({ chapterNumber }: UseChapterLikesProps) {
       const response = await fetch(`/api/chapters/${chapterNumber}/likes`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${session.session.access_token}`
-        }
+          'Authorization': `Bearer ${session.session.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ novelId })
       });
 
       if (!response.ok) throw new Error('Failed to toggle like');

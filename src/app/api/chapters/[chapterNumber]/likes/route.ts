@@ -37,9 +37,21 @@ export async function POST(
       );
     }
 
+    // Get the novel ID from the request body
+    const { novelId } = await request.json();
+    if (!novelId) {
+      return NextResponse.json(
+        { error: 'Novel ID is required' },
+        { status: 400 }
+      );
+    }
+
     // Get the chapter to get its ID and novel ID
     const chapter = await prisma.chapter.findFirst({
-      where: { chapterNumber },
+      where: { 
+        chapterNumber,
+        novelId 
+      },
       select: { id: true, novelId: true }
     });
 
@@ -136,9 +148,22 @@ export async function GET(
       );
     }
 
+    // Get the novel ID from the query params
+    const { searchParams } = new URL(request.url);
+    const novelId = searchParams.get('novelId');
+    if (!novelId) {
+      return NextResponse.json(
+        { error: 'Novel ID is required' },
+        { status: 400 }
+      );
+    }
+
     // Get the chapter to get its ID
     const chapter = await prisma.chapter.findFirst({
-      where: { chapterNumber },
+      where: { 
+        chapterNumber,
+        novelId 
+      },
       select: { id: true, likeCount: true }
     });
 
