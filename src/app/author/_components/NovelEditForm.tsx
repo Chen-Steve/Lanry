@@ -281,7 +281,7 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
 
           {/* Chapter List */}
           {novel.id && (
-            <div>
+            <div className="space-y-4">
               {isLoadingChapters ? (
                 <div className="text-center py-8">
                   <Icon icon="mdi:loading" className="w-6 h-6 animate-spin mx-auto text-muted-foreground" />

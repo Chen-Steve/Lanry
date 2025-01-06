@@ -5,6 +5,7 @@ import { Icon } from '@iconify/react';
 import { ChapterListProps, ChapterListChapter, Volume } from '../_types/authorTypes';
 import { toast } from 'react-hot-toast';
 import ChapterEditForm from './ChapterEditForm';
+import ChapterBulkUpload from './ChapterBulkUpload';
 import * as authorChapterService from '../_services/authorChapterService';
 import { VolumeModal, DeleteConfirmationModal, AssignChaptersModal } from './ChapterListModals';
 
@@ -354,6 +355,15 @@ export default function ChapterList({
                 >
                   Add Chapter
                 </button>
+                <ChapterBulkUpload
+                  novelId={novelId}
+                  userId={userId}
+                  onUploadComplete={() => {
+                    if (onLoadChapters) {
+                      onLoadChapters();
+                    }
+                  }}
+                />
               </div>
               <div className="flex items-center gap-4 flex-1">
                 <div className="relative flex-1 max-w-md">
