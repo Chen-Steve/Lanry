@@ -259,15 +259,32 @@ export default function ChapterContent({
                   </span>
                 </div>
               </div>
-              <div className="mb-4"></div>
+              {index < paragraphs.length - 1 && <div className="mb-4"></div>}
             </div>
           );
         })}
+
+        {/* Like Button Section - Moved inside the prose div */}
+        <div className="flex justify-center items-center gap-3 mt-4">
+          <button
+            onClick={handleLikeClick}
+            className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
+            aria-label={isLiked ? 'Unlike chapter' : 'Like chapter'}
+          >
+            <Icon 
+              icon={isLiked ? "mdi:heart" : "mdi:heart-outline"} 
+              className={`w-6 h-6 ${isLiked ? 'text-red-500' : 'text-gray-600 dark:text-gray-400'}`}
+            />
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              {likeCount} {likeCount === 1 ? 'Like' : 'Likes'}
+            </span>
+          </button>
+        </div>
       </div>
 
       {/* Author's Thoughts Section */}
       {authorThoughts && authorThoughts.trim() !== '' && (
-        <div className="mt-12 max-w-2xl mx-auto border-t border-gray-200 dark:border-gray-700 pt-8">
+        <div className="mt-8 max-w-2xl mx-auto border-t border-gray-200 dark:border-gray-700 pt-8">
           <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-6">
             <div className="flex items-center gap-2 mb-4">
               <Icon icon="mdi:thought-bubble" className="w-6 h-6 text-gray-600 dark:text-gray-400" />
@@ -281,23 +298,6 @@ export default function ChapterContent({
           </div>
         </div>
       )}
-
-      {/* Like Button Section */}
-      <div className="mt-12 max-w-2xl mx-auto flex justify-center items-center gap-3">
-        <button
-          onClick={handleLikeClick}
-          className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
-          aria-label={isLiked ? 'Unlike chapter' : 'Like chapter'}
-        >
-          <Icon 
-            icon={isLiked ? "mdi:heart" : "mdi:heart-outline"} 
-            className={`w-6 h-6 ${isLiked ? 'text-red-500' : 'text-gray-600 dark:text-gray-400'}`}
-          />
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            {likeCount} {likeCount === 1 ? 'Like' : 'Likes'}
-          </span>
-        </button>
-      </div>
 
       {selectedParagraphId && (
         <CommentPopover
