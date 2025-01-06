@@ -23,6 +23,7 @@ export const ChapterList = ({
   volumes = []
 }: ChapterListProps) => {
   const [selectedVolumeId, setSelectedVolumeId] = useState<string | null>(volumes[0]?.id || null);
+  const [showAllChapters, setShowAllChapters] = useState(false);
 
   const chaptersGroupedByVolume = useMemo(() => {
     const noVolumeChapters = chapters.filter(chapter => !chapter.volume_id);
@@ -39,11 +40,11 @@ export const ChapterList = ({
   }, [chapters, volumes]);
 
   const currentChapters = useMemo(() => {
-    if (!selectedVolumeId) {
+    if (showAllChapters || !selectedVolumeId) {
       return chapters.sort((a, b) => a.chapter_number - b.chapter_number);
     }
     return chaptersGroupedByVolume.volumeChapters.get(selectedVolumeId) || [];
-  }, [selectedVolumeId, chaptersGroupedByVolume, chapters]);
+  }, [selectedVolumeId, chaptersGroupedByVolume, chapters, showAllChapters]);
 
   const renderChapter = (chapter: Chapter) => (
     <div key={chapter.id} className="w-full h-10 flex items-center px-4">
@@ -69,12 +70,31 @@ export const ChapterList = ({
         {volumes.length > 0 && (
           <>
             <div className="flex items-center gap-2 p-2 bg-accent/50 border-b border-border overflow-x-auto scrollbar-hide">
+              <button
+                onClick={() => {
+                  setShowAllChapters(true);
+                  setSelectedVolumeId(null);
+                }}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors
+                  ${showAllChapters 
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'hover:bg-accent text-muted-foreground hover:text-foreground'
+                  }`}
+              >
+                All Chapters
+                <span className="ml-2 text-xs">
+                  ({chapters.length})
+                </span>
+              </button>
               {volumes.map(volume => (
                 <button
                   key={volume.id}
-                  onClick={() => setSelectedVolumeId(volume.id)}
+                  onClick={() => {
+                    setSelectedVolumeId(volume.id);
+                    setShowAllChapters(false);
+                  }}
                   className={`px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors
-                    ${selectedVolumeId === volume.id 
+                    ${selectedVolumeId === volume.id && !showAllChapters
                       ? 'bg-primary text-primary-foreground' 
                       : 'hover:bg-accent text-muted-foreground hover:text-foreground'
                     }`}
@@ -88,7 +108,7 @@ export const ChapterList = ({
             </div>
 
             {/* Volume Description */}
-            {selectedVolume?.description && (
+            {selectedVolume?.description && !showAllChapters && (
               <div className="px-4 py-3 border-b border-border">
                 <p className="text-sm text-muted-foreground">
                   {selectedVolume.description}
@@ -100,16 +120,14 @@ export const ChapterList = ({
 
         {/* Chapter List */}
         <div className="grid grid-cols-1 md:grid-cols-2">
-          {(volumes.length === 0 ? chapters : currentChapters)
-            .sort((a, b) => a.chapter_number - b.chapter_number)
-            .map(chapter => (
-              <div 
-                key={chapter.id} 
-                className="h-10"
-              >
-                {renderChapter(chapter)}
-              </div>
-            ))}
+          {currentChapters.map(chapter => (
+            <div 
+              key={chapter.id} 
+              className="h-10"
+            >
+              {renderChapter(chapter)}
+            </div>
+          ))}
         </div>
       </div>
     </div>
