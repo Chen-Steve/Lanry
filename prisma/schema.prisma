@@ -29,6 +29,11 @@ model Novel {
   rating         Float     @default(0) @map("rating")
   ratingCount    Int       @default(0) @map("rating_count")
   isAuthorNameCustom Boolean @default(true) @map("is_author_name_custom")
+  autoScheduleEnabled Boolean @default(false) @map("auto_schedule_enabled")
+  autoScheduleInterval Int @default(7) @map("auto_schedule_interval")
+  autoScheduleTime String @default("12:00") @map("auto_schedule_time")
+  autoPriceEnabled Boolean @default(false) @map("auto_price_enabled")
+  autoPrice Int @default(10) @map("auto_price")
   chapters       Chapter[]
   volumes        Volume[]
   arcs           Arc[]

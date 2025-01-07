@@ -263,4 +263,45 @@ async function verifyNovelAuthor(novelId: string, userId: string) {
   if (novel?.author_profile_id !== userId) {
     throw new Error('Not authorized to modify chapters for this novel');
   }
+}
+
+export interface AutoScheduleSettings {
+  enabled: boolean;
+  interval: number;
+  scheduleTime: string;
+  startDate: string;
+}
+
+export async function saveAutoScheduleSettings(
+  novelId: string,
+  userId: string,
+  settings: AutoScheduleSettings
+): Promise<void> {
+  const response = await fetch(`/api/author/novels/${novelId}/auto-schedule`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      userId,
+      ...settings
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to save auto-schedule settings');
+  }
+}
+
+export async function fetchAutoScheduleSettings(
+  novelId: string,
+  userId: string
+): Promise<AutoScheduleSettings> {
+  const response = await fetch(`/api/author/novels/${novelId}/auto-schedule?userId=${userId}`);
+  
+  if (!response.ok) {
+    throw new Error('Failed to fetch auto-schedule settings');
+  }
+
+  return response.json();
 } 

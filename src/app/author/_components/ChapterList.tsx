@@ -1,21 +1,17 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Icon } from '@iconify/react';
-import { ChapterListProps, ChapterListChapter, Volume } from '../_types/authorTypes';
+import { ChapterListProps, ChapterListChapter } from '../_types/authorTypes';
 import { toast } from 'react-hot-toast';
 import ChapterEditForm from './ChapterEditForm';
 import ChapterBulkUpload from './ChapterBulkUpload';
 import * as authorChapterService from '../_services/authorChapterService';
 import { VolumeModal, DeleteConfirmationModal, AssignChaptersModal } from './ChapterListModals';
-
-const isAdvancedChapter = (chapter: ChapterListChapter): boolean => {
-  const now = new Date();
-  const publishDate = chapter.publish_at ? new Date(chapter.publish_at) : null;
-  
-  return (publishDate !== null && publishDate > now) && 
-         (chapter.coins !== undefined && chapter.coins > 0);
-};
+import VolumeSection from './VolumeSection';
+import ChapterListItem from './ChapterListItem';
+import ChapterPublishSettings from './ChapterPublishSettings';
+import { AutoScheduleSettings } from '../_services/authorChapterService';
 
 export default function ChapterList({
   chapters,
@@ -47,6 +43,31 @@ export default function ChapterList({
   const [selectedChapterIds, setSelectedChapterIds] = useState<Set<string>>(new Set());
   const [assigningVolumeId, setAssigningVolumeId] = useState<string | null>(null);
   const [collapsedVolumes, setCollapsedVolumes] = useState<Set<string>>(new Set());
+  const [showScheduleSettings, setShowScheduleSettings] = useState(false);
+  const [autoScheduleSettings, setAutoScheduleSettings] = useState<AutoScheduleSettings>({
+    enabled: false,
+    interval: 7,
+    scheduleTime: '12:00',
+    startDate: ''
+  });
+  const [publishSettings, setPublishSettings] = useState({
+    publishAt: '',
+    coins: '0'
+  });
+
+  useEffect(() => {
+    const loadAutoScheduleSettings = async () => {
+      try {
+        const settings = await authorChapterService.fetchAutoScheduleSettings(novelId, userId);
+        setAutoScheduleSettings(settings);
+      } catch (error) {
+        console.error('Error loading auto-schedule settings:', error);
+        toast.error('Failed to load auto-schedule settings');
+      }
+    };
+
+    loadAutoScheduleSettings();
+  }, [novelId, userId]);
 
   const chaptersGroupedByVolume = useMemo(() => {
     const noVolumeChapters = chapters.filter(chapter => !chapter.volumeId);
@@ -186,139 +207,34 @@ export default function ChapterList({
     }
   };
 
-  const renderChapter = (chapter: ChapterListChapter) => (
-    <div
-      key={chapter.id}
-      className={`relative group ${
-        editingChapterId === chapter.id 
-          ? 'bg-primary/10 hover:bg-primary/20' 
-          : 'hover:bg-accent/50'
-      }`}
-    >
-      <div 
-        onClick={() => handleEditChapter(chapter)}
-        className="p-3 sm:p-4 cursor-pointer"
-      >
-        <div className="flex flex-col gap-1 pr-20">
-          <div className="flex-1">
-            <h4 className="font-medium text-foreground text-sm">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleEditChapter(chapter);
-                }}
-                className="mr-2 px-2 py-0.5 text-xs bg-primary/10 hover:bg-primary/20 text-primary rounded transition-colors"
-              >
-                Edit
-              </button>
-              Chapter {chapter.chapter_number}
-              {chapter.part_number && (
-                <span className="text-muted-foreground">
-                  {" "}Part {chapter.part_number}
-                </span>
-              )}
-              {chapter.title && (
-                <span className="text-muted-foreground ml-1">: {chapter.title}</span>
-              )}
-            </h4>
-            {chapter.publish_at && (
-              <p className="text-sm text-muted-foreground">
-                {new Date(chapter.publish_at) > new Date() 
-                  ? `Scheduled: ${new Date(chapter.publish_at).toLocaleDateString()}`
-                  : `Published: ${new Date(chapter.publish_at).toLocaleDateString()}`
-                }
-              </p>
-            )}
-          </div>
-          
-          {isAdvancedChapter(chapter) && (
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
-              <Icon icon="mdi:star" className="w-4 h-4 mr-1" />
-              Advanced
-            </span>
-          )}
-        </div>
-      </div>
+  const handleAutoScheduleChange = async (settings: AutoScheduleSettings) => {
+    setAutoScheduleSettings({
+      enabled: settings.enabled,
+      interval: settings.interval,
+      scheduleTime: settings.scheduleTime || '12:00',
+      startDate: settings.startDate || ''
+    });
+    
+    try {
+      await authorChapterService.saveAutoScheduleSettings(novelId, userId, settings);
+      
+      if (settings.enabled) {
+        toast.success('Auto-scheduling enabled');
+      }
+    } catch (error) {
+      console.error('Error saving auto-schedule settings:', error);
+      toast.error('Failed to save auto-schedule settings');
+      
+      setAutoScheduleSettings(prev => ({
+        ...prev,
+        enabled: !settings.enabled,
+        startDate: prev.startDate
+      }));
+    }
+  };
 
-      <div className="absolute top-2 right-1 sm:top-2 sm:right-2 flex items-center gap-1">
-        {chapter.volumeId && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleUnassignChapter(chapter.id);
-            }}
-            className="px-2 py-0.5 text-xs text-muted-foreground hover:text-primary hover:bg-primary/10 rounded transition-colors"
-          >
-            Unassign
-          </button>
-        )}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            handleDeleteClick(chapter.id);
-          }}
-          className="p-1 text-muted-foreground hover:text-red-500 dark:hover:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-full transition-colors"
-          title="Delete chapter"
-        >
-          <Icon icon="mdi:delete-outline" className="w-4 h-4" />
-        </button>
-      </div>
-    </div>
-  );
-
-  const renderVolumeSection = (volume: Volume) => {
-    const volumeChapters = chaptersGroupedByVolume.volumeChapters.get(volume.id) || [];
-    const isCollapsed = collapsedVolumes.has(volume.id);
-
-    return (
-      <div key={volume.id} className="border-t border-border first:border-t-0">
-        <div className="bg-accent/50 px-3 py-2 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => toggleVolumeCollapse(volume.id)}
-              className="p-1 text-muted-foreground hover:text-foreground rounded-full transition-colors"
-              aria-label={isCollapsed ? "Expand volume" : "Collapse volume"}
-            >
-              <Icon 
-                icon={isCollapsed ? "mdi:chevron-right" : "mdi:chevron-down"} 
-                className="w-4 h-4"
-              />
-            </button>
-            <h3 className="text-sm font-medium text-foreground">
-              Volume {volume.volumeNumber}: {volume.title}
-            </h3>
-            <button
-              onClick={() => setDeleteVolumeConfirmation({ isOpen: true, volumeId: volume.id })}
-              className="p-1 text-muted-foreground hover:text-red-500 dark:hover:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-full transition-colors"
-              title="Delete volume"
-            >
-              <Icon icon="mdi:delete-outline" className="w-4 h-4" />
-            </button>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => handleAssignChaptersClick(volume.id)}
-              className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-primary hover:text-primary/90 bg-primary/10 hover:bg-primary/20 rounded transition-colors"
-            >
-              <Icon icon="mdi:file-move" className="w-3.5 h-3.5" />
-              Assign Chapters
-            </button>
-            <button
-              onClick={() => handleCreateChapter(volume.id)}
-              className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-primary hover:text-primary/90 bg-primary/10 hover:bg-primary/20 rounded transition-colors"
-            >
-              <Icon icon="mdi:plus" className="w-3.5 h-3.5" />
-              Add Chapter
-            </button>
-          </div>
-        </div>
-        <div className={`divide-y divide-border ${isCollapsed ? 'hidden' : ''}`}>
-          {volumeChapters
-            .sort((a, b) => a.chapter_number - b.chapter_number)
-            .map(renderChapter)}
-        </div>
-      </div>
-    );
+  const handlePublishSettingsChange = (settings: { publishAt: string; coins: string }) => {
+    setPublishSettings(settings);
   };
 
   return (
@@ -329,6 +245,10 @@ export default function ChapterList({
           userId={userId}
           chapterId={editingChapter?.id}
           volumeId={selectedVolumeId}
+          autoScheduleEnabled={autoScheduleSettings.enabled}
+          autoScheduleInterval={autoScheduleSettings.interval}
+          autoScheduleTime={autoScheduleSettings.scheduleTime}
+          autoScheduleStartDate={autoScheduleSettings.startDate}
           onCancel={() => {
             setShowChapterForm(false);
             setEditingChapter(null);
@@ -387,6 +307,29 @@ export default function ChapterList({
                 >
                   Add Volume
                 </button>
+                <div className="flex items-center gap-2">
+                  <label className="inline-flex items-center gap-2 px-2.5 py-1.5 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-accent/50 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={autoScheduleSettings.enabled}
+                      onChange={(e) => handleAutoScheduleChange({
+                        enabled: e.target.checked,
+                        interval: autoScheduleSettings.interval,
+                        scheduleTime: autoScheduleSettings.scheduleTime,
+                        startDate: autoScheduleSettings.startDate
+                      })}
+                      className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
+                    />
+                    <span className={autoScheduleSettings.enabled ? 'text-primary' : ''}>Auto Schedule</span>
+                  </label>
+                  <button
+                    onClick={() => setShowScheduleSettings(true)}
+                    className="inline-flex items-center justify-center w-8 h-8 text-foreground bg-background border border-border rounded-md hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors"
+                    title="Configure auto schedule settings"
+                  >
+                    <Icon icon="mdi:cog" className="w-4 h-4" />
+                  </button>
+                </div>
                 <span className="text-sm text-muted-foreground ml-2 whitespace-nowrap">
                   {chapters.length} {chapters.length === 1 ? 'chapter' : 'chapters'}
                 </span>
@@ -395,7 +338,22 @@ export default function ChapterList({
           </div>
 
           <div className="overflow-y-auto scrollbar-hide flex-1">
-            {volumes.map(renderVolumeSection)}
+            {volumes.map(volume => (
+              <VolumeSection
+                key={volume.id}
+                volume={volume}
+                chapters={chaptersGroupedByVolume.volumeChapters.get(volume.id) || []}
+                editingChapterId={editingChapterId}
+                isCollapsed={collapsedVolumes.has(volume.id)}
+                onToggleCollapse={toggleVolumeCollapse}
+                onDeleteVolume={() => setDeleteVolumeConfirmation({ isOpen: true, volumeId: volume.id })}
+                onAssignChapters={handleAssignChaptersClick}
+                onCreateChapter={handleCreateChapter}
+                onEditChapter={handleEditChapter}
+                onDeleteChapter={handleDeleteClick}
+                onUnassignChapter={handleUnassignChapter}
+              />
+            ))}
 
             {chaptersGroupedByVolume.noVolumeChapters.length > 0 && (
               <div className="border-t border-border mt-4">
@@ -414,7 +372,15 @@ export default function ChapterList({
                 <div className="divide-y divide-border mt-2">
                   {chaptersGroupedByVolume.noVolumeChapters
                     .sort((a, b) => a.chapter_number - b.chapter_number)
-                    .map(renderChapter)}
+                    .map(chapter => (
+                      <ChapterListItem
+                        key={chapter.id}
+                        chapter={chapter}
+                        editingChapterId={editingChapterId}
+                        onEditChapter={handleEditChapter}
+                        onDeleteClick={handleDeleteClick}
+                      />
+                    ))}
                 </div>
               </div>
             )}
@@ -462,6 +428,21 @@ export default function ChapterList({
             toggleChapterSelection={toggleChapterSelection}
             onAssign={handleAssignChapters}
           />
+
+          {showScheduleSettings && (
+            <ChapterPublishSettings
+              publishAt={publishSettings.publishAt}
+              coins={publishSettings.coins}
+              onSettingsChange={handlePublishSettingsChange}
+              autoScheduleInterval={autoScheduleSettings.interval}
+              useAutoSchedule={autoScheduleSettings.enabled}
+              autoScheduleTime={autoScheduleSettings.scheduleTime}
+              autoScheduleStartDate={autoScheduleSettings.startDate}
+              onAutoScheduleChange={handleAutoScheduleChange}
+              showSchedulePopup={showScheduleSettings}
+              onCloseSchedulePopup={() => setShowScheduleSettings(false)}
+            />
+          )}
         </div>
       )}
     </div>

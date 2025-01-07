@@ -14,6 +14,10 @@ interface ChapterEditFormProps {
   volumeId?: string;
   onCancel: () => void;
   onSave: () => void;
+  autoScheduleEnabled?: boolean;
+  autoScheduleInterval: number;
+  autoScheduleTime?: string;
+  autoScheduleStartDate?: string;
 }
 
 export default function ChapterEditForm({ 
@@ -22,7 +26,11 @@ export default function ChapterEditForm({
   userId,
   volumeId,
   onCancel,
-  onSave
+  onSave,
+  autoScheduleEnabled = false,
+  autoScheduleInterval,
+  autoScheduleTime = '12:00',
+  autoScheduleStartDate = ''
 }: ChapterEditFormProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -39,9 +47,11 @@ export default function ChapterEditForm({
     authorThoughts: '',
   });
   const [autoSchedule, setAutoSchedule] = useState({
-    enabled: false,
-    interval: 7,
-    scheduleTime: '12:00'
+    enabled: autoScheduleEnabled,
+    interval: autoScheduleInterval,
+    scheduleTime: autoScheduleTime,
+    startDate: autoScheduleStartDate,
+    isOverridden: false
   });
 
   useEffect(() => {
@@ -51,6 +61,34 @@ export default function ChapterEditForm({
       setIsLoading(false);
     }
   }, [chapterId]);
+
+  useEffect(() => {
+    if (!autoSchedule.isOverridden) {
+      setAutoSchedule({
+        enabled: autoScheduleEnabled,
+        interval: autoScheduleInterval,
+        scheduleTime: autoScheduleTime,
+        startDate: autoScheduleStartDate,
+        isOverridden: false
+      });
+    }
+  }, [autoScheduleEnabled, autoScheduleInterval, autoScheduleTime, autoScheduleStartDate]);
+
+  // Calculate next publish date based on auto-schedule settings
+  useEffect(() => {
+    if (autoSchedule.enabled && !chapterId) {
+      const baseDate = autoSchedule.startDate ? new Date(autoSchedule.startDate) : new Date();
+      const nextPublishDate = new Date(baseDate);
+      nextPublishDate.setDate(baseDate.getDate() + autoSchedule.interval);
+      const [hours, minutes] = autoSchedule.scheduleTime.split(':').map(Number);
+      nextPublishDate.setHours(hours, minutes, 0, 0);
+      
+      setFormData(prev => ({
+        ...prev,
+        publishAt: nextPublishDate.toISOString().slice(0, 16)
+      }));
+    }
+  }, [autoSchedule.enabled, autoSchedule.interval, autoSchedule.scheduleTime, autoSchedule.startDate]);
 
   const fetchChapterDetails = async () => {
     try {
@@ -69,6 +107,13 @@ export default function ChapterEditForm({
           coins: chapter.coins?.toString() || '0',
           authorThoughts: chapter.author_thoughts || '',
         });
+        
+        // Keep auto-schedule enabled if it was auto-scheduled
+        setAutoSchedule(prev => ({
+          ...prev,
+          enabled: autoScheduleEnabled,
+          isOverridden: false
+        }));
       }
     } catch (error) {
       console.error('Error fetching chapter:', error);
@@ -118,6 +163,43 @@ export default function ChapterEditForm({
     }
   };
 
+  const handleScheduleOverride = () => {
+    setAutoSchedule(prev => {
+      const newEnabled = !prev.enabled;
+      if (newEnabled) {
+        // If enabling auto-schedule, calculate next publish date
+        const nextPublishDate = new Date();
+        nextPublishDate.setDate(nextPublishDate.getDate() + prev.interval);
+        const [hours, minutes] = prev.scheduleTime.split(':').map(Number);
+        nextPublishDate.setHours(hours, minutes, 0, 0);
+        setFormData(prevForm => ({
+          ...prevForm,
+          publishAt: nextPublishDate.toISOString().slice(0, 16)
+        }));
+      }
+      return {
+        ...prev,
+        enabled: newEnabled,
+        isOverridden: true
+      };
+    });
+  };
+
+  const handleAutoScheduleChange = (settings: {
+    enabled: boolean;
+    interval: number;
+    scheduleTime: string;
+    startDate: string;
+  }) => {
+    setAutoSchedule({
+      interval: settings.interval,
+      enabled: settings.enabled,
+      scheduleTime: settings.scheduleTime,
+      startDate: settings.startDate,
+      isOverridden: true
+    });
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[200px]">
@@ -144,27 +226,27 @@ export default function ChapterEditForm({
       </div>
 
       <div className="flex gap-3 sticky z-10 bg-background py-2 px-4 border-b border-border">
-        <div className="w-24">
+        <div className="w-16">
           <input
             id="chapterNumber"
             type="number"
             min="1"
             value={formData.chapterNumber}
             onChange={(e) => setFormData({ ...formData, chapterNumber: e.target.value })}
-            className="w-full text-foreground py-2 px-3 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary placeholder:text-muted-foreground"
+            className="w-full text-foreground py-2 px-3 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary placeholder:text-muted-foreground [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             placeholder="Ch #"
             required
           />
         </div>
 
-        <div className="w-28">
+        <div className="w-16">
           <input
             id="partNumber"
             type="number"
             min="1"
             value={formData.partNumber}
             onChange={(e) => setFormData({ ...formData, partNumber: e.target.value })}
-            className="w-full text-foreground py-2 px-3 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary placeholder:text-muted-foreground"
+            className="w-full text-foreground py-2 px-3 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary placeholder:text-muted-foreground [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             placeholder="Part #"
           />
         </div>
@@ -178,21 +260,51 @@ export default function ChapterEditForm({
             className="w-full text-foreground py-2 px-3 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary placeholder:text-muted-foreground"
             placeholder="Title (Optional)"
           />
-          <button
-            type="button"
-            onClick={() => setShowSchedulePopup(true)}
-            className={`px-3 py-2 rounded-lg border transition-colors flex items-center gap-2 whitespace-nowrap ring-2 ring-yellow-600 dark:ring-yellow-500 ${
-              autoSchedule.enabled 
-                ? 'bg-primary border-primary text-primary-foreground hover:bg-primary/90'
-                : 'border-border text-muted-foreground hover:text-foreground hover:bg-accent'
-            }`}
-            title={autoSchedule.enabled ? `Auto-scheduled every ${autoSchedule.interval} days at ${autoSchedule.scheduleTime}` : 'Configure auto-scheduling'}
-          >
-            <Icon icon={autoSchedule.enabled ? "mdi:calendar-check" : "mdi:calendar-clock"} className="w-4 h-4" />
-            <span className="text-sm font-medium">
-              {autoSchedule.enabled ? 'Auto-scheduled' : 'Schedule'}
-            </span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleScheduleOverride}
+              className={`px-3 py-2 rounded-lg border transition-colors flex items-center gap-2 whitespace-nowrap ${
+                autoSchedule.enabled
+                  ? 'bg-primary/10 border-primary text-primary hover:bg-primary/20'
+                  : 'border-border text-muted-foreground hover:text-foreground hover:bg-accent'
+              }`}
+              title={autoSchedule.enabled 
+                ? `Auto-scheduled every ${autoSchedule.interval} days at ${autoSchedule.scheduleTime}` 
+                : formData.publishAt 
+                  ? `Manual release at ${new Date(formData.publishAt).toLocaleString()}` 
+                  : 'Set release date'}
+            >
+              <Icon icon={autoSchedule.enabled ? "mdi:calendar-check" : "mdi:calendar-clock"} className="w-4 h-4" />
+              <span className="text-sm font-medium">
+                {autoSchedule.enabled ? 'Auto-scheduled' : 'Manual Release'}
+              </span>
+            </button>
+            {!autoSchedule.enabled && (
+              <>
+                <input
+                  type="datetime-local"
+                  value={formData.publishAt}
+                  onChange={(e) => setFormData(prev => ({ ...prev, publishAt: e.target.value }))}
+                  className="w-44 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary px-3 py-2"
+                  placeholder="Select release date"
+                />
+                <div className="flex items-center gap-2 ml-2">
+                  <div className="flex items-center gap-1.5 px-3 py-2 border border-border rounded-lg bg-background">
+                    <Icon icon="mdi:coins" className="w-4 h-4 text-yellow-500" />
+                    <input
+                      type="number"
+                      min="0"
+                      value={formData.coins}
+                      onChange={(e) => setFormData(prev => ({ ...prev, coins: e.target.value }))}
+                      className="w-16 bg-transparent focus:outline-none text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      placeholder="Coins"
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
@@ -224,11 +336,8 @@ export default function ChapterEditForm({
               autoScheduleInterval={autoSchedule.interval}
               useAutoSchedule={autoSchedule.enabled}
               autoScheduleTime={autoSchedule.scheduleTime}
-              onAutoScheduleChange={(settings) => setAutoSchedule({
-                interval: settings.interval,
-                enabled: settings.enabled,
-                scheduleTime: settings.scheduleTime || '12:00'
-              })}
+              autoScheduleStartDate={autoSchedule.startDate}
+              onAutoScheduleChange={handleAutoScheduleChange}
               isNewChapter={!chapterId}
               showSchedulePopup={showSchedulePopup}
               onCloseSchedulePopup={() => setShowSchedulePopup(false)}
