@@ -37,6 +37,7 @@ export default function ChapterEditForm({
     publishAt: '',
     coins: '0',
     authorThoughts: '',
+    ageRating: 'EVERYONE' as 'EVERYONE' | 'TEEN' | 'MATURE',
   });
 
   useEffect(() => {
@@ -63,6 +64,7 @@ export default function ChapterEditForm({
           publishAt: chapter.publish_at ? new Date(chapter.publish_at).toISOString().slice(0, 16) : '',
           coins: chapter.coins?.toString() || '0',
           authorThoughts: chapter.author_thoughts || '',
+          ageRating: chapter.age_rating || 'EVERYONE',
         });
       }
     } catch (error) {
@@ -85,7 +87,8 @@ export default function ChapterEditForm({
           content: formData.content,
           publish_at: formData.publishAt || null,
           coins: parseInt(formData.coins),
-          author_thoughts: formData.authorThoughts
+          author_thoughts: formData.authorThoughts,
+          age_rating: formData.ageRating,
         });
       } else {
         await authorChapterService.createChapter(novelId, userId, {
@@ -96,6 +99,7 @@ export default function ChapterEditForm({
           publish_at: formData.publishAt || null,
           coins: parseInt(formData.coins),
           author_thoughts: formData.authorThoughts,
+          age_rating: formData.ageRating,
           volumeId: volumeId
         });
       }
@@ -173,6 +177,16 @@ export default function ChapterEditForm({
             className="w-full text-foreground py-2 px-3 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary placeholder:text-muted-foreground"
             placeholder="Title (Optional)"
           />
+          <select
+            value={formData.ageRating}
+            onChange={(e) => setFormData({ ...formData, ageRating: e.target.value as 'EVERYONE' | 'TEEN' | 'MATURE' })}
+            className="px-3 py-2 rounded-lg border border-border text-foreground bg-background hover:bg-accent transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+            title="Age Rating"
+          >
+            <option value="EVERYONE">Everyone</option>
+            <option value="TEEN">Teen</option>
+            <option value="MATURE">Mature</option>
+          </select>
           <button
             type="button"
             onClick={() => setShowSchedulePopup(true)}

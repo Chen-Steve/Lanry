@@ -30,6 +30,8 @@ interface ChapterInput {
   title?: string;
   content: string;
   publishAt?: string;
+  ageRating?: 'EVERYONE' | 'TEEN' | 'MATURE';
+  authorThoughts?: string;
 }
 
 // Updated input validation function
@@ -76,6 +78,8 @@ export async function PUT(
         content: body.content.trim(),
         slug,
         publishAt: body.publishAt ? new Date(body.publishAt) : null,
+        ageRating: body.ageRating || 'EVERYONE',
+        authorThoughts: body.authorThoughts?.trim(),
       },
     });
 

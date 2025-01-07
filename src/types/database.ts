@@ -16,6 +16,7 @@ export interface Chapter {
   author_profile_id: string;
   author_thoughts?: string;
   volume_id?: string;
+  age_rating: 'EVERYONE' | 'TEEN' | 'MATURE';
 }
 
 export interface Novel {

@@ -104,6 +104,7 @@ model Chapter {
   publishAt     DateTime? @map("publish_at")
   coins         Int       @default(1)
   authorThoughts String?  @map("author_thoughts") @db.Text
+  ageRating     AgeRating @default(EVERYONE) @map("age_rating")
   novel         Novel     @relation(fields: [novelId], references: [id], onDelete: Cascade)
   novelId       String    @map("novel_id")
   volume        Volume?   @relation(fields: [volumeId], references: [id])

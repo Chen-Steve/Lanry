@@ -34,6 +34,7 @@ interface ChapterContentProps {
   authorThoughts?: string;
   onCommentStateChange: (isOpen: boolean) => void;
   authorId: string;
+  ageRating: 'EVERYONE' | 'TEEN' | 'MATURE';
 }
 
 export default function ChapterContent({
@@ -48,6 +49,7 @@ export default function ChapterContent({
   authorThoughts,
   onCommentStateChange,
   authorId,
+  ageRating,
 }: ChapterContentProps) {
   const [selectedParagraphId, setSelectedParagraphId] = useState<string | null>(null);
   const { comments, addComment, deleteComment, isAuthenticated, isLoading, userId } = useComments(novelId, chapterNumber);
@@ -173,11 +175,25 @@ export default function ChapterContent({
       <div className="mb-4 max-w-2xl mx-auto">
         <div className="flex justify-between items-start">
           <div>
-            <h2 className="text-lg md:text-xl font-semibold text-black dark:text-white">
-              Chapter {chapterNumber}
-              {partNumber && <span> Part {partNumber}</span>}
-              {title && <span>: {title}</span>}
-            </h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg md:text-xl font-semibold text-black dark:text-white">
+                Chapter {chapterNumber}
+                {partNumber && <span> Part {partNumber}</span>}
+                {title && <span>: {title}</span>}
+              </h2>
+              {ageRating === 'MATURE' && (
+                <span className="px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 rounded-md flex items-center gap-1">
+                  <Icon icon="mdi:alert" className="w-3.5 h-3.5" />
+                  Mature
+                </span>
+              )}
+              {ageRating === 'TEEN' && (
+                <span className="px-2 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300 rounded-md flex items-center gap-1">
+                  <Icon icon="mdi:alert" className="w-3.5 h-3.5" />
+                  Teen
+                </span>
+              )}
+            </div>
             <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400">
               Published {formatDate(createdAt)}
             </p>
