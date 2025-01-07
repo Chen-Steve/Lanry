@@ -118,6 +118,8 @@ export interface Comment {
   id: string;
   content: string;
   created_at: string;
+  novel_id: string;
+  chapter_number?: number;
   user: {
     username: string;
     avatar_url: string;
@@ -126,6 +128,7 @@ export interface Comment {
     title: string;
     novel: {
       title: string;
+      slug: string;
     };
   };
 }

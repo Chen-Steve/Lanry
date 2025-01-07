@@ -6,6 +6,7 @@ import supabase from '@/lib/supabaseClient';
 import { formatRelativeDate } from '@/lib/utils';
 import Image from 'next/image';
 import type { Comment } from '@/app/author/_types/authorTypes';
+import Link from 'next/link';
 
 type RawComment = {
   id: string;
@@ -21,6 +22,7 @@ type RawComment = {
   novel: {
     title: string;
     author_profile_id: string;
+    slug: string;
   };
 };
 
@@ -74,7 +76,8 @@ export default function NovelComments() {
             ),
             novel:novels!inner (
               title,
-              author_profile_id
+              author_profile_id,
+              slug
             )
           `)
           .eq('novel.author_profile_id', session.user.id)
@@ -103,7 +106,8 @@ export default function NovelComments() {
             ),
             novel:novels!inner (
               title,
-              author_profile_id
+              author_profile_id,
+              slug
             )
           `)
           .eq('novel.author_profile_id', session.user.id)
@@ -131,6 +135,8 @@ export default function NovelComments() {
             id: comment.id,
             content: comment.content,
             created_at: comment.created_at,
+            novel_id: comment.novel_id,
+            chapter_number: comment.chapter_number,
             user: {
               username: comment.profile.username || 'Anonymous',
               avatar_url: comment.profile.avatar_url || ''
@@ -138,7 +144,8 @@ export default function NovelComments() {
             chapter: {
               title: comment.chapter_number ? `Chapter ${comment.chapter_number}` : 'Novel Comment',
               novel: {
-                title: comment.novel.title
+                title: comment.novel.title,
+                slug: comment.novel.slug
               }
             }
           }));
@@ -171,7 +178,10 @@ export default function NovelComments() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h2 className="text-2xl font-bold">Comments</h2>
+        <h2 className="text-2xl font-bold flex items-center gap-2">
+          Comments
+          <span className="text-lg text-muted-foreground">({comments.length})</span>
+        </h2>
         <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
           <select
             value={commentType}
@@ -229,9 +239,17 @@ export default function NovelComments() {
                   <div className="flex justify-between items-start">
                     <div>
                       <p className="font-semibold">{comment.user.username}</p>
-                      <p className="text-sm text-muted-foreground">
+                      <Link 
+                        href={comment.chapter.title === 'Novel Comment' 
+                          ? `/novels/${comment.chapter.novel.slug}`
+                          : `/novels/${comment.chapter.novel.slug}/c${comment.chapter_number}`
+                        }
+                        className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
                         on {comment.chapter.title} ({comment.chapter.novel.title})
-                      </p>
+                      </Link>
                     </div>
                     <span className="text-sm text-muted-foreground">
                       {formatRelativeDate(comment.created_at)}
