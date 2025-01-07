@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTheme } from '@/lib/ThemeContext';
 import supabase from '@/lib/supabaseClient';
 import ChapterPurchaseHistory from '@/app/author/_components/ChapterPurchaseHistory';
 import NovelStatistics from '@/app/author/_components/NovelStatistics';
@@ -16,6 +17,7 @@ export default function AuthorDashboard() {
   const router = useRouter();
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
     const checkAuthorization = async () => {
@@ -150,6 +152,17 @@ export default function AuthorDashboard() {
               </span>
             </button>
             
+            <div className="mt-auto pt-4 border-t border-border">
+              <button
+                onClick={toggleTheme}
+                className="w-full py-2 px-4 rounded-lg transition-colors text-left text-muted-foreground hover:bg-accent/50"
+              >
+                <span className="flex items-center gap-2">
+                  <Icon icon={theme === 'dark' ? "ph:sun-bold" : "ph:moon-bold"} className="w-5 h-5" />
+                  {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+                </span>
+              </button>
+            </div>
           </nav>
         </div>
       </div>

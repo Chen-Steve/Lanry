@@ -27,6 +27,7 @@ export default function ChapterEditForm({
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showSchedulePopup, setShowSchedulePopup] = useState(false);
   const [formData, setFormData] = useState({
     chapterNumber: '',
     partNumber: '',
@@ -36,6 +37,11 @@ export default function ChapterEditForm({
     publishAt: '',
     coins: '0',
     authorThoughts: '',
+  });
+  const [autoSchedule, setAutoSchedule] = useState({
+    enabled: false,
+    interval: 7,
+    scheduleTime: '12:00'
   });
 
   useEffect(() => {
@@ -163,7 +169,7 @@ export default function ChapterEditForm({
           />
         </div>
 
-        <div className="flex-1">
+        <div className="flex-1 flex gap-2 items-center">
           <input
             id="title"
             type="text"
@@ -172,6 +178,21 @@ export default function ChapterEditForm({
             className="w-full text-foreground py-2 px-3 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary placeholder:text-muted-foreground"
             placeholder="Title (Optional)"
           />
+          <button
+            type="button"
+            onClick={() => setShowSchedulePopup(true)}
+            className={`px-3 py-2 rounded-lg border transition-colors flex items-center gap-2 whitespace-nowrap ring-2 ring-yellow-600 dark:ring-yellow-500 ${
+              autoSchedule.enabled 
+                ? 'bg-primary border-primary text-primary-foreground hover:bg-primary/90'
+                : 'border-border text-muted-foreground hover:text-foreground hover:bg-accent'
+            }`}
+            title={autoSchedule.enabled ? `Auto-scheduled every ${autoSchedule.interval} days at ${autoSchedule.scheduleTime}` : 'Configure auto-scheduling'}
+          >
+            <Icon icon={autoSchedule.enabled ? "mdi:calendar-check" : "mdi:calendar-clock"} className="w-4 h-4" />
+            <span className="text-sm font-medium">
+              {autoSchedule.enabled ? 'Auto-scheduled' : 'Schedule'}
+            </span>
+          </button>
         </div>
       </div>
 
@@ -200,6 +221,17 @@ export default function ChapterEditForm({
               publishAt={formData.publishAt}
               coins={formData.coins}
               onSettingsChange={(settings) => setFormData(prev => ({ ...prev, ...settings }))}
+              autoScheduleInterval={autoSchedule.interval}
+              useAutoSchedule={autoSchedule.enabled}
+              autoScheduleTime={autoSchedule.scheduleTime}
+              onAutoScheduleChange={(settings) => setAutoSchedule({
+                interval: settings.interval,
+                enabled: settings.enabled,
+                scheduleTime: settings.scheduleTime || '12:00'
+              })}
+              isNewChapter={!chapterId}
+              showSchedulePopup={showSchedulePopup}
+              onCloseSchedulePopup={() => setShowSchedulePopup(false)}
             />
           )}
         </div>
