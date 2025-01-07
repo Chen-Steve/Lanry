@@ -206,9 +206,9 @@ export function ChapterListItem({
           </span>
         )}
       </div>
-      {!isPublished && chapter.publish_at && (
-        <div className="flex items-center gap-1.5 text-xs whitespace-nowrap">
-          {isUnlocked ? (
+      <div className="flex items-center gap-1.5 text-xs whitespace-nowrap">
+        {!isPublished && chapter.publish_at ? (
+          isUnlocked ? (
             <span className="text-emerald-600 dark:text-emerald-400">Unlocked</span>
           ) : (
             <>
@@ -222,9 +222,21 @@ export function ChapterListItem({
                 · unlocks {formatPublishDate(chapter.publish_at)}
               </span>
             </>
-          )}
-        </div>
-      )}
+          )
+        ) : (
+          chapter.age_rating === 'MATURE' && (
+            <span 
+              className="text-xs font-bold text-red-500 dark:text-red-400 relative group cursor-help"
+              aria-label="18+ content"
+            >
+              H
+              <span className="absolute hidden group-hover:block top-full right-0 mt-1 px-2 py-1 text-xs font-medium bg-black/90 text-white rounded whitespace-nowrap">
+                18+
+              </span>
+            </span>
+          )
+        )}
+      </div>
     </div>
   );
 

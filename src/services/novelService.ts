@@ -25,7 +25,8 @@ export async function getNovel(id: string, userId?: string): Promise<Novel | nul
           part_number,
           publish_at,
           coins,
-          volume_id
+          volume_id,
+          age_rating
         ),
         volumes (
           id,

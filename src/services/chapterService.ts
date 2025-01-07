@@ -53,6 +53,7 @@ export async function getChapter(novelId: string, chapterId: string): Promise<Ch
         publish_at,
         coins,
         author_thoughts,
+        age_rating,
         novel:novels!inner (
           id,
           title,
@@ -85,6 +86,7 @@ export async function getChapter(novelId: string, chapterId: string): Promise<Ch
           publish_at,
           coins,
           author_thoughts,
+          age_rating,
           novel:novels!inner (
             id,
             title,
