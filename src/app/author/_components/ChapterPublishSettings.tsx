@@ -1,19 +1,10 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Icon } from '@iconify/react';
 
 interface ChapterPublishSettingsProps {
   publishAt: string;
   coins: string;
   onSettingsChange: (settings: { publishAt: string; coins: string }) => void;
-  autoScheduleInterval?: number;
-  useAutoSchedule?: boolean;
-  onAutoScheduleChange?: (settings: { 
-    interval: number; 
-    enabled: boolean;
-    scheduleTime?: string; 
-  }) => void;
-  isNewChapter?: boolean;
-  autoScheduleTime?: string;
   showSchedulePopup?: boolean;
   onCloseSchedulePopup?: () => void;
 }
@@ -22,36 +13,13 @@ export default function ChapterPublishSettings({
   publishAt,
   coins,
   onSettingsChange,
-  autoScheduleInterval = 7,
-  useAutoSchedule = false,
-  onAutoScheduleChange,
-  isNewChapter = false,
-  autoScheduleTime = '12:00',
   showSchedulePopup = false,
   onCloseSchedulePopup
 }: ChapterPublishSettingsProps) {
-  // Auto-calculate publish date when auto-schedule is enabled
-  useEffect(() => {
-    if (isNewChapter && useAutoSchedule && onAutoScheduleChange) {
-      const lastPublishDate = new Date(publishAt || new Date());
-      const nextPublishDate = new Date(lastPublishDate);
-      nextPublishDate.setDate(nextPublishDate.getDate() + autoScheduleInterval);
-      
-      // Apply the scheduled time
-      const [hours, minutes] = autoScheduleTime.split(':').map(Number);
-      nextPublishDate.setHours(hours, minutes, 0, 0);
-      
-      onSettingsChange({
-        publishAt: nextPublishDate.toISOString().slice(0, 16),
-        coins
-      });
-    }
-  }, [useAutoSchedule, autoScheduleInterval, autoScheduleTime, isNewChapter]);
-
   return (
     <>
       {/* Schedule Settings Popup */}
-      {showSchedulePopup && onAutoScheduleChange && (
+      {showSchedulePopup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onCloseSchedulePopup} />
           <div className="relative bg-background rounded-lg shadow-lg w-full max-w-md mx-4">
@@ -68,96 +36,33 @@ export default function ChapterPublishSettings({
             </div>
 
             <div className="p-4 space-y-6">
-              {/* Auto Schedule Section */}
+              {/* Publication Date Section */}
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <Icon icon="mdi:calendar-clock" className="w-5 h-5 text-primary" />
                   <h4 className="text-sm font-medium text-foreground">Schedule Publication</h4>
                 </div>
                 
-                <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={useAutoSchedule}
-                    onChange={(e) => onAutoScheduleChange({ 
-                      interval: autoScheduleInterval,
-                      enabled: e.target.checked,
-                      scheduleTime: autoScheduleTime
-                    })}
-                    className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
-                  />
-                  Enable Auto-scheduling
-                </label>
-
-                {useAutoSchedule ? (
-                  <div className="space-y-4 p-4 bg-accent rounded-lg">
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium text-foreground">Release Interval</label>
-                      <div className="flex items-center gap-2">
-                        <Icon icon="mdi:calendar-refresh" className="w-5 h-5 text-muted-foreground" />
-                        <input
-                          type="number"
-                          min="1"
-                          value={autoScheduleInterval}
-                          onChange={(e) => onAutoScheduleChange({ 
-                            interval: parseInt(e.target.value) || 1,
-                            enabled: useAutoSchedule,
-                            scheduleTime: autoScheduleTime
-                          })}
-                          className="w-20 p-2 text-sm border border-border rounded bg-background text-foreground focus:ring-primary"
-                          aria-label="Auto-schedule interval in days"
-                        />
-                        <span className="text-sm text-muted-foreground">days</span>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium text-foreground">Release Time</label>
-                      <div className="flex items-center gap-2">
-                        <Icon icon="mdi:clock-outline" className="w-5 h-5 text-muted-foreground" />
-                        <input
-                          type="time"
-                          value={autoScheduleTime}
-                          onChange={(e) => onAutoScheduleChange({
-                            interval: autoScheduleInterval,
-                            enabled: useAutoSchedule,
-                            scheduleTime: e.target.value
-                          })}
-                          className="w-32 p-2 text-sm border border-border rounded bg-background text-foreground focus:ring-primary"
-                          aria-label="Auto-schedule time of day"
-                        />
-                      </div>
+                <div className="space-y-4 p-4 bg-accent rounded-lg">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Icon icon="mdi:calendar" className="w-5 h-5 text-muted-foreground" />
+                      <input
+                        type="datetime-local"
+                        value={publishAt}
+                        onChange={(e) => {
+                          const newPublishAt = e.target.value;
+                          onSettingsChange({
+                            publishAt: newPublishAt,
+                            coins: newPublishAt ? coins : '0'
+                          });
+                        }}
+                        className="flex-1 p-2 text-sm border border-border rounded bg-background text-foreground focus:ring-primary"
+                        aria-label="Publication date and time"
+                      />
                     </div>
                   </div>
-                ) : (
-                  <div className="space-y-4 p-4 bg-accent rounded-lg">
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <Icon icon="mdi:calendar" className="w-5 h-5 text-muted-foreground" />
-                        <input
-                          type="datetime-local"
-                          value={publishAt}
-                          onChange={(e) => {
-                            const newPublishAt = e.target.value;
-                            onSettingsChange({
-                              publishAt: newPublishAt,
-                              coins: newPublishAt ? coins : '0'
-                            });
-                          }}
-                          className="flex-1 p-2 text-sm border border-border rounded bg-background text-foreground focus:ring-primary"
-                          aria-label="Publication date and time"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {useAutoSchedule && (
-                  <p className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Icon icon="mdi:information" className="w-4 h-4" />
-                    Chapters will be automatically scheduled for release every {autoScheduleInterval} days at {autoScheduleTime}
-                  </p>
-                )}
+                </div>
               </div>
 
               {/* Early Access Section */}

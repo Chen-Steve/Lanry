@@ -38,11 +38,6 @@ export default function ChapterEditForm({
     coins: '0',
     authorThoughts: '',
   });
-  const [autoSchedule, setAutoSchedule] = useState({
-    enabled: false,
-    interval: 7,
-    scheduleTime: '12:00'
-  });
 
   useEffect(() => {
     if (chapterId) {
@@ -181,17 +176,11 @@ export default function ChapterEditForm({
           <button
             type="button"
             onClick={() => setShowSchedulePopup(true)}
-            className={`px-3 py-2 rounded-lg border transition-colors flex items-center gap-2 whitespace-nowrap ring-2 ring-yellow-600 dark:ring-yellow-500 ${
-              autoSchedule.enabled 
-                ? 'bg-primary border-primary text-primary-foreground hover:bg-primary/90'
-                : 'border-border text-muted-foreground hover:text-foreground hover:bg-accent'
-            }`}
-            title={autoSchedule.enabled ? `Auto-scheduled every ${autoSchedule.interval} days at ${autoSchedule.scheduleTime}` : 'Configure auto-scheduling'}
+            className="px-3 py-2 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-accent transition-colors flex items-center gap-2 whitespace-nowrap"
+            title="Configure publishing settings"
           >
-            <Icon icon={autoSchedule.enabled ? "mdi:calendar-check" : "mdi:calendar-clock"} className="w-4 h-4" />
-            <span className="text-sm font-medium">
-              {autoSchedule.enabled ? 'Auto-scheduled' : 'Schedule'}
-            </span>
+            <Icon icon="mdi:calendar-clock" className="w-4 h-4" />
+            <span className="text-sm font-medium">Schedule</span>
           </button>
         </div>
       </div>
@@ -221,15 +210,6 @@ export default function ChapterEditForm({
               publishAt={formData.publishAt}
               coins={formData.coins}
               onSettingsChange={(settings) => setFormData(prev => ({ ...prev, ...settings }))}
-              autoScheduleInterval={autoSchedule.interval}
-              useAutoSchedule={autoSchedule.enabled}
-              autoScheduleTime={autoSchedule.scheduleTime}
-              onAutoScheduleChange={(settings) => setAutoSchedule({
-                interval: settings.interval,
-                enabled: settings.enabled,
-                scheduleTime: settings.scheduleTime || '12:00'
-              })}
-              isNewChapter={!chapterId}
               showSchedulePopup={showSchedulePopup}
               onCloseSchedulePopup={() => setShowSchedulePopup(false)}
             />
@@ -251,15 +231,11 @@ export default function ChapterEditForm({
                 Saving...
               </span>
             ) : (
-              chapterId ? 'Update Chapter' : 'Create Chapter'
+              <span className="inline-flex items-center gap-2">
+                <Icon icon="mdi:content-save" className="w-5 h-5" />
+                Save Chapter
+              </span>
             )}
-          </button>
-          <button
-            type="button"
-            onClick={onCancel}
-            className="flex-1 bg-accent text-accent-foreground py-3 px-4 rounded-lg hover:bg-accent/80 transition-colors"
-          >
-            Cancel
           </button>
         </div>
       )}
