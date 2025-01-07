@@ -10,6 +10,7 @@ import * as authorChapterService from '../_services/authorChapterService';
 import * as categoryService from '../_services/categoryService';
 import { useAuth } from '@/hooks/useAuth';
 import { ChapterListChapter, NovelEditFormProps, Volume, NovelCategory } from '../_types/authorTypes';
+import supabase from '@/lib/supabaseClient';
 
 export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFormProps) {
   const { userId, isLoading: isAuthLoading } = useAuth();
@@ -25,6 +26,7 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
   const [isLoadingChapters, setIsLoadingChapters] = useState(true);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<NovelCategory[]>([]);
+  const [coverImageUrl, setCoverImageUrl] = useState(novel.coverImageUrl || '');
 
   const loadChapters = useCallback(async () => {
     if (!userId || !novel.id) {
@@ -76,15 +78,31 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
     loadCategories();
   }, [novel.id]);
 
+  useEffect(() => {
+    const handleCoverUpdate = () => {
+      // Force a re-render by updating a state
+      setIsSubmitting(prev => !prev);
+    };
+    
+    window.addEventListener('novelCoverUpdated', handleCoverUpdate);
+    return () => window.removeEventListener('novelCoverUpdated', handleCoverUpdate);
+  }, []);
+
   const handleSave = async () => {
     setIsSubmitting(true);
     try {
+      // Generate slug from title
+      const slug = title.toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+
       const updatedNovel = {
         ...novel,
         title,
         author,
         description,
-        status
+        status,
+        slug
       };
       await onUpdate(updatedNovel);
       toast.success('Save successful!');
@@ -95,13 +113,27 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
     }
   };
 
-  const handleCoverUpdate = async (coverImageUrl: string) => {
-    const updatedNovel = {
-      ...novel,
-      coverImageUrl,
-    };
-    await onUpdate(updatedNovel);
-    novel.coverImageUrl = coverImageUrl;
+  const handleCoverUpdate = async (newCoverImageUrl: string) => {
+    try {
+      const { error } = await supabase
+        .from('novels')
+        .update({
+          cover_image_url: newCoverImageUrl,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', novel.id);
+
+      if (error) throw error;
+      
+      // Update both the novel and local state
+      novel.coverImageUrl = newCoverImageUrl;
+      setCoverImageUrl(newCoverImageUrl);
+      
+      toast.success('Cover image updated successfully');
+    } catch (error) {
+      console.error('Error updating cover:', error);
+      toast.error('Failed to update cover image');
+    }
   };
 
   const handleDeleteChapter = async (chapterId: string) => {
@@ -147,7 +179,7 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
           <div className="flex justify-between items-start">
             <div className="flex gap-6 items-start">
               <NovelCoverImage 
-                coverImageUrl={novel.coverImageUrl}
+                coverImageUrl={coverImageUrl}
                 onUpdate={handleCoverUpdate}
               />
               <div className="flex flex-col flex-grow h-[270px]">
@@ -158,7 +190,7 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
                       className="text-xl font-semibold text-foreground px-2 py-1 border-b border-border hover:border-muted-foreground focus:border-primary focus:ring-0 focus:outline-none w-fit min-w-[200px] truncate bg-background placeholder:text-muted-foreground"
-                      placeholder="Novel Title"
+                      placeholder="Enter your novel title"
                       title={title}
                     />
                   </div>
@@ -168,7 +200,7 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
                         type="text"
                         value={author}
                         onChange={(e) => setAuthor(e.target.value)}
-                        placeholder="Original Author"
+                        placeholder="Enter original author name"
                         className="px-3 py-1 text-sm border-b border-border hover:border-muted-foreground focus:border-primary focus:ring-0 focus:outline-none w-fit min-w-[150px] bg-background text-foreground placeholder:text-muted-foreground"
                       />
                     </div>
@@ -208,7 +240,7 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
                     <div className="flex-grow min-h-[100px] text-sm text-muted-foreground whitespace-pre-wrap">
                       {description.length > 300 
                         ? `${description.slice(0, 300)}...`
-                        : description || 'No description available.'
+                        : description || 'Enter your novel description here...'
                       }
                     </div>
                     <button

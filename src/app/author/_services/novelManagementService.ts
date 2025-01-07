@@ -109,7 +109,8 @@ export async function updateNovel(novel: Novel): Promise<Novel> {
         status: novel.status,
         cover_image_url: novel.coverImageUrl || null,
         updated_at: new Date().toISOString(),
-        is_author_name_custom: true
+        is_author_name_custom: true,
+        slug: novel.slug
       })
       .eq('id', novel.id);
 

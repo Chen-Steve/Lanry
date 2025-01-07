@@ -15,9 +15,9 @@ interface NovelWithChapters extends Novel {
 
 const emptyNovel: NovelWithChapters = {
   id: '',
-  title: 'Untitled Novel',
-  description: 'Enter your novel description here...',
-  author: 'Anonymous',
+  title: '',
+  description: '',
+  author: '',
   status: 'ONGOING',
   slug: '',
   coverImageUrl: '',
