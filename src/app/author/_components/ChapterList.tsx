@@ -192,7 +192,7 @@ export default function ChapterList({
       className={`relative group ${
         editingChapterId === chapter.id 
           ? 'bg-primary/10 hover:bg-primary/20' 
-          : 'hover:bg-accent'
+          : 'hover:bg-accent/50'
       }`}
     >
       <div 
@@ -207,7 +207,7 @@ export default function ChapterList({
                   e.stopPropagation();
                   handleEditChapter(chapter);
                 }}
-                className="mr-2 px-2 py-0.5 text-xs bg-primary/10 hover:bg-primary/20 text-primary rounded"
+                className="mr-2 px-2 py-0.5 text-xs bg-primary/10 hover:bg-primary/20 text-primary rounded transition-colors"
               >
                 Edit
               </button>
@@ -257,7 +257,7 @@ export default function ChapterList({
             e.stopPropagation();
             handleDeleteClick(chapter.id);
           }}
-          className="p-1 text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
+          className="p-1 text-muted-foreground hover:text-red-500 dark:hover:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-full transition-colors"
           title="Delete chapter"
         >
           <Icon icon="mdi:delete-outline" className="w-4 h-4" />
@@ -272,7 +272,7 @@ export default function ChapterList({
 
     return (
       <div key={volume.id} className="border-t border-border first:border-t-0">
-        <div className="bg-accent px-3 py-2 flex justify-between items-center">
+        <div className="bg-accent/50 px-3 py-2 flex justify-between items-center">
           <div className="flex items-center gap-2">
             <button
               onClick={() => toggleVolumeCollapse(volume.id)}
@@ -289,7 +289,7 @@ export default function ChapterList({
             </h3>
             <button
               onClick={() => setDeleteVolumeConfirmation({ isOpen: true, volumeId: volume.id })}
-              className="p-1 text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
+              className="p-1 text-muted-foreground hover:text-red-500 dark:hover:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-full transition-colors"
               title="Delete volume"
             >
               <Icon icon="mdi:delete-outline" className="w-4 h-4" />
@@ -346,12 +346,12 @@ export default function ChapterList({
         />
       ) : (
         <div className="flex flex-col h-full">
-          <div className="bg-accent p-2 sm:p-3 border-b border-border sticky top-0 z-10">
+          <div className="bg-accent/50 p-2 sm:p-3 border-b border-border sticky top-0 z-10">
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => handleCreateChapter()}
-                  className="inline-flex items-center px-2.5 py-1.5 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-accent focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  className="inline-flex items-center px-2.5 py-1.5 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors"
                 >
                   Add Chapter
                 </button>
@@ -372,7 +372,7 @@ export default function ChapterList({
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search chapters..."
-                    className="w-full pl-8 pr-3 py-1 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    className="w-full pl-8 pr-3 py-1 text-sm bg-background text-foreground placeholder:text-muted-foreground border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors"
                   />
                   <Icon 
                     icon="mdi:magnify"
@@ -383,7 +383,7 @@ export default function ChapterList({
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setIsVolumeModalOpen(true)}
-                  className="inline-flex items-center px-2.5 py-1.5 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-accent focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  className="inline-flex items-center px-2.5 py-1.5 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors"
                 >
                   Add Volume
                 </button>
@@ -395,13 +395,11 @@ export default function ChapterList({
           </div>
 
           <div className="overflow-y-auto scrollbar-hide flex-1">
-            {/* Render volumes and their chapters first */}
             {volumes.map(renderVolumeSection)}
 
-            {/* Render chapters not in any volume */}
             {chaptersGroupedByVolume.noVolumeChapters.length > 0 && (
               <div className="border-t border-border mt-4">
-                <div className="bg-accent px-3 py-2 flex justify-between items-center">
+                <div className="bg-accent/50 px-3 py-2 flex justify-between items-center">
                   <h3 className="text-sm font-medium text-foreground">
                     Unassigned Chapters
                   </h3>

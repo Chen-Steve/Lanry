@@ -137,7 +137,7 @@ export default function NovelManagement() {
             placeholder="Search novels..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 bg-background"
+            className="w-full pl-10 pr-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 bg-background text-foreground placeholder:text-muted-foreground"
           />
         </div>
       </section>
@@ -145,13 +145,13 @@ export default function NovelManagement() {
       <section>
         {isLoading ? (
           <div className="py-12 text-center">
-            <Icon icon="mdi:loading" className="animate-spin text-3xl text-muted-foreground" />
+            <Icon icon="mdi:loading" className="animate-spin text-3xl text-primary/60" />
           </div>
         ) : filteredNovels.length > 0 ? (
           filteredNovels.map((novel) => (
-            <article key={novel.id} className="flex gap-4 bg-accent py-2 px-4 border-b border-border last:border-b-0 relative">
+            <article key={novel.id} className="relative flex gap-4 bg-background hover:bg-accent/50 py-2 px-4 border border-border rounded-lg mb-2">
               <button 
-                className="absolute top-2 right-4 p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-full"
+                className="absolute top-2 right-4 p-1.5 text-muted-foreground hover:text-red-600 dark:hover:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-full transition-colors"
                 aria-label="Delete novel"
                 onClick={() => setNovelToDelete(novel)}
               >
@@ -164,7 +164,7 @@ export default function NovelManagement() {
                   alt={novel.title}
                   width={80}
                   height={120}
-                  className="object-cover w-full h-full rounded"
+                  className="object-cover w-full h-full rounded border border-border"
                   priority
                 />
               </div>
@@ -179,9 +179,9 @@ export default function NovelManagement() {
                     </span>
 
                     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium
-                      ${novel.status === 'ONGOING' ? 'bg-green-100 text-green-800' :
-                        novel.status === 'COMPLETED' ? 'bg-blue-100 text-blue-800' :
-                        'bg-yellow-100 text-yellow-800'}`}>
+                      ${novel.status === 'ONGOING' ? 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300' :
+                        novel.status === 'COMPLETED' ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300' :
+                        'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-300'}`}>
                       <Icon icon={
                         novel.status === 'ONGOING' ? 'mdi:pencil' :
                         novel.status === 'COMPLETED' ? 'mdi:check-circle' :
@@ -213,8 +213,8 @@ export default function NovelManagement() {
 
       {/* Delete Confirmation Modal */}
       {novelToDelete && (
-        <div className="fixed inset-0 bg-foreground/50 flex items-center justify-center z-50">
-          <div className="bg-background rounded-lg p-6 max-w-sm w-full mx-4 shadow-xl">
+        <div className="fixed inset-0 bg-foreground/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-background rounded-lg p-6 max-w-sm w-full mx-4 shadow-xl border border-border">
             <h3 className="text-lg font-medium text-foreground mb-4">Delete Novel</h3>
             <p className="text-muted-foreground mb-6">
               Are you sure you want to delete &quot;{novelToDelete.title}&quot;? This action cannot be undone.
@@ -227,7 +227,7 @@ export default function NovelManagement() {
                 Cancel
               </button>
               <button
-                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors"
+                className="px-4 py-2 text-sm font-medium text-primary-foreground bg-red-600 dark:bg-red-700 hover:bg-red-700 dark:hover:bg-red-800 rounded-md transition-colors"
                 onClick={handleDeleteNovel}
               >
                 Delete
@@ -239,14 +239,14 @@ export default function NovelManagement() {
 
       <footer className="flex justify-center items-center gap-2">
         <button 
-          className="p-2 rounded-lg hover:bg-accent"
+          className="p-2 rounded-lg hover:bg-accent transition-colors"
           aria-label="Previous page"
         >
           <Icon icon="mdi:chevron-left" className="text-xl text-foreground" />
         </button>
         <span className="px-4 py-2 text-foreground">Page 1 of 1</span>
         <button 
-          className="p-2 rounded-lg hover:bg-accent"
+          className="p-2 rounded-lg hover:bg-accent transition-colors"
           aria-label="Next page"
         >
           <Icon icon="mdi:chevron-right" className="text-xl text-foreground" />

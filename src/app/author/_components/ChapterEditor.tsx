@@ -164,10 +164,10 @@ export default function ChapterEditor({
   return (
     <div className={`${className.includes('flex-1') ? 'flex flex-col h-full' : 'space-y-2'} w-full`}>
       {/* Formatting Toolbar */}
-      <div className="flex flex-wrap items-center gap-1 p-1 bg-accent border border-border rounded-lg">
+      <div className="flex flex-wrap items-center gap-1 p-1 bg-muted border border-border rounded-lg">
         <button
           onClick={() => applyFormatting('bold')}
-          className="p-1.5 md:p-2 hover:bg-accent/80 rounded-lg transition-colors"
+          className="p-1.5 md:p-2 hover:bg-accent/50 rounded-lg transition-colors"
           title="Bold (Ctrl+B)"
           type="button"
         >
@@ -175,7 +175,7 @@ export default function ChapterEditor({
         </button>
         <button
           onClick={() => applyFormatting('italic')}
-          className="p-1.5 md:p-2 hover:bg-accent/80 rounded-lg transition-colors"
+          className="p-1.5 md:p-2 hover:bg-accent/50 rounded-lg transition-colors"
           title="Italic (Ctrl+I)"
           type="button"
         >
@@ -183,7 +183,7 @@ export default function ChapterEditor({
         </button>
         <button
           onClick={() => applyFormatting('underline')}
-          className="p-1.5 md:p-2 hover:bg-accent/80 rounded-lg transition-colors"
+          className="p-1.5 md:p-2 hover:bg-accent/50 rounded-lg transition-colors"
           title="Underline (Ctrl+U)"
           type="button"
         >
@@ -191,7 +191,7 @@ export default function ChapterEditor({
         </button>
         <button
           onClick={() => applyFormatting('footnote')}
-          className="p-1.5 md:p-2 hover:bg-accent/80 rounded-lg transition-colors"
+          className="p-1.5 md:p-2 hover:bg-accent/50 rounded-lg transition-colors"
           title="Add Footnote (Ctrl+F)"
           type="button"
         >
@@ -199,7 +199,7 @@ export default function ChapterEditor({
         </button>
         <button
           onClick={() => applyFormatting('link')}
-          className="p-1.5 md:p-2 hover:bg-accent/80 rounded-lg transition-colors"
+          className="p-1.5 md:p-2 hover:bg-accent/50 rounded-lg transition-colors"
           title="Add Link (Ctrl+K)"
           type="button"
         >
@@ -208,7 +208,7 @@ export default function ChapterEditor({
         <div className="w-px h-4 md:h-5 bg-border mx-1" /> {/* Separator */}
         <button
           onClick={() => applyFormatting('divider')}
-          className="p-1.5 md:p-2 hover:bg-accent/80 rounded-lg transition-colors"
+          className="p-1.5 md:p-2 hover:bg-accent/50 rounded-lg transition-colors"
           title="Insert Horizontal Line"
           type="button"
         >
@@ -228,7 +228,7 @@ export default function ChapterEditor({
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={handleKeyDown}
         onPaste={handlePaste}
-        className={`w-full p-3 md:p-4 border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary bg-accent ${
+        className={`w-full p-3 md:p-4 border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary bg-background placeholder:text-muted-foreground ${
           className.includes('flex-1') ? 'flex-1' : 'min-h-[400px] resize-y'
         }`}
         placeholder="Write your chapter here..."
@@ -245,7 +245,7 @@ export default function ChapterEditor({
           <textarea
             value={authorThoughts}
             onChange={(e) => onAuthorThoughtsChange(e.target.value)}
-            className="w-full p-3 md:p-4 border border-border rounded-lg text-foreground min-h-[150px] focus:outline-none focus:ring-2 focus:ring-primary resize-y bg-accent"
+            className="w-full p-3 md:p-4 border border-border rounded-lg text-foreground min-h-[150px] focus:outline-none focus:ring-2 focus:ring-primary resize-y bg-background placeholder:text-muted-foreground"
             placeholder="Share your thoughts about this chapter (it will be visible at the bottom of the chapter)"
           />
         </div>

@@ -73,30 +73,30 @@ export default function NovelStatistics() {
 
   return (
     <section className="p-4">
-      <h2 className="text-2xl font-bold mb-6">Novel Statistics</h2>
+      <h2 className="text-2xl font-bold mb-6 text-foreground">Novel Statistics</h2>
       
       <ul className="grid gap-4 sm:grid-cols-2">
         {stats.map((novel) => (
           <li 
             key={novel.id}
-            className="bg-white rounded-lg p-4 shadow-sm hover:shadow-md transition-all"
+            className="bg-background border border-border rounded-lg p-4 shadow-sm hover:shadow-md transition-all"
           >
-            <h3 className="text-lg font-semibold mb-4 line-clamp-1">{novel.title}</h3>
+            <h3 className="text-lg font-semibold mb-4 line-clamp-1 text-foreground">{novel.title}</h3>
             <ul className="grid grid-cols-3 gap-2">
               <li className="flex flex-col items-center">
                 <Icon icon="mdi:bookmark" className="text-2xl text-primary mb-1" />
-                <span className="text-xl font-bold">{novel.bookmarks}</span>
-                <span className="text-xs text-gray-600">Bookmarks</span>
+                <span className="text-xl font-bold text-foreground">{novel.bookmarks}</span>
+                <span className="text-xs text-muted-foreground">Bookmarks</span>
               </li>
               <li className="flex flex-col items-center">
                 <Icon icon="mdi:book-open" className="text-2xl text-primary mb-1" />
-                <span className="text-xl font-bold">{novel.total_chapters}</span>
-                <span className="text-xs text-gray-600">Chapters</span>
+                <span className="text-xl font-bold text-foreground">{novel.total_chapters}</span>
+                <span className="text-xs text-muted-foreground">Chapters</span>
               </li>
               <li className="flex flex-col items-center">
                 <Icon icon="mdi:comment" className="text-2xl text-primary mb-1" />
-                <span className="text-xl font-bold">{novel.total_comments}</span>
-                <span className="text-xs text-gray-600">Comments</span>
+                <span className="text-xl font-bold text-foreground">{novel.total_comments}</span>
+                <span className="text-xs text-muted-foreground">Comments</span>
               </li>
             </ul>
           </li>

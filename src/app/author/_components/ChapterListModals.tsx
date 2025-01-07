@@ -43,8 +43,8 @@ export function VolumeModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-foreground/50 flex items-center justify-center z-50">
-      <div className="bg-background rounded-lg p-6 w-full max-w-md border-2 border-gray-600">
+    <div className="fixed inset-0 bg-foreground/50 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="bg-background rounded-lg p-6 w-full max-w-md border border-border shadow-lg">
         <h3 className="text-lg font-medium text-foreground mb-4">Create New Volume</h3>
         <form onSubmit={onSubmit}>
           <div className="space-y-4">
@@ -57,7 +57,7 @@ export function VolumeModal({
                 id="volumeNumber"
                 value={volumeNumber}
                 onChange={(e) => onVolumeNumberChange(e.target.value)}
-                className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 bg-background text-foreground"
+                className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 bg-background text-foreground placeholder:text-muted-foreground"
                 placeholder="Enter volume number"
                 required
                 min="1"
@@ -72,7 +72,7 @@ export function VolumeModal({
                 id="volumeName"
                 value={volumeName}
                 onChange={(e) => onVolumeNameChange(e.target.value)}
-                className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 bg-background text-foreground"
+                className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 bg-background text-foreground placeholder:text-muted-foreground"
                 placeholder="Enter volume title"
                 required
               />
@@ -82,13 +82,13 @@ export function VolumeModal({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-accent"
+              className="px-4 py-2 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-accent/50 transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 rounded-md"
+              className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 rounded-md transition-colors"
             >
               Create Volume
             </button>
@@ -109,20 +109,20 @@ export function DeleteConfirmationModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-foreground/50 flex items-center justify-center z-50">
-      <div className="bg-background rounded-lg p-6 w-full max-w-sm">
+    <div className="fixed inset-0 bg-foreground/50 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="bg-background rounded-lg p-6 w-full max-w-sm border border-border shadow-lg">
         <h3 className="text-lg font-medium text-foreground mb-3">{title}</h3>
         <p className="text-sm text-muted-foreground mb-6">{message}</p>
         <div className="flex justify-end gap-3">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-accent"
+            className="px-4 py-2 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-accent/50 transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
-            className="px-4 py-2 text-sm font-medium text-primary-foreground bg-red-600 hover:bg-red-700 rounded-md"
+            className="px-4 py-2 text-sm font-medium text-primary-foreground bg-red-600 dark:bg-red-700 hover:bg-red-700 dark:hover:bg-red-800 rounded-md transition-colors"
           >
             Delete
           </button>
@@ -145,13 +145,13 @@ export function AssignChaptersModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-foreground/50 flex items-center justify-center z-50">
-      <div className="bg-background rounded-lg p-6 w-full max-w-2xl border-2 border-gray-600">
+    <div className="fixed inset-0 bg-foreground/50 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="bg-background rounded-lg p-6 w-full max-w-2xl border border-border shadow-lg">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-medium text-foreground">Assign Chapters to Volume</h3>
           <button
             onClick={onClose}
-            className="text-muted-foreground hover:text-foreground"
+            className="text-muted-foreground hover:text-foreground transition-colors"
             aria-label="Close modal"
           >
             <Icon icon="mdi:close" className="w-5 h-5" />
@@ -163,7 +163,7 @@ export function AssignChaptersModal({
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Search chapters..."
-            className="w-full px-3 py-2 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+            className="w-full px-3 py-2 text-sm bg-background text-foreground placeholder:text-muted-foreground border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors"
           />
         </div>
         <div className="max-h-[400px] overflow-y-auto border border-border rounded-md divide-y divide-border">
@@ -176,7 +176,7 @@ export function AssignChaptersModal({
             .map(chapter => (
               <div
                 key={chapter.id}
-                className="flex items-center gap-3 p-3 hover:bg-accent cursor-pointer"
+                className="flex items-center gap-3 p-3 hover:bg-accent/50 cursor-pointer transition-colors"
                 onClick={() => toggleChapterSelection(chapter.id)}
               >
                 <div className="flex-shrink-0">
@@ -184,7 +184,7 @@ export function AssignChaptersModal({
                     type="checkbox"
                     checked={selectedChapterIds.has(chapter.id)}
                     onChange={() => toggleChapterSelection(chapter.id)}
-                    className="w-4 h-4 text-primary border-border rounded focus:ring-primary"
+                    className="w-4 h-4 text-primary border-border rounded focus:ring-primary focus:ring-offset-background"
                     aria-label={`Select Chapter ${chapter.chapter_number}${chapter.part_number ? ` Part ${chapter.part_number}` : ''}`}
                   />
                 </div>
@@ -207,14 +207,14 @@ export function AssignChaptersModal({
         <div className="mt-6 flex justify-end gap-3">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-accent"
+            className="px-4 py-2 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-accent/50 transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={onAssign}
             disabled={selectedChapterIds.size === 0}
-            className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             Assign {selectedChapterIds.size} {selectedChapterIds.size === 1 ? 'Chapter' : 'Chapters'}
           </button>

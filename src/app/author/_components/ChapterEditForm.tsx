@@ -115,7 +115,7 @@ export default function ChapterEditForm({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[200px]">
-        <Icon icon="mdi:loading" className="w-8 h-8 animate-spin text-muted-foreground" />
+        <Icon icon="mdi:loading" className="w-8 h-8 animate-spin text-primary/60" />
       </div>
     );
   }
@@ -129,7 +129,7 @@ export default function ChapterEditForm({
         <button
           type="button"
           onClick={onCancel}
-          className="text-muted-foreground hover:text-foreground"
+          className="text-muted-foreground hover:text-foreground transition-colors"
           title="Close"
           aria-label="Close chapter editor"
         >
@@ -145,7 +145,7 @@ export default function ChapterEditForm({
             min="1"
             value={formData.chapterNumber}
             onChange={(e) => setFormData({ ...formData, chapterNumber: e.target.value })}
-            className="w-full text-foreground py-2 px-3 border-2 border-gray-600 rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+            className="w-full text-foreground py-2 px-3 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary placeholder:text-muted-foreground"
             placeholder="Ch #"
             required
           />
@@ -158,7 +158,7 @@ export default function ChapterEditForm({
             min="1"
             value={formData.partNumber}
             onChange={(e) => setFormData({ ...formData, partNumber: e.target.value })}
-            className="w-full text-foreground py-2 px-3 border-2 border-gray-600 rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+            className="w-full text-foreground py-2 px-3 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary placeholder:text-muted-foreground"
             placeholder="Part #"
           />
         </div>
@@ -169,7 +169,7 @@ export default function ChapterEditForm({
             type="text"
             value={formData.title}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            className="w-full text-foreground py-2 px-3 border-2 border-gray-600 rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+            className="w-full text-foreground py-2 px-3 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary placeholder:text-muted-foreground"
             placeholder="Title (Optional)"
           />
         </div>
@@ -181,7 +181,7 @@ export default function ChapterEditForm({
             <button
               type="button"
               onClick={() => setIsExpanded(!isExpanded)}
-              className="absolute right-2 top-2 p-1.5 text-muted-foreground hover:text-foreground rounded-lg hover:bg-accent z-10"
+              className="absolute right-2 top-2 p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors"
               title={isExpanded ? "Exit fullscreen" : "Enter fullscreen"}
             >
               <Icon icon={isExpanded ? "mdi:fullscreen-exit" : "mdi:fullscreen"} className="w-4 h-4 md:w-5 md:h-5" />
@@ -211,7 +211,7 @@ export default function ChapterEditForm({
             type="button"
             onClick={handleSave}
             disabled={isSaving}
-            className="flex-1 bg-primary text-primary-foreground py-3 px-4 rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 bg-primary text-primary-foreground py-3 px-4 rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {isSaving ? (
               <span className="inline-flex items-center gap-2">
@@ -225,7 +225,7 @@ export default function ChapterEditForm({
           <button
             type="button"
             onClick={onCancel}
-            className="flex-1 bg-accent text-black hover:text-foreground py-3 px-4 rounded-lg hover:bg-accent/80"
+            className="flex-1 bg-accent text-accent-foreground py-3 px-4 rounded-lg hover:bg-accent/80 transition-colors"
           >
             Cancel
           </button>

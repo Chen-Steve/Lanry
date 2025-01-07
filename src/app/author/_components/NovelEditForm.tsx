@@ -136,7 +136,7 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
     <main className="space-y-4">
       <button
         onClick={onCancel}
-        className="flex items-center gap-2 text-black hover:text-foreground bg-background hover:bg-accent rounded-lg px-4 py-2 border border-border shadow-sm transition-colors"
+        className="flex items-center gap-2 text-foreground bg-background hover:bg-accent rounded-lg px-4 py-2 border border-border shadow-sm transition-colors"
       >
         <Icon icon="mdi:arrow-left" className="w-4 h-4" />
         <span className="font-medium">Novel List</span>
@@ -157,7 +157,7 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
                       type="text"
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
-                      className="text-xl font-semibold text-foreground px-2 py-1 border-b border-border hover:border-muted-foreground focus:border-primary focus:ring-0 focus:outline-none w-fit min-w-[200px] truncate bg-background"
+                      className="text-xl font-semibold text-foreground px-2 py-1 border-b border-border hover:border-muted-foreground focus:border-primary focus:ring-0 focus:outline-none w-fit min-w-[200px] truncate bg-background placeholder:text-muted-foreground"
                       placeholder="Novel Title"
                       title={title}
                     />
@@ -169,7 +169,7 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
                         value={author}
                         onChange={(e) => setAuthor(e.target.value)}
                         placeholder="Original Author"
-                        className="px-3 py-1 text-sm border-b border-border hover:border-muted-foreground focus:border-primary focus:ring-0 focus:outline-none w-fit min-w-[150px] bg-background text-foreground"
+                        className="px-3 py-1 text-sm border-b border-border hover:border-muted-foreground focus:border-primary focus:ring-0 focus:outline-none w-fit min-w-[150px] bg-background text-foreground placeholder:text-muted-foreground"
                       />
                     </div>
                   </div>
@@ -236,13 +236,13 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
 
           {/* Description Edit Modal */}
           {isDescriptionModalOpen && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-              <div className="bg-background rounded-lg w-[700px] shadow-xl">
+            <div className="fixed inset-0 bg-foreground/50 backdrop-blur-sm flex items-center justify-center z-50">
+              <div className="bg-background rounded-lg w-[700px] shadow-lg border border-border">
                 <div className="flex items-center justify-between border-b border-border p-3">
                   <h3 className="text-lg font-medium text-foreground">Edit Description</h3>
                   <button
                     onClick={() => setIsDescriptionModalOpen(false)}
-                    className="text-muted-foreground hover:text-foreground"
+                    className="text-muted-foreground hover:text-foreground transition-colors"
                     aria-label="Close dialog"
                   >
                     <Icon icon="mdi:close" className="w-5 h-5" />
@@ -252,7 +252,7 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
                   <textarea
                     value={editingDescription}
                     onChange={(e) => setEditingDescription(e.target.value)}
-                    className="w-full px-2 py-1.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary resize-none h-[150px] bg-background text-foreground"
+                    className="w-full px-2 py-1.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary resize-none h-[150px] bg-background text-foreground placeholder:text-muted-foreground"
                     placeholder="Synopsis"
                   />
                 </div>
@@ -260,7 +260,7 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
                   <button
                     type="button"
                     onClick={() => setIsDescriptionModalOpen(false)}
-                    className="px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground bg-accent hover:bg-accent/80 rounded-md transition-colors"
+                    className="px-3 py-1.5 text-sm font-medium text-foreground bg-background border border-border hover:bg-accent/50 rounded-md transition-colors"
                   >
                     Cancel
                   </button>
@@ -284,7 +284,7 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
             <div className="space-y-4">
               {isLoadingChapters ? (
                 <div className="text-center py-8">
-                  <Icon icon="mdi:loading" className="w-6 h-6 animate-spin mx-auto text-muted-foreground" />
+                  <Icon icon="mdi:loading" className="w-6 h-6 animate-spin mx-auto text-primary/60" />
                 </div>
               ) : (
                 <ChapterList

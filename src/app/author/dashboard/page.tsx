@@ -56,11 +56,11 @@ export default function AuthorDashboard() {
   }
 
   return (
-    <div className="flex min-h-screen relative" style={{ backgroundColor: '#F2EEE5' }}>
+    <div className="flex min-h-screen relative bg-background">
       {/* Mobile Toggle Button */}
       <button
         onClick={() => setSidebarOpen(!isSidebarOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-[#E5E1D8] text-gray-600 hover:bg-[#E5E1D8]/80"
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-accent hover:bg-accent/80 text-accent-foreground"
         aria-label="Toggle Sidebar"
       >
         <Icon icon={isSidebarOpen ? "mdi:close" : "mdi:menu"} className="text-2xl" />
@@ -69,17 +69,17 @@ export default function AuthorDashboard() {
       {/* Overlay for mobile */}
       {isSidebarOpen && (
         <div 
-          className="lg:hidden fixed inset-0 bg-black/20 z-30"
+          className="lg:hidden fixed inset-0 bg-black/20 dark:bg-black/50 z-30"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Left Sidebar */}
-      <div className={`w-64 bg-[#F2EEE5] border-r border-[#E5E1D8] fixed h-full z-40 transition-transform duration-300 lg:translate-x-0 ${
+      <div className={`w-64 bg-background border-r border-border fixed h-full z-40 transition-transform duration-300 lg:translate-x-0 ${
         isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
         <div className="p-6 pt-16 lg:pt-6">
-          <a href="https://lanry.space/" className="text-2xl font-bold mb-6 block text-center">
+          <a href="https://lanry.space/" className="text-2xl font-bold mb-6 block text-center text-foreground">
             Lanry
           </a>
           <nav className="flex flex-col gap-2">
@@ -87,8 +87,8 @@ export default function AuthorDashboard() {
               onClick={() => setActiveTab('manage-novels')}
               className={`w-full py-2 px-4 rounded-lg transition-colors text-left ${
                 activeTab === 'manage-novels'
-                  ? 'bg-[#E5E1D8] text-indigo-700'
-                  : 'text-gray-600 hover:bg-[#E5E1D8]/50'
+                  ? 'bg-accent text-accent-foreground'
+                  : 'text-muted-foreground hover:bg-accent/50'
               }`}
             >
               <span className="flex items-center gap-2">
@@ -100,8 +100,8 @@ export default function AuthorDashboard() {
               onClick={() => setActiveTab('purchases')}
               className={`w-full py-2 px-4 rounded-lg transition-colors text-left ${
                 activeTab === 'purchases'
-                  ? 'bg-[#E5E1D8] text-indigo-700'
-                  : 'text-gray-600 hover:bg-[#E5E1D8]/50'
+                  ? 'bg-accent text-accent-foreground'
+                  : 'text-muted-foreground hover:bg-accent/50'
               }`}
             >
               <span className="flex items-center gap-2">
@@ -113,8 +113,8 @@ export default function AuthorDashboard() {
               onClick={() => setActiveTab('statistics')}
               className={`w-full py-2 px-4 rounded-lg transition-colors text-left ${
                 activeTab === 'statistics'
-                  ? 'bg-[#E5E1D8] text-indigo-700'
-                  : 'text-gray-600 hover:bg-[#E5E1D8]/50'
+                  ? 'bg-accent text-accent-foreground'
+                  : 'text-muted-foreground hover:bg-accent/50'
               }`}
             >
               <span className="flex items-center gap-2">
@@ -126,8 +126,8 @@ export default function AuthorDashboard() {
               onClick={() => setActiveTab('links')}
               className={`w-full py-2 px-4 rounded-lg transition-colors text-left ${
                 activeTab === 'links'
-                  ? 'bg-[#E5E1D8] text-indigo-700'
-                  : 'text-gray-600 hover:bg-[#E5E1D8]/50'
+                  ? 'bg-accent text-accent-foreground'
+                  : 'text-muted-foreground hover:bg-accent/50'
               }`}
             >
               <span className="flex items-center gap-2">

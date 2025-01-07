@@ -79,18 +79,18 @@ export default function TranslatorLinks() {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[200px]">
-        <Icon icon="mdi:loading" className="animate-spin text-3xl text-gray-500" />
+        <Icon icon="mdi:loading" className="animate-spin text-3xl text-primary/60" />
       </div>
     );
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <h2 className="text-xl font-semibold text-gray-900 mb-6">Manage Support Links</h2>
+      <h2 className="text-xl font-semibold text-foreground mb-6">Manage Support Links</h2>
       
       <div className="space-y-4">
         <div>
-          <label htmlFor="kofi" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="kofi" className="block text-sm font-medium text-foreground mb-1">
             Ko-fi URL
           </label>
           <div className="flex items-center gap-2">
@@ -101,13 +101,13 @@ export default function TranslatorLinks() {
               placeholder="https://ko-fi.com/yourusername"
               value={links.kofiUrl}
               onChange={(e) => setLinks(prev => ({ ...prev, kofiUrl: e.target.value }))}
-              className="flex-1 p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+              className="flex-1 p-2 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-primary"
             />
           </div>
         </div>
 
         <div>
-          <label htmlFor="patreon" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="patreon" className="block text-sm font-medium text-foreground mb-1">
             Patreon URL
           </label>
           <div className="flex items-center gap-2">
@@ -118,25 +118,25 @@ export default function TranslatorLinks() {
               placeholder="https://patreon.com/yourusername"
               value={links.patreonUrl}
               onChange={(e) => setLinks(prev => ({ ...prev, patreonUrl: e.target.value }))}
-              className="flex-1 p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+              className="flex-1 p-2 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-primary"
             />
           </div>
         </div>
 
         <div>
-          <label htmlFor="custom" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="custom" className="block text-sm font-medium text-foreground mb-1">
             Custom Support URL
           </label>
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <Icon icon="mdi:link-variant" className="text-gray-500 text-xl" />
+              <Icon icon="mdi:link-variant" className="text-muted-foreground text-xl" />
               <input
                 type="url"
                 id="custom"
                 placeholder="https://your-custom-support-link.com"
                 value={links.customUrl}
                 onChange={(e) => setLinks(prev => ({ ...prev, customUrl: e.target.value }))}
-                className="flex-1 p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                className="flex-1 p-2 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-primary"
               />
             </div>
             <input
@@ -145,10 +145,10 @@ export default function TranslatorLinks() {
               placeholder="Label for your custom link (e.g., 'Buy Me a Coffee', 'Personal Website')"
               value={links.customUrlLabel}
               onChange={(e) => setLinks(prev => ({ ...prev, customUrlLabel: e.target.value }))}
-              className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm text-black"
+              className="w-full p-2 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-primary text-sm"
             />
           </div>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-muted-foreground">
             Add any other support platform or personal website
           </p>
         </div>
@@ -159,8 +159,8 @@ export default function TranslatorLinks() {
           type="submit"
           disabled={isSaving}
           className={`
-            flex items-center gap-2 px-4 py-2 rounded-lg text-white font-medium
-            ${isSaving ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600'}
+            flex items-center gap-2 px-4 py-2 rounded-lg text-primary-foreground font-medium
+            ${isSaving ? 'bg-primary/70 cursor-not-allowed' : 'bg-primary hover:bg-primary/90'}
           `}
         >
           {isSaving && <Icon icon="mdi:loading" className="animate-spin" />}
