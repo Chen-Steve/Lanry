@@ -112,4 +112,38 @@ export interface NovelCategory {
   name: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface Comment {
+  id: string;
+  content: string;
+  created_at: string;
+  user: {
+    username: string;
+    avatar_url: string;
+  };
+  chapter: {
+    title: string;
+    novel: {
+      title: string;
+    };
+  };
+}
+
+export interface SupabaseComment {
+  id: string;
+  content: string;
+  created_at: string;
+  profile: {
+    username: string | null;
+    avatar_url: string | null;
+    role: string;
+  };
+  chapter_number: number;
+  novel_id: string;
+  paragraph_id: string;
+  novel: {
+    title: string;
+    author_profile_id: string;
+  };
 } 

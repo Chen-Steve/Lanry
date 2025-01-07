@@ -7,6 +7,7 @@ import ChapterPurchaseHistory from '@/app/author/_components/ChapterPurchaseHist
 import NovelStatistics from '@/app/author/_components/NovelStatistics';
 import TranslatorLinks from '@/app/author/_components/TranslatorLinks';
 import NovelManagement from '@/app/author/_components/NovelManagement';
+import NovelComments from '@/app/author/_components/NovelComments';
 import { Icon } from '@iconify/react';
 
 export default function AuthorDashboard() {
@@ -110,6 +111,19 @@ export default function AuthorDashboard() {
               </span>
             </button>
             <button
+              onClick={() => setActiveTab('comments')}
+              className={`w-full py-2 px-4 rounded-lg transition-colors text-left ${
+                activeTab === 'comments'
+                  ? 'bg-accent text-accent-foreground'
+                  : 'text-muted-foreground hover:bg-accent/50'
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <Icon icon="mdi:comment-text-multiple" />
+                Comments
+              </span>
+            </button>
+            <button
               onClick={() => setActiveTab('statistics')}
               className={`w-full py-2 px-4 rounded-lg transition-colors text-left ${
                 activeTab === 'statistics'
@@ -135,6 +149,7 @@ export default function AuthorDashboard() {
                 Support Links
               </span>
             </button>
+            
           </nav>
         </div>
       </div>
@@ -147,6 +162,9 @@ export default function AuthorDashboard() {
           )}
           {activeTab === 'purchases' && (
             <ChapterPurchaseHistory />
+          )}
+          {activeTab === 'comments' && (
+            <NovelComments />
           )}
           {activeTab === 'statistics' && (
             <NovelStatistics />

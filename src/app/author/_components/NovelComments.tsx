@@ -1,0 +1,249 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Icon } from '@iconify/react';
+import supabase from '@/lib/supabaseClient';
+import { formatRelativeDate } from '@/lib/utils';
+import Image from 'next/image';
+import type { Comment } from '@/app/author/_types/authorTypes';
+
+type RawComment = {
+  id: string;
+  content: string;
+  created_at: string;
+  chapter_number?: number;
+  novel_id: string;
+  profile: {
+    username: string | null;
+    avatar_url: string | null;
+    role: string;
+  };
+  novel: {
+    title: string;
+    author_profile_id: string;
+  };
+};
+
+export default function NovelComments() {
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedNovel, setSelectedNovel] = useState<string>('all');
+  const [novels, setNovels] = useState<{ id: string; title: string }[]>([]);
+  const [commentType, setCommentType] = useState<'all' | 'novel' | 'chapter'>('all');
+
+  useEffect(() => {
+    const fetchNovels = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const { data: userNovels } = await supabase
+        .from('novels')
+        .select('id, title')
+        .eq('author_profile_id', session.user.id);
+
+      if (userNovels) {
+        setNovels(userNovels);
+      }
+    };
+
+    fetchNovels();
+  }, []);
+
+  useEffect(() => {
+    const fetchComments = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const promises = [];
+
+      // Fetch chapter comments if needed
+      if (commentType === 'all' || commentType === 'chapter') {
+        const chapterQuery = supabase
+          .from('chapter_comments')
+          .select(`
+            id,
+            content,
+            created_at,
+            chapter_number,
+            novel_id,
+            paragraph_id,
+            profile:profiles (
+              username,
+              avatar_url,
+              role
+            ),
+            novel:novels!inner (
+              title,
+              author_profile_id
+            )
+          `)
+          .eq('novel.author_profile_id', session.user.id)
+          .order('created_at', { ascending: false });
+
+        if (selectedNovel !== 'all') {
+          chapterQuery.eq('novel_id', selectedNovel);
+        }
+
+        promises.push(chapterQuery);
+      }
+
+      // Fetch novel comments if needed
+      if (commentType === 'all' || commentType === 'novel') {
+        const novelQuery = supabase
+          .from('novel_comments')
+          .select(`
+            id,
+            content,
+            created_at,
+            novel_id,
+            profile:profiles (
+              username,
+              avatar_url,
+              role
+            ),
+            novel:novels!inner (
+              title,
+              author_profile_id
+            )
+          `)
+          .eq('novel.author_profile_id', session.user.id)
+          .order('created_at', { ascending: false });
+
+        if (selectedNovel !== 'all') {
+          novelQuery.eq('novel_id', selectedNovel);
+        }
+
+        promises.push(novelQuery);
+      }
+
+      try {
+        const results = await Promise.all(promises);
+        const errors = results.filter(r => r.error).map(r => r.error);
+        if (errors.length > 0) {
+          console.error('Error fetching comments:', errors);
+          return;
+        }
+
+        // Transform and combine the comments
+        const allComments = results.flatMap(result => {
+          const comments = (result.data || []) as unknown as RawComment[];
+          return comments.map(comment => ({
+            id: comment.id,
+            content: comment.content,
+            created_at: comment.created_at,
+            user: {
+              username: comment.profile.username || 'Anonymous',
+              avatar_url: comment.profile.avatar_url || ''
+            },
+            chapter: {
+              title: comment.chapter_number ? `Chapter ${comment.chapter_number}` : 'Novel Comment',
+              novel: {
+                title: comment.novel.title
+              }
+            }
+          }));
+        });
+
+        // Sort all comments by date
+        const sortedComments = allComments.sort((a, b) => 
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+
+        setComments(sortedComments);
+      } catch (error) {
+        console.error('Error processing comments:', error);
+      }
+
+      setIsLoading(false);
+    };
+
+    fetchComments();
+  }, [selectedNovel, commentType]);
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-[200px]">
+        <Icon icon="mdi:loading" className="animate-spin text-3xl text-gray-500" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h2 className="text-2xl font-bold">Comments</h2>
+        <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+          <select
+            value={commentType}
+            onChange={(e) => setCommentType(e.target.value as 'all' | 'novel' | 'chapter')}
+            className="px-3 py-2 rounded-lg border bg-background"
+            aria-label="Filter comment type"
+          >
+            <option value="all">All Comments</option>
+            <option value="novel">Novel Comments</option>
+            <option value="chapter">Chapter Comments</option>
+          </select>
+          <select
+            value={selectedNovel}
+            onChange={(e) => setSelectedNovel(e.target.value)}
+            className="px-3 py-2 rounded-lg border bg-background"
+            aria-label="Filter comments by novel"
+          >
+            <option value="all">All Novels</option>
+            {novels.map((novel) => (
+              <option key={novel.id} value={novel.id}>
+                {novel.title}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {comments.length === 0 ? (
+        <div className="text-center py-8 text-muted-foreground">
+          <Icon icon="mdi:comment-off-outline" className="text-4xl mx-auto mb-2" />
+          <p>No comments found</p>
+        </div>
+      ) : (
+        <div className="divide-y divide-border">
+          {comments.map((comment) => (
+            <div key={comment.id} className="p-4 bg-card">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full overflow-hidden bg-primary">
+                  {comment.user.avatar_url ? (
+                    <Image
+                      src={comment.user.avatar_url}
+                      alt={comment.user.username}
+                      width={40}
+                      height={40}
+                      className="w-full h-full object-cover"
+                      unoptimized
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-primary-foreground font-semibold">
+                      {comment.user.username[0]?.toUpperCase() || '?'}
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="font-semibold">{comment.user.username}</p>
+                      <p className="text-sm text-muted-foreground">
+                        on {comment.chapter.title} ({comment.chapter.novel.title})
+                      </p>
+                    </div>
+                    <span className="text-sm text-muted-foreground">
+                      {formatRelativeDate(comment.created_at)}
+                    </span>
+                  </div>
+                  <p className="mt-2">{comment.content}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+} 
