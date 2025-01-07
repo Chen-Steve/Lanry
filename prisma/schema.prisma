@@ -24,6 +24,7 @@ model Novel {
   coverImageUrl  String?   @map("cover_image_url")
   slug           String    @unique
   status         NovelStatus
+  ageRating      AgeRating @default(EVERYONE) @map("age_rating")
   bookmarkCount  Int       @default(0) @map("bookmark_count")
   views          Int       @default(0)
   rating         Float     @default(0) @map("rating")
@@ -431,4 +432,11 @@ model ChapterLike {
   @@index([profileId])
   @@index([novelId])
   @@map("chapter_likes")
+}
+
+enum AgeRating {
+  EVERYONE
+  TEEN
+  MATURE
+  ADULT
 }

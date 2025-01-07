@@ -38,7 +38,8 @@ export async function fetchAuthorNovels(): Promise<NovelWithChapters[]> {
     ...novel,
     categories: novel.categories?.map((item: { category: { id: string; name: string; created_at: string; updated_at: string } }) => item.category) || [],
     coverImageUrl: novel.cover_image_url,
-    chapterCount: novel.chapters[0]?.count || 0
+    chapterCount: novel.chapters[0]?.count || 0,
+    ageRating: novel.age_rating
   }));
 }
 
@@ -60,6 +61,7 @@ export async function updateNovel(novel: Novel): Promise<Novel> {
   if (!novel.author?.trim()) throw new Error('Author is required');
   if (!novel.description?.trim()) throw new Error('Description is required');
   if (!novel.status) throw new Error('Status is required');
+  if (!novel.ageRating) throw new Error('Age rating is required');
 
   // Generate slug from title
   const slug = novel.title.toLowerCase()
@@ -76,6 +78,7 @@ export async function updateNovel(novel: Novel): Promise<Novel> {
         author: novel.author.trim(),
         description: novel.description.trim(),
         status: novel.status,
+        age_rating: novel.ageRating,
         slug,
         cover_image_url: novel.coverImageUrl || null,
         author_profile_id: session.user.id,
@@ -107,6 +110,7 @@ export async function updateNovel(novel: Novel): Promise<Novel> {
         author: novel.author.trim(),
         description: novel.description.trim(),
         status: novel.status,
+        age_rating: novel.ageRating,
         cover_image_url: novel.coverImageUrl || null,
         updated_at: new Date().toISOString(),
         is_author_name_custom: true,

@@ -35,6 +35,7 @@ interface NovelHeaderProps {
   ratingCount?: number;
   userRating?: number;
   novelId: string;
+  ageRating?: 'EVERYONE' | 'TEEN' | 'MATURE' | 'ADULT';
 }
 
 const StatsItem = ({ icon, value, color = 'gray', withGap = false }: { icon: string; value: string; color?: string; withGap?: boolean }) => (
@@ -121,6 +122,20 @@ const RatingPopup = ({
   );
 };
 
+const ageRatingIcons = {
+  EVERYONE: 'mdi:account-multiple',
+  TEEN: 'mdi:account-school',
+  MATURE: 'mdi:account-alert',
+  ADULT: 'mdi:account-lock'
+} as const;
+
+const ageRatingColors = {
+  EVERYONE: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200',
+  TEEN: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200',
+  MATURE: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200',
+  ADULT: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200'
+} as const;
+
 export const NovelHeader = ({
   title,
   author,
@@ -143,6 +158,7 @@ export const NovelHeader = ({
   ratingCount = 0,
   userRating,
   novelId,
+  ageRating = 'EVERYONE',
 }: NovelHeaderProps) => {
   const [isRating, setIsRating] = useState(false);
   const [localRating, setLocalRating] = useState(rating);
@@ -279,14 +295,22 @@ export const NovelHeader = ({
               <div className="w-28 sm:w-32 md:w-40 lg:w-48 mx-0 flex-shrink-0">
                 <div className="relative aspect-[2/3] rounded-xl overflow-hidden shadow-lg">
                   {coverImageUrl ? (
-                    <Image
-                      src={coverImageUrl.startsWith('http') ? coverImageUrl : `/novel-covers/${coverImageUrl}`}
-                      alt={title}
-                      fill
-                      priority
-                      className="object-cover"
-                      sizes="(max-width: 640px) 192px, (max-width: 768px) 144px, 176px"
-                    />
+                    <>
+                      <Image
+                        src={coverImageUrl.startsWith('http') ? coverImageUrl : `/novel-covers/${coverImageUrl}`}
+                        alt={title}
+                        fill
+                        priority
+                        className="object-cover"
+                        sizes="(max-width: 640px) 192px, (max-width: 768px) 144px, 176px"
+                      />
+                      <div className="absolute top-2 left-2">
+                        <div className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium backdrop-blur-md ${ageRatingColors[ageRating]}`}>
+                          <Icon icon={ageRatingIcons[ageRating]} className="w-3.5 h-3.5" />
+                          {ageRating}
+                        </div>
+                      </div>
+                    </>
                   ) : (
                     <div className="w-full h-full bg-gray-200" />
                   )}

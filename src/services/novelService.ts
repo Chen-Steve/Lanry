@@ -106,7 +106,8 @@ export async function getNovel(id: string, userId?: string): Promise<Novel | nul
       bookmarkCount,
       chapters,
       volumes: data.volumes || [],
-      categories
+      categories,
+      ageRating: data.age_rating
     };
   } catch (error) {
     console.error('Error fetching novel:', error);
@@ -216,7 +217,8 @@ export async function getNovels(): Promise<Novel[]> {
         customUrlLabel: novel.translator.custom_url_label
       } : null,
       coverImageUrl: novel.cover_image_url,
-      categories: novel.categories?.map((item: { category: NovelCategory }) => item.category) || []
+      categories: novel.categories?.map((item: { category: NovelCategory }) => item.category) || [],
+      ageRating: novel.age_rating
     }));
   } catch (error) {
     console.error('Error in getNovels:', error);

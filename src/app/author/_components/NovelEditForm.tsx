@@ -18,6 +18,7 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
   const [author, setAuthor] = useState(novel.author || '');
   const [description, setDescription] = useState(novel.description || '');
   const [status, setStatus] = useState(novel.status);
+  const [ageRating, setAgeRating] = useState(novel.ageRating || 'EVERYONE');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDescriptionModalOpen, setIsDescriptionModalOpen] = useState(false);
   const [editingDescription, setEditingDescription] = useState('');
@@ -102,6 +103,7 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
         author,
         description,
         status,
+        ageRating,
         slug
       };
       await onUpdate(updatedNovel);
@@ -164,6 +166,13 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
     { value: 'HIATUS', label: 'Hiatus', icon: 'mdi:pause-circle' }
   ] as const;
 
+  const ageRatingOptions = [
+    { value: 'EVERYONE', label: 'Everyone', icon: 'mdi:account-multiple', description: 'Suitable for all ages' },
+    { value: 'TEEN', label: 'Teen', icon: 'mdi:account-school', description: 'May contain mild violence and language' },
+    { value: 'MATURE', label: 'Mature', icon: 'mdi:account-alert', description: 'Contains mature themes and content' },
+    { value: 'ADULT', label: 'Adult', icon: 'mdi:account-lock', description: 'Contains adult content' }
+  ] as const;
+
   return (
     <main className="space-y-4">
       <button
@@ -216,22 +225,45 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
                     </button>
                   </div>
                   <div className="mt-2">
-                    <div className="flex gap-2">
-                      {statusOptions.map(option => (
-                        <button
-                          key={option.value}
-                          type="button"
-                          className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                            status === option.value
-                              ? 'bg-primary text-primary-foreground'
-                              : 'bg-accent text-muted-foreground hover:text-foreground'
-                          }`}
-                          onClick={() => setStatus(option.value)}
-                        >
-                          <Icon icon={option.icon} className="w-4 h-4" />
-                          {option.label}
-                        </button>
-                      ))}
+                    <div className="flex flex-col gap-2">
+                      <div className="flex flex-wrap gap-1.5">
+                        {statusOptions.map(option => (
+                          <button
+                            key={option.value}
+                            type="button"
+                            className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition-colors ${
+                              status === option.value
+                                ? 'bg-primary text-primary-foreground'
+                                : 'bg-accent text-muted-foreground hover:text-foreground'
+                            }`}
+                            onClick={() => setStatus(option.value)}
+                          >
+                            <Icon icon={option.icon} className="w-3.5 h-3.5" />
+                            {option.label}
+                          </button>
+                        ))}
+                      </div>
+
+                      <div className="flex flex-wrap gap-1.5">
+                        {ageRatingOptions.map(option => (
+                          <button
+                            key={option.value}
+                            type="button"
+                            className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition-colors group relative ${
+                              ageRating === option.value
+                                ? 'bg-primary text-primary-foreground'
+                                : 'bg-accent text-muted-foreground hover:text-foreground'
+                            }`}
+                            onClick={() => setAgeRating(option.value)}
+                          >
+                            <Icon icon={option.icon} className="w-3.5 h-3.5" />
+                            {option.label}
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-0.5 bg-background border border-border text-foreground text-[10px] rounded shadow-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+                              {option.description}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>

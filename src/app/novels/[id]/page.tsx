@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 import { getNovel, toggleBookmark } from '@/services/novelService';
 import { track } from '@vercel/analytics';
 import { SynopsisSection } from '@/app/novels/[id]/_components/SynopsisSection';
+import AdultContentWarning from './_components/AdultContentWarning';
 
 export default function NovelPage({ params }: { params: { id: string } }) {
   const { id } = params;
@@ -19,6 +20,13 @@ export default function NovelPage({ params }: { params: { id: string } }) {
   const [isBookmarkLoading, setIsBookmarkLoading] = useState(false);
   const [viewCount, setViewCount] = useState<number>(0);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [hasAcceptedWarning, setHasAcceptedWarning] = useState(false);
+
+  useEffect(() => {
+    // Check localStorage for age confirmation
+    const hasAccepted = localStorage.getItem('adult-content-accepted') === 'true';
+    setHasAcceptedWarning(hasAccepted);
+  }, []);
 
   useEffect(() => {
     const fetchNovelAndAuth = async () => {
@@ -57,7 +65,6 @@ export default function NovelPage({ params }: { params: { id: string } }) {
         
         const data = await getNovel(id, session?.user?.id);
         if (data) {
-          // console.log('Novel data:', data);
           setNovel(data);
           setIsBookmarked(data.isBookmarked || false);
           setViewCount(data.views || 0);
@@ -158,6 +165,10 @@ export default function NovelPage({ params }: { params: { id: string } }) {
     notFound();
   }
 
+  if (novel.ageRating === 'ADULT' && !hasAcceptedWarning) {
+    return <AdultContentWarning onAccept={() => setHasAcceptedWarning(true)} />;
+  }
+
   return (
     <div className="max-w-5xl mx-auto">
       <SynopsisSection 
@@ -167,6 +178,7 @@ export default function NovelPage({ params }: { params: { id: string } }) {
         bookmarkCount={novel.bookmarkCount}
         viewCount={viewCount}
         status={novel.status}
+        ageRating={novel.ageRating}
         createdAt={novel.created_at}
         updatedAt={novel.updated_at}
         author={novel.author}

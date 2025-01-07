@@ -19,6 +19,7 @@ const emptyNovel: NovelWithChapters = {
   description: '',
   author: '',
   status: 'ONGOING',
+  ageRating: 'EVERYONE',
   slug: '',
   coverImageUrl: '',
   created_at: new Date().toISOString(),
@@ -32,6 +33,20 @@ const emptyNovel: NovelWithChapters = {
   author_profile_id: '',
   is_author_name_custom: true
 };
+
+const ageRatingIcons = {
+  EVERYONE: 'mdi:account-multiple',
+  TEEN: 'mdi:account-school',
+  MATURE: 'mdi:account-alert',
+  ADULT: 'mdi:account-lock'
+} as const;
+
+const ageRatingLabels = {
+  EVERYONE: 'Everyone',
+  TEEN: 'Teen',
+  MATURE: 'Mature',
+  ADULT: 'Adult'
+} as const;
 
 export default function NovelManagement() {
   const [isLoading, setIsLoading] = useState(true);
@@ -188,6 +203,15 @@ export default function NovelManagement() {
                         'mdi:pause-circle'
                       } className="w-3.5 h-3.5" />
                       {novel.status}
+                    </span>
+
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium
+                      ${novel.ageRating === 'EVERYONE' ? 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300' :
+                        novel.ageRating === 'TEEN' ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300' :
+                        novel.ageRating === 'MATURE' ? 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-300' :
+                        'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300'}`}>
+                      <Icon icon={ageRatingIcons[novel.ageRating]} className="w-3.5 h-3.5" />
+                      {ageRatingLabels[novel.ageRating]}
                     </span>
                   </div>
                 </div>

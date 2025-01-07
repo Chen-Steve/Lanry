@@ -15,6 +15,7 @@ interface SynopsisSectionProps {
   bookmarkCount: number;
   viewCount: number;
   status: string;
+  ageRating?: 'EVERYONE' | 'TEEN' | 'MATURE' | 'ADULT';
   createdAt: string;
   updatedAt: string;
   author: string;
@@ -72,6 +73,7 @@ export const SynopsisSection = ({
   bookmarkCount, 
   viewCount,
   status,
+  ageRating = 'EVERYONE',
   createdAt,
   updatedAt,
   author,
@@ -124,6 +126,7 @@ export const SynopsisSection = ({
           ratingCount={ratingCount}
           userRating={userRating}
           novelId={novelId}
+          ageRating={ageRating}
         />
       )}
 
@@ -169,6 +172,7 @@ export const SynopsisSection = ({
             <h2 className="font-semibold text-foreground mb-2">Novel Details</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
               <DetailItem label="Status" value={status} />
+              <DetailItem label="Age Rating" value={ageRating} />
               <DetailItem label="Uploaded" value={formatDateMDY(createdAt)} />
               <DetailItem label="Updated" value={formatDateMDY(updatedAt)} />
             </div>
