@@ -28,6 +28,10 @@ export default function CategorySelectionModal({
   );
 
   useEffect(() => {
+    setSelectedIds(new Set(selectedCategories.map(c => c.id)));
+  }, [selectedCategories]);
+
+  useEffect(() => {
     const loadCategories = async () => {
       try {
         const allCategories = await categoryService.getCategories();
@@ -55,7 +59,8 @@ export default function CategorySelectionModal({
         if (success) {
           newSelectedIds.delete(category.id);
           setSelectedIds(newSelectedIds);
-          onCategoriesChange(selectedCategories.filter(c => c.id !== category.id));
+          const updatedCategories = selectedCategories.filter(c => c.id !== category.id);
+          onCategoriesChange(updatedCategories);
           toast.success(`Removed category: ${category.name}`);
         } else {
           toast.error('Failed to remove category');
@@ -71,7 +76,8 @@ export default function CategorySelectionModal({
         if (success) {
           newSelectedIds.add(category.id);
           setSelectedIds(newSelectedIds);
-          onCategoriesChange([...selectedCategories, category]);
+          const updatedCategories = [...selectedCategories, category];
+          onCategoriesChange(updatedCategories);
           toast.success(`Added category: ${category.name}`);
         } else {
           toast.error('Failed to add category');

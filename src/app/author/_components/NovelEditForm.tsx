@@ -29,6 +29,17 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
   const [selectedCategories, setSelectedCategories] = useState<NovelCategory[]>([]);
   const [coverImageUrl, setCoverImageUrl] = useState(novel.coverImageUrl || '');
 
+  const loadCategories = useCallback(async () => {
+    if (!novel.id) return;
+    try {
+      const categories = await categoryService.getNovelCategories(novel.id);
+      setSelectedCategories(categories);
+    } catch (error) {
+      console.error('Error loading novel categories:', error);
+      toast.error('Failed to load categories');
+    }
+  }, [novel.id]);
+
   const loadChapters = useCallback(async () => {
     if (!userId || !novel.id) {
       setIsLoadingChapters(false);
@@ -60,24 +71,15 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
 
   useEffect(() => {
     if (!isAuthLoading && novel.id) {
+      loadCategories();
+    }
+  }, [isAuthLoading, loadCategories, novel.id]);
+
+  useEffect(() => {
+    if (!isAuthLoading && novel.id) {
       loadChapters();
     }
   }, [isAuthLoading, loadChapters, novel.id]);
-
-  useEffect(() => {
-    const loadCategories = async () => {
-      if (!novel.id) return;
-      try {
-        const categories = await categoryService.getNovelCategories(novel.id);
-        setSelectedCategories(categories);
-      } catch (error) {
-        console.error('Error loading novel categories:', error);
-        toast.error('Failed to load categories');
-      }
-    };
-
-    loadCategories();
-  }, [novel.id]);
 
   useEffect(() => {
     const handleCoverUpdate = () => {
