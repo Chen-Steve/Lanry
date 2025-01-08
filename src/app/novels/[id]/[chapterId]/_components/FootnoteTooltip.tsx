@@ -10,9 +10,9 @@ export default function FootnoteTooltip() {
       const spaceBelow = viewportHeight - rect.bottom;
       
       // Set minimum width but don't exceed viewport width minus padding
-      const minWidth = Math.min(200, viewportWidth - 32); // 32px for 16px padding on each side
+      const minWidth = Math.min(300, viewportWidth - 32); // 32px for 16px padding on each side
       tooltip.style.minWidth = `${minWidth}px`;
-      tooltip.style.maxWidth = `${viewportWidth - 32}px`;
+      tooltip.style.maxWidth = `${Math.min(500, viewportWidth - 32)}px`;
 
       // Calculate horizontal position
       const tooltipRect = tooltip.getBoundingClientRect();
@@ -28,26 +28,63 @@ export default function FootnoteTooltip() {
         tooltip.style.left = '16px';
         tooltip.style.right = 'auto';
         tooltip.style.transform = 'none';
+        // Move arrow to match footnote position
+        const arrow = tooltip.querySelector('.arrow') as HTMLElement;
+        if (arrow) {
+          const arrowX = centerX - 16; // 16px is left padding
+          arrow.style.left = `${arrowX}px`;
+          arrow.style.transform = 'rotate(45deg)';
+          arrow.style.right = 'auto';
+        }
       } else if (wouldOverflowRight) {
         // Align to right edge with padding
         tooltip.style.right = '16px';
         tooltip.style.left = 'auto';
         tooltip.style.transform = 'none';
+        // Move arrow to match footnote position
+        const arrow = tooltip.querySelector('.arrow') as HTMLElement;
+        if (arrow) {
+          const arrowX = viewportWidth - centerX - 16; // 16px is right padding
+          arrow.style.right = `${arrowX}px`;
+          arrow.style.transform = 'rotate(45deg)';
+          arrow.style.left = 'auto';
+        }
       } else {
         // Center align if no overflow
         tooltip.style.left = '50%';
         tooltip.style.right = 'auto';
         tooltip.style.transform = 'translateX(-50%)';
+        // Reset arrow position
+        const arrow = tooltip.querySelector('.arrow') as HTMLElement;
+        if (arrow) {
+          arrow.style.left = '50%';
+          arrow.style.right = 'auto';
+          arrow.style.transform = 'translateX(-50%) rotate(45deg)';
+        }
       }
 
-      // Vertical positioning
-      if (spaceBelow >= 100 || spaceBelow > spaceAbove) {
-        tooltip.style.top = 'calc(100% + 5px)';
+      // Vertical positioning with more space for images
+      const minSpaceNeeded = 150; // Minimum space needed for tooltip
+      if (spaceBelow >= minSpaceNeeded || spaceBelow > spaceAbove) {
+        tooltip.style.top = 'calc(100% + 12px)';
         tooltip.style.bottom = 'auto';
+        tooltip.classList.add('tooltip-bottom');
+        tooltip.classList.remove('tooltip-top');
       } else {
-        tooltip.style.bottom = 'calc(100% + 5px)';
+        tooltip.style.bottom = 'calc(100% + 12px)';
         tooltip.style.top = 'auto';
+        tooltip.classList.add('tooltip-top');
+        tooltip.classList.remove('tooltip-bottom');
       }
+
+      // Handle images
+      const images = tooltip.querySelectorAll('img');
+      images.forEach(img => {
+        img.addEventListener('load', () => {
+          // Reposition tooltip after image loads
+          positionTooltip(tooltip, wrapper);
+        });
+      });
     };
 
     // Use event delegation for footnote interactions

@@ -8,6 +8,12 @@ export const scrambleText = (text: string): string => {
 };
 
 export const formatText = (text: string): string => {
+  // Replace standalone Supabase image URLs with image elements
+  text = text.replace(
+    /(https:\/\/[a-zA-Z0-9-]+\.supabase\.co\/storage\/v1\/object\/public\/footnote-images\/[a-zA-Z0-9_-]+\.(png|jpg|jpeg|gif))/g,
+    '<img src="$1" alt="Footnote image" class="max-w-full h-auto rounded-lg my-2 hover:opacity-90 transition-opacity" style="max-height: 300px; object-fit: contain;" loading="lazy" />'
+  );
+
   // Replace **text** with <strong>text</strong> for bold
   text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
   
@@ -51,17 +57,19 @@ export const formatText = (text: string): string => {
     </span>`;
   });
   
-  // Replace [^number: content] with inline footnote popups
+  // Replace [^number: content] with inline footnote popups (no image/link processing)
   text = text.replace(/\[\^(\d+):\s*(.*?)\]/g, (_match, num, content) => {
-    console.log('Creating footnote:', { num, content });
     return `<span class="footnote-wrapper inline-block relative pointer-events-auto">
       <button type="button" 
         class="footnote inline-block text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors" 
         data-footnote="${num}" 
         data-content="${content.replace(/"/g, '&quot;')}"
       ><sup>[${num}]</sup></button>
-      <div class="footnote-tooltip opacity-0 invisible absolute z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-3 rounded-lg shadow-lg transition-all duration-200 max-w-sm text-sm text-gray-700 dark:text-gray-200">
-        ${content}
+      <div class="footnote-tooltip opacity-0 invisible absolute z-50 bg-white dark:bg-gray-800 border border-border rounded-lg shadow-lg transition-all duration-200 text-sm text-foreground">
+        <div class="p-3 max-w-sm overflow-hidden">
+          ${content}
+        </div>
+        <div class="absolute w-3 h-3 bg-white dark:bg-gray-800 border-t border-l border-border transform rotate-45 -translate-y-1/2 left-1/2 -translate-x-1/2 -top-[6px]"></div>
       </div>
     </span>`;
   });

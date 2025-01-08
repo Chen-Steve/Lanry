@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Icon } from '@iconify/react';
+import FootnoteImageUploader from './FootnoteImageUploader';
 
 interface ChapterEditorProps {
   value: string;
@@ -7,6 +8,7 @@ interface ChapterEditorProps {
   authorThoughts?: string;
   onAuthorThoughtsChange?: (thoughts: string) => void;
   className?: string;
+  userId: string;
 }
 
 export const formatText = (text: string): string => {
@@ -23,7 +25,8 @@ export default function ChapterEditor({
   onChange, 
   authorThoughts,
   onAuthorThoughtsChange,
-  className = '' 
+  className = '',
+  userId
 }: ChapterEditorProps) {
   const [textareaRef, setTextareaRef] = useState<HTMLTextAreaElement | null>(null);
 
@@ -161,6 +164,25 @@ export default function ChapterEditor({
     }, 0);
   };
 
+  const handleImageUploaded = (imageUrl: string) => {
+    if (!textareaRef) return;
+
+    const start = textareaRef.selectionStart;
+    const end = textareaRef.selectionEnd;
+
+    // Insert the image URL directly
+    const newText = textareaRef.value.substring(0, start) + imageUrl + textareaRef.value.substring(end);
+    onChange(newText);
+
+    // Set cursor position after the inserted URL
+    setTimeout(() => {
+      const newPosition = start + imageUrl.length;
+      textareaRef.selectionStart = newPosition;
+      textareaRef.selectionEnd = newPosition;
+      textareaRef.focus();
+    }, 0);
+  };
+
   return (
     <div className={`${className.includes('flex-1') ? 'flex flex-col h-full' : 'space-y-2'} w-full`}>
       {/* Formatting Toolbar */}
@@ -205,6 +227,7 @@ export default function ChapterEditor({
         >
           <Icon icon="mdi:link" className="w-4 h-4 md:w-5 md:h-5 text-foreground" />
         </button>
+        <FootnoteImageUploader userId={userId} onImageUploaded={handleImageUploaded} />
         <div className="w-px h-4 md:h-5 bg-border mx-1" /> {/* Separator */}
         <button
           onClick={() => applyFormatting('divider')}
