@@ -61,12 +61,6 @@ export default function MorePage() {
           </div>
         </section>
 
-        {/* Main Menu */}
-        <section className="space-y-3">
-          <MenuItem href="/sponsors" label="Sponsors" bgColor="bg-background" />
-          <MenuItem href="/shop" label="Shop" bgColor="bg-background" />
-        </section>
-
         {/* Support Section */}
         <section className="space-y-3">
           <MenuItem 
