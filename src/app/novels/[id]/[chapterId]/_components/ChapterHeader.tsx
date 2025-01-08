@@ -13,7 +13,7 @@ export default function ChapterHeader({
   novelTitle,
 }: ChapterHeaderProps) {
   return (
-    <div className="mb-6 md:mb-8">
+    <div className="mb-2 md:mb-4">
       <div className="max-w-2xl mx-auto text-center">
         <Link 
           href={`/novels/${novelId}`}
