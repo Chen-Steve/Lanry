@@ -2,7 +2,6 @@
 
 import React, { useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { Icon } from '@iconify/react';
 import Image from 'next/image';
 
 interface UserProfile {
@@ -95,13 +94,6 @@ const UserProfileButton = ({
             >
               {userProfile?.username}
             </Link>
-            <div className="px-4 py-2 text-sm text-muted-foreground border-b border-border flex items-center gap-2">
-              <Icon icon="mdi:fire" className={`${userProfile?.current_streak ? 'text-amber-500 dark:text-amber-400' : 'text-muted-foreground'}`} />
-              <span>
-                {userProfile?.current_streak || 0} day
-                {(userProfile?.current_streak || 0) !== 1 ? 's' : ''} streak
-              </span>
-            </div>
             <button
               type="button"
               onClick={onSignOut}
@@ -135,13 +127,6 @@ const UserProfileButton = ({
           >
             {userProfile?.username || 'Error loading profile'}
           </Link>
-          <div className="px-4 py-2 text-sm text-muted-foreground border-b border-border flex items-center gap-2">
-            <Icon icon="mdi:fire" className={`${userProfile?.current_streak ? 'text-amber-500 dark:text-amber-400' : 'text-muted-foreground'}`} />
-            <span>
-              {userProfile?.current_streak || 0} day
-              {(userProfile?.current_streak || 0) !== 1 ? 's' : ''} streak
-            </span>
-          </div>
           <button
             type="button"
             onClick={onSignOut}
