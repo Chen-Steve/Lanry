@@ -75,11 +75,6 @@ export default function MorePage() {
             external
             bgColor="bg-yellow-500/10 dark:bg-yellow-500/5"
           />
-          <MenuItem 
-            href="/novels/requests" 
-            label="Request Novel"
-            bgColor="bg-primary/10"
-          />
         </section>
 
         {/* Social Links */}

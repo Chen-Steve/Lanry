@@ -28,7 +28,7 @@ export async function POST(req: Request) {
     }
 
     // Validate file size (e.g., 5MB limit)
-    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+    const MAX_FILE_SIZE = 5 * 1024 * 1024;
     if (file.size > MAX_FILE_SIZE) {
       return NextResponse.json(
         { error: 'File size must be less than 5MB' },

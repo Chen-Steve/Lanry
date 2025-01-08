@@ -126,14 +126,6 @@ const Header = () => {
                 </li>
                 <li>
                   <Link 
-                    href="/novels/requests"
-                    className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer py-1 inline-block flex items-center gap-1"
-                  >
-                    <span>Requests</span>
-                  </Link>
-                </li>
-                <li>
-                  <Link 
                     href="/shop" 
                     className="bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-100 px-2 lg:px-2.5 py-1 rounded-md hover:bg-amber-200 dark:hover:bg-amber-800 transition-colors flex items-center gap-1.5 h-[32px]"
                   >

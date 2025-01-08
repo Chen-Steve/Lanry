@@ -26,12 +26,6 @@ const Footer = () => {
                 >
                   Feedback
                 </Link>
-                <Link 
-                  href="/novels/requests" 
-                  className="text-xs sm:text-sm text-blue-800 dark:text-blue-100 hover:text-blue-900 dark:hover:text-blue-50 hover:underline bg-blue-100 dark:bg-blue-900 px-2 py-0.5 rounded transition-colors"
-                >
-                  Request Novel
-                </Link>
               </div>
             </div>
 
