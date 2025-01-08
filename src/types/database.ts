@@ -43,6 +43,7 @@ export interface Novel {
   translator_id?: string;
   is_author_name_custom?: boolean;
   categories?: NovelCategory[];
+  tags?: Tag[];
   translator?: {
     username: string | null;
     profile_id: string;
@@ -223,4 +224,12 @@ export interface NovelCategory {
   name: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface Tag {
+  id: string;
+  name: string;
+  description?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
 } 

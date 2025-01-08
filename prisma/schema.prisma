@@ -44,6 +44,7 @@ model Novel {
   translatorId   String?     @map("translator_id")
   ratings       NovelRating[]
   categories    CategoriesOnNovels[]
+  tags          TagsOnNovels[]
   chapterLikes  ChapterLike[]
 
   @@index([title])
@@ -401,6 +402,30 @@ model CategoriesOnNovels {
 
   @@id([novelId, categoryId])
   @@map("categories_on_novels")
+}
+
+model Tag {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  description String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  novels      TagsOnNovels[]
+
+  @@map("tags")
+}
+
+model TagsOnNovels {
+  novel     Novel     @relation(fields: [novelId], references: [id], onDelete: Cascade)
+  novelId   String    @map("novel_id")
+  tag       Tag       @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  tagId     String    @map("tag_id")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@id([novelId, tagId])
+  @@index([novelId])
+  @@index([tagId])
+  @@map("tags_on_novels")
 }
 
 enum NovelStatus {

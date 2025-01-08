@@ -1,7 +1,7 @@
 import { Icon } from '@iconify/react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { NovelCategory } from '@/types/database';
+import { NovelCategory, Tag } from '@/types/database';
 import { TranslatorLinks } from './TranslatorLinks';
 import { useState, useRef, useEffect } from 'react';
 import toast from 'react-hot-toast';
@@ -23,6 +23,7 @@ interface NovelHeaderProps {
   novelAuthorId: string;
   isAuthorNameCustom?: boolean;
   categories?: NovelCategory[];
+  tags?: Tag[];
   // New props for actions and rating
   showActionButtons?: boolean;
   firstChapterNumber?: number;
@@ -146,7 +147,7 @@ export const NovelHeader = ({
   coverImageUrl,
   novelAuthorId,
   isAuthorNameCustom = true,
-  categories,
+  tags,
   showActionButtons,
   firstChapterNumber,
   novelSlug,
@@ -291,8 +292,8 @@ export const NovelHeader = ({
           <div>
             {/* Cover and Title Row */}
             <div className="flex flex-row gap-4 mb-2">
-              {/* Cover Image */}
-              <div className="w-28 sm:w-32 md:w-40 lg:w-48 mx-0 flex-shrink-0">
+              {/* Cover Image and Tags for Mobile */}
+              <div className="flex flex-col gap-2 w-28 sm:w-32 md:w-40 lg:w-48 mx-0 flex-shrink-0">
                 <div className="relative aspect-[2/3] rounded-xl overflow-hidden shadow-lg">
                   {coverImageUrl ? (
                     <>
@@ -315,36 +316,52 @@ export const NovelHeader = ({
                     <div className="w-full h-full bg-gray-200" />
                   )}
                 </div>
+                {/* Tags for Mobile */}
+                {tags && tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2 md:hidden">
+                    {tags.map((tag) => (
+                      <Link
+                        key={tag.id}
+                        href={`/novels?tag=${tag.name.toLowerCase()}`}
+                        className="flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full transition-colors bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200"
+                      >
+                        {tag.name}
+                      </Link>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              {/* Title and Author Section */}
-              <div className="flex-1">
-                <h1 className="text-base sm:text-xl md:text-3xl lg:text-4xl font-bold mb-1 text-gray-900 dark:text-gray-50 text-left">{title}</h1>
-                <div className="text-xs sm:text-sm md:text-base lg:text-lg text-gray-600 dark:text-gray-300 mb-2 text-left">
-                  {isAuthorNameCustom ? (
-                    <>
-                      by <span className="bg-green-100 dark:bg-green-900/30 px-1.5 py-0.5 rounded">{author}</span>
-                      {translator && (
-                        <> • TL: {translator.username ? (
-                          <Link 
-                            href={`/user-dashboard?id=${translator.profile_id}`}
-                            className="bg-green-100 dark:bg-green-900/30 px-1.5 py-0.5 rounded text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white hover:underline"
-                          >
-                            {translator.username}
-                          </Link>
-                        ) : (
-                          <span className="bg-green-100 dark:bg-green-900/30 px-1.5 py-0.5 rounded text-gray-700 dark:text-gray-200">Anonymous</span>
-                        )}</>
-                      )}
-                    </>
-                  ) : (
-                    <>Author: <Link 
-                      href={`/user-dashboard?id=${novelAuthorId}`}
-                      className="bg-green-50 dark:bg-green-900/30 px-1.5 py-0.5 rounded text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white hover:underline"
-                    >
-                      {author}
-                    </Link></>
-                  )}
+              {/* Title, Author, Stats Section */}
+              <div className="flex-1 flex flex-col">
+                <div>
+                  <h1 className="text-base sm:text-xl md:text-3xl lg:text-4xl font-bold mb-1 text-gray-900 dark:text-gray-50 text-left">{title}</h1>
+                  <div className="text-xs sm:text-sm md:text-base lg:text-lg text-gray-600 dark:text-gray-300 mb-2 text-left">
+                    {isAuthorNameCustom ? (
+                      <>
+                        by <span className="bg-green-100 dark:bg-green-900/30 px-1.5 py-0.5 rounded">{author}</span>
+                        {translator && (
+                          <> • TL: {translator.username ? (
+                            <Link 
+                              href={`/user-dashboard?id=${translator.profile_id}`}
+                              className="bg-green-100 dark:bg-green-900/30 px-1.5 py-0.5 rounded text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white hover:underline"
+                            >
+                              {translator.username}
+                            </Link>
+                          ) : (
+                            <span className="bg-green-100 dark:bg-green-900/30 px-1.5 py-0.5 rounded text-gray-700 dark:text-gray-200">Anonymous</span>
+                          )}</>
+                        )}
+                      </>
+                    ) : (
+                      <>Author: <Link 
+                        href={`/user-dashboard?id=${novelAuthorId}`}
+                        className="bg-green-50 dark:bg-green-900/30 px-1.5 py-0.5 rounded text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white hover:underline"
+                      >
+                        {author}
+                      </Link></>
+                    )}
+                  </div>
                 </div>
 
                 {/* Stats and Rating */}
@@ -380,24 +397,26 @@ export const NovelHeader = ({
                   {/* Translator Links */}
                   {translator && <TranslatorLinks translator={translator} />}
                 </div>
+
+                {/* Tags for Desktop */}
+                <div className="mt-auto hidden md:block">
+                  {tags && tags.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {tags.map((tag) => (
+                        <Link
+                          key={tag.id}
+                          href={`/novels?tag=${tag.name.toLowerCase()}`}
+                          className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-full transition-colors bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200"
+                        >
+                          {tag.name}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-
-          {/* Categories */}
-          {categories && categories.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {categories.map((category) => (
-                <Link
-                  key={category.id}
-                  href={`/novels?category=${category.name.toLowerCase()}`}
-                  className="px-3 py-1 text-sm rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors"
-                >
-                  {category.name}
-                </Link>
-              ))}
-            </div>
-          )}
         </div>
       </div>
 

@@ -2,7 +2,7 @@ import { formatDateMDY } from '@/lib/utils';
 import { formatText } from '@/lib/textFormatting';
 import { useState } from 'react';
 import { ChapterList } from './ChapterList';
-import { Chapter, UserProfile, NovelCategory } from '@/types/database';
+import { Chapter, UserProfile, NovelCategory, Tag } from '@/types/database';
 import { Volume } from '@/types/novel';
 import { NovelRecommendations } from './NovelRecommendations';
 import { NovelComments } from './NovelComments';
@@ -42,6 +42,7 @@ interface SynopsisSectionProps {
   translatorId?: string;
   isAuthorNameCustom?: boolean;
   categories?: NovelCategory[];
+  tags?: Tag[];
   showHeader?: boolean;
 }
 
@@ -96,6 +97,7 @@ export const SynopsisSection = ({
   userRating,
   isAuthorNameCustom = true,
   categories,
+  tags,
   showHeader = true,
 }: SynopsisSectionProps) => {
   const [activeTab, setActiveTab] = useState<'synopsis' | 'chapters' | 'recommendations' | 'comments'>('synopsis');
@@ -115,6 +117,7 @@ export const SynopsisSection = ({
           novelAuthorId={novelAuthorId}
           isAuthorNameCustom={isAuthorNameCustom}
           categories={categories}
+          tags={tags}
           showActionButtons={showActionButtons}
           firstChapterNumber={firstChapterNumber}
           novelSlug={novelSlug}

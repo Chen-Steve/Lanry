@@ -6,10 +6,13 @@ import { toast } from 'react-hot-toast';
 import ChapterList from './ChapterList';
 import NovelCoverImage from './NovelCoverImage';
 import CategorySelectionModal from './CategorySelectionModal';
+import TagSelectionModal from './TagSelectionModal';
 import * as authorChapterService from '../_services/authorChapterService';
 import * as categoryService from '../_services/categoryService';
+import * as tagService from '../_services/tagService';
 import { useAuth } from '@/hooks/useAuth';
 import { ChapterListChapter, NovelEditFormProps, Volume, NovelCategory } from '../_types/authorTypes';
+import { Tag } from '@/types/database';
 import supabase from '@/lib/supabaseClient';
 
 export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFormProps) {
@@ -28,6 +31,8 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<NovelCategory[]>([]);
   const [coverImageUrl, setCoverImageUrl] = useState(novel.coverImageUrl || '');
+  const [isTagModalOpen, setIsTagModalOpen] = useState(false);
+  const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
 
   const loadCategories = useCallback(async () => {
     if (!novel.id) return;
@@ -69,6 +74,17 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
     }
   }, [novel.id, userId]);
 
+  const loadTags = useCallback(async () => {
+    if (!novel.id) return;
+    try {
+      const tags = await tagService.getNovelTags(novel.id);
+      setSelectedTags(tags);
+    } catch (error) {
+      console.error('Error loading novel tags:', error);
+      toast.error('Failed to load tags');
+    }
+  }, [novel.id]);
+
   useEffect(() => {
     if (!isAuthLoading && novel.id) {
       loadCategories();
@@ -80,6 +96,12 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
       loadChapters();
     }
   }, [isAuthLoading, loadChapters, novel.id]);
+
+  useEffect(() => {
+    if (!isAuthLoading && novel.id) {
+      loadTags();
+    }
+  }, [isAuthLoading, loadTags, novel.id]);
 
   useEffect(() => {
     const handleCoverUpdate = () => {
@@ -225,6 +247,14 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
                       <Icon icon="mdi:tag-multiple" className="w-3.5 h-3.5" />
                       {selectedCategories.length > 0 ? `${selectedCategories.length} Categories` : 'Add Categories'}
                     </button>
+                    <button
+                      type="button"
+                      className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-muted-foreground bg-accent hover:bg-accent/80 rounded transition-colors"
+                      onClick={() => setIsTagModalOpen(true)}
+                    >
+                      <Icon icon="mdi:tag" className="w-3.5 h-3.5" />
+                      {selectedTags.length > 0 ? `${selectedTags.length} Tags` : 'Add Tags'}
+                    </button>
                   </div>
                   <div className="mt-2">
                     <div className="flex flex-col gap-2">
@@ -269,11 +299,11 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
                     </div>
                   </div>
                 </div>
-                <div className="flex-grow flex flex-col justify-end">
+                <div className="flex-grow flex flex-col justify-end mt-8">
                   <div className="relative group flex items-start gap-2">
                     <div className="flex-grow min-h-[100px] text-sm text-muted-foreground whitespace-pre-wrap">
-                      {description.length > 300 
-                        ? `${description.slice(0, 300)}...`
+                      {description.length > 200 
+                        ? `${description.slice(0, 200)}...`
                         : description || 'Enter your novel description here...'
                       }
                     </div>
@@ -378,6 +408,15 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
         novelId={novel.id}
         selectedCategories={selectedCategories}
         onCategoriesChange={setSelectedCategories}
+      />
+
+      {/* Tag Selection Modal */}
+      <TagSelectionModal
+        isOpen={isTagModalOpen}
+        onClose={() => setIsTagModalOpen(false)}
+        novelId={novel.id}
+        selectedTags={selectedTags}
+        onTagsChange={setSelectedTags}
       />
     </main>
   );

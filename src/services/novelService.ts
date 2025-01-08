@@ -53,6 +53,16 @@ export async function getNovel(id: string, userId?: string): Promise<Novel | nul
             created_at,
             updated_at
           )
+        ),
+        tags:tags_on_novels!left (
+          novel_id,
+          tag_id,
+          created_at,
+          tag:tag_id (
+            id,
+            name,
+            description
+          )
         )
       `)
       .eq(isNumericId ? 'id' : 'slug', isNumericId ? Number(id) : id)
@@ -108,6 +118,7 @@ export async function getNovel(id: string, userId?: string): Promise<Novel | nul
       chapters,
       volumes: data.volumes || [],
       categories,
+      tags: data.tags?.map((t: { tag: { id: string; name: string; description: string | null } }) => t.tag) || [],
       ageRating: data.age_rating
     };
   } catch (error) {
@@ -200,6 +211,16 @@ export async function getNovels(): Promise<Novel[]> {
             created_at,
             updated_at
           )
+        ),
+        tags:tags_on_novels!left (
+          novel_id,
+          tag_id,
+          created_at,
+          tag:tag_id (
+            id,
+            name,
+            description
+          )
         )
       `)
       .order('created_at', { ascending: false })
@@ -219,6 +240,7 @@ export async function getNovels(): Promise<Novel[]> {
       } : null,
       coverImageUrl: novel.cover_image_url,
       categories: novel.categories?.map((item: { category: NovelCategory }) => item.category) || [],
+      tags: novel.tags?.map((t: { tag: { id: string; name: string; description: string | null } }) => t.tag) || [],
       ageRating: novel.age_rating
     }));
   } catch (error) {
