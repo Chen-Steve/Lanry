@@ -17,6 +17,7 @@ const SearchSection: React.FC<SearchSectionProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<Novel[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -30,12 +31,10 @@ const SearchSection: React.FC<SearchSectionProps> = ({
       }
 
       try {
-        // Cancel previous request if it exists
         if (abortControllerRef.current) {
           abortControllerRef.current.abort();
         }
 
-        // Create new abort controller for this request
         abortControllerRef.current = new AbortController();
         setIsLoading(true);
 
@@ -81,15 +80,7 @@ const SearchSection: React.FC<SearchSectionProps> = ({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchQuery(value);
-    
-    if (value === '') {
-      setResults([]);
-      setShowDropdown(false);
-      setIsLoading(false);
-    } else {
-      setIsLoading(true);
-      debouncedSearch(value);
-    }
+    debouncedSearch(value);
   };
 
   return (
@@ -99,6 +90,11 @@ const SearchSection: React.FC<SearchSectionProps> = ({
           type="text"
           value={searchQuery}
           onChange={handleInputChange}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => {
+            // Small delay to allow clicking the advanced search link
+            setTimeout(() => setIsFocused(false), 200);
+          }}
           placeholder="Search for novels..."
           className="w-full pl-10 pr-4 py-2 bg-secondary text-foreground placeholder:text-muted-foreground border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
         />
@@ -112,31 +108,56 @@ const SearchSection: React.FC<SearchSectionProps> = ({
         )}
       </div>
 
-      {showDropdown && (
+      {(showDropdown || (isFocused && !searchQuery)) && (
         <div className="absolute w-full bg-background mt-1 rounded-lg shadow-lg border border-border max-h-60 overflow-y-auto z-50">
           {isLoading ? (
             <div className="px-4 py-2 text-center text-muted-foreground">
               Searching...
             </div>
           ) : results.length > 0 ? (
-            results.map((novel) => (
-              <Link 
-                href={`/novels/${novel.id}`} 
-                key={novel.id}
-                className="block px-4 py-2 hover:bg-accent transition-colors cursor-pointer border-b border-border last:border-b-0"
-                onClick={() => setShowDropdown(false)}
+            <>
+              {results.map((novel) => (
+                <Link 
+                  href={`/novels/${novel.id}`} 
+                  key={novel.id}
+                  className="block px-4 py-2 hover:bg-accent transition-colors cursor-pointer border-b border-border last:border-b-0"
+                  onClick={() => setShowDropdown(false)}
+                >
+                  <span className="text-foreground">{novel.title}</span>
+                  <span className="text-muted-foreground text-sm ml-2">by {novel.author}</span>
+                </Link>
+              ))}
+              <Link
+                href="/search"
+                className="block px-4 py-2 text-sm text-muted-foreground hover:bg-accent transition-colors text-center border-t border-border"
               >
-                <span className="text-foreground">{novel.title}</span>
-                <span className="text-muted-foreground text-sm ml-2">by {novel.author}</span>
+                Advanced Search
               </Link>
-            ))
+            </>
+          ) : searchQuery.length > 0 ? (
+            <div className="space-y-2 p-4">
+              <div className="text-center text-muted-foreground">
+                {searchQuery.length < minSearchLength 
+                  ? `Type at least ${minSearchLength} characters to search` 
+                  : searchQuery.trim() 
+                    ? 'No novels found' 
+                    : 'Start typing to search'}
+              </div>
+              <Link
+                href="/search"
+                className="block text-sm text-primary hover:text-primary/80 transition-colors text-center"
+              >
+                Try Advanced Search
+              </Link>
+            </div>
           ) : (
-            <div className="px-4 py-2 text-center text-muted-foreground">
-              {searchQuery.length < minSearchLength 
-                ? `Type at least ${minSearchLength} characters to search` 
-                : searchQuery.trim() 
-                  ? 'No novels found' 
-                  : 'Start typing to search'}
+            <div className="p-2 text-center">
+              <Link
+                href="/search"
+                className="text-sm text-primary hover:text-primary/80 transition-colors"
+              >
+                Advanced Search
+              </Link>
             </div>
           )}
         </div>

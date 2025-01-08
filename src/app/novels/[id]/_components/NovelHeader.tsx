@@ -322,7 +322,7 @@ export const NovelHeader = ({
                     {tags.map((tag) => (
                       <Link
                         key={tag.id}
-                        href={`/novels?tag=${tag.name.toLowerCase()}`}
+                        href={`/search?tags=${tag.id}`}
                         className="flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full transition-colors bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200"
                       >
                         {tag.name}
@@ -405,7 +405,7 @@ export const NovelHeader = ({
                       {tags.map((tag) => (
                         <Link
                           key={tag.id}
-                          href={`/novels?tag=${tag.name.toLowerCase()}`}
+                          href={`/search?tags=${tag.id}`}
                           className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-full transition-colors bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200"
                         >
                           {tag.name}

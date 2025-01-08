@@ -1,24 +1,108 @@
 import { NextResponse } from 'next/server';
-import supabase from '@/lib/supabaseClient';
+import { prisma } from '@/lib/prisma';
+import { Prisma, NovelStatus } from '@prisma/client';
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const query = searchParams.get('q');
+    const author = searchParams.get('author');
+    const tags = searchParams.getAll('tags');
+    const status = searchParams.get('status') as NovelStatus | null;
 
-    if (!query) {
-      return NextResponse.json({ error: 'Search query is required' }, { status: 400 });
+    // Build the where clause
+    let where: Prisma.NovelWhereInput = {};
+
+    // Add title search if query exists
+    if (query?.trim()) {
+      where = {
+        ...where,
+        title: { contains: query.trim(), mode: 'insensitive' }
+      };
     }
 
-    const { data, error } = await supabase
-      .from('novels')
-      .select('*')
-      .or(`title.ilike.%${query}%,author.ilike.%${query}%`)
-      .limit(10);
+    // Add author search if author exists
+    if (author?.trim()) {
+      // First find the user ID by username
+      const user = await prisma.profile.findFirst({
+        where: {
+          username: {
+            equals: author.trim(),
+            mode: 'insensitive'
+          }
+        },
+        select: {
+          id: true
+        }
+      });
 
-    if (error) throw error;
+      if (user) {
+        where = {
+          ...where,
+          authorProfileId: user.id
+        };
+      } else {
+        // If no user found, return empty array
+        return NextResponse.json([]);
+      }
+    }
 
-    return NextResponse.json(data || []);
+    // Add tag filtering if tags exist
+    if (tags.length > 0) {
+      where = {
+        ...where,
+        tags: {
+          some: {
+            tagId: {
+              in: tags
+            }
+          }
+        }
+      };
+    }
+
+    // Add status filtering if status exists
+    if (status) {
+      where = {
+        ...where,
+        status
+      };
+    }
+
+    // If no search conditions are provided, return empty array
+    if (!query?.trim() && !author?.trim() && tags.length === 0 && !status) {
+      return NextResponse.json([]);
+    }
+
+    const novels = await prisma.novel.findMany({
+      where,
+      include: {
+        tags: {
+          include: {
+            tag: true
+          }
+        },
+        authorProfile: {
+          select: {
+            username: true
+          }
+        }
+      },
+      take: 20,
+      orderBy: {
+        bookmarkCount: 'desc'
+      }
+    });
+
+    // Transform the response to include flat tag array and author username
+    const transformedNovels = novels.map(novel => ({
+      ...novel,
+      author: novel.authorProfile?.username || novel.author,
+      tags: novel.tags.map(t => t.tag),
+      authorProfile: undefined // Remove the authorProfile object from the response
+    }));
+
+    return NextResponse.json(transformedNovels);
   } catch (error) {
     console.error('Search error:', error);
     return NextResponse.json(
