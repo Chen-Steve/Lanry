@@ -71,7 +71,7 @@ export default function CategoryFilter({
       </div>
       
       <div className={`grid gap-1.5 transition-all duration-300 ${
-        `grid-cols-3 sm:grid-cols-4 md:grid-cols-6`
+        `grid-cols-4 sm:grid-cols-6 md:grid-cols-8`
       }`}>
         {categories
           .slice(0, (!isExpanded && isMobile) ? 5 : categories.length)
@@ -81,7 +81,7 @@ export default function CategoryFilter({
               <button
                 key={category.id}
                 onClick={() => handleCategoryToggle(category.name)}
-                className={`flex items-center justify-between px-2 py-1 rounded-md text-xs transition-colors w-full ${
+                className={`flex items-center justify-between px-1.5 py-0.5 rounded-md text-xs transition-colors ${
                   isSelected
                     ? 'bg-emerald-100 dark:bg-emerald-400/20 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-400/30'
                     : 'bg-secondary text-secondary-foreground hover:bg-accent'

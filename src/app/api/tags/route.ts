@@ -23,9 +23,20 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const supabase = createRouteHandlerClient({ cookies });
-    const { data: { session } } = await supabase.auth.getSession();
     
-    if (!session?.user) {
+    // Get the authorization header
+    const authHeader = request.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json(
+        { error: 'Missing or invalid authorization header' },
+        { status: 401 }
+      );
+    }
+
+    const token = authHeader.split(' ')[1];
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+    if (authError || !user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -34,10 +45,17 @@ export async function POST(request: Request) {
 
     const { name, description } = await request.json();
     
+    if (!name?.trim()) {
+      return NextResponse.json(
+        { error: 'Tag name is required' },
+        { status: 400 }
+      );
+    }
+
     const tag = await prisma.tag.create({
       data: {
-        name,
-        description
+        name: name.trim(),
+        description: description?.trim()
       }
     });
 

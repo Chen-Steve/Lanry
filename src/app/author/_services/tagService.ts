@@ -1,9 +1,27 @@
 import { Tag } from '@/types/database';
+import supabase from '@/lib/supabaseClient';
+
+async function getAuthHeader() {
+  const { data: { session } } = await supabase.auth.getSession();
+  
+  if (!session) {
+    throw new Error('No active session');
+  }
+
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${session.access_token}`
+  };
+}
 
 export async function getTags(): Promise<Tag[]> {
   try {
-    const response = await fetch('/api/tags');
-    if (!response.ok) throw new Error('Failed to fetch tags');
+    const headers = await getAuthHeader();
+    const response = await fetch('/api/tags', { headers });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to fetch tags');
+    }
     return response.json();
   } catch (error) {
     console.error('Error fetching tags:', error);
@@ -13,8 +31,12 @@ export async function getTags(): Promise<Tag[]> {
 
 export async function getNovelTags(novelId: string): Promise<Tag[]> {
   try {
-    const response = await fetch(`/api/novels/${novelId}/tags`);
-    if (!response.ok) throw new Error('Failed to fetch novel tags');
+    const headers = await getAuthHeader();
+    const response = await fetch(`/api/novels/${novelId}/tags`, { headers });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to fetch novel tags');
+    }
     return response.json();
   } catch (error) {
     console.error('Error fetching novel tags:', error);
@@ -24,14 +46,16 @@ export async function getNovelTags(novelId: string): Promise<Tag[]> {
 
 export async function addNovelTags(novelId: string, tagIds: string[]): Promise<boolean> {
   try {
+    const headers = await getAuthHeader();
     const response = await fetch(`/api/novels/${novelId}/tags`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
       body: JSON.stringify({ tagIds }),
     });
-    if (!response.ok) throw new Error('Failed to add tags');
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to add tags');
+    }
     return true;
   } catch (error) {
     console.error('Error adding tags:', error);
@@ -41,10 +65,15 @@ export async function addNovelTags(novelId: string, tagIds: string[]): Promise<b
 
 export async function removeNovelTag(novelId: string, tagId: string): Promise<boolean> {
   try {
+    const headers = await getAuthHeader();
     const response = await fetch(`/api/novels/${novelId}/tags/${tagId}`, {
       method: 'DELETE',
+      headers,
     });
-    if (!response.ok) throw new Error('Failed to remove tag');
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to remove tag');
+    }
     return true;
   } catch (error) {
     console.error('Error removing tag:', error);
@@ -54,14 +83,16 @@ export async function removeNovelTag(novelId: string, tagId: string): Promise<bo
 
 export async function createTag(name: string, description?: string): Promise<Tag> {
   try {
+    const headers = await getAuthHeader();
     const response = await fetch('/api/tags', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
       body: JSON.stringify({ name, description }),
     });
-    if (!response.ok) throw new Error('Failed to create tag');
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to create tag');
+    }
     return response.json();
   } catch (error) {
     console.error('Error creating tag:', error);
