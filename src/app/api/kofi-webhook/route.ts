@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 import supabase from '@/lib/supabaseClient';
 
 interface KofiData {
@@ -22,15 +23,35 @@ interface KofiData {
 
 const KOFI_VERIFICATION_TOKEN = process.env.KOFI_VERIFICATION_TOKEN;
 
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  }
+);
+
 export async function POST(request: Request) {
   try {
+    console.log('Webhook received - starting processing');
     const formData = await request.formData();
-    const kofiData: KofiData = JSON.parse(formData.get('data') as string);
+    console.log('Form data received:', formData);
+    
+    const dataString = formData.get('data');
+    console.log('Raw data string:', dataString);
+    
+    const kofiData: KofiData = JSON.parse(dataString as string);
+    console.log('Parsed Ko-fi data:', kofiData);
 
     // Verify the webhook is from Ko-fi
     if (kofiData.verification_token !== KOFI_VERIFICATION_TOKEN) {
+      console.log('Invalid verification token:', kofiData.verification_token);
       return NextResponse.json({ error: 'Invalid verification token' }, { status: 401 });
     }
+    console.log('Verification token validated');
 
     // Parse the amount to determine coins to award
     const amount = parseFloat(kofiData.amount);
@@ -44,54 +65,111 @@ export async function POST(request: Request) {
       case 20: coinsToAward = 200; break;
       default: coinsToAward = Math.floor(amount * 10); // Fallback calculation
     }
+    console.log('Coins to award:', coinsToAward);
 
-    // Get user ID from message or email (you'll need to implement your own mapping logic)
-    // For now, we'll use the email to find the user
-    const { data: userData, error: userError } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('email', kofiData.email)
-      .single();
+    // Get user ID from message or email
+    console.log('Looking up user with email:', kofiData.email);
+    
+    // Get user data using the admin client
+    const { data: { users }, error: authError } = await supabaseAdmin.auth.admin.listUsers();
+    
+    if (authError) {
+      console.error('Error accessing auth API:', authError);
+      return NextResponse.json({ error: 'Auth API error', details: authError }, { status: 500 });
+    }
 
-    if (userError || !userData) {
-      console.error('Error finding user:', userError);
+    const authUser = users.find(user => user.email === kofiData.email);
+    
+    if (!authUser) {
+      console.error('No user found with email:', kofiData.email);
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
+    // Now get the profile using the auth user's ID
+    const { data: userData, error: userError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('id', authUser.id)
+      .single();
+
+    if (userError) {
+      console.error('Error finding user profile:', userError);
+      return NextResponse.json({ error: 'User profile not found', details: userError }, { status: 404 });
+    }
+    if (!userData) {
+      console.error('No user profile found for ID:', authUser.id);
+      return NextResponse.json({ error: 'User profile not found' }, { status: 404 });
+    }
+    console.log('Found user:', userData);
+
+    // Get the current coin balance
+    const { data: currentBalance, error: balanceError } = await supabase
+      .from('profiles')
+      .select('coins')
+      .eq('id', userData.id)
+      .single();
+
+    if (balanceError) {
+      console.error('Error getting current balance:', balanceError);
+      return NextResponse.json({ error: 'Failed to get current balance', details: balanceError }, { status: 500 });
+    }
+    console.log('Current coin balance:', currentBalance?.coins || 0);
+
     // Update the user's coin balance in Supabase
-    const { error: updateError } = await supabase.rpc(
-      'increment_coins',
-      { 
-        user_id: userData.id,
-        coins_to_add: coinsToAward 
-      }
-    );
+    console.log('Attempting to increment coins for user:', userData.id);
+    const newBalance = (currentBalance?.coins || 0) + coinsToAward;
+    console.log('New balance will be:', newBalance);
+    
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ 
+        coins: newBalance
+      })
+      .eq('id', userData.id);
 
     if (updateError) {
       console.error('Error updating coins:', updateError);
-      return NextResponse.json({ error: 'Failed to update coins' }, { status: 500 });
+      return NextResponse.json({ error: 'Failed to update coins', details: updateError }, { status: 500 });
+    }
+
+    // Verify the new balance
+    const { data: verifyBalance, error: verifyError } = await supabase
+      .from('profiles')
+      .select('coins')
+      .eq('id', userData.id)
+      .single();
+      
+    if (verifyError) {
+      console.error('Error verifying new balance:', verifyError);
+    } else {
+      console.log('Verified new balance:', verifyBalance.coins);
     }
 
     // Log the transaction
+    console.log('Logging transaction');
     const { error: logError } = await supabase
       .from('coin_transactions')
       .insert({
-        user_id: userData.id,
+        id: crypto.randomUUID(),
+        profile_id: userData.id,
         amount: coinsToAward,
-        transaction_type: kofiData.type.toLowerCase(),
-        payment_id: kofiData.kofi_transaction_id,
-        payment_platform: 'kofi',
-        is_subscription: kofiData.is_subscription_payment,
-        subscription_tier: kofiData.tier_name
+        type: kofiData.type.toLowerCase(),
+        order_id: kofiData.kofi_transaction_id
       });
 
     if (logError) {
       console.error('Error logging transaction:', logError);
+      // Continue even if logging fails
     }
 
+    console.log('Webhook processing completed successfully');
     return NextResponse.json({ success: true, coinsAwarded: coinsToAward });
   } catch (error) {
     console.error('Webhook error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    // Return more detailed error information
+    return NextResponse.json({ 
+      error: 'Internal server error', 
+      details: error instanceof Error ? error.message : String(error)
+    }, { status: 500 });
   }
 } 

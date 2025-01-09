@@ -216,6 +216,7 @@ export default function ChapterEditForm({
               authorThoughts={formData.authorThoughts}
               onAuthorThoughtsChange={(thoughts) => setFormData(prev => ({ ...prev, authorThoughts: thoughts }))}
               className={isExpanded ? 'flex-1' : ''}
+              userId={userId}
             />
           </div>
 
