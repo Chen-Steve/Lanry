@@ -29,32 +29,44 @@ export function useAuth() {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
+          console.log('Session user found:', session.user.id);
+          
           const { data: profile, error: profileError } = await supabase
             .from('profiles')
             .select('*')
             .eq('id', session.user.id)
             .single();
 
-          if (profileError) {
+          if (profileError && profileError.code !== 'PGRST116') {
             console.error('Error fetching profile:', profileError);
+            return;
           }
 
+          console.log('Profile check result:', { profile, profileError });
+
           if (!profile) {
-            const { error: createError } = await supabase
+            console.log('Creating new profile for user:', session.user.id);
+            const { data: newProfile, error: createError } = await supabase
               .from('profiles')
-              .insert([{
+              .upsert([{
                 id: session.user.id,
                 username: generateUsername(),
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString(),
                 current_streak: 0,
                 last_visit: new Date().toISOString(),
-                coins: 0
-              }]);
+                coins: 0,
+                role: 'USER'
+              }], { onConflict: 'id' });
 
             if (createError) {
               console.error('Error creating profile:', createError);
+              return;
             }
+
+            console.log('New profile created:', newProfile);
+            router.push('/');
+            router.refresh();
           }
         }
       } catch (error) {
@@ -62,8 +74,21 @@ export function useAuth() {
       }
     };
 
+    // Initial check
     checkAndCreateProfile();
-  }, []);
+
+    // Subscribe to auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event, session?.user?.id);
+      if (event === 'SIGNED_IN' && session?.user) {
+        await checkAndCreateProfile();
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [router]);
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -173,10 +198,15 @@ export function useAuth() {
     try {
       setGoogleLoading(true);
       const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google'
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`
+        }
       });
 
       if (error) throw error;
+
+      // Profile creation will be handled by the useEffect hook after redirect
     } catch (error) {
       console.error('Google sign-in error:', error);
       setError(error instanceof Error ? error.message : 'Google sign-in failed');
