@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 export function useAuth() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -20,6 +21,7 @@ export function useAuth() {
         if (mounted && session?.user) {
           setIsAuthenticated(true);
           setUserId(session.user.id);
+          setUserEmail(session.user.email || null);
         }
       } catch (error) {
         console.error('[Init] Error:', error);
@@ -35,10 +37,12 @@ export function useAuth() {
 
       if (event === 'SIGNED_OUT') {
         setUserId(null);
+        setUserEmail(null);
         setIsAuthenticated(false);
       } else if (session?.user) {
         setIsAuthenticated(true);
         setUserId(session.user.id);
+        setUserEmail(session.user.email || null);
       }
       setIsLoading(false);
     });
@@ -64,6 +68,7 @@ export function useAuth() {
       
       setIsAuthenticated(false);
       setUserId(null);
+      setUserEmail(null);
       queryClient.clear();
 
       router.push('/auth');
@@ -86,6 +91,7 @@ export function useAuth() {
   return {
     isAuthenticated,
     userId,
+    userEmail,
     isLoading,
     handleSignOut
   };

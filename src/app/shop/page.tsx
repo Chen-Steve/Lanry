@@ -18,15 +18,22 @@ const coinPackages: CoinPackage[] = [
 ];
 
 export default function ShopPage() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, userEmail } = useAuth();
 
-  const handlePurchaseClick = () => {
+  const handlePurchaseClick = (price: number) => {
     if (!isAuthenticated) {
       toast.error('Please create an account to buy coins');
       return;
     }
+
+    if (!userEmail) {
+      toast.error('Unable to find your email. Please try signing out and back in.');
+      return;
+    }
     
-    window.open('https://ko-fi.com/niasser', '_blank');
+    // Include user's email in Ko-fi URL message parameter
+    const message = encodeURIComponent(`Email: ${userEmail}`);
+    window.open(`https://ko-fi.com/niasser/shop?amount=${price}&message=${message}`, '_blank');
   };
 
   return (
@@ -34,6 +41,7 @@ export default function ShopPage() {
       {/* Header Section */}
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold mb-4 text-foreground">Coin Shop</h1>
+        <p className="text-muted-foreground">Purchase coins to unlock premium chapters and support our authors</p>
       </div>
 
       {/* Instructions */}
@@ -44,9 +52,9 @@ export default function ShopPage() {
             <li className="text-red-500 dark:text-red-400 font-medium">First, please create an account or sign in</li>
           )}
           <li>Click on your preferred coin package below</li>
-          <li>You&apos;ll be redirected to Ko-fi for payment</li>
-          <li><strong>Important:</strong> Include your username in the message when making the purchase</li>
-          <li>Coins will be added to your account within 24 hours</li>
+          <li>Complete the payment on Ko-fi</li>
+          <li>Your coins will be automatically added to your account</li>
+          <li className="text-sm italic">Note: It may take a few minutes for coins to appear in your account</li>
         </ol>
       </div>
 
@@ -67,7 +75,7 @@ export default function ShopPage() {
             </p>
 
             <button
-              onClick={handlePurchaseClick}
+              onClick={() => handlePurchaseClick(pkg.price)}
               className={`
                 inline-flex items-center justify-center gap-2 w-full py-2 px-4 rounded-md font-medium
                 ${isAuthenticated 
