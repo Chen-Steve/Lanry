@@ -6,7 +6,6 @@ import { formatRelativeDate } from '@/lib/utils';
 import { Icon } from '@iconify/react';
 import Image from 'next/image';
 
-// Update the fetch function to handle undefined userId
 const fetchReadingHistory = async (userId: string | undefined) => {
   if (!userId) throw new Error('Not authenticated');
 
@@ -74,11 +73,11 @@ const ReadingHistorySection = ({ userId }: ReadingHistorySectionProps) => {
   }
 
   return (
-    <>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-2">
       {history.map((item) => (
         <article
           key={item.id}
-          className="-mx-4 sm:mx-0 flex gap-2 sm:gap-4 items-center min-w-0 px-4 sm:px-0 border-b border-border last:border-b-0"
+          className="flex gap-2 items-center min-w-0 px-3 py-1 border-b border-border/40 first:border-t md:first:border-t-0 md:even:border-l hover:bg-accent/5 transition-colors"
         >
           <Link 
             href={`/novels/${item.novel.slug}`} 
@@ -87,36 +86,33 @@ const ReadingHistorySection = ({ userId }: ReadingHistorySectionProps) => {
             <Image
               src={item.novel.coverImageUrl?.startsWith('http') ? item.novel.coverImageUrl : item.novel.coverImageUrl ? `/novel-covers/${item.novel.coverImageUrl}` : '/images/default-cover.jpg'}
               alt={item.novel.title}
-              width={120}
+              width={80}
               priority
-              height={120}
-              className="object-cover shadow-sm w-[60px] h-[60px] sm:w-[120px] sm:h-[120px]"
+              height={80}
+              className="object-cover shadow-sm w-[40px] h-[40px] sm:w-[50px] sm:h-[50px]"
             />
           </Link>
-          <div className="flex-grow min-w-0">
+          <div className="flex-grow min-w-0 space-y-0">
             <Link 
               href={`/novels/${item.novel.slug}`}
-              className="text-foreground font-medium text-base sm:text-lg hover:text-primary transition-colors block truncate"
+              className="text-foreground font-medium text-sm hover:text-primary transition-colors block truncate"
             >
               {item.novel.title}
             </Link>
-            <p className="text-xs sm:text-sm text-foreground mt-0.5 sm:mt-1 truncate">
-              by {item.novel.author}
-            </p>
-            <p className="text-xs sm:text-sm text-muted-foreground mt-1 sm:mt-2 truncate">
-              Last read: {formatRelativeDate(item.last_read)}
-            </p>
+            <div className="flex items-center gap-2 text-xs">
+              <span className="text-foreground truncate">by {item.novel.author}</span>
+              <span className="text-muted-foreground truncate">· {formatRelativeDate(item.last_read)}</span>
+            </div>
           </div>
           <Link
             href={`/novels/${item.novel.slug}/c${item.last_chapter}`}
-            className="flex flex-col items-center gap-0.5 text-foreground px-1 sm:px-2 border border-border rounded-md touch-action-manipulation whitespace-nowrap flex-shrink-0 text-xs sm:text-base transition-colors hover:bg-accent"
+            className="flex items-center gap-1 text-foreground px-2 py-0.5 border border-border/60 rounded touch-action-manipulation whitespace-nowrap flex-shrink-0 text-xs transition-colors hover:bg-accent"
           >
-            <span>Continue</span>
             <span>Ch.{item.last_chapter}</span>
           </Link>
         </article>
       ))}
-    </>
+    </div>
   );
 };
 

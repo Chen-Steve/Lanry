@@ -119,11 +119,11 @@ const Bookmarks = ({ userId, isOwnProfile = false }: BookmarksProps) => {
   }
 
   return (
-    <>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-2">
       {bookmarks.map((bookmark) => (
         <article
           key={bookmark.id}
-          className="-mx-4 sm:mx-0 flex gap-2 sm:gap-4 items-center min-w-0 px-4 sm:px-0 border-b border-border last:border-b-0"
+          className="flex gap-2 items-center min-w-0 px-3 py-1 border-b border-border/40 first:border-t md:first:border-t-0 md:even:border-l hover:bg-accent/5 transition-colors"
         >
           <Link 
             href={`/novels/${bookmark.novel.slug}`} 
@@ -134,34 +134,34 @@ const Bookmarks = ({ userId, isOwnProfile = false }: BookmarksProps) => {
                 ? bookmark.novel.cover_image_url 
                 : `/novel-covers/${bookmark.novel.cover_image_url}` || '/images/default-cover.jpg'}
               alt={bookmark.novel.title}
-              width={120}
-              height={120}
+              width={80}
+              height={80}
               priority
-              className="object-cover shadow-sm w-[60px] h-[60px] sm:w-[120px] sm:h-[120px]"
+              className="object-cover shadow-sm w-[40px] h-[40px] sm:w-[50px] sm:h-[50px]"
             />
           </Link>
-          <div className="flex-grow min-w-0">
+          <div className="flex-grow min-w-0 space-y-0">
             <Link 
               href={`/novels/${bookmark.novel.slug}`}
-              className="text-foreground font-medium text-base sm:text-lg hover:text-primary transition-colors block truncate"
+              className="text-foreground font-medium text-sm hover:text-primary transition-colors block truncate"
             >
               {bookmark.novel.title}
             </Link>
-            <p className="text-xs sm:text-sm text-foreground mt-0.5 sm:mt-1 truncate">
+            <p className="text-xs text-foreground truncate">
               by {bookmark.novel.author}
             </p>
           </div>
-          <div className="flex gap-2 flex-shrink-0">
+          <div className="flex gap-1.5 flex-shrink-0">
             <Link
               href={`/novels/${bookmark.novel.slug}`}
-              className="flex items-center gap-1.5 text-foreground px-3 py-1.5 border border-border rounded-md touch-action-manipulation whitespace-nowrap text-xs sm:text-base transition-colors hover:bg-accent"
+              className="flex items-center text-foreground px-2 py-0.5 border border-border/60 rounded touch-action-manipulation whitespace-nowrap text-xs transition-colors hover:bg-accent"
             >
               <span>Read</span>
             </Link>
             {isOwnProfile && (
               <button
                 onClick={() => removeMutation.mutate(bookmark.id)}
-                className="flex items-center gap-1.5 text-red-600 dark:text-red-400 px-3 py-1.5 border border-red-600 dark:border-red-400 rounded-md touch-action-manipulation whitespace-nowrap text-xs sm:text-base transition-colors hover:bg-red-50 dark:hover:bg-red-900/20"
+                className="flex items-center text-red-600 dark:text-red-400 px-2 py-0.5 border border-red-600/60 dark:border-red-400/60 rounded touch-action-manipulation whitespace-nowrap text-xs transition-colors hover:bg-red-50 dark:hover:bg-red-900/20"
                 aria-label="Remove bookmark"
               >
                 <span>Remove</span>
@@ -170,7 +170,7 @@ const Bookmarks = ({ userId, isOwnProfile = false }: BookmarksProps) => {
           </div>
         </article>
       ))}
-    </>
+    </div>
   );
 };
 
