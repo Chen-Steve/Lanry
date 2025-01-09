@@ -3,6 +3,7 @@
 import { useAuth } from './_hooks/useAuth';
 import { AuthForm } from './_components/AuthForm';
 import { GoogleSignInButton } from './_components/GoogleSignInButton';
+import { toast } from 'react-hot-toast';
 
 export default function AuthPage() {
   const {
@@ -10,11 +11,9 @@ export default function AuthPage() {
     credentials,
     error,
     loading,
-    googleLoading,
     emailError,
     setCredentials,
     handleSubmit,
-    handleGoogleSignIn,
     resetForm,
     validateEmail
   } = useAuth();
@@ -33,8 +32,8 @@ export default function AuthPage() {
         )}
 
         <GoogleSignInButton 
-          onClick={handleGoogleSignIn}
-          loading={googleLoading}
+          onClick={() => toast.success('Coming Soon!')}
+          loading={false}
         />
 
         <div className="relative">

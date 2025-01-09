@@ -25,12 +25,20 @@ export function useAuth() {
 
   // Check and create profile if needed
   useEffect(() => {
-    const checkAndCreateProfile = async () => {
+    let isInitialCheck = true;
+
+    const checkAndCreateProfile = async (isAuthChange = false) => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
-          console.log('Session user found:', session.user.id);
+          console.log('Session user found:', session.user.id, 'isAuthChange:', isAuthChange);
           
+          // Skip profile check on initial page load if not from auth change
+          if (isInitialCheck && !isAuthChange) {
+            console.log('Skipping initial check, waiting for auth state change');
+            return;
+          }
+
           const { data: profile, error: profileError } = await supabase
             .from('profiles')
             .select('*')
@@ -65,23 +73,31 @@ export function useAuth() {
             }
 
             console.log('New profile created:', newProfile);
-            router.push('/');
-            router.refresh();
+            
+            // Only redirect if this was triggered by an auth change
+            if (isAuthChange) {
+              router.push('/');
+              router.refresh();
+            }
           }
         }
       } catch (error) {
         console.error('Profile check error:', error);
+      } finally {
+        isInitialCheck = false;
       }
     };
 
     // Initial check
-    checkAndCreateProfile();
+    checkAndCreateProfile(false);
 
     // Subscribe to auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Auth state changed:', event, session?.user?.id);
       if (event === 'SIGNED_IN' && session?.user) {
-        await checkAndCreateProfile();
+        // Add a small delay to ensure the session is fully established
+        await new Promise(resolve => setTimeout(resolve, 500));
+        await checkAndCreateProfile(true);
       }
     });
 
