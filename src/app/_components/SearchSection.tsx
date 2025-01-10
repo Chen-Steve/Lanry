@@ -20,6 +20,7 @@ const SearchSection: React.FC<SearchSectionProps> = ({
   const [isFocused, setIsFocused] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const blurTimeoutRef = useRef<NodeJS.Timeout>();
 
   const debouncedSearch = useRef(
     debounce(async (query: string) => {
@@ -67,6 +68,7 @@ const SearchSection: React.FC<SearchSectionProps> = ({
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setShowDropdown(false);
+        setIsFocused(false);
       }
     };
 
@@ -74,8 +76,30 @@ const SearchSection: React.FC<SearchSectionProps> = ({
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
       debouncedSearch.cancel();
+      if (blurTimeoutRef.current) {
+        clearTimeout(blurTimeoutRef.current);
+      }
     };
   }, [debouncedSearch]);
+
+  const handleBlur = () => {
+    // Clear any existing timeout
+    if (blurTimeoutRef.current) {
+      clearTimeout(blurTimeoutRef.current);
+    }
+    
+    // Set a new timeout
+    blurTimeoutRef.current = setTimeout(() => {
+      setIsFocused(false);
+    }, 300);
+  };
+
+  const handleFocus = () => {
+    if (blurTimeoutRef.current) {
+      clearTimeout(blurTimeoutRef.current);
+    }
+    setIsFocused(true);
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -90,11 +114,8 @@ const SearchSection: React.FC<SearchSectionProps> = ({
           type="text"
           value={searchQuery}
           onChange={handleInputChange}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => {
-            // Small delay to allow clicking the advanced search link
-            setTimeout(() => setIsFocused(false), 200);
-          }}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
           placeholder="Search for novels..."
           className="w-full pl-10 pr-4 py-2 bg-secondary text-foreground placeholder:text-muted-foreground border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
         />

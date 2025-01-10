@@ -9,14 +9,16 @@ import UserProfileButton from '@/app/_components/UserProfileButton';
 import ThemeToggle from '@/app/_components/ThemeToggle';
 import { useStreak } from '@/hooks/useStreak';
 import { useAuth } from '@/hooks/useAuth';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
 const Header = () => {
+  const router = useRouter();
   const pathname = usePathname();
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const { isAuthenticated, userId, isLoading, handleSignOut } = useAuth();
   const { userProfile } = useStreak(userId, true);
+  const [isRandomizing, setIsRandomizing] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -26,6 +28,27 @@ const Header = () => {
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  const handleRandomNovel = async () => {
+    if (isRandomizing) return;
+    
+    try {
+      setIsRandomizing(true);
+      const response = await fetch('/api/novels/random');
+      const data = await response.json();
+      
+      if (data.error) {
+        console.error('Error fetching random novel:', data.error);
+        return;
+      }
+      
+      router.push(`/novels/${data.slug}`);
+    } catch (error) {
+      console.error('Error fetching random novel:', error);
+    } finally {
+      setIsRandomizing(false);
+    }
+  };
 
   // Don't render header on auth page when on mobile
   if (isMobile && pathname === '/auth') {
@@ -105,10 +128,21 @@ const Header = () => {
 
             {/* Search and Theme Toggle */}
             <div className="flex items-center flex-1 max-w-xl">
-              <div className="relative flex-1 min-w-0">
+              <div className="relative flex-1 min-w-0 flex items-center">
                 <SearchSection />
+                <button
+                  onClick={handleRandomNovel}
+                  disabled={isRandomizing}
+                  className="flex-none ml-1 p-1.5 text-muted-foreground hover:text-foreground transition-colors"
+                  title="Go to random novel"
+                >
+                  <Icon 
+                    icon={isRandomizing ? "eos-icons:loading" : "mdi:dice-6"} 
+                    className={`text-xl ${isRandomizing ? 'animate-spin' : ''}`}
+                  />
+                </button>
               </div>
-              <div className="flex-none mr-6 sm:mr-0">
+              <div className="flex-none ml-2 mr-6 sm:mr-0">
                 <ThemeToggle />
               </div>
             </div>
