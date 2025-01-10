@@ -143,7 +143,7 @@ export const NovelHeader = ({
   translator,
   chaptersCount,
   bookmarkCount,
-  // viewCount,
+  viewCount,
   coverImageUrl,
   novelAuthorId,
   isAuthorNameCustom = true,
@@ -370,6 +370,7 @@ export const NovelHeader = ({
                   <div className="flex flex-wrap gap-2 text-sm md:text-base lg:text-lg">
                     <StatsItem icon="pepicons-print:book" value={`${chaptersCount}`} color="blue" withGap />
                     <StatsItem icon="pepicons-print:bookmark" value={`${bookmarkCount}`} />
+                    <StatsItem icon="mdi:eye-outline" value={`${viewCount.toLocaleString()}`} color="purple" withGap />
                     <div className="relative">
                       <button
                         ref={ratingButtonRef}

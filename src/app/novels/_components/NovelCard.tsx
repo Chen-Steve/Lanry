@@ -39,10 +39,21 @@ const NovelCard = ({ novel, isPriority = false }: NovelCardProps) => {
     fetchData();
   }, [novel.id]);
 
+  const handleClick = async () => {
+    try {
+      await fetch(`/api/novels/${novel.id}/views`, {
+        method: 'POST',
+      });
+    } catch (error) {
+      console.error('Failed to increment views:', error);
+    }
+  };
+
   return (
     <Link 
       href={`/novels/${novel.slug}`} 
       className="block p-0.5 sm:p-2 hover:bg-accent rounded-lg transition-colors h-full"
+      onClick={handleClick}
     >
       <div className="flex flex-col h-full">
         <NovelCover 
