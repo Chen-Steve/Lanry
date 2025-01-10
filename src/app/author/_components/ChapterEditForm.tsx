@@ -194,7 +194,16 @@ export default function ChapterEditForm({
             title="Configure publishing settings"
           >
             <Icon icon="mdi:calendar-clock" className="w-4 h-4" />
-            <span className="text-sm font-medium">Schedule</span>
+            <span className="text-sm font-medium">
+              {formData.publishAt ? (
+                <span className="flex items-center gap-1">
+                  {new Date(formData.publishAt) > new Date() ? 'Scheduled:' : 'Published:'}{' '}
+                  {new Date(formData.publishAt).toLocaleDateString()}
+                </span>
+              ) : (
+                'Schedule'
+              )}
+            </span>
           </button>
         </div>
       </div>
