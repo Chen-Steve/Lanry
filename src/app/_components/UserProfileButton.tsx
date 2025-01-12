@@ -3,6 +3,7 @@
 import React, { useRef, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { Icon } from '@iconify/react';
 
 interface UserProfile {
   username: string;
@@ -92,7 +93,13 @@ const UserProfileButton = ({
               className="block px-4 py-2 text-sm text-foreground border-b border-border hover:bg-accent transition-colors"
               onClick={onMenuClose}
             >
-              {userProfile?.username}
+              <div>
+                <div>{userProfile?.username}</div>
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Icon icon="heroicons:fire" className="w-4 h-4 text-amber-500" />
+                  {userProfile?.current_streak || 0} day streak
+                </div>
+              </div>
             </Link>
             <button
               type="button"
@@ -125,7 +132,13 @@ const UserProfileButton = ({
               setIsProfileDropdownOpen(false);
             }}
           >
-            {userProfile?.username || 'Error loading profile'}
+            <div>
+              <div>{userProfile?.username || 'Error loading profile'}</div>
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Icon icon="heroicons:fire" className="w-4 h-4 text-amber-500" />
+                {userProfile?.current_streak || 0} day streak
+              </div>
+            </div>
           </Link>
           <button
             type="button"

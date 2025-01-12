@@ -108,27 +108,24 @@ const Header = () => {
     <header className="w-full bg-background">
       <div className="max-w-5xl mx-auto px-3 sm:px-4 mt-2 sm:mt-4 md:mt-6 lg:mt-8 mb-3 md:mb-6 lg:mb-10">
         <div className="bg-background border-b border-border rounded-md px-2 sm:px-4 md:px-6 py-2 md:py-3">
-          <div className="flex items-center justify-between gap-2 sm:gap-4 max-w-full">
+          <div className="flex items-center justify-between max-w-full">
             {/* Logo */}
-            <Link href="/" className="flex-shrink-0 flex items-center gap-2">
+            <Link href="/" className="flex-shrink-0">
               <Image
                 src="/lanry.jpg"
                 alt="Lanry Logo"
                 width={32}
                 height={32}
-                className="w-7 h-7 sm:w-8 sm:h-8 rounded-full"
+                className="hidden md:block w-8 h-8 sm:w-10 sm:h-10 rounded-full"
                 quality={95}
                 priority
                 sizes="(max-width: 640px) 28px, 32px"
               />
-              <span className="hidden sm:block text-lg md:text-xl lg:text-2xl font-bold text-foreground hover:text-muted-foreground transition-colors">
-                Lanry
-              </span>
             </Link>
 
             {/* Search and Theme Toggle */}
-            <div className="flex items-center flex-1 max-w-xl">
-              <div className="relative flex-1 min-w-0 flex items-center">
+            <div className="flex items-center flex-1">
+              <div className="relative flex-1 min-w-0 flex items-center ml-0 md:ml-3">
                 <SearchSection />
                 <button
                   onClick={handleRandomNovel}
@@ -142,7 +139,7 @@ const Header = () => {
                   />
                 </button>
               </div>
-              <div className="flex-none ml-2 mr-6 sm:mr-0">
+              <div className="flex-none md:ml-4">
                 <ThemeToggle />
               </div>
             </div>

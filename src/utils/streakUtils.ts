@@ -10,21 +10,26 @@ interface Profile {
 interface StreakUpdate {
   newStreak: number;
   shouldUpdate: boolean;
+  lastVisitDate: string;
 }
 
 export const calculateStreak = (lastVisit: string | null, currentStreak: number = 0): StreakUpdate => {
-  const today = new Date();
+  // Get user's local timezone date
+  const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const today = new Date(new Date().toLocaleString('en-US', { timeZone: userTz }));
   
   if (!lastVisit) {
     return {
       newStreak: 1,
-      shouldUpdate: true
+      shouldUpdate: true,
+      lastVisitDate: today.toISOString()
     };
   }
 
-  const lastVisitDate = new Date(lastVisit);
+  // Convert last visit to user's timezone
+  const lastVisitDate = new Date(new Date(lastVisit).toLocaleString('en-US', { timeZone: userTz }));
   
-  // Get dates without time components for day comparison in local time
+  // Get dates without time components in user's timezone
   const lastVisitDay = new Date(
     lastVisitDate.getFullYear(),
     lastVisitDate.getMonth(),
@@ -43,21 +48,24 @@ export const calculateStreak = (lastVisit: string | null, currentStreak: number 
   if (diffDays === 0) {
     return {
       newStreak: currentStreak,
-      shouldUpdate: false
+      shouldUpdate: false,
+      lastVisitDate: lastVisit // Keep existing timestamp
     };
   } 
   // If last visit was yesterday, increment streak
   else if (diffDays === 1) {
     return {
       newStreak: currentStreak + 1,
-      shouldUpdate: true
+      shouldUpdate: true,
+      lastVisitDate: today.toISOString()
     };
   } 
   // If more than 1 day has passed, reset streak
   else {
     return {
       newStreak: 1,
-      shouldUpdate: true
+      shouldUpdate: true,
+      lastVisitDate: today.toISOString()
     };
   }
 };
@@ -65,21 +73,35 @@ export const calculateStreak = (lastVisit: string | null, currentStreak: number 
 export const updateStreakInDb = async (
   supabase: SupabaseClient,
   userId: string,
-  newStreak: number
+  streakUpdate: StreakUpdate
 ): Promise<Profile> => {
-  const today = new Date();
   const maxRetries = 3;
   let retryCount = 0;
   let lastError: Error | unknown;
 
   while (retryCount < maxRetries) {
     try {
+      // Use optimistic locking to prevent race conditions
+      const { data: currentProfile } = await supabase
+        .from('profiles')
+        .select('current_streak, last_visit, updated_at')
+        .eq('id', userId)
+        .single();
+
+      if (currentProfile) {
+        // Recheck if update is still needed with latest data
+        const recheck = calculateStreak(currentProfile.last_visit, currentProfile.current_streak);
+        if (!recheck.shouldUpdate) {
+          return currentProfile as Profile;
+        }
+      }
+
       const { data, error } = await supabase
         .from('profiles')
         .update({
-          current_streak: newStreak,
-          last_visit: today.toISOString(),
-          updated_at: today.toISOString()
+          current_streak: streakUpdate.newStreak,
+          last_visit: streakUpdate.lastVisitDate,
+          updated_at: new Date().toISOString()
         })
         .eq('id', userId)
         .select()

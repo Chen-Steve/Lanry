@@ -43,14 +43,14 @@ export function useStreak(userId: string | null, checkStreak: boolean = false) {
     mutationFn: async () => {
       if (!userId || !userProfile) throw new Error('No user ID or profile');
 
-      const { newStreak, shouldUpdate } = calculateStreak(
+      const streakUpdate = calculateStreak(
         userProfile.last_visit, 
         userProfile.current_streak
       );
 
-      if (!shouldUpdate) return null;
+      if (!streakUpdate.shouldUpdate) return null;
 
-      return await updateStreakInDb(supabase, userId, newStreak);
+      return await updateStreakInDb(supabase, userId, streakUpdate);
     },
     onSuccess: (data) => {
       if (data) {
