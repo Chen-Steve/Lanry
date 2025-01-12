@@ -137,6 +137,38 @@ const ageRatingColors = {
   ADULT: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200'
 } as const;
 
+const TagsModal = ({ tags, isOpen, onClose }: { tags: Tag[], isOpen: boolean, onClose: () => void }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 w-full max-w-md max-h-[80vh] overflow-y-auto">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Tags</h3>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            aria-label="Close tags modal"
+          >
+            <Icon icon="mdi:close" className="text-xl" />
+          </button>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {tags.map((tag) => (
+            <Link
+              key={tag.id}
+              href={`/search?tags=${tag.id}`}
+              className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-full transition-colors bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 border border-gray-300 dark:border-gray-600"
+            >
+              {tag.name}
+            </Link>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const NovelHeader = ({
   title,
   author,
@@ -166,6 +198,7 @@ export const NovelHeader = ({
   const [localRatingCount, setLocalRatingCount] = useState(ratingCount);
   const [localUserRating, setLocalUserRating] = useState(userRating);
   const [showRatingPopup, setShowRatingPopup] = useState(false);
+  const [showTagsModal, setShowTagsModal] = useState(false);
   const ratingButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -292,7 +325,7 @@ export const NovelHeader = ({
           <div>
             {/* Cover and Title Row */}
             <div className="flex flex-row gap-4 mb-2">
-              {/* Cover Image and Tags for Mobile */}
+              {/* Cover Image */}
               <div className="flex flex-col gap-2 w-28 sm:w-32 md:w-40 lg:w-48 mx-0 flex-shrink-0">
                 <div className="relative aspect-[2/3] rounded-xl overflow-hidden shadow-lg">
                   {coverImageUrl ? (
@@ -316,20 +349,6 @@ export const NovelHeader = ({
                     <div className="w-full h-full bg-gray-200" />
                   )}
                 </div>
-                {/* Tags for Mobile */}
-                {tags && tags.length > 0 && (
-                  <div className="flex flex-wrap gap-2 md:hidden">
-                    {tags.map((tag) => (
-                      <Link
-                        key={tag.id}
-                        href={`/search?tags=${tag.id}`}
-                        className="flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full transition-colors bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200"
-                      >
-                        {tag.name}
-                      </Link>
-                    ))}
-                  </div>
-                )}
               </div>
 
               {/* Title, Author, Stats Section */}
@@ -399,22 +418,36 @@ export const NovelHeader = ({
                   {translator && <TranslatorLinks translator={translator} />}
                 </div>
 
-                {/* Tags for Desktop */}
-                <div className="mt-auto hidden md:block">
-                  {tags && tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {tags.map((tag) => (
-                        <Link
-                          key={tag.id}
-                          href={`/search?tags=${tag.id}`}
-                          className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-full transition-colors bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200"
+                {/* Tags for both Mobile and Desktop */}
+                {tags && tags.length > 0 && (
+                  <div className="mt-auto">
+                    <div className="flex items-center gap-2">
+                      {/* Show first tag */}
+                      <Link
+                        href={`/search?tags=${tags[0].id}`}
+                        className="flex-shrink-0 flex items-center gap-1 px-2 py-1 text-xs md:text-sm font-medium rounded-full transition-colors bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200"
+                      >
+                        {tags[0].name}
+                      </Link>
+                      {/* More button */}
+                      {tags.length > 1 && (
+                        <button
+                          onClick={() => setShowTagsModal(true)}
+                          className="flex-shrink-0 flex items-center gap-1 px-2 py-1 text-xs md:text-sm font-medium rounded-full transition-colors bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200"
+                          aria-label={`Show all ${tags.length} tags`}
                         >
-                          {tag.name}
-                        </Link>
-                      ))}
+                          <Icon icon="mdi:dots-horizontal" className="text-base" />
+                          {tags.length - 1} more
+                        </button>
+                      )}
                     </div>
-                  )}
-                </div>
+                    <TagsModal
+                      tags={tags}
+                      isOpen={showTagsModal}
+                      onClose={() => setShowTagsModal(false)}
+                    />
+                  </div>
+                )}
               </div>
             </div>
           </div>

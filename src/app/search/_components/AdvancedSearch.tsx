@@ -254,9 +254,9 @@ export default function AdvancedSearch() {
   };
 
   return (
-    <div className="flex justify-end gap-6">
-      {/* Results Section - Middle */}
-      <div className="flex-1 max-w-3xl">
+    <div className="flex flex-col-reverse lg:flex-row justify-end gap-4 lg:gap-6">
+      {/* Results Section */}
+      <div className="flex-1 max-w-3xl w-full">
         {results.length > 0 ? (
           <div className="space-y-3">
             <div className="text-sm text-muted-foreground">
@@ -318,9 +318,9 @@ export default function AdvancedSearch() {
         )}
       </div>
 
-      {/* Search Form - Right Side */}
-      <div className="w-80 shrink-0">
-        <div className="space-y-4 bg-secondary/50 rounded-lg p-4 border border-border sticky top-4">
+      {/* Search Form */}
+      <div className="w-full lg:w-80 lg:shrink-0">
+        <div className="space-y-4 bg-secondary/50 rounded-lg p-4 border border-border lg:sticky lg:top-4">
           {/* Filter Types */}
           <div className="space-y-4">
             {/* Basic Filters */}
