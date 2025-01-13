@@ -33,11 +33,12 @@ interface SupabaseComment {
 }
 
 interface ChapterCommentsProps {
+  novelId: string;
   chapterId: string;
   authorId: string;
 }
 
-export function ChapterComments({ chapterId, authorId }: ChapterCommentsProps) {
+export function ChapterComments({ novelId, chapterId, authorId }: ChapterCommentsProps) {
   const [userId, setUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [comments, setComments] = useState<ChapterComment[]>([]);
@@ -139,6 +140,7 @@ export function ChapterComments({ chapterId, authorId }: ChapterCommentsProps) {
         .insert({
           id: uuidv4(),
           chapter_id: chapterId,
+          novel_id: novelId,
           content: newComment.trim(),
           profile_id: userId,
           created_at: now,
