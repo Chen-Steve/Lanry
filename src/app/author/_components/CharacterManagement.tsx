@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Icon } from '@iconify/react';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
@@ -27,6 +27,13 @@ export const CharacterManagement = ({
   const [isUploading, setIsUploading] = useState(false);
   const [editingCharacter, setEditingCharacter] = useState<NovelCharacter | null>(null);
   const [localCharacters, setLocalCharacters] = useState<NovelCharacter[]>(characters);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Keep local state in sync with props
+  useEffect(() => {
+    setLocalCharacters(characters);
+  }, [characters]);
 
   const handleImageUpload = async (file: File) => {
     if (!file) return;
@@ -144,6 +151,25 @@ export const CharacterManagement = ({
     }
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const resetForm = () => {
+    setEditingCharacter(null);
+    setPreviewImage(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -226,7 +252,7 @@ export const CharacterManagement = ({
                   {editingCharacter.id ? 'Edit Character' : 'Add New Character'}
                 </h3>
                 <button
-                  onClick={() => setEditingCharacter(null)}
+                  onClick={resetForm}
                   className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                   aria-label="Close modal"
                 >
@@ -241,6 +267,7 @@ export const CharacterManagement = ({
                   
                   let imageUrl = editingCharacter.imageUrl;
                   if (file.size > 0) {
+                    setIsUploading(true);
                     const uploadedUrl = await handleImageUpload(file);
                     if (uploadedUrl) imageUrl = uploadedUrl;
                   }
@@ -258,7 +285,7 @@ export const CharacterManagement = ({
                   } else {
                     await handleAddCharacter(characterData);
                   }
-                  setEditingCharacter(null);
+                  resetForm();
                 }}
                 className="space-y-4"
               >
@@ -307,18 +334,32 @@ export const CharacterManagement = ({
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Image
                   </label>
-                  <input
-                    type="file"
-                    name="image"
-                    accept="image/*"
-                    aria-label="Character image"
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-900"
-                  />
+                  <div className="space-y-2">
+                    {(previewImage || editingCharacter.imageUrl) && (
+                      <div className="w-32 h-32 relative rounded-lg overflow-hidden mx-auto">
+                        <Image
+                          src={previewImage || editingCharacter.imageUrl}
+                          alt="Character preview"
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                    )}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      name="image"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      aria-label="Character image"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-900"
+                    />
+                  </div>
                 </div>
                 <div className="flex justify-end gap-2 mt-6">
                   <button
                     type="button"
-                    onClick={() => setEditingCharacter(null)}
+                    onClick={resetForm}
                     className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
                   >
                     Cancel
@@ -326,8 +367,9 @@ export const CharacterManagement = ({
                   <button
                     type="submit"
                     disabled={isUploading}
-                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 rounded-lg disabled:opacity-50"
+                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 rounded-lg disabled:opacity-50 flex items-center gap-2"
                   >
+                    {isUploading && <Icon icon="mdi:loading" className="animate-spin" />}
                     {isUploading ? 'Uploading...' : 'Save'}
                   </button>
                 </div>
