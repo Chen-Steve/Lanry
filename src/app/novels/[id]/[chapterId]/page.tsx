@@ -14,6 +14,7 @@ import supabase from '@/lib/supabaseClient';
 import ChapterProgressBar from './_components/ChapterBar';
 import ChapterSidebar from './_components/ChapterSidebar';
 import ChapterNavigation from './_components/ChapterNavigation';
+import ChapterComments from './_components/ChapterComments';
 import { useReadingTimeTracker } from '@/hooks/useReadingTimeTracker';
 
 function ScrollToTopButton() {
@@ -275,6 +276,15 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
         authorId={chapter.novel.author_profile_id}
         ageRating={chapter.age_rating}
       />
+
+      {/* Chapter Comments */}
+      <div className="mt-8 border-t pt-8">
+        <ChapterComments
+          novelId={chapter.novel.id}
+          chapterId={chapter.id}
+          authorId={chapter.novel.author_profile_id}
+        />
+      </div>
 
       {/* Bottom Navigation */}
       <div className="border-t pt-4">

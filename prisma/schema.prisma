@@ -114,6 +114,7 @@ model Chapter {
   arcId         String?   @map("arc_id")
   likes         ChapterLike[]
   likeCount     Int       @default(0) @map("like_count")
+  comments      ChapterThreadComment[]
 
   @@unique([novelId, slug])
   @@index([novelId])
@@ -143,6 +144,7 @@ model Profile {
   readingHistory     ReadingHistory[]
   readingTime        ReadingTime?
   chapterComments    ChapterComment[]
+  chapterThreadComments ChapterThreadComment[]
   novelComments      NovelComment[]
   coins              Int       @default(0)
   transactions       CoinTransaction[]
@@ -208,6 +210,22 @@ model ChapterComment {
   @@index([profileId])
   @@index([novel_id])
   @@map("chapter_comments")
+}
+
+model ChapterThreadComment {
+  id            String   @id @default(uuid())
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  chapterId     String   @map("chapter_id")
+  content       String   @db.Text
+  profile       Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  profileId     String   @map("profile_id")
+  chapter       Chapter  @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+
+  @@index([chapterId])
+  @@index([profileId])
+  @@index([createdAt])
+  @@map("chapter_thread_comments")
 }
 
 model CoinTransaction {
