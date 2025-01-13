@@ -44,6 +44,8 @@ export function ChapterComments({ chapterId, authorId }: ChapterCommentsProps) {
   const [newComment, setNewComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState('');
 
   // Auth setup
   useEffect(() => {
@@ -199,6 +201,38 @@ export function ChapterComments({ chapterId, authorId }: ChapterCommentsProps) {
     }
   };
 
+  const handleEdit = async (commentId: string) => {
+    try {
+      const { error } = await supabase
+        .from('chapter_thread_comments')
+        .update({
+          content: editContent.trim(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', commentId)
+        .eq('profile_id', userId);
+
+      if (error) throw error;
+      
+      setComments(prev => prev.map(comment => 
+        comment.id === commentId 
+          ? { ...comment, content: editContent.trim() }
+          : comment
+      ));
+      setEditingCommentId(null);
+      setEditContent('');
+      toast.success('Comment updated successfully');
+    } catch (err) {
+      console.error('Error updating comment:', err);
+      toast.error('Failed to update comment');
+    }
+  };
+
+  const startEditing = (comment: ChapterComment) => {
+    setEditingCommentId(comment.id);
+    setEditContent(comment.content);
+  };
+
   const renderAvatar = (username: string, avatarUrl?: string) => {
     if (avatarUrl) {
       return (
@@ -305,7 +339,25 @@ export function ChapterComments({ chapterId, authorId }: ChapterCommentsProps) {
                   <time dateTime={comment.createdAt}>
                     {new Date(comment.createdAt).toLocaleDateString()}
                   </time>
-                  {(userId === comment.profile.id || userId === authorId) && (
+                  {userId === comment.profile.id && (
+                    <>
+                      <button
+                        onClick={() => startEditing(comment)}
+                        className="text-blue-500 hover:text-blue-600 transition-colors"
+                        title="Edit comment"
+                      >
+                        <Icon icon="mdi:pencil" className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(comment.id)}
+                        className="text-red-500 hover:text-red-600 transition-colors"
+                        title="Delete comment"
+                      >
+                        <Icon icon="mdi:delete" className="w-4 h-4" />
+                      </button>
+                    </>
+                  )}
+                  {userId === authorId && userId !== comment.profile.id && (
                     <button
                       onClick={() => handleDelete(comment.id)}
                       className="text-red-500 hover:text-red-600 transition-colors"
@@ -316,7 +368,36 @@ export function ChapterComments({ chapterId, authorId }: ChapterCommentsProps) {
                   )}
                 </div>
               </div>
-              <p className="text-sm text-muted-foreground">{comment.content}</p>
+              {editingCommentId === comment.id ? (
+                <div className="space-y-2">
+                  <Textarea
+                    value={editContent}
+                    onChange={(e) => setEditContent(e.target.value)}
+                    className="w-full min-h-[100px]"
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => handleEdit(comment.id)}
+                      disabled={!editContent.trim() || editContent.trim() === comment.content}
+                      className="text-sm"
+                    >
+                      Save
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        setEditingCommentId(null);
+                        setEditContent('');
+                      }}
+                      variant="outline"
+                      className="text-sm"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">{comment.content}</p>
+              )}
             </div>
           </div>
         ))}
