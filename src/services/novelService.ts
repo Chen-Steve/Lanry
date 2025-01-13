@@ -2,6 +2,15 @@ import { Novel, Chapter, ChapterUnlock, NovelCategory } from '@/types/database';
 import supabase from '@/lib/supabaseClient';
 import { generateUUID } from '@/lib/utils';
 
+interface NovelCharacterFromDB {
+  id: string;
+  name: string;
+  role: string;
+  image_url: string;
+  description: string | null;
+  order_index: number;
+}
+
 export async function getNovel(id: string, userId?: string): Promise<Novel | null> {
   try {
     const isNumericId = !isNaN(Number(id));
@@ -63,6 +72,14 @@ export async function getNovel(id: string, userId?: string): Promise<Novel | nul
             name,
             description
           )
+        ),
+        characters:novel_characters (
+          id,
+          name,
+          role,
+          image_url,
+          description,
+          order_index
         )
       `)
       .eq(isNumericId ? 'id' : 'slug', isNumericId ? Number(id) : id)
@@ -99,6 +116,16 @@ export async function getNovel(id: string, userId?: string): Promise<Novel | nul
     // Process categories
     const categories = data.categories?.map((item: { category: NovelCategory }) => item.category) || [];
 
+    // Process characters
+    const characters = data.characters?.map((char: NovelCharacterFromDB) => ({
+      id: char.id,
+      name: char.name,
+      role: char.role,
+      imageUrl: char.image_url,
+      description: char.description,
+      orderIndex: char.order_index,
+    })) || [];
+
     return {
       ...data,
       translator: data.translator ? {
@@ -119,6 +146,7 @@ export async function getNovel(id: string, userId?: string): Promise<Novel | nul
       volumes: data.volumes || [],
       categories,
       tags: data.tags?.map((t: { tag: { id: string; name: string; description: string | null } }) => t.tag) || [],
+      characters,
       ageRating: data.age_rating
     };
   } catch (error) {

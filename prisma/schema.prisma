@@ -46,6 +46,7 @@ model Novel {
   categories    CategoriesOnNovels[]
   tags          TagsOnNovels[]
   chapterLikes  ChapterLike[]
+  characters     NovelCharacter[]
 
   @@index([title])
   @@index([author])
@@ -483,4 +484,20 @@ enum AgeRating {
   TEEN
   MATURE
   ADULT
+}
+
+model NovelCharacter {
+  id          String   @id @default(uuid())
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  name        String
+  role        String   // e.g. "Male Lead", "Female Lead", "Supporting"
+  imageUrl    String   @map("image_url")
+  description String?  @db.Text
+  novel       Novel    @relation(fields: [novelId], references: [id], onDelete: Cascade)
+  novelId     String   @map("novel_id")
+  orderIndex  Int      @default(0) @map("order_index") // For controlling display order
+
+  @@index([novelId])
+  @@map("novel_characters")
 }

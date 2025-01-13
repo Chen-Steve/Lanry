@@ -7,6 +7,7 @@ import { Volume } from '@/types/novel';
 import { NovelRecommendations } from './NovelRecommendations';
 import { NovelComments } from './NovelComments';
 import { NovelHeader } from './NovelHeader';
+import Image from 'next/image';
 
 interface SynopsisSectionProps {
   title: string;
@@ -44,6 +45,14 @@ interface SynopsisSectionProps {
   categories?: NovelCategory[];
   tags?: Tag[];
   showHeader?: boolean;
+  characters?: {
+    id: string;
+    name: string;
+    role: string;
+    imageUrl: string;
+    description?: string | null;
+    orderIndex: number;
+  }[];
 }
 
 const TabButton = ({ 
@@ -99,6 +108,7 @@ export const SynopsisSection = ({
   categories,
   tags,
   showHeader = true,
+  characters = [],
 }: SynopsisSectionProps) => {
   const [activeTab, setActiveTab] = useState<'synopsis' | 'chapters' | 'recommendations' | 'comments'>('synopsis');
 
@@ -162,6 +172,38 @@ export const SynopsisSection = ({
       {/* Tab Content */}
       {activeTab === 'synopsis' ? (
         <>
+          {/* Characters Card */}
+          {characters && characters.length > 0 && (
+            <div className="bg-card rounded-lg border border-border mb-4">
+              <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-1.5">
+                {characters.map((character) => (
+                  <div
+                    key={character.id}
+                    className="relative bg-white dark:bg-gray-800 overflow-hidden"
+                  >
+                    <div className="aspect-[3/4] relative">
+                      <Image
+                        src={character.imageUrl}
+                        alt={character.name}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 640px) 25vw, (max-width: 768px) 12.5vw, 10vw"
+                      />
+                      <div className="absolute inset-x-0 bottom-0 bg-black/60 p-1">
+                        <p className="text-xs font-medium text-white leading-tight truncate">
+                          {character.name}
+                        </p>
+                        <p className="text-[10px] text-gray-300 leading-tight truncate">
+                          {character.role}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Description Card */}
           <div className="bg-card rounded-xl shadow-sm border border-border p-4 mb-4">
             <div 

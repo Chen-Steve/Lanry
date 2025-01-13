@@ -202,6 +202,7 @@ export default function NovelPage({ params }: { params: { id: string } }) {
         userRating={novel.userRating}
         categories={novel.categories}
         tags={novel.tags}
+        characters={novel.characters}
       />
     </div>
   );

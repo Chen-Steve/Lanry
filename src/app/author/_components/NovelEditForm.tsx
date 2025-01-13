@@ -14,6 +14,16 @@ import { useAuth } from '@/hooks/useAuth';
 import { ChapterListChapter, NovelEditFormProps, Volume, NovelCategory } from '../_types/authorTypes';
 import { Tag } from '@/types/database';
 import supabase from '@/lib/supabaseClient';
+import { CharacterManagement } from './CharacterManagement';
+
+interface NovelCharacter {
+  id: string;
+  name: string;
+  role: string;
+  imageUrl: string;
+  description?: string | null;
+  orderIndex: number;
+}
 
 export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFormProps) {
   const { userId, isLoading: isAuthLoading } = useAuth();
@@ -33,6 +43,7 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
   const [coverImageUrl, setCoverImageUrl] = useState(novel.coverImageUrl || '');
   const [isTagModalOpen, setIsTagModalOpen] = useState(false);
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
+  const [characters, setCharacters] = useState<NovelCharacter[]>([]);
 
   const loadCategories = useCallback(async () => {
     if (!novel.id) return;
@@ -85,6 +96,31 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
     }
   }, [novel.id]);
 
+  const loadCharacters = useCallback(async () => {
+    if (!novel.id) return;
+    try {
+      const { data, error } = await supabase
+        .from('novel_characters')
+        .select('*')
+        .eq('novel_id', novel.id)
+        .order('order_index');
+
+      if (error) throw error;
+      
+      setCharacters(data.map(char => ({
+        id: char.id,
+        name: char.name,
+        role: char.role,
+        imageUrl: char.image_url,
+        description: char.description,
+        orderIndex: char.order_index
+      })));
+    } catch (error) {
+      console.error('Error loading characters:', error);
+      toast.error('Failed to load characters');
+    }
+  }, [novel.id]);
+
   useEffect(() => {
     if (!isAuthLoading && novel.id) {
       loadCategories();
@@ -102,6 +138,12 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
       loadTags();
     }
   }, [isAuthLoading, loadTags, novel.id]);
+
+  useEffect(() => {
+    if (!isAuthLoading && novel.id) {
+      loadCharacters();
+    }
+  }, [isAuthLoading, loadCharacters, novel.id]);
 
   useEffect(() => {
     const handleCoverUpdate = () => {
@@ -182,6 +224,10 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
       console.error('Error creating volume:', error);
       toast.error('Failed to create volume');
     }
+  };
+
+  const handleCharactersUpdate = (updatedCharacters: NovelCharacter[]) => {
+    setCharacters(updatedCharacters);
   };
 
   const statusOptions = [
@@ -398,6 +444,14 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
               )}
             </div>
           )}
+
+          <div className="mt-8">
+            <CharacterManagement
+              novelId={novel.id}
+              characters={characters}
+              onCharactersUpdate={handleCharactersUpdate}
+            />
+          </div>
         </div>
       </div>
 

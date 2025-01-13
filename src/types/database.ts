@@ -44,6 +44,14 @@ export interface Novel {
   is_author_name_custom?: boolean;
   categories?: NovelCategory[];
   tags?: Tag[];
+  characters?: {
+    id: string;
+    name: string;
+    role: string;
+    imageUrl: string;
+    description?: string | null;
+    orderIndex: number;
+  }[];
   translator?: {
     username: string | null;
     profile_id: string;
