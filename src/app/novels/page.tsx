@@ -1,5 +1,6 @@
 import NovelListing from '@/app/novels/_components/NovelListing';
-import AdBanner from './_components/AdBanner';
+import AdBanner from './_components/YllixAdBanner';
+import GoogleAdBanner from './_components/GoogleAdBanner';
 
 export const metadata = {
   title: 'Browse Novels | Lanry',
@@ -12,8 +13,11 @@ export default function NovelsPage() {
       <div className="max-w-5xl mx-auto">
         <NovelListing />
       </div>
+      <div className="absolute top-0 left-0">
+        <AdBanner position="left" />
+      </div>
       <div className="absolute top-0 right-0">
-        <AdBanner position="right" />
+        <GoogleAdBanner />
       </div>
     </main>
   );
