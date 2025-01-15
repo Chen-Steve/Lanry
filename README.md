@@ -1,24 +1,14 @@
 # Lanry
 
-A modern web platform for reading translated light novels.
+A platform for reading translated light novels.
 
 ## Project Overview
 
 Lanry is a platform where readers can:
 - Read translated light novels for free
 - Track their reading progress
-- Get notifications for new chapter releases
 - Discuss chapters with other readers
 - Support translators through donations
-
-## Technology Stack
-
-- Frontend: Next.js with TypeScript
-- Styling: Tailwind CSS
-- Backend: Next.js API routes
-- Database: PostgreSQL with Prisma ORM
-- Authentication: Supabase Auth
-- Content Delivery: Supabase Storage
 
 ## Features
 
