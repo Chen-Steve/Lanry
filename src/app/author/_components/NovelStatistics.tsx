@@ -17,9 +17,10 @@ interface NovelData {
   id: string;
   title: string;
   bookmark_count: number;
-  chapters: { count: number }[];
-  chapter_comments: { count: number }[];
-  authorProfileId: string;
+  chapters_count: { count: number; }[];
+  chapter_comments_count: { count: number; }[];
+  novel_comments_count: { count: number; }[];
+  chapters_thread_comments: { chapter_thread_comments: { count: number; }[]; }[];
 }
 
 export default function NovelStatistics() {
@@ -38,8 +39,10 @@ export default function NovelStatistics() {
           id,
           title,
           bookmark_count,
-          chapters(count),
-          chapter_comments(count)
+          chapters_count:chapters(count),
+          chapter_comments_count:chapter_comments(count),
+          novel_comments_count:novel_comments(count),
+          chapters_thread_comments:chapters(chapter_thread_comments(count))
         `)
         .eq('author_profile_id', session.user.id);
 
@@ -48,13 +51,22 @@ export default function NovelStatistics() {
         return;
       }
 
-      const formattedStats = (data as NovelData[]).map(novel => ({
-        id: novel.id,
-        title: novel.title,
-        bookmarks: novel.bookmark_count,
-        total_chapters: novel.chapters[0]?.count || 0,
-        total_comments: novel.chapter_comments[0]?.count || 0
-      }));
+      const formattedStats = (data as NovelData[]).map(novel => {
+        // Calculate total thread comments by summing up counts from each chapter
+        const totalThreadComments = novel.chapters_thread_comments.reduce((sum, chapter) => {
+          return sum + (chapter.chapter_thread_comments[0]?.count || 0);
+        }, 0);
+
+        return {
+          id: novel.id,
+          title: novel.title,
+          bookmarks: novel.bookmark_count,
+          total_chapters: novel.chapters_count[0]?.count || 0,
+          total_comments: (novel.chapter_comments_count[0]?.count || 0) + 
+                         (novel.novel_comments_count[0]?.count || 0) + 
+                         totalThreadComments
+        };
+      });
 
       setStats(formattedStats);
       setIsLoading(false);

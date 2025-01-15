@@ -78,30 +78,32 @@ export default function TranslatorLinks() {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-[200px]">
-        <Icon icon="mdi:loading" className="animate-spin text-3xl text-primary/60" />
+      <div className="flex justify-center items-center min-h-[150px]">
+        <Icon icon="mdi:loading" className="animate-spin text-2xl text-primary/60" />
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <h2 className="text-xl font-semibold text-foreground mb-6">Manage Support Links</h2>
+    <form onSubmit={handleSubmit} className="space-y-4 w-full max-w-lg mx-auto">
+      <h2 className="text-lg font-semibold text-foreground mb-4">Manage Support Links</h2>
       
-      <div className="space-y-4">
+      <div className="space-y-3">
         <div>
           <label htmlFor="kofi" className="block text-sm font-medium text-foreground mb-1">
             Ko-fi URL
           </label>
-          <div className="flex items-center gap-2">
-            <Icon icon="simple-icons:kofi" className="text-[#13C3FF] text-xl" />
+          <div className="relative">
+            <div className="absolute left-2 top-1/2 -translate-y-1/2">
+              <Icon icon="simple-icons:kofi" className="text-[#13C3FF] text-lg" />
+            </div>
             <input
               type="url"
               id="kofi"
               placeholder="https://ko-fi.com/yourusername"
               value={links.kofiUrl}
               onChange={(e) => setLinks(prev => ({ ...prev, kofiUrl: e.target.value }))}
-              className="flex-1 p-2 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-primary"
+              className="w-full pl-9 pr-3 py-1.5 border border-border rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:ring-1 focus:ring-primary focus:border-primary text-sm"
             />
           </div>
         </div>
@@ -110,15 +112,17 @@ export default function TranslatorLinks() {
           <label htmlFor="patreon" className="block text-sm font-medium text-foreground mb-1">
             Patreon URL
           </label>
-          <div className="flex items-center gap-2">
-            <Icon icon="simple-icons:patreon" className="text-[#FF424D] text-xl" />
+          <div className="relative">
+            <div className="absolute left-2 top-1/2 -translate-y-1/2">
+              <Icon icon="simple-icons:patreon" className="text-[#FF424D] text-lg" />
+            </div>
             <input
               type="url"
               id="patreon"
               placeholder="https://patreon.com/yourusername"
               value={links.patreonUrl}
               onChange={(e) => setLinks(prev => ({ ...prev, patreonUrl: e.target.value }))}
-              className="flex-1 p-2 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-primary"
+              className="w-full pl-9 pr-3 py-1.5 border border-border rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:ring-1 focus:ring-primary focus:border-primary text-sm"
             />
           </div>
         </div>
@@ -128,42 +132,44 @@ export default function TranslatorLinks() {
             Custom Support URL
           </label>
           <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Icon icon="mdi:link-variant" className="text-muted-foreground text-xl" />
+            <div className="relative">
+              <div className="absolute left-2 top-1/2 -translate-y-1/2">
+                <Icon icon="mdi:link-variant" className="text-muted-foreground text-lg" />
+              </div>
               <input
                 type="url"
                 id="custom"
                 placeholder="https://your-custom-support-link.com"
                 value={links.customUrl}
                 onChange={(e) => setLinks(prev => ({ ...prev, customUrl: e.target.value }))}
-                className="flex-1 p-2 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-primary"
+                className="w-full pl-9 pr-3 py-1.5 border border-border rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:ring-1 focus:ring-primary focus:border-primary text-sm"
               />
             </div>
             <input
               type="text"
               id="customLabel"
-              placeholder="Label for your custom link (e.g., 'Buy Me a Coffee', 'Personal Website')"
+              placeholder="Label (e.g., 'Buy Me a Coffee')"
               value={links.customUrlLabel}
               onChange={(e) => setLinks(prev => ({ ...prev, customUrlLabel: e.target.value }))}
-              className="w-full p-2 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-primary text-sm"
+              className="w-full px-3 py-1.5 border border-border rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:ring-1 focus:ring-primary focus:border-primary text-sm"
             />
           </div>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-xs text-muted-foreground">
             Add any other support platform or personal website
           </p>
         </div>
       </div>
 
-      <div className="flex items-center justify-end gap-4">
+      <div className="flex justify-end pt-2">
         <button
           type="submit"
           disabled={isSaving}
           className={`
-            flex items-center gap-2 px-4 py-2 rounded-lg text-primary-foreground font-medium
+            flex items-center gap-1.5 px-3 py-1.5 rounded-md text-primary-foreground text-sm font-medium
             ${isSaving ? 'bg-primary/70 cursor-not-allowed' : 'bg-primary hover:bg-primary/90'}
           `}
         >
-          {isSaving && <Icon icon="mdi:loading" className="animate-spin" />}
+          {isSaving && <Icon icon="mdi:loading" className="animate-spin text-sm" />}
           Save Links
         </button>
       </div>
