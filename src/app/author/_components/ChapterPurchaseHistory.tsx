@@ -99,7 +99,7 @@ export default function ChapterPurchaseHistory() {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center p-8">
+      <div className="flex justify-center items-center p-4">
         <Icon icon="mdi:loading" className="animate-spin text-2xl text-primary/60" />
       </div>
     );
@@ -107,8 +107,8 @@ export default function ChapterPurchaseHistory() {
 
   if (error) {
     return (
-      <div className="text-center p-8 text-red-500 dark:text-red-400">
-        <Icon icon="mdi:alert" className="text-2xl mb-2" />
+      <div className="text-center p-4 text-red-500 dark:text-red-400">
+        <Icon icon="mdi:alert" className="text-2xl" />
         <p>{error}</p>
       </div>
     );
@@ -116,67 +116,40 @@ export default function ChapterPurchaseHistory() {
 
   if (purchases.length === 0) {
     return (
-      <div className="text-center p-8 text-muted-foreground">
-        <Icon icon="mdi:book-open-page-variant" className="text-3xl mb-2" />
+      <div className="text-center p-4 text-muted-foreground">
         <p>No chapter purchases yet</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4">
-      <div className="bg-background rounded-lg shadow overflow-hidden border border-border">
-        <div className="px-4 py-5 sm:px-6">
-          <h3 className="text-lg font-medium text-foreground">Chapter Purchase History</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            A list of all chapters purchased by readers
-          </p>
+    <div className="px-2">
+      <div className="bg-background rounded-lg border border-border">
+        <div className="p-3 border-b border-border">
+          <h3 className="font-medium">Purchase History</h3>
+          <p className="text-xs text-muted-foreground">Chapters purchased by readers</p>
         </div>
-        <div className="border-t border-border">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-border">
-              <thead className="bg-muted">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Reader
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Novel
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Chapter
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Earnings
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Date
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-background divide-y divide-border">
-                {purchases.map((purchase) => (
-                  <tr key={purchase.id} className="hover:bg-muted/50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
-                      {purchase.profile.username}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
-                      {purchase.novel.title}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
-                      Chapter {purchase.chapter_number}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
-                      {Math.floor(purchase.cost * 0.9)} coins
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                      {formatDate(purchase.created_at)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        
+        <div className="grid gap-1 p-2">
+          {purchases.map((purchase) => (
+            <div
+              key={purchase.id}
+              className="flex flex-col p-2 rounded border border-border hover:bg-muted/50"
+            >
+              <div className="flex justify-between text-sm">
+                <span className="font-medium">{purchase.profile.username}</span>
+                <span className="text-xs text-muted-foreground">{formatDate(purchase.created_at)}</span>
+              </div>
+              
+              <div className="flex justify-between items-center mt-1 text-sm">
+                <div className="flex items-center gap-1 flex-1 min-w-0">
+                  <span className="truncate">{purchase.novel.title}</span>
+                  <span className="text-xs text-muted-foreground ml-1">Ch.{purchase.chapter_number}</span>
+                </div>
+                <span className="text-primary font-medium ml-2 shrink-0">{Math.floor(purchase.cost * 0.9)} coins</span>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>
