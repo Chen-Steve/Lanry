@@ -14,6 +14,7 @@ type RawComment = {
   created_at: string;
   chapter_number?: number;
   novel_id: string;
+  paragraph_id?: string;
   profile: {
     username: string | null;
     avatar_url: string | null;
@@ -23,6 +24,14 @@ type RawComment = {
     title: string;
     author_profile_id: string;
     slug: string;
+  };
+  chapter?: {
+    chapter_number: number;
+    novel_id: string;
+    novel: {
+      title: string;
+      slug: string;
+    };
   };
 };
 
@@ -60,6 +69,7 @@ export default function NovelComments() {
 
       // Fetch chapter comments if needed
       if (commentType === 'all' || commentType === 'chapter') {
+        // Fetch paragraph comments
         const chapterQuery = supabase
           .from('chapter_comments')
           .select(`
@@ -88,6 +98,37 @@ export default function NovelComments() {
         }
 
         promises.push(chapterQuery);
+
+        // Fetch chapter thread comments
+        const threadQuery = supabase
+          .from('chapter_thread_comments')
+          .select(`
+            id,
+            content,
+            created_at,
+            chapter:chapters!inner (
+              chapter_number,
+              novel_id,
+              novel:novels!inner (
+                title,
+                author_profile_id,
+                slug
+              )
+            ),
+            profile:profiles (
+              username,
+              avatar_url,
+              role
+            )
+          `)
+          .eq('chapter.novel.author_profile_id', session.user.id)
+          .order('created_at', { ascending: false });
+
+        if (selectedNovel !== 'all') {
+          threadQuery.eq('chapter.novel_id', selectedNovel);
+        }
+
+        promises.push(threadQuery);
       }
 
       // Fetch novel comments if needed
@@ -129,26 +170,52 @@ export default function NovelComments() {
         }
 
         // Transform and combine the comments
-        const allComments = results.flatMap(result => {
+        const allComments = results.flatMap((result, index) => {
           const comments = (result.data || []) as unknown as RawComment[];
-          return comments.map(comment => ({
-            id: comment.id,
-            content: comment.content,
-            created_at: comment.created_at,
-            novel_id: comment.novel_id,
-            chapter_number: comment.chapter_number,
-            user: {
-              username: comment.profile.username || 'Anonymous',
-              avatar_url: comment.profile.avatar_url || ''
-            },
-            chapter: {
-              title: comment.chapter_number ? `Chapter ${comment.chapter_number}` : 'Novel Comment',
-              novel: {
-                title: comment.novel.title,
-                slug: comment.novel.slug
-              }
+          return comments.map(comment => {
+            // For thread comments (index 1)
+            if (index === 1 && comment.chapter && 'novel' in comment.chapter) {
+              return {
+                id: comment.id,
+                content: comment.content,
+                created_at: comment.created_at,
+                novel_id: comment.chapter.novel_id,
+                chapter_number: comment.chapter.chapter_number,
+                user: {
+                  username: comment.profile.username || 'Anonymous',
+                  avatar_url: comment.profile.avatar_url || ''
+                },
+                chapter: {
+                  title: `Chapter ${comment.chapter.chapter_number} Thread`,
+                  novel: {
+                    title: comment.chapter.novel.title,
+                    slug: comment.chapter.novel.slug
+                  }
+                }
+              } satisfies Comment;
             }
-          }));
+            
+            // For paragraph comments and novel comments
+            return {
+              id: comment.id,
+              content: comment.content,
+              created_at: comment.created_at,
+              novel_id: comment.novel_id,
+              chapter_number: comment.chapter_number,
+              paragraph_id: comment.paragraph_id,
+              user: {
+                username: comment.profile.username || 'Anonymous',
+                avatar_url: comment.profile.avatar_url || ''
+              },
+              chapter: {
+                title: comment.chapter_number ? `Chapter ${comment.chapter_number}` : 'Novel Comment',
+                novel: {
+                  title: comment.novel.title,
+                  slug: comment.novel.slug
+                }
+              }
+            } satisfies Comment;
+          });
         });
 
         // Sort all comments by date

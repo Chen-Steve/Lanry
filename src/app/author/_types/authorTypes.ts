@@ -120,6 +120,7 @@ export interface Comment {
   created_at: string;
   novel_id: string;
   chapter_number?: number;
+  paragraph_id?: string;
   user: {
     username: string;
     avatar_url: string;
