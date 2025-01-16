@@ -254,7 +254,7 @@ export default function ChapterEditor({
         className={`w-full p-3 md:p-4 border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary bg-background placeholder:text-muted-foreground ${
           className.includes('flex-1') ? 'flex-1' : 'min-h-[400px] resize-y'
         }`}
-        placeholder="Write your chapter here..."
+        placeholder="Write your chapter here... (Ctrl or ⌘+B: Bold, Ctrl or ⌘+I: Italic, Ctrl or ⌘+U: Underline, Ctrl or ⌘+F: Footnote, Ctrl or ⌘+K: Link)"
         style={className.includes('flex-1') ? { resize: 'none' } : undefined}
       />
 
