@@ -47,30 +47,30 @@ export default function ChapterBulkUpload({ novelId, userId, onUploadComplete }:
   const processZipFile = async (file: File): Promise<FileToProcess[]> => {
     const zip = new JSZip();
     const zipContent = await zip.loadAsync(file);
-    const docxFiles: FileToProcess[] = [];
+    const processableFiles: FileToProcess[] = [];
 
     for (const [path, zipEntry] of Object.entries(zipContent.files)) {
-      if (!zipEntry.dir && path.toLowerCase().endsWith('.docx')) {
+      if (!zipEntry.dir && (path.toLowerCase().endsWith('.docx') || path.toLowerCase().endsWith('.txt'))) {
         const content = await zipEntry.async('arraybuffer');
-        docxFiles.push({
+        processableFiles.push({
           name: path.split('/').pop() || path,
           content
         });
       }
     }
 
-    if (docxFiles.length === 0) {
-      toast.error('No .docx files found in the zip archive');
+    if (processableFiles.length === 0) {
+      toast.error('No .docx or .txt files found in the zip archive');
     }
 
-    return docxFiles;
+    return processableFiles;
   };
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     const newFiles: FileToProcess[] = [];
     
     for (const file of acceptedFiles) {
-      if (file.name.endsWith('.docx')) {
+      if (file.name.endsWith('.docx') || file.name.endsWith('.txt')) {
         const arrayBuffer = await file.arrayBuffer();
         newFiles.push({
           name: file.name,
@@ -80,7 +80,7 @@ export default function ChapterBulkUpload({ novelId, userId, onUploadComplete }:
         const zipFiles = await processZipFile(file);
         newFiles.push(...zipFiles);
       } else {
-        toast.error('Only .docx and .zip files are allowed');
+        toast.error('Only .docx, .txt, and .zip files are allowed');
       }
     }
 
@@ -91,6 +91,7 @@ export default function ChapterBulkUpload({ novelId, userId, onUploadComplete }:
     onDrop,
     accept: {
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+      'text/plain': ['.txt'],
       'application/zip': ['.zip']
     }
   });
@@ -100,8 +101,13 @@ export default function ChapterBulkUpload({ novelId, userId, onUploadComplete }:
   };
 
   const getFileContent = async (file: FileToProcess): Promise<string> => {
-    const result = await mammoth.extractRawText({ arrayBuffer: file.content });
-    return result.value;
+    if (file.name.endsWith('.txt')) {
+      const decoder = new TextDecoder('utf-8');
+      return decoder.decode(file.content);
+    } else {
+      const result = await mammoth.extractRawText({ arrayBuffer: file.content });
+      return result.value;
+    }
   };
 
   const handleUpload = async () => {
@@ -118,12 +124,13 @@ export default function ChapterBulkUpload({ novelId, userId, onUploadComplete }:
         try {
           const content = await getFileContent(file);
           
-          // First try to match the standard format (chapter2.docx)
-          const standardMatch = /^chapter[\s-]?(\d+)\.docx$/i.test(file.name);
+          // First try to match the standard format (chapter2.docx or chapter2.txt)
+          const standardMatch = /^chapter[\s-]?(\d+)\.(docx|txt)$/i.test(file.name);
           
           // Then try to match formats with titles
           // Matches: chapter2-title.docx, chapter 2-title.docx, chapter2: title.docx, chapter2_title.docx
-          const titleMatch = file.name.match(/^chapter[\s-]?(\d+)(?:[-:_\s]+(.+?))?\.docx$/i);
+          // And the same patterns for .txt files
+          const titleMatch = file.name.match(/^chapter[\s-]?(\d+)(?:[-:_\s]+(.+?))?\.(docx|txt)$/i);
 
           if (!titleMatch) {
             failedUploads.push({ 
@@ -137,7 +144,7 @@ export default function ChapterBulkUpload({ novelId, userId, onUploadComplete }:
           let title = '';
 
           if (!standardMatch && titleMatch[2]) {
-            // Clean up the title: remove .docx, trim spaces
+            // Clean up the title: remove extension, trim spaces
             title = titleMatch[2].trim();
           }
 
@@ -235,22 +242,19 @@ export default function ChapterBulkUpload({ novelId, userId, onUploadComplete }:
                           <li>Accepts:
                             <div className="mt-1 space-y-1">
                               <span className="font-mono text-[10px] bg-accent px-1 rounded block">.docx files</span>
-                              <span className="font-mono text-[10px] bg-accent px-1 rounded block">.zip containing .docx files</span>
+                              <span className="font-mono text-[10px] bg-accent px-1 rounded block">.txt files</span>
+                              <span className="font-mono text-[10px] bg-accent px-1 rounded block">.zip containing .docx or .txt files</span>
                             </div>
                           </li>
                           <li>File names must be in format: 
                             <div className="mt-1 space-y-1">
-                              <span className="font-mono text-[10px] bg-accent px-1 rounded block">chapter-X.docx</span>
                               <span className="font-mono text-[10px] bg-accent px-1 rounded block">chapterX.docx</span>
                               <span className="font-mono text-[10px] bg-accent px-1 rounded block">chapter X.docx</span>
-                              <span className="font-mono text-[10px] bg-accent px-1 rounded block">chapterX-title.docx</span>
                               <span className="font-mono text-[10px] bg-accent px-1 rounded block">chapter X: title.docx</span>
                               <span className="font-mono text-[10px] bg-accent px-1 rounded block">chapter X_title.docx</span>
                             </div>
                           </li>
-                          <li>Where X is the chapter number (e.g., chapter-1.docx)</li>
-                          <li>Optional title after dash, colon, or underscore will be used as chapter title</li>
-                          <li>Files should be Word documents (.docx)</li>
+                          <li>Where X is the chapter number</li>
                         </ul>
                       </div>
                     )}
@@ -282,7 +286,7 @@ export default function ChapterBulkUpload({ novelId, userId, onUploadComplete }:
                     className="w-6 h-6 text-muted-foreground" 
                   />
                   <span className="text-xs text-muted-foreground">
-                    {isDragActive ? 'Drop files here' : 'Drop .docx files or .zip archive'}
+                    {isDragActive ? 'Drop files here' : 'Drop .docx, .txt files or .zip archive'}
                   </span>
                 </div>
               </div>
