@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Icon } from '@iconify/react';
 
 interface ChapterPublishSettingsProps {
@@ -14,8 +14,16 @@ export default function ChapterPublishSettings({
   coins,
   onSettingsChange,
   showSchedulePopup = false,
-  onCloseSchedulePopup
+  onCloseSchedulePopup,
 }: ChapterPublishSettingsProps) {
+  useEffect(() => {
+    // When publishAt is set to a future date and coins is 0, set it to default from localStorage
+    if (publishAt && new Date(publishAt) > new Date() && (coins === '0' || !coins)) {
+      const defaultCoins = localStorage.getItem('defaultChapterCoins') || '1';
+      onSettingsChange({ publishAt, coins: defaultCoins });
+    }
+  }, [publishAt, coins, onSettingsChange]);
+
   return (
     <>
       {/* Schedule Settings Popup */}

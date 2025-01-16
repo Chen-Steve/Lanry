@@ -256,6 +256,22 @@ export async function assignChaptersToVolume(
   if (error) throw error;
 }
 
+export async function updateAdvancedChapterCoins(
+  novelId: string,
+  userId: string,
+  defaultCoins: number
+) {
+  await verifyNovelAuthor(novelId, userId);
+
+  const { error } = await supabase
+    .from('chapters')
+    .update({ coins: defaultCoins })
+    .eq('novel_id', novelId)
+    .gt('publish_at', new Date().toISOString());
+
+  if (error) throw error;
+}
+
 async function verifyNovelAuthor(novelId: string, userId: string) {
   const { data: novel } = await supabase
     .from('novels')

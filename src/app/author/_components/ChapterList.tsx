@@ -7,7 +7,7 @@ import { toast } from 'react-hot-toast';
 import ChapterEditForm from './ChapterEditForm';
 import ChapterBulkUpload from './ChapterBulkUpload';
 import * as authorChapterService from '../_services/authorChapterService';
-import { VolumeModal, DeleteConfirmationModal, AssignChaptersModal } from './ChapterListModals';
+import { VolumeModal, DeleteConfirmationModal, AssignChaptersModal, DefaultCoinsModal } from './ChapterListModals';
 
 const isAdvancedChapter = (chapter: ChapterListChapter): boolean => {
   const now = new Date();
@@ -47,6 +47,7 @@ export default function ChapterList({
   const [selectedChapterIds, setSelectedChapterIds] = useState<Set<string>>(new Set());
   const [assigningVolumeId, setAssigningVolumeId] = useState<string | null>(null);
   const [collapsedVolumes, setCollapsedVolumes] = useState<Set<string>>(new Set());
+  const [isDefaultCoinsModalOpen, setIsDefaultCoinsModalOpen] = useState(false);
 
   const chaptersGroupedByVolume = useMemo(() => {
     const noVolumeChapters = chapters.filter(chapter => !chapter.volumeId);
@@ -186,6 +187,19 @@ export default function ChapterList({
     }
   };
 
+  const handleDefaultCoinsSubmit = async (coins: number) => {
+    try {
+      await authorChapterService.updateAdvancedChapterCoins(novelId, userId, coins);
+      if (onLoadChapters) {
+        await onLoadChapters();
+      }
+      toast.success('Default coins updated successfully');
+    } catch (error) {
+      console.error('Error updating default coins:', error);
+      toast.error('Failed to update default coins');
+    }
+  };
+
   const renderChapter = (chapter: ChapterListChapter) => (
     <div
       key={chapter.id}
@@ -233,7 +247,7 @@ export default function ChapterList({
           
           {isAdvancedChapter(chapter) && (
             <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
-              <Icon icon="mdi:star" className="w-4 h-4 mr-1" />
+              <Icon icon="ph:coins" className="w-4 h-4 mr-1" />
               Advanced
             </span>
           )}
@@ -387,6 +401,12 @@ export default function ChapterList({
                 >
                   Add Volume
                 </button>
+                <button
+                  onClick={() => setIsDefaultCoinsModalOpen(true)}
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 text-sm font-medium text-primary bg-primary/10 rounded-md hover:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors"
+                >
+                  Set Default Price
+                </button>
                 <span className="text-sm text-muted-foreground ml-2 whitespace-nowrap">
                   {chapters.length} {chapters.length === 1 ? 'chapter' : 'chapters'}
                 </span>
@@ -452,6 +472,12 @@ export default function ChapterList({
             message="Are you sure you want to delete this volume? All chapters in this volume will be unassigned. This action cannot be undone."
           />
 
+          <DefaultCoinsModal
+            isOpen={isDefaultCoinsModalOpen}
+            onClose={() => setIsDefaultCoinsModalOpen(false)}
+            onSubmit={handleDefaultCoinsSubmit}
+          />
+
           <AssignChaptersModal
             isOpen={isAssignChaptersModalOpen}
             onClose={() => setIsAssignChaptersModalOpen(false)}
@@ -466,4 +492,4 @@ export default function ChapterList({
       )}
     </div>
   );
-} 
+}
