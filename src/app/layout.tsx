@@ -6,7 +6,6 @@ import Providers from './providers';
 import { Toaster } from 'react-hot-toast';
 import MobileNavigation from './_components/MobileNavigation';
 import { ThemeProvider } from '@/lib/ThemeContext';
-import Script from 'next/script';
 
 export const metadata: Metadata = {
   title: "Lanry",
@@ -36,12 +35,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <Script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1969691044413795"
-          crossOrigin="anonymous"
-          strategy="afterInteractive"
-        />
+        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1969691044413795"
+          crossOrigin="anonymous"></script>
       </head>
       <body className="min-h-screen relative">
         <Providers>
