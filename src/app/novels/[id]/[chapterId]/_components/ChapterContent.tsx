@@ -206,7 +206,102 @@ export default function ChapterContent({
         </div>
       </div>
       
-      <ScreenshotProtection>
+      {!isMobile ? (
+        <ScreenshotProtection>
+          <div 
+            className="prose prose-sm md:prose-base max-w-2xl mx-auto text-black dark:text-white chapter-content select-none dark:prose-invert"
+            style={getTextStyles(fontFamily, fontSize)}
+          >
+            {paragraphs.map((paragraph, index) => {
+              const paragraphId = `p-${index}`;
+              const paragraphComments = comments[paragraphId] || [];
+              
+              return (
+                <div key={`${chapterNumber}-${paragraphId}`} className="relative group">
+                  <div className="relative">
+                    <div 
+                      id={paragraphId}
+                      className={`leading-relaxed cursor-pointer pointer-events-none active:underline active:decoration-dashed active:decoration-gray-400 dark:active:decoration-gray-500 active:underline-offset-4 transition-all duration-200 
+                        ${isMobile ? 'touch-action-none' : ''} 
+                        ${selectedParagraphId === paragraphId ? 'underline decoration-dashed decoration-gray-400 dark:decoration-gray-500 underline-offset-4' : ''}`}
+                      style={getParagraphStyles()}
+                      onClick={(e) => handleParagraphClick(e, paragraphId)}
+                      onContextMenu={(e) => isMobile && handleParagraphLongPress(e, paragraphId)}
+                      onTouchStart={(e) => {
+                        // If touching a footnote, don't start the long press timer
+                        if ((e.target as Element).closest('.footnote')) {
+                          return;
+                        }
+
+                        if (!isMobile) return;
+                        
+                        const timer = setTimeout(() => {
+                          handleParagraphLongPress(e, paragraphId);
+                        }, 500);
+                        
+                        const cleanup = () => {
+                          clearTimeout(timer);
+                          document.removeEventListener('touchend', cleanup);
+                          document.removeEventListener('touchmove', cleanup);
+                        };
+                        
+                        document.addEventListener('touchend', cleanup);
+                        document.addEventListener('touchmove', cleanup);
+                      }}
+                    >
+                      <span aria-hidden="true" className="select-all invisible absolute">{scrambleText(paragraph)}</span>
+                      <span className="relative pointer-events-auto" dangerouslySetInnerHTML={{ __html: formatText(paragraph) }} />
+                      <span className="inline-flex items-center pointer-events-auto">
+                        {paragraphComments.length > 0 && (
+                          <button
+                            onClick={(e) => handleCommentClick(e, paragraphId)}
+                            className={`transition-colors duration-200 ml-1 relative ${isMobile ? 'text-gray-400 dark:text-gray-500' : ''}`}
+                            aria-label="View comments"
+                          >
+                            <Icon 
+                              icon="bx:comment" 
+                              className={`w-5 h-5 ${
+                                isMobile 
+                                  ? 'text-gray-400 dark:text-gray-500' 
+                                  : 'text-gray-400 dark:text-gray-500 hover:text-blue-500 dark:hover:text-blue-400'
+                              } transition-colors`}
+                            />
+                            <span className={`absolute ${isMobile ? 'top-[45%]' : 'top-[40%]'} left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-[10px] font-medium ${
+                              isMobile 
+                                ? 'text-gray-400 dark:text-gray-500' 
+                                : 'text-gray-400 dark:text-gray-500 hover:text-blue-500 dark:hover:text-blue-400'
+                            }`}>
+                              {paragraphComments.length}
+                            </span>
+                          </button>
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                  {index < paragraphs.length - 1 && <div className="mb-4"></div>}
+                </div>
+              );
+            })}
+
+            {/* Like Button Section - Moved inside the prose div */}
+            <div className="flex justify-center items-center gap-3 mt-4 mb-8">
+              <button
+                onClick={handleLikeClick}
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
+                aria-label={isLiked ? 'Unlike chapter' : 'Like chapter'}
+              >
+                <Icon 
+                  icon={isLiked ? "mdi:heart" : "mdi:heart-outline"} 
+                  className={`w-6 h-6 ${isLiked ? 'text-red-500' : 'text-gray-600 dark:text-gray-400'}`}
+                />
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {likeCount} {likeCount === 1 ? 'Like' : 'Likes'}
+                </span>
+              </button>
+            </div>
+          </div>
+        </ScreenshotProtection>
+      ) : (
         <div 
           className="prose prose-sm md:prose-base max-w-2xl mx-auto text-black dark:text-white chapter-content select-none dark:prose-invert"
           style={getTextStyles(fontFamily, fontSize)}
@@ -299,7 +394,7 @@ export default function ChapterContent({
             </button>
           </div>
         </div>
-      </ScreenshotProtection>
+      )}
 
       {/* Author's Thoughts Section */}
       {authorThoughts && authorThoughts.trim() !== '' && (
