@@ -106,7 +106,7 @@ const Header = () => {
 
   return (
     <header className="w-full bg-background">
-      <div className="max-w-5xl mx-auto px-3 sm:px-4 mt-2 sm:mt-4 md:mt-6 lg:mt-8 mb-3 md:mb-6 lg:mb-10">
+      <div className="max-w-5xl mx-auto px-3 sm:px-4 mt-4 mb-8">
         <div className="bg-background border-b border-border rounded-md px-2 sm:px-4 md:px-6 py-2 md:py-3">
           <div className="flex items-center justify-between max-w-full">
             {/* Logo */}

@@ -7,6 +7,7 @@ import Providers from './providers';
 import { Toaster } from 'react-hot-toast';
 import MobileNavigation from './_components/MobileNavigation';
 import { ThemeProvider } from '@/lib/ThemeContext';
+import CookieConsent from './_components/CookieConsent';
 
 export const metadata: Metadata = {
   title: "Lanry",
@@ -53,7 +54,7 @@ export default function RootLayout({
           <ThemeProvider>
             <div className="flex flex-col min-h-screen">
               <Header />
-              <main className="flex-grow pb-16 md:pb-0">
+              <main className="flex-grow">
                 {children}
               </main>
               <div className="hidden md:block">
@@ -62,6 +63,7 @@ export default function RootLayout({
             </div>
             <Toaster position="bottom-right" />
             <MobileNavigation />
+            <CookieConsent />
           </ThemeProvider>
         </Providers>
       </body>
