@@ -22,13 +22,6 @@ export async function GET() {
       }
     });
 
-    if (!chapters.length) {
-      return NextResponse.json(
-        { error: 'No free chapters found' },
-        { status: 404 }
-      );
-    }
-
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://lanry.space';
     const xml = generateChapterFeedXML(null, chapters, baseUrl);
 
@@ -40,9 +33,14 @@ export async function GET() {
     });
   } catch (error) {
     console.error('Error generating free chapters RSS feed:', error);
-    return NextResponse.json(
-      { error: 'Failed to generate RSS feed' },
-      { status: 500 }
-    );
+    // Return empty feed instead of error
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://lanry.space';
+    const xml = generateChapterFeedXML(null, [], baseUrl);
+    return new NextResponse(xml, {
+      headers: {
+        'Content-Type': 'application/xml',
+        'Cache-Control': 'public, max-age=1800'
+      }
+    });
   }
 } 
