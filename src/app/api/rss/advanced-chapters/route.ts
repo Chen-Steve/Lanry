@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { generateChapterFeedXML } from '@/lib/rssUtils';
 
 export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
 
 export async function GET() {
   try {
@@ -15,7 +16,7 @@ export async function GET() {
       orderBy: {
         publishAt: 'asc'
       },
-      take: 50, // Limit to latest 50 chapters
+      take: 50,
       include: {
         novel: true
       }
@@ -34,7 +35,7 @@ export async function GET() {
     return new NextResponse(xml, {
       headers: {
         'Content-Type': 'application/xml',
-        'Cache-Control': 'public, max-age=1800' // Cache for 30 minutes
+        'Cache-Control': 'public, max-age=1800'
       }
     });
   } catch (error) {
