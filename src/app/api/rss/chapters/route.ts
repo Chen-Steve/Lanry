@@ -4,40 +4,37 @@ import { generateChapterFeedXML } from '@/lib/rssUtils';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(
-  request: Request,
-  { params }: { params: { slug: string } }
-) {
+export async function GET() {
   try {
-    const novel = await prisma.novel.findUnique({
-      where: { slug: params.slug }
-    });
-
-    if (!novel) {
-      return NextResponse.json(
-        { error: 'Novel not found' },
-        { status: 404 }
-      );
-    }
-
     const chapters = await prisma.chapter.findMany({
-      where: { novelId: novel.id },
+      where: {
+        publishAt: {
+          lte: new Date()
+        }
+      },
       orderBy: {
         createdAt: 'desc'
       },
       take: 50, // Limit to latest 50 chapters
       include: {
-        novel: true
+        novel: true // Include novel data for the feed
       }
     });
 
+    if (!chapters.length) {
+      return NextResponse.json(
+        { error: 'No chapters found' },
+        { status: 404 }
+      );
+    }
+
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://lanry.space';
-    const xml = generateChapterFeedXML(novel, chapters, baseUrl);
+    const xml = generateChapterFeedXML(null, chapters, baseUrl);
 
     return new NextResponse(xml, {
       headers: {
         'Content-Type': 'application/xml',
-        'Cache-Control': 'public, max-age=3600' // Cache for 1 hour
+        'Cache-Control': 'public, max-age=1800' // Cache for 30 minutes
       }
     });
   } catch (error) {

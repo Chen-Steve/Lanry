@@ -25,26 +25,29 @@ export function generateNovelFeedXML(novels: Novel[], baseUrl: string) {
 </rss>`;
 }
 
-export function generateChapterFeedXML(novel: Novel, chapters: Chapter[], baseUrl: string) {
+export function generateChapterFeedXML(novel: Novel | null, chapters: (Chapter & { novel: Novel })[], baseUrl: string) {
   const now = new Date().toUTCString();
+  const title = novel ? `${escapeXml(novel.title)} Chapters` : 'All Latest Chapters';
+  const link = novel ? `${baseUrl}/novels/${novel.slug}` : baseUrl;
+  const description = novel ? `Latest chapters for ${escapeXml(novel.title)} on Lanry` : 'Latest chapters from all novels on Lanry';
   
   return `<?xml version="1.0" encoding="UTF-8" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Lanry - ${escapeXml(novel.title)} Chapters</title>
-    <link>${baseUrl}/novels/${novel.slug}</link>
-    <description>Latest chapters for ${escapeXml(novel.title)} on Lanry</description>
+    <title>Lanry - ${title}</title>
+    <link>${link}</link>
+    <description>${description}</description>
     <language>en</language>
     <lastBuildDate>${now}</lastBuildDate>
-    <atom:link href="${baseUrl}/api/rss/novels/${novel.slug}/chapters" rel="self" type="application/rss+xml" />
+    <atom:link href="${baseUrl}/api/rss/${novel ? `novels/${novel.slug}/chapters` : 'chapters'}" rel="self" type="application/rss+xml" />
     ${chapters.map(chapter => `
     <item>
-      <title>Chapter ${chapter.chapterNumber}${chapter.title ? `: ${escapeXml(chapter.title)}` : ''}</title>
-      <link>${baseUrl}/novels/${novel.slug}/c${chapter.chapterNumber}</link>
-      <guid>${baseUrl}/novels/${novel.slug}/c${chapter.chapterNumber}</guid>
-      <description>Chapter ${chapter.chapterNumber} of ${escapeXml(novel.title)}</description>
+      <title>${novel ? '' : `[${escapeXml(chapter.novel.title)}] `}Chapter ${chapter.chapterNumber}${chapter.title ? `: ${escapeXml(chapter.title)}` : ''}</title>
+      <link>${baseUrl}/novels/${novel ? novel.slug : chapter.novel.slug}/c${chapter.chapterNumber}</link>
+      <guid>${baseUrl}/novels/${novel ? novel.slug : chapter.novel.slug}/c${chapter.chapterNumber}</guid>
+      <description>${novel ? `Chapter ${chapter.chapterNumber}` : `Chapter ${chapter.chapterNumber} of ${escapeXml(chapter.novel.title)}`}</description>
       <pubDate>${new Date(chapter.createdAt).toUTCString()}</pubDate>
-      <author>${escapeXml(novel.author)}</author>
+      <author>${escapeXml(novel ? novel.author : chapter.novel.author)}</author>
     </item>`).join('')}
   </channel>
 </rss>`;
