@@ -109,7 +109,7 @@ export default function ScreenshotProtection({ children }: ScreenshotProtectionP
               Nice Try! 😏
             </h3>
             <p className="text-gray-600 dark:text-gray-300 mb-4">
-              Sneaky, sneaky! But our authors&apos; content is too precious to steal.
+              Sneaky, sneaky! But our translators & authors&apos; content is too precious to steal.
               How about supporting them properly instead?
             </p>
             <div className="flex justify-center gap-4">

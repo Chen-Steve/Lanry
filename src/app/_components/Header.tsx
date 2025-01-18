@@ -106,7 +106,7 @@ const Header = () => {
 
   return (
     <header className="w-full bg-background">
-      <div className="max-w-5xl mx-auto px-3 sm:px-4 mt-4 mb-8">
+      <div className="max-w-5xl mx-auto px-3 sm:px-4 mt-4 mb-4 md:mb-8">
         <div className="bg-background border-b border-border rounded-md px-2 sm:px-4 md:px-6 py-2 md:py-3">
           <div className="flex items-center justify-between max-w-full">
             {/* Logo */}
@@ -124,13 +124,13 @@ const Header = () => {
             </Link>
 
             {/* Search and Theme Toggle */}
-            <div className="flex items-center flex-1">
-              <div className="relative flex-1 min-w-0 flex items-center ml-0 md:ml-3">
+            <div className="flex items-center flex-1 gap-4 ml-4">
+              <div className="relative flex-1 min-w-0 flex items-center gap-2">
                 <SearchSection />
                 <button
                   onClick={handleRandomNovel}
                   disabled={isRandomizing}
-                  className="flex-none ml-1 p-1.5 text-muted-foreground hover:text-foreground transition-colors"
+                  className="flex-none p-2 text-muted-foreground hover:text-foreground transition-colors"
                   title="Go to random novel"
                 >
                   <Icon 
@@ -139,18 +139,28 @@ const Header = () => {
                   />
                 </button>
               </div>
-              <div className="flex-none md:ml-4">
+              <div className="flex-none">
                 <ThemeToggle />
               </div>
             </div>
 
             {/* Desktop Navigation */}
-            <nav className="hidden md:block flex-shrink-0">
-              <ul className="flex items-center gap-2 lg:gap-4">
+            <nav className="hidden md:block flex-shrink-0 ml-4">
+              <ul className="flex items-center gap-4">
+                <li>
+                  <Link 
+                    href="https://discord.gg/DXHRpV3sxF"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer p-2 inline-flex items-center"
+                  >
+                    <Icon icon="ic:baseline-discord" className="text-2xl" />
+                  </Link>
+                </li>
                 <li>
                   <Link 
                     href="/forum"
-                    className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer py-1 inline-block"
+                    className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer p-2 inline-block"
                   >
                     Forum
                   </Link>

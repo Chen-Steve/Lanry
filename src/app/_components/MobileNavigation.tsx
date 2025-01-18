@@ -36,12 +36,17 @@ export default function MobileNavigation() {
           <span className="text-xs">Browse</span>
         </Link>
         
-        <Link href="/forum" className={`flex flex-col items-center p-2 ${isActive('/forum')}`}>
+        <Link 
+          href="https://discord.gg/DXHRpV3sxF" 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          className="flex flex-col items-center p-2 text-muted-foreground"
+        >
           <Icon 
-            icon="pepicons-print:text-bubbles" 
+            icon="ic:baseline-discord" 
             className="w-6 h-6" 
           />
-          <span className="text-xs">Forum</span>
+          <span className="text-xs">Discord</span>
         </Link>
         
         <Link href="/shop" className={`flex flex-col items-center p-2 ${isActive('/shop')}`}>
@@ -63,12 +68,12 @@ export default function MobileNavigation() {
           <span className="text-xs">{isAuthenticated ? 'Profile' : 'Sign in'}</span>
         </Link>
         
-        <Link href="/more" className={`flex flex-col items-center p-2 ${isActive('/more')}`}>
+        <Link href="/forum" className={`flex flex-col items-center p-2 ${isActive('/forum')}`}>
           <Icon 
-            icon="pepicons-print:dots-x" 
+            icon="pepicons-print:text-bubbles" 
             className="w-6 h-6" 
           />
-          <span className="text-xs">More</span>
+          <span className="text-xs">Forum</span>
         </Link>
       </div>
     </nav>
