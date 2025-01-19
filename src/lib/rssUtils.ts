@@ -30,6 +30,7 @@ export function generateChapterFeedXML(novel: Novel | null, chapters: (Chapter &
   const title = novel ? `${escapeXml(novel.title)} Chapters` : 'All Latest Chapters';
   const link = novel ? `${baseUrl}/novels/${novel.slug}` : baseUrl;
   const description = novel ? `Latest chapters for ${escapeXml(novel.title)} on Lanry` : 'Latest chapters from all novels on Lanry';
+  const feedUrl = novel ? `novels/${novel.slug}/chapters` : 'freechapters';
   
   return `<?xml version="1.0" encoding="UTF-8" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
@@ -39,7 +40,7 @@ export function generateChapterFeedXML(novel: Novel | null, chapters: (Chapter &
     <description>${description}</description>
     <language>en</language>
     <lastBuildDate>${now}</lastBuildDate>
-    <atom:link href="${baseUrl}/api/rss/${novel ? `novels/${novel.slug}/chapters` : 'chapters'}" rel="self" type="application/rss+xml" />
+    <atom:link href="${baseUrl}/api/rss/${feedUrl}" rel="self" type="application/rss+xml" />
     ${chapters.map(chapter => `
     <item>
       <title>${novel ? '' : `[${escapeXml(chapter.novel.title)}] `}Chapter ${chapter.chapterNumber}${chapter.title ? `: ${escapeXml(chapter.title)}` : ''}</title>

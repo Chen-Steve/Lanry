@@ -30,46 +30,53 @@ export default function ShopPage() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8">
+    <div className="max-w-5xl mx-auto px-4 py-6">
       {/* Header Section */}
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold mb-4 text-foreground">Coin Shop</h1>
+      <div className="text-center mb-6">
+        <h1 className="text-2xl font-bold mb-2 text-foreground">Coin Shop</h1>
       </div>
 
-      {/* Instructions */}
-      <div className="bg-primary/10 p-4 rounded-lg mb-8">
-        <h2 className="font-semibold text-lg mb-2 text-foreground">How to buy coins:</h2>
-        <ol className="list-decimal list-inside text-muted-foreground space-y-2">
-          {!isAuthenticated && (
-            <li className="text-red-500 dark:text-red-400 font-medium">First, please create an account or sign in</li>
-          )}
-          <li>Click on your preferred coin package below</li>
-          <li>You&apos;ll be redirected to Ko-fi for payment</li>
-          <li><strong>Important:</strong> Include your username in the message when making the purchase</li>
-          <li>Coins will be added to your account within 24 hours</li>
-        </ol>
+      {/* Instructions and Discord Notice */}
+      <div className="bg-primary/10 p-4 rounded-lg mb-6 space-y-4">
+        <div className="flex items-start gap-3">
+          <Icon icon="mdi:information" className="text-xl text-muted-foreground mt-0.5" />
+          <div className="flex-1">
+            <p className="text-sm text-muted-foreground">
+              {!isAuthenticated && <span className="text-red-500 dark:text-red-400 block font-medium mb-1">First, please create an account or sign in</span>}
+              1. Click your preferred package below<br />
+              2. Include your username in the Ko-fi message<br />
+              3. Coins will be added within 12 hours
+            </p>
+          </div>
+        </div>
+        <div className="flex items-start gap-3">
+          <Icon icon="mdi:discord" className="text-xl text-[#5865F2] mt-0.5" />
+          <p className="text-sm text-muted-foreground">
+            Get <span className="font-medium text-[#5865F2]">Supporter role</span> on our Discord server with any purchase!
+          </p>
+        </div>
       </div>
 
       {/* Packages Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {coinPackages.map((pkg) => (
           <div 
             key={pkg.id}
-            className="border border-border rounded-lg p-6 text-center hover:shadow-md transition-shadow bg-background"
+            className="border border-border rounded-lg p-4 text-center hover:shadow-md transition-shadow bg-background"
           >
-            <div className="flex justify-center mb-4">
-              <Icon icon="pepicons-print:coins" className="text-amber-500 text-4xl" />
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <Icon icon="pepicons-print:coins" className="text-amber-500 text-2xl" />
+              <h3 className="text-lg font-bold text-foreground">{pkg.coins} Coins</h3>
             </div>
             
-            <h3 className="text-xl font-bold mb-2 text-foreground">{pkg.coins} Coins</h3>
-            <p className="text-2xl font-bold text-amber-500 dark:text-amber-400 mb-4">
+            <p className="text-xl font-bold text-amber-500 dark:text-amber-400 mb-3">
               ${pkg.price.toFixed(2)}
             </p>
 
             <button
               onClick={handlePurchaseClick}
               className={`
-                inline-flex items-center justify-center gap-2 w-full py-2 px-4 rounded-md font-medium
+                inline-flex items-center justify-center gap-2 w-full py-1.5 px-3 rounded-md text-sm font-medium
                 ${isAuthenticated 
                   ? 'bg-[#29abe0] hover:bg-[#228db8] text-white' 
                   : 'bg-muted text-muted-foreground cursor-not-allowed'}
@@ -77,7 +84,7 @@ export default function ShopPage() {
               `}
               disabled={!isAuthenticated}
             >
-              <Icon icon="simple-icons:kofi" className="text-xl" />
+              <Icon icon="simple-icons:kofi" className="text-lg" />
               Buy on Ko-fi
             </button>
           </div>

@@ -124,23 +124,25 @@ const Header = () => {
             </Link>
 
             {/* Search and Theme Toggle */}
-            <div className="flex items-center flex-1 gap-4 ml-4">
-              <div className="relative flex-1 min-w-0 flex items-center gap-2">
+            <div className="flex items-center flex-1 ml-0 md:ml-4">
+              <div className="relative flex-1 min-w-0 flex items-center">
                 <SearchSection />
-                <button
-                  onClick={handleRandomNovel}
-                  disabled={isRandomizing}
-                  className="flex-none p-2 text-muted-foreground hover:text-foreground transition-colors"
-                  title="Go to random novel"
-                >
-                  <Icon 
-                    icon={isRandomizing ? "eos-icons:loading" : "mdi:dice-6"} 
-                    className={`text-xl ${isRandomizing ? 'animate-spin' : ''}`}
-                  />
-                </button>
-              </div>
-              <div className="flex-none">
-                <ThemeToggle />
+                <div className="flex items-center">
+                  <button
+                    onClick={handleRandomNovel}
+                    disabled={isRandomizing}
+                    className="flex-none p-2 text-muted-foreground hover:text-foreground transition-colors"
+                    title="Go to random novel"
+                  >
+                    <Icon 
+                      icon={isRandomizing ? "eos-icons:loading" : "mdi:dice-6"} 
+                      className={`text-xl ${isRandomizing ? 'animate-spin' : ''}`}
+                    />
+                  </button>
+                  <div className="flex-none flex items-center">
+                    <ThemeToggle />
+                  </div>
+                </div>
               </div>
             </div>
 
