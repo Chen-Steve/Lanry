@@ -46,7 +46,22 @@ export function generateChapterFeedXML(novel: Novel | null, chapters: (Chapter &
       <title>${novel ? '' : `[${escapeXml(chapter.novel.title)}] `}Chapter ${chapter.chapterNumber}${chapter.title ? `: ${escapeXml(chapter.title)}` : ''}</title>
       <link>${baseUrl}/novels/${novel ? novel.slug : chapter.novel.slug}/c${chapter.chapterNumber}</link>
       <guid>${baseUrl}/novels/${novel ? novel.slug : chapter.novel.slug}/c${chapter.chapterNumber}</guid>
-      <description>${novel ? `Chapter ${chapter.chapterNumber}` : `Chapter ${chapter.chapterNumber} of ${escapeXml(chapter.novel.title)}`}</description>
+      <description><![CDATA[
+        <div style="font-family: Arial, sans-serif; padding: 15px;">
+          <h3>${novel ? `Chapter ${chapter.chapterNumber}` : `Chapter ${chapter.chapterNumber} of ${escapeXml(chapter.novel.title)}`}</h3>
+          <a href="${baseUrl}/novels/${novel ? novel.slug : chapter.novel.slug}/c${chapter.chapterNumber}" 
+             style="display: inline-block; 
+                    background-color: #4a5568; 
+                    color: white; 
+                    padding: 10px 20px; 
+                    text-decoration: none; 
+                    border-radius: 5px; 
+                    font-weight: bold;
+                    margin-top: 10px;">
+            Read Chapter
+          </a>
+        </div>
+      ]]></description>
       <pubDate>${new Date(chapter.createdAt).toUTCString()}</pubDate>
       <author>${escapeXml(novel ? novel.author : chapter.novel.author)}</author>
     </item>`).join('')}
