@@ -345,13 +345,12 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
                     </div>
                   </div>
                 </div>
-                <div className="flex-grow flex flex-col justify-end mt-8">
-                  <div className="relative group flex items-start gap-2">
-                    <div className="flex-grow min-h-[100px] text-sm text-muted-foreground whitespace-pre-wrap">
-                      {description.length > 200 
-                        ? `${description.slice(0, 200)}...`
-                        : description || 'Enter your novel description here...'
-                      }
+                <div className="h-[100px] mt-8">
+                  <div className="relative group flex items-start gap-2 max-w-[600px]">
+                    <div className="flex-grow min-h-[100px] max-h-[100px] text-sm text-muted-foreground whitespace-pre-wrap overflow-y-auto">
+                      {description.length > 50 
+                        ? `${description.slice(0, 50)}...`
+                        : description || 'Enter your novel description here...'}
                     </div>
                     <button
                       onClick={() => {
@@ -381,7 +380,6 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
             <div className="fixed inset-0 bg-foreground/50 backdrop-blur-sm flex items-center justify-center z-50">
               <div className="bg-background rounded-lg w-[700px] shadow-lg border border-border">
                 <div className="flex items-center justify-between border-b border-border p-3">
-                  <h3 className="text-lg font-medium text-foreground">Edit Description</h3>
                   <button
                     onClick={() => setIsDescriptionModalOpen(false)}
                     className="text-muted-foreground hover:text-foreground transition-colors"
