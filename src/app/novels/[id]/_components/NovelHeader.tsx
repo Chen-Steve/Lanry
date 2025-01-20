@@ -294,42 +294,6 @@ export const NovelHeader = ({
                 <div className="w-full h-full bg-gray-200 dark:bg-gray-800" />
               )}
             </div>
-            {/* Mobile Action Buttons */}
-            <div className="sm:hidden mt-2 flex items-center gap-2">
-              {firstChapterNumber !== undefined && (
-                <Link 
-                  href={`/novels/${novelSlug}/c${firstChapterNumber}`}
-                  className="flex-1 inline-flex items-center justify-center gap-1 px-4 h-10 rounded-lg bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 transition-colors text-white font-medium"
-                >
-                  <Icon icon="pepicons-print:book-open" className="text-xl" />
-                  <span className="text-sm">Read Now</span>
-                </Link>
-              )}
-              <button 
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  if (!isBookmarkLoading) {
-                    onBookmarkClick();
-                  }
-                }}
-                type="button"
-                disabled={isBookmarkLoading}
-                aria-label={isBookmarked ? "Remove Bookmark" : "Add Bookmark"}
-                className={`inline-flex items-center justify-center w-10 h-10 rounded-lg transition-colors touch-manipulation ${
-                  !isAuthenticated 
-                    ? 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-800/50 dark:hover:bg-gray-700/50'
-                    : isBookmarked 
-                      ? 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-800/50 dark:hover:bg-gray-700/50'
-                      : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-800/50 dark:hover:bg-gray-700/50'
-                } ${isBookmarkLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-              >
-                <Icon 
-                  icon={isBookmarked ? "pepicons-print:checkmark" : "pepicons-print:bookmark"} 
-                  className={`text-[20px] text-gray-700 dark:text-gray-200 flex-shrink-0 ${isBookmarkLoading ? 'animate-pulse' : ''}`}
-                />
-              </button>
-            </div>
           </div>
 
           {/* Right Side - Content */}
@@ -337,7 +301,7 @@ export const NovelHeader = ({
             {/* Title and Author Info */}
             <div className="space-y-1">
               <div className="sm:block overflow-x-auto scrollbar-hide">
-                <h1 className="text-md sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-gray-50 leading-tight whitespace-nowrap pr-4 sm:pr-0 sm:whitespace-normal">
+                <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-gray-50 leading-tight whitespace-nowrap pr-4 sm:pr-0 sm:whitespace-normal">
                   {title}
                 </h1>
               </div>
@@ -379,6 +343,75 @@ export const NovelHeader = ({
                     )}
                   </>
                 )}
+              </div>
+            </div>
+
+            {/* Mobile Stats */}
+            <div className="sm:hidden flex flex-col flex-1">
+              <div className="flex items-center gap-1.5 mt-2">
+                <div className="flex items-center gap-2 px-1.5 py-1 bg-gray-100 dark:bg-gray-800/50 rounded-lg text-xs">
+                  <StatsItem icon="pepicons-print:bookmark" value={`${bookmarkCount}`} withGap />
+                  <StatsItem icon="mdi:eye-outline" value={`${viewCount.toLocaleString()}`} color="purple" withGap />
+                </div>
+                <div className="relative flex items-center px-1.5 py-1 bg-gray-100 dark:bg-gray-800/50 rounded-lg">
+                  <button
+                    ref={ratingButtonRef}
+                    className="flex items-center gap-1 transition-colors hover:text-amber-400"
+                    onClick={() => setShowRatingPopup(!showRatingPopup)}
+                    aria-label="Rate novel"
+                  >
+                    <Icon 
+                      icon="pepicons-print:star-filled"
+                      className="text-base text-amber-400"
+                    />
+                    <span className="text-gray-700 dark:text-gray-200 font-medium text-xs">{localRating.toFixed(1)}</span>
+                    <span className="text-gray-500 dark:text-gray-400 text-xs">({localRatingCount})</span>
+                  </button>
+                  {showRatingPopup && (
+                    <RatingPopup
+                      onRate={handleRate}
+                      currentRating={localUserRating}
+                      isRating={isRating}
+                    />
+                  )}
+                </div>
+              </div>
+
+              {/* Mobile Action Buttons */}
+              <div className="flex items-center gap-2 mt-auto">
+                {firstChapterNumber !== undefined && (
+                  <Link 
+                    href={`/novels/${novelSlug}/c${firstChapterNumber}`}
+                    className="flex-1 inline-flex items-center justify-center gap-1 px-4 h-10 rounded-lg bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 transition-colors text-white font-medium"
+                  >
+                    <Icon icon="pepicons-print:book-open" className="text-xl" />
+                    <span className="text-sm">Read Now</span>
+                  </Link>
+                )}
+                <button 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (!isBookmarkLoading) {
+                      onBookmarkClick();
+                    }
+                  }}
+                  type="button"
+                  disabled={isBookmarkLoading}
+                  aria-label={isBookmarked ? "Remove Bookmark" : "Add Bookmark"}
+                  className={`inline-flex items-center justify-center w-10 h-10 rounded-lg transition-colors touch-manipulation ${
+                    !isAuthenticated 
+                      ? 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-800/50 dark:hover:bg-gray-700/50'
+                      : isBookmarked 
+                        ? 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-800/50 dark:hover:bg-gray-700/50'
+                        : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-800/50 dark:hover:bg-gray-700/50'
+                  } ${isBookmarkLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  <Icon 
+                    icon={isBookmarked ? "pepicons-print:checkmark" : "pepicons-print:bookmark"} 
+                    className={`text-[20px] text-gray-700 dark:text-gray-200 flex-shrink-0 ${isBookmarkLoading ? 'animate-pulse' : ''}`}
+                  />
+                </button>
               </div>
             </div>
 

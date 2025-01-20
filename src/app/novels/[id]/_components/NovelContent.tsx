@@ -89,7 +89,7 @@ export const NovelContent = ({
 
   const tabs = [
     { label: 'Chapters', value: 'chapters' },
-    ...(translator && translator.kofiUrl || translator?.patreonUrl || translator?.customUrl ? [{ label: 'Support Author', value: 'support' }] : []),
+    ...(translator && translator.kofiUrl || translator?.patreonUrl || translator?.customUrl ? [{ label: 'About Author', value: 'support' }] : []),
     { label: 'Comments', value: 'comments' },
     { label: 'Recommendations', value: 'recommendations' },
   ];
