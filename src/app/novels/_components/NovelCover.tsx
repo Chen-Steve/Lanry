@@ -22,7 +22,7 @@ const NovelCover = ({
   status = '',
   showStatus = false
 }: NovelCoverProps) => (
-  <div className="relative aspect-[2/3] w-full rounded overflow-hidden bg-muted">
+  <div className="relative aspect-[2/3] w-full rounded overflow-hidden bg-muted group">
     {coverUrl ? (
       <Image
         src={coverUrl.startsWith('http') ? coverUrl : `/novel-covers/${coverUrl}`}
@@ -30,7 +30,7 @@ const NovelCover = ({
         fill
         priority={isPriority}
         loading={isPriority ? 'eager' : 'lazy'}
-        className="object-cover transition-transform hover:scale-105"
+        className="object-cover transition-transform group-hover:scale-105"
         sizes="(max-width: 640px) 33vw, (max-width: 768px) 25vw, 16vw"
       />
     ) : (
@@ -39,20 +39,24 @@ const NovelCover = ({
       </div>
     )}
     
-    {showRating && (
-      <div className="absolute bottom-0 left-0 bg-black/80 dark:bg-black/60 flex items-center justify-center gap-1 h-5 w-10 rounded-tr-lg backdrop-blur-[2px]">
-        <Icon icon="pepicons-print:star-filled" className="text-amber-400 text-[10px]" />
-        <span className="text-white text-[10px] font-medium">
-          {rating > 0 ? rating.toFixed(1) : 'N/A'}
-        </span>
-      </div>
-    )}
-
-    {showStatus && status && (
-      <div className="absolute bottom-0 right-0 bg-black/80 dark:bg-black/60 flex items-center justify-center h-5 w-12 rounded-tl-lg backdrop-blur-[2px]">
-        <span className="text-white text-[10px] font-medium capitalize">
-          {status.toLowerCase()}
-        </span>
+    {(showRating || (showStatus && status)) && (
+      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent pt-8 pb-2 px-2 transition-opacity group-hover:opacity-100">
+        <div className="flex items-center justify-between gap-2">
+          {showRating && (
+            <div className="flex items-center gap-1">
+              <Icon icon="pepicons-print:star-filled" className="text-amber-400 text-sm" />
+              <span className="text-white text-xs font-medium">
+                {rating > 0 ? rating.toFixed(1) : 'N/A'}
+              </span>
+            </div>
+          )}
+          
+          {showStatus && status && (
+            <span className="text-xs font-medium text-white/90 capitalize px-2 py-0.5 rounded-full bg-white/10 backdrop-blur-[2px]">
+              {status.toLowerCase()}
+            </span>
+          )}
+        </div>
       </div>
     )}
   </div>

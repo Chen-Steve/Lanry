@@ -37,6 +37,25 @@ export default function MobileNavigation() {
         </Link>
         
         <Link 
+          href={isAuthenticated ? "/user-dashboard" : "/auth"} 
+          className={`flex flex-col items-center p-2 ${isActive(isAuthenticated ? '/user-dashboard' : '/auth')}`}
+        >
+          <Icon 
+            icon="pepicons-print:person" 
+            className="w-6 h-6" 
+          />
+          <span className="text-xs">{isAuthenticated ? 'Profile' : 'Sign in'}</span>
+        </Link>
+
+        <Link href="/shop" className={`flex flex-col items-center p-2 ${isActive('/shop')}`}>
+          <Icon 
+            icon="solar:dollar-minimalistic-bold" 
+            className="w-6 h-6" 
+          />
+          <span className="text-xs">Shop</span>
+        </Link>
+
+        <Link 
           href="https://discord.gg/DXHRpV3sxF" 
           target="_blank" 
           rel="noopener noreferrer" 
@@ -48,33 +67,7 @@ export default function MobileNavigation() {
           />
           <span className="text-xs">Discord</span>
         </Link>
-        
-        <Link href="/shop" className={`flex flex-col items-center p-2 ${isActive('/shop')}`}>
-          <Icon 
-            icon="solar:dollar-minimalistic-bold" 
-            className="w-6 h-6" 
-          />
-          <span className="text-xs">Shop</span>
-        </Link>
-        
-        <Link 
-          href={isAuthenticated ? "/user-dashboard" : "/auth"} 
-          className={`flex flex-col items-center p-2 ${isActive(isAuthenticated ? '/user-dashboard' : '/auth')}`}
-        >
-          <Icon 
-            icon="pepicons-print:person" 
-            className="w-6 h-6" 
-          />
-          <span className="text-xs">{isAuthenticated ? 'Profile' : 'Sign in'}</span>
-        </Link>
-        
-        <Link href="/forum" className={`flex flex-col items-center p-2 ${isActive('/forum')}`}>
-          <Icon 
-            icon="pepicons-print:text-bubbles" 
-            className="w-6 h-6" 
-          />
-          <span className="text-xs">Forum</span>
-        </Link>
+
       </div>
     </nav>
   );

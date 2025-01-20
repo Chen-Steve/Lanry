@@ -83,7 +83,7 @@ const NovelListing = () => {
           <p className="text-gray-500">No novels found in the selected categories.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-1.5">
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-1.5 pb-20">
           {filteredNovels.map((novel, index) => (
             <NovelCard 
               key={novel.id} 
