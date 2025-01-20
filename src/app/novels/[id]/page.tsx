@@ -177,10 +177,7 @@ export default function NovelPage({ params }: { params: { id: string } }) {
         chaptersCount={novel.chapters.length}
         bookmarkCount={novel.bookmarkCount}
         viewCount={viewCount}
-        status={novel.status}
         ageRating={novel.ageRating}
-        createdAt={novel.created_at}
-        updatedAt={novel.updated_at}
         author={novel.author}
         isAuthorNameCustom={novel.is_author_name_custom}
         translator={novel.translator}
