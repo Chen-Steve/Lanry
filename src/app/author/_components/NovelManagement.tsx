@@ -126,11 +126,11 @@ export default function NovelManagement() {
   }
 
   return (
-    <main className="space-y-6">
-      <header className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-foreground">Novel Management</h1>
+    <main className="space-y-4 sm:space-y-6 px-4 sm:px-0">
+      <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h1 className="text-xl sm:text-2xl font-bold text-foreground">Novel Management</h1>
         <button
-          className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+          className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
           onClick={() => {
             setNovelToEdit(emptyNovel);
             setView('edit');
@@ -152,48 +152,48 @@ export default function NovelManagement() {
             placeholder="Search novels..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 bg-background text-foreground placeholder:text-muted-foreground"
+            className="w-full pl-10 pr-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 bg-background text-foreground placeholder:text-muted-foreground text-sm sm:text-base"
           />
         </div>
       </section>
 
-      <section>
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
         {isLoading ? (
-          <div className="py-12 text-center">
+          <div className="col-span-full py-12 text-center">
             <Icon icon="mdi:loading" className="animate-spin text-3xl text-primary/60" />
           </div>
         ) : filteredNovels.length > 0 ? (
           filteredNovels.map((novel) => (
-            <article key={novel.id} className="relative flex gap-4 bg-background hover:bg-accent/50 py-2 px-4 border border-border rounded-lg mb-2">
+            <article key={novel.id} className="relative flex gap-3 bg-background hover:bg-accent/50 p-2 xs:p-2.5 sm:p-3 border border-border rounded-lg">
               <button 
-                className="absolute top-2 right-4 p-1.5 text-muted-foreground hover:text-red-600 dark:hover:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-full transition-colors"
+                className="absolute top-1 xs:top-1.5 right-1 xs:right-1.5 p-0.5 xs:p-1 text-muted-foreground hover:text-red-600 dark:hover:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-full transition-colors"
                 aria-label="Delete novel"
                 onClick={() => setNovelToDelete(novel)}
               >
-                <Icon icon="mdi:delete" className="w-5 h-5" />
+                <Icon icon="mdi:delete" className="w-3 xs:w-3.5 sm:w-4 h-3 xs:h-3.5 sm:h-4" />
               </button>
 
-              <div className="w-[80px] h-[120px] flex-shrink-0">
+              <div className="w-[45px] xs:w-[50px] sm:w-[60px] h-[68px] xs:h-[75px] sm:h-[90px] flex-shrink-0">
                 <Image
                   src={novel.coverImageUrl || '/images/default-cover.jpg'}
                   alt={novel.title}
-                  width={80}
-                  height={120}
+                  width={60}
+                  height={90}
                   className="object-cover w-full h-full rounded border border-border"
                   priority
                 />
               </div>
 
-              <div className="flex-1 min-w-0 flex flex-col justify-between">
+              <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
                 <div>
-                  <h2 className="font-medium text-lg text-foreground mb-1 pr-8">{novel.title}</h2>
+                  <h2 className="font-medium text-sm xs:text-base text-foreground mb-1 xs:mb-1.5 pr-4 xs:pr-5 sm:pr-6 line-clamp-1">{novel.title}</h2>
 
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm text-muted-foreground">
+                  <div className="flex flex-wrap items-center gap-1 xs:gap-1.5">
+                    <span className="text-[10px] xs:text-xs text-muted-foreground">
                       {novel.chapterCount} Chapters
                     </span>
 
-                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium
+                    <span className={`inline-flex items-center gap-0.5 xs:gap-1 px-1 xs:px-1.5 py-0.5 rounded-full text-[10px] xs:text-xs font-medium
                       ${novel.status === 'ONGOING' ? 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300' :
                         novel.status === 'COMPLETED' ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300' :
                         'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-300'}`}>
@@ -201,24 +201,24 @@ export default function NovelManagement() {
                         novel.status === 'ONGOING' ? 'mdi:pencil' :
                         novel.status === 'COMPLETED' ? 'mdi:check-circle' :
                         'mdi:pause-circle'
-                      } className="w-3.5 h-3.5" />
+                      } className="w-2.5 xs:w-3 h-2.5 xs:h-3" />
                       {novel.status}
                     </span>
 
-                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium
+                    <span className={`inline-flex items-center gap-0.5 xs:gap-1 px-1 xs:px-1.5 py-0.5 rounded-full text-[10px] xs:text-xs font-medium
                       ${novel.ageRating === 'EVERYONE' ? 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300' :
                         novel.ageRating === 'TEEN' ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300' :
                         novel.ageRating === 'MATURE' ? 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-300' :
                         'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300'}`}>
-                      <Icon icon={ageRatingIcons[novel.ageRating]} className="w-3.5 h-3.5" />
+                      <Icon icon={ageRatingIcons[novel.ageRating]} className="w-2.5 xs:w-3 h-2.5 xs:h-3" />
                       {ageRatingLabels[novel.ageRating]}
                     </span>
                   </div>
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex gap-2 mt-2 xs:mt-2.5">
                   <button 
-                    className="px-4 py-1.5 text-sm font-medium text-primary bg-primary/10 hover:bg-primary/20 rounded-md transition-colors"
+                    className="w-full px-3 xs:px-4 py-2 xs:py-2.5 text-sm sm:text-base font-medium text-primary bg-primary/10 hover:bg-primary/20 rounded-md transition-colors"
                     aria-label="Edit novel"
                     onClick={() => handleEditClick(novel)}
                   >
@@ -229,7 +229,7 @@ export default function NovelManagement() {
             </article>
           ))
         ) : (
-          <p className="py-12 text-center text-muted-foreground">
+          <p className="col-span-full py-12 text-center text-sm sm:text-base text-muted-foreground">
             No novels found. Click &quot;Add New Novel&quot; to create one.
           </p>
         )}
@@ -237,21 +237,21 @@ export default function NovelManagement() {
 
       {/* Delete Confirmation Modal */}
       {novelToDelete && (
-        <div className="fixed inset-0 bg-foreground/50 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-background rounded-lg p-6 max-w-sm w-full mx-4 shadow-xl border border-border">
-            <h3 className="text-lg font-medium text-foreground mb-4">Delete Novel</h3>
-            <p className="text-muted-foreground mb-6">
+        <div className="fixed inset-0 bg-foreground/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-background rounded-lg p-4 sm:p-6 max-w-sm w-full mx-auto shadow-xl border border-border">
+            <h3 className="text-base sm:text-lg font-medium text-foreground mb-3 sm:mb-4">Delete Novel</h3>
+            <p className="text-sm sm:text-base text-muted-foreground mb-4 sm:mb-6">
               Are you sure you want to delete &quot;{novelToDelete.title}&quot;? This action cannot be undone.
             </p>
             <div className="flex justify-end gap-3">
               <button
-                className="px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-accent rounded-md transition-colors"
+                className="px-3 sm:px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-accent rounded-md transition-colors"
                 onClick={() => setNovelToDelete(null)}
               >
                 Cancel
               </button>
               <button
-                className="px-4 py-2 text-sm font-medium text-primary-foreground bg-red-600 dark:bg-red-700 hover:bg-red-700 dark:hover:bg-red-800 rounded-md transition-colors"
+                className="px-3 sm:px-4 py-2 text-sm font-medium text-primary-foreground bg-red-600 dark:bg-red-700 hover:bg-red-700 dark:hover:bg-red-800 rounded-md transition-colors"
                 onClick={handleDeleteNovel}
               >
                 Delete
@@ -261,14 +261,14 @@ export default function NovelManagement() {
         </div>
       )}
 
-      <footer className="flex justify-center items-center gap-2">
+      <footer className="flex justify-center items-center gap-2 py-4">
         <button 
           className="p-2 rounded-lg hover:bg-accent transition-colors"
           aria-label="Previous page"
         >
           <Icon icon="mdi:chevron-left" className="text-xl text-foreground" />
         </button>
-        <span className="px-4 py-2 text-foreground">Page 1 of 1</span>
+        <span className="px-4 py-2 text-sm sm:text-base text-foreground">Page 1 of 1</span>
         <button 
           className="p-2 rounded-lg hover:bg-accent transition-colors"
           aria-label="Next page"

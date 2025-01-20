@@ -103,9 +103,6 @@ export default function UserDashboard() {
       const targetId = profileId || user?.id;
       if (!targetId) return null;
 
-      // Set whether this is the user's own profile
-      setIsOwnProfile(user?.id === targetId);
-
       // Fetch profile with bookmarks and reading history counts
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
@@ -143,6 +140,16 @@ export default function UserDashboard() {
     retry: 1,
     staleTime: 30000,
   });
+
+  // Update isOwnProfile when profile data changes
+  useEffect(() => {
+    const checkOwnProfile = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setIsOwnProfile(user?.id === (profileId || user?.id));
+    };
+    
+    checkOwnProfile();
+  }, [profileId, profile]);
 
   useEffect(() => {
     const checkAuth = async () => {

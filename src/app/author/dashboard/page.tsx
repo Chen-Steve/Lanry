@@ -168,23 +168,25 @@ export default function AuthorDashboard() {
       </div>
 
       {/* Main Content */}
-      <div className="lg:ml-64 flex-1 p-8 pt-16 lg:pt-8">
-        <div className="max-w-5xl mx-auto">
-          {activeTab === 'manage-novels' && (
-            <NovelManagement />
-          )}
-          {activeTab === 'purchases' && (
-            <ChapterPurchaseHistory />
-          )}
-          {activeTab === 'comments' && (
-            <NovelComments />
-          )}
-          {activeTab === 'statistics' && (
-            <NovelStatistics />
-          )}
-          {activeTab === 'links' && (
-            <TranslatorLinks />
-          )}
+      <div className="lg:ml-64 flex-1 min-w-0">
+        <div className="p-4 sm:p-8 pt-16 lg:pt-8">
+          <div className="max-w-5xl mx-auto min-w-0">
+            {activeTab === 'manage-novels' && (
+              <NovelManagement />
+            )}
+            {activeTab === 'purchases' && (
+              <ChapterPurchaseHistory />
+            )}
+            {activeTab === 'comments' && (
+              <NovelComments />
+            )}
+            {activeTab === 'statistics' && (
+              <NovelStatistics />
+            )}
+            {activeTab === 'links' && (
+              <TranslatorLinks />
+            )}
+          </div>
         </div>
       </div>
     </div>
