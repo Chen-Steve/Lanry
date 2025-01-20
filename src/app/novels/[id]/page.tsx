@@ -8,7 +8,7 @@ import supabase from '@/lib/supabaseClient';
 import toast from 'react-hot-toast';
 import { getNovel, toggleBookmark } from '@/services/novelService';
 import { track } from '@vercel/analytics';
-import { SynopsisSection } from '@/app/novels/[id]/_components/SynopsisSection';
+import { NovelContent } from '@/app/novels/[id]/_components/NovelContent';
 import AdultContentWarning from './_components/AdultContentWarning';
 
 export default function NovelPage({ params }: { params: { id: string } }) {
@@ -171,13 +171,16 @@ export default function NovelPage({ params }: { params: { id: string } }) {
 
   return (
     <div className="max-w-5xl mx-auto">
-      <SynopsisSection 
+      <NovelContent 
         title={novel.title}
         description={novel.description}
         chaptersCount={novel.chapters.length}
         bookmarkCount={novel.bookmarkCount}
         viewCount={viewCount}
+        status={novel.status}
         ageRating={novel.ageRating}
+        createdAt={novel.created_at}
+        updatedAt={novel.updated_at}
         author={novel.author}
         isAuthorNameCustom={novel.is_author_name_custom}
         translator={novel.translator}

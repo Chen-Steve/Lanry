@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import supabase from '@/lib/supabaseClient';
 import { NovelActionButtons } from './NovelActionButtons';
 import { generateUUID } from '@/lib/utils';
+import { NovelSynopsis } from './NovelSynopsis';
 
 interface NovelHeaderProps {
   title: string;
@@ -16,7 +17,6 @@ interface NovelHeaderProps {
     username: string | null;
     profile_id: string;
   } | null;
-  chaptersCount: number;
   bookmarkCount: number;
   viewCount: number;
   coverImageUrl?: string;
@@ -24,7 +24,7 @@ interface NovelHeaderProps {
   isAuthorNameCustom?: boolean;
   categories?: NovelCategory[];
   tags?: Tag[];
-  // New props for actions and rating
+  description: string;
   showActionButtons?: boolean;
   firstChapterNumber?: number;
   novelSlug: string;
@@ -37,10 +37,30 @@ interface NovelHeaderProps {
   userRating?: number;
   novelId: string;
   ageRating?: 'EVERYONE' | 'TEEN' | 'MATURE' | 'ADULT';
+  characters?: {
+    id: string;
+    name: string;
+    role: string;
+    imageUrl: string;
+    description?: string | null;
+    orderIndex: number;
+  }[];
 }
 
-const StatsItem = ({ icon, value, color = 'gray', withGap = false }: { icon: string; value: string; color?: string; withGap?: boolean }) => (
-  <div className={`flex items-center ${withGap ? 'gap-1' : ''}`}>
+const StatsItem = ({ 
+  icon, 
+  value, 
+  color = 'gray', 
+  withGap = false,
+  className = ''
+}: { 
+  icon: string; 
+  value: string; 
+  color?: string; 
+  withGap?: boolean;
+  className?: string;
+}) => (
+  <div className={`flex items-center ${withGap ? 'gap-1' : ''} ${className}`}>
     <Icon 
       icon={icon} 
       className={`text-lg ${
@@ -141,10 +161,10 @@ const TagsModal = ({ tags, isOpen, onClose }: { tags: Tag[], isOpen: boolean, on
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
       <div className="bg-white dark:bg-gray-800 rounded-lg p-4 w-full max-w-md max-h-[80vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Tags</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">All Tags</h3>
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
@@ -158,7 +178,7 @@ const TagsModal = ({ tags, isOpen, onClose }: { tags: Tag[], isOpen: boolean, on
             <Link
               key={tag.id}
               href={`/search?tags=${tag.id}`}
-              className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-full transition-colors bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 border border-gray-300 dark:border-gray-600"
+              className="flex items-center gap-1 px-2 py-1 text-sm font-medium rounded-full transition-colors bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200"
             >
               {tag.name}
             </Link>
@@ -173,13 +193,13 @@ export const NovelHeader = ({
   title,
   author,
   translator,
-  chaptersCount,
   bookmarkCount,
   viewCount,
   coverImageUrl,
   novelAuthorId,
   isAuthorNameCustom = true,
   tags,
+  description,
   showActionButtons,
   firstChapterNumber,
   novelSlug,
@@ -192,6 +212,7 @@ export const NovelHeader = ({
   userRating,
   novelId,
   ageRating = 'EVERYONE',
+  characters = [],
 }: NovelHeaderProps) => {
   const [isRating, setIsRating] = useState(false);
   const [localRating, setLocalRating] = useState(rating);
@@ -318,139 +339,212 @@ export const NovelHeader = ({
 
   return (
     <>
-      <div className="flex flex-col lg:flex-row gap-3 -mt-4 sm:-mt-6 lg:-mt-8">
-        {/* Left side with cover and main content */}
-        <div className="flex flex-col gap-3 flex-1">
-          {/* Cover and Title Section */}
-          <div>
-            {/* Cover and Title Row */}
-            <div className="flex flex-row gap-4 mb-2">
-              {/* Cover Image */}
-              <div className="flex flex-col gap-2 w-28 sm:w-32 md:w-40 lg:w-48 mx-0 flex-shrink-0">
-                <div className="relative aspect-[2/3] rounded-xl overflow-hidden shadow-lg">
-                  {coverImageUrl ? (
-                    <>
-                      <Image
-                        src={coverImageUrl.startsWith('http') ? coverImageUrl : `/novel-covers/${coverImageUrl}`}
-                        alt={title}
-                        fill
-                        priority
-                        className="object-cover"
-                        sizes="(max-width: 640px) 192px, (max-width: 768px) 144px, 176px"
-                      />
-                      <div className="absolute top-2 left-2">
-                        <div className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium backdrop-blur-md ${ageRatingColors[ageRating]}`}>
-                          <Icon icon={ageRatingIcons[ageRating]} className="w-3.5 h-3.5" />
-                          {ageRating}
-                        </div>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="w-full h-full bg-gray-200" />
+      <div className="-mt-2 sm:-mt-3">
+        <div className="flex gap-4">
+          {/* Left Side - Cover Image */}
+          <div className="w-28 sm:w-36 lg:w-44">
+            <div className="relative aspect-[2/3] rounded-lg overflow-hidden shadow-md">
+              {coverImageUrl ? (
+                <>
+                  <Image
+                    src={coverImageUrl.startsWith('http') ? coverImageUrl : `/novel-covers/${coverImageUrl}`}
+                    alt={title}
+                    fill
+                    priority
+                    className="object-cover"
+                    sizes="(max-width: 640px) 112px, (max-width: 768px) 144px, 176px"
+                  />
+                  <div className="absolute top-1.5 left-1.5">
+                    <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium backdrop-blur-md ${ageRatingColors[ageRating]}`}>
+                      <Icon icon={ageRatingIcons[ageRating]} className="w-3 h-3" />
+                      {ageRating}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="w-full h-full bg-gray-200 dark:bg-gray-800" />
+              )}
+            </div>
+          </div>
+
+          {/* Right Side - Content */}
+          <div className="flex-1 min-w-0 space-y-2">
+            {/* Title and Author Info */}
+            <div className="space-y-2">
+              <div className="sm:block overflow-x-auto scrollbar-hide">
+                <h1 className="text-md sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-gray-50 leading-tight whitespace-nowrap pr-4 sm:pr-0 sm:whitespace-normal">
+                  {title}
+                </h1>
+              </div>
+              
+              <div className="flex flex-wrap items-center gap-1.5 text-[11px] sm:text-sm">
+                {isAuthorNameCustom ? (
+                  <>
+                    <span className="text-gray-600 dark:text-gray-400">by</span>
+                    <span className="bg-green-100 dark:bg-green-900/30 px-1.5 py-0.5 rounded text-gray-800 dark:text-gray-200">
+                      {author}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-gray-600 dark:text-gray-400">Author:</span>
+                    <Link 
+                      href={`/user-dashboard?id=${novelAuthorId}`}
+                      className="bg-green-100 dark:bg-green-900/30 px-1.5 py-0.5 rounded text-gray-800 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white hover:underline"
+                    >
+                      {author}
+                    </Link>
+                  </>
+                )}
+                {translator && (
+                  <>
+                    <span className="text-gray-600 dark:text-gray-400">•</span>
+                    <span className="text-gray-600 dark:text-gray-400">TL:</span>
+                    {translator.username ? (
+                      <Link 
+                        href={`/user-dashboard?id=${translator.profile_id}`}
+                        className="bg-green-100 dark:bg-green-900/30 px-1.5 py-0.5 rounded text-gray-800 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white hover:underline"
+                      >
+                        {translator.username}
+                      </Link>
+                    ) : (
+                      <span className="bg-green-100 dark:bg-green-900/30 px-1.5 py-0.5 rounded text-gray-800 dark:text-gray-200">
+                        Anonymous
+                      </span>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Mobile Stats */}
+            <div className="sm:hidden space-y-2">
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3 px-2 py-1.5 bg-gray-100 dark:bg-gray-800/50 rounded-lg text-sm">
+                  <StatsItem icon="pepicons-print:bookmark" value={`${bookmarkCount}`} withGap />
+                  <StatsItem icon="mdi:eye-outline" value={`${viewCount.toLocaleString()}`} color="purple" withGap />
+                </div>
+                <div className="relative flex items-center px-2 py-1.5 bg-gray-100 dark:bg-gray-800/50 rounded-lg">
+                  <button
+                    ref={ratingButtonRef}
+                    className="flex items-center gap-1.5 transition-colors hover:text-amber-400"
+                    onClick={() => setShowRatingPopup(!showRatingPopup)}
+                    aria-label="Rate novel"
+                  >
+                    <Icon 
+                      icon="pepicons-print:star-filled"
+                      className="text-lg text-amber-400"
+                    />
+                    <span className="text-gray-700 dark:text-gray-200 font-medium text-sm">{localRating.toFixed(1)}</span>
+                    <span className="text-gray-500 dark:text-gray-400 text-sm">({localRatingCount})</span>
+                  </button>
+                  {showRatingPopup && (
+                    <RatingPopup
+                      onRate={handleRate}
+                      currentRating={localUserRating}
+                      isRating={isRating}
+                    />
                   )}
                 </div>
               </div>
 
-              {/* Title, Author, Stats Section */}
-              <div className="flex-1 flex flex-col">
-                <div>
-                  <h1 className="text-base sm:text-xl md:text-3xl lg:text-4xl font-bold mb-1 text-gray-900 dark:text-gray-50 text-left">{title}</h1>
-                  <div className="text-xs sm:text-sm md:text-base lg:text-lg text-gray-600 dark:text-gray-300 mb-2 text-left">
-                    {isAuthorNameCustom ? (
-                      <>
-                        by <span className="bg-green-100 dark:bg-green-900/30 px-1.5 py-0.5 rounded">{author}</span>
-                        {translator && (
-                          <> • TL: {translator.username ? (
-                            <Link 
-                              href={`/user-dashboard?id=${translator.profile_id}`}
-                              className="bg-green-100 dark:bg-green-900/30 px-1.5 py-0.5 rounded text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white hover:underline"
-                            >
-                              {translator.username}
-                            </Link>
-                          ) : (
-                            <span className="bg-green-100 dark:bg-green-900/30 px-1.5 py-0.5 rounded text-gray-700 dark:text-gray-200">Anonymous</span>
-                          )}</>
-                        )}
-                      </>
-                    ) : (
-                      <>Author: <Link 
-                        href={`/user-dashboard?id=${novelAuthorId}`}
-                        className="bg-green-50 dark:bg-green-900/30 px-1.5 py-0.5 rounded text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white hover:underline"
-                      >
-                        {author}
-                      </Link></>
-                    )}
-                  </div>
+              {/* Mobile Translator Links */}
+              {translator && <TranslatorLinks translator={translator} />}
+            </div>
+
+            {/* Description */}
+            <div className="hidden sm:block">
+              <NovelSynopsis
+                description={description}
+                characters={characters}
+              />
+            </div>
+
+            {/* Desktop Stats and Tags */}
+            <div className="hidden sm:flex flex-col gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex items-center gap-3 px-2 py-1.5 bg-gray-100 dark:bg-gray-800/50 rounded-lg text-sm">
+                  <StatsItem icon="pepicons-print:bookmark" value={`${bookmarkCount}`} withGap />
+                  <StatsItem icon="mdi:eye-outline" value={`${viewCount.toLocaleString()}`} color="purple" withGap />
                 </div>
-
-                {/* Stats and Rating */}
-                <div className="flex flex-col gap-2">
-                  {/* Quick Stats */}
-                  <div className="flex flex-wrap gap-2 text-sm md:text-base lg:text-lg">
-                    <StatsItem icon="pepicons-print:book" value={`${chaptersCount}`} color="blue" withGap />
-                    <StatsItem icon="pepicons-print:bookmark" value={`${bookmarkCount}`} />
-                    <StatsItem icon="mdi:eye-outline" value={`${viewCount.toLocaleString()}`} color="purple" withGap />
-                    <div className="relative">
-                      <button
-                        ref={ratingButtonRef}
-                        className="flex items-center gap-1 transition-colors hover:text-amber-400"
-                        onClick={() => setShowRatingPopup(!showRatingPopup)}
-                        aria-label="Rate novel"
-                      >
-                        <Icon 
-                          icon="pepicons-print:star-filled"
-                          className="text-lg text-amber-400"
-                        />
-                        <span className="text-gray-700 dark:text-gray-200">{localRating.toFixed(1)}</span>
-                        <span className="text-gray-500 dark:text-gray-400">({localRatingCount})</span>
-                      </button>
-                      {showRatingPopup && (
-                        <RatingPopup
-                          onRate={handleRate}
-                          currentRating={localUserRating}
-                          isRating={isRating}
-                        />
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Translator Links */}
-                  {translator && <TranslatorLinks translator={translator} />}
-                </div>
-
-                {/* Tags for both Mobile and Desktop */}
-                {tags && tags.length > 0 && (
-                  <div className="mt-auto">
-                    <div className="flex items-center gap-2">
-                      {/* Show first tag */}
-                      <Link
-                        href={`/search?tags=${tags[0].id}`}
-                        className="flex-shrink-0 flex items-center gap-1 px-2 py-1 text-xs md:text-sm font-medium rounded-full transition-colors bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200"
-                      >
-                        {tags[0].name}
-                      </Link>
-                      {/* More button */}
-                      {tags.length > 1 && (
-                        <button
-                          onClick={() => setShowTagsModal(true)}
-                          className="flex-shrink-0 flex items-center gap-1 px-2 py-1 text-xs md:text-sm font-medium rounded-full transition-colors bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200"
-                          aria-label={`Show all ${tags.length} tags`}
-                        >
-                          <Icon icon="mdi:dots-horizontal" className="text-base" />
-                          {tags.length - 1} more
-                        </button>
-                      )}
-                    </div>
-                    <TagsModal
-                      tags={tags}
-                      isOpen={showTagsModal}
-                      onClose={() => setShowTagsModal(false)}
+                <div className="relative flex items-center px-2 py-1.5 bg-gray-100 dark:bg-gray-800/50 rounded-lg">
+                  <button
+                    ref={ratingButtonRef}
+                    className="flex items-center gap-1.5 transition-colors hover:text-amber-400"
+                    onClick={() => setShowRatingPopup(!showRatingPopup)}
+                    aria-label="Rate novel"
+                  >
+                    <Icon 
+                      icon="pepicons-print:star-filled"
+                      className="text-lg text-amber-400"
                     />
-                  </div>
-                )}
+                    <span className="text-gray-700 dark:text-gray-200 font-medium text-sm">{localRating.toFixed(1)}</span>
+                    <span className="text-gray-500 dark:text-gray-400 text-sm">({localRatingCount})</span>
+                  </button>
+                  {showRatingPopup && (
+                    <RatingPopup
+                      onRate={handleRate}
+                      currentRating={localUserRating}
+                      isRating={isRating}
+                    />
+                  )}
+                </div>
+                {translator && <TranslatorLinks translator={translator} />}
               </div>
+
+              {/* Desktop Tags */}
+              {tags && tags.length > 0 && (
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <Link
+                    href={`/search?tags=${tags[0].id}`}
+                    className="flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full transition-colors bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200"
+                  >
+                    {tags[0].name}
+                  </Link>
+                  {tags.length > 1 && (
+                    <button
+                      onClick={() => setShowTagsModal(true)}
+                      className="flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full transition-colors bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200"
+                      aria-label={`Show all ${tags.length} tags`}
+                    >
+                      <Icon icon="mdi:dots-horizontal" className="text-sm" />
+                      +{tags.length - 1} more
+                    </button>
+                  )}
+                  <TagsModal
+                    tags={tags}
+                    isOpen={showTagsModal}
+                    onClose={() => setShowTagsModal(false)}
+                  />
+                </div>
+              )}
             </div>
           </div>
+        </div>
+
+        {/* Mobile Tags - Scrollable */}
+        <div className="sm:hidden mt-3 mb-1 overflow-x-auto scrollbar-hide">
+          {tags && tags.length > 0 && (
+            <div className="flex items-center gap-1.5">
+              {tags.map((tag) => (
+                <Link
+                  key={tag.id}
+                  href={`/search?tags=${tag.id}`}
+                  className="flex-none inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full transition-colors bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 whitespace-nowrap"
+                >
+                  {tag.name}
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Mobile Description */}
+        <div className="sm:hidden">
+          <NovelSynopsis
+            description={description}
+            characters={characters}
+          />
         </div>
       </div>
 
