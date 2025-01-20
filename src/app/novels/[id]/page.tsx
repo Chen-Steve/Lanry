@@ -190,7 +190,6 @@ export default function NovelPage({ params }: { params: { id: string } }) {
         isBookmarked={isBookmarked}
         isBookmarkLoading={isBookmarkLoading}
         onBookmarkClick={handleBookmark}
-        showActionButtons={true}
         coverImageUrl={novel.coverImageUrl}
         chapters={novel.chapters}
         volumes={novel.volumes}

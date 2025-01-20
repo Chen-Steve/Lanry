@@ -448,7 +448,7 @@ export const NovelHeader = ({
                 {translator && <TranslatorLinks translator={translator} />}
               </div>
 
-              {/* Action Buttons */}
+              {/* Desktop Action Buttons */}
               <div className="flex items-center gap-2">
                 {firstChapterNumber !== undefined && (
                   <Link 
