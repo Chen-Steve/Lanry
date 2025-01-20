@@ -162,11 +162,13 @@ export const NovelContent = ({
         />
       )}
 
-      <TabGroup
-        tabs={tabs}
-        value={activeTab}
-        onChange={setActiveTab}
-      />
+      <div className="mt-6">
+        <TabGroup
+          tabs={tabs}
+          value={activeTab}
+          onChange={setActiveTab}
+        />
+      </div>
 
       {renderTabContent()}
     </div>

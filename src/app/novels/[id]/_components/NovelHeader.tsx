@@ -2,7 +2,6 @@ import { Icon } from '@iconify/react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { NovelCategory, Tag } from '@/types/database';
-import { TranslatorLinks } from './TranslatorLinks';
 import { useState, useRef, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import supabase from '@/lib/supabaseClient';
@@ -272,7 +271,7 @@ export const NovelHeader = ({
       <div className="-mt-2 sm:-mt-3">
         <div className="flex gap-4">
           {/* Left Side - Cover Image */}
-          <div className="w-28 sm:w-36 lg:w-44">
+          <div className="w-28 sm:w-36 lg:w-44 flex flex-col">
             <div className="relative aspect-[2/3] rounded-lg overflow-hidden shadow-md">
               {coverImageUrl ? (
                 <>
@@ -295,10 +294,46 @@ export const NovelHeader = ({
                 <div className="w-full h-full bg-gray-200 dark:bg-gray-800" />
               )}
             </div>
+            {/* Mobile Action Buttons */}
+            <div className="sm:hidden mt-2 flex items-center gap-2">
+              {firstChapterNumber !== undefined && (
+                <Link 
+                  href={`/novels/${novelSlug}/c${firstChapterNumber}`}
+                  className="flex-1 inline-flex items-center justify-center gap-1 px-4 h-10 rounded-lg bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 transition-colors text-white font-medium"
+                >
+                  <Icon icon="pepicons-print:book-open" className="text-xl" />
+                  <span className="text-sm">Read Now</span>
+                </Link>
+              )}
+              <button 
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (!isBookmarkLoading) {
+                    onBookmarkClick();
+                  }
+                }}
+                type="button"
+                disabled={isBookmarkLoading}
+                aria-label={isBookmarked ? "Remove Bookmark" : "Add Bookmark"}
+                className={`inline-flex items-center justify-center w-10 h-10 rounded-lg transition-colors touch-manipulation ${
+                  !isAuthenticated 
+                    ? 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-800/50 dark:hover:bg-gray-700/50'
+                    : isBookmarked 
+                      ? 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-800/50 dark:hover:bg-gray-700/50'
+                      : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-800/50 dark:hover:bg-gray-700/50'
+                } ${isBookmarkLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <Icon 
+                  icon={isBookmarked ? "pepicons-print:checkmark" : "pepicons-print:bookmark"} 
+                  className={`text-[20px] text-gray-700 dark:text-gray-200 flex-shrink-0 ${isBookmarkLoading ? 'animate-pulse' : ''}`}
+                />
+              </button>
+            </div>
           </div>
 
           {/* Right Side - Content */}
-          <div className="flex-1 min-w-0 space-y-2">
+          <div className="flex-1 min-w-0 flex flex-col">
             {/* Title and Author Info */}
             <div className="space-y-1">
               <div className="sm:block overflow-x-auto scrollbar-hide">
@@ -347,108 +382,46 @@ export const NovelHeader = ({
               </div>
             </div>
 
-            {/* Mobile Stats */}
-            <div className="sm:hidden space-y-2">
-              <div className="flex items-center gap-1.5">
-                <div className="flex items-center gap-2 px-1.5 py-1 bg-gray-100 dark:bg-gray-800/50 rounded-lg text-xs">
-                  <StatsItem icon="pepicons-print:bookmark" value={`${bookmarkCount}`} withGap />
-                  <StatsItem icon="mdi:eye-outline" value={`${viewCount.toLocaleString()}`} color="purple" withGap />
-                </div>
-                <div className="relative flex items-center px-1.5 py-1 bg-gray-100 dark:bg-gray-800/50 rounded-lg">
-                  <button
-                    ref={ratingButtonRef}
-                    className="flex items-center gap-1 transition-colors hover:text-amber-400"
-                    onClick={() => setShowRatingPopup(!showRatingPopup)}
-                    aria-label="Rate novel"
+            {/* Desktop Stats and Tags */}
+            <div className="hidden sm:flex flex-col gap-2 flex-1">
+              {/* Desktop Tags */}
+              {tags && tags.length > 0 && (
+                <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                  <Link
+                    href={`/search?tags=${tags[0].id}`}
+                    className="flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full transition-colors bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200"
                   >
-                    <Icon 
-                      icon="pepicons-print:star-filled"
-                      className="text-base text-amber-400"
-                    />
-                    <span className="text-gray-700 dark:text-gray-200 font-medium text-xs">{localRating.toFixed(1)}</span>
-                    <span className="text-gray-500 dark:text-gray-400 text-xs">({localRatingCount})</span>
-                  </button>
-                  {showRatingPopup && (
-                    <RatingPopup
-                      onRate={handleRate}
-                      currentRating={localUserRating}
-                      isRating={isRating}
-                    />
-                  )}
-                </div>
-              </div>
-
-              {/* Mobile Action Buttons */}
-              <div className="flex items-center gap-2">
-                {firstChapterNumber !== undefined && (
-                  <Link 
-                    href={`/novels/${novelSlug}/c${firstChapterNumber}`}
-                    className="flex-1 inline-flex items-center justify-center gap-1 px-4 h-10 rounded-lg bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 transition-colors text-white font-medium"
-                  >
-                    <Icon icon="pepicons-print:book-open" className="text-xl" />
-                    <span className="text-sm">Read Now</span>
+                    {tags[0].name}
                   </Link>
-                )}
-                <button 
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (!isBookmarkLoading) {
-                      onBookmarkClick();
-                    }
-                  }}
-                  type="button"
-                  disabled={isBookmarkLoading}
-                  aria-label={isBookmarked ? "Remove Bookmark" : "Add Bookmark"}
-                  className={`inline-flex items-center justify-center w-10 h-10 rounded-lg transition-colors touch-manipulation ${
-                    !isAuthenticated 
-                      ? 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-800/50 dark:hover:bg-gray-700/50'
-                      : isBookmarked 
-                        ? 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-800/50 dark:hover:bg-gray-700/50'
-                        : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-800/50 dark:hover:bg-gray-700/50'
-                  } ${isBookmarkLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                  <Icon 
-                    icon={isBookmarked ? "pepicons-print:checkmark" : "pepicons-print:bookmark"} 
-                    className={`text-[20px] text-gray-700 dark:text-gray-200 flex-shrink-0 ${isBookmarkLoading ? 'animate-pulse' : ''}`}
+                  {tags.length > 1 && (
+                    <button
+                      onClick={() => setShowTagsModal(true)}
+                      className="flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full transition-colors bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200"
+                      aria-label={`Show all ${tags.length} tags`}
+                    >
+                      <Icon icon="mdi:dots-horizontal" className="text-sm" />
+                      +{tags.length - 1} more
+                    </button>
+                  )}
+                  <TagsModal
+                    tags={tags}
+                    isOpen={showTagsModal}
+                    onClose={() => setShowTagsModal(false)}
                   />
-                </button>
+                </div>
+              )}
+
+              {/* Desktop Synopsis */}
+              <div className="hidden sm:block">
+                <NovelSynopsis
+                  description={description}
+                  characters={characters}
+                />
               </div>
             </div>
 
-            {/* Desktop Stats and Tags */}
-            <div className="hidden sm:flex flex-col gap-2">
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="flex items-center gap-3 px-2 py-1.5 bg-gray-100 dark:bg-gray-800/50 rounded-lg text-sm">
-                  <StatsItem icon="pepicons-print:bookmark" value={`${bookmarkCount}`} withGap />
-                  <StatsItem icon="mdi:eye-outline" value={`${viewCount.toLocaleString()}`} color="purple" withGap />
-                </div>
-                <div className="relative flex items-center px-2 py-1.5 bg-gray-100 dark:bg-gray-800/50 rounded-lg">
-                  <button
-                    ref={ratingButtonRef}
-                    className="flex items-center gap-1.5 transition-colors hover:text-amber-400"
-                    onClick={() => setShowRatingPopup(!showRatingPopup)}
-                    aria-label="Rate novel"
-                  >
-                    <Icon 
-                      icon="pepicons-print:star-filled"
-                      className="text-lg text-amber-400"
-                    />
-                    <span className="text-gray-700 dark:text-gray-200 font-medium text-sm">{localRating.toFixed(1)}</span>
-                    <span className="text-gray-500 dark:text-gray-400 text-sm">({localRatingCount})</span>
-                  </button>
-                  {showRatingPopup && (
-                    <RatingPopup
-                      onRate={handleRate}
-                      currentRating={localUserRating}
-                      isRating={isRating}
-                    />
-                  )}
-                </div>
-                {translator && <TranslatorLinks translator={translator} />}
-              </div>
-
-              {/* Desktop Action Buttons */}
+            {/* Desktop Action Buttons and Stats */}
+            <div className="hidden sm:flex items-center gap-3 mt-4">
               <div className="flex items-center gap-2">
                 {firstChapterNumber !== undefined && (
                   <Link 
@@ -485,32 +458,34 @@ export const NovelHeader = ({
                 </button>
               </div>
 
-              {/* Desktop Tags */}
-              {tags && tags.length > 0 && (
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <Link
-                    href={`/search?tags=${tags[0].id}`}
-                    className="flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full transition-colors bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200"
-                  >
-                    {tags[0].name}
-                  </Link>
-                  {tags.length > 1 && (
-                    <button
-                      onClick={() => setShowTagsModal(true)}
-                      className="flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full transition-colors bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200"
-                      aria-label={`Show all ${tags.length} tags`}
-                    >
-                      <Icon icon="mdi:dots-horizontal" className="text-sm" />
-                      +{tags.length - 1} more
-                    </button>
-                  )}
-                  <TagsModal
-                    tags={tags}
-                    isOpen={showTagsModal}
-                    onClose={() => setShowTagsModal(false)}
-                  />
+              <div className="flex items-center gap-3 ml-auto">
+                <div className="flex items-center gap-3 px-2 py-1.5 bg-gray-100 dark:bg-gray-800/50 rounded-lg text-sm">
+                  <StatsItem icon="pepicons-print:bookmark" value={`${bookmarkCount}`} withGap />
+                  <StatsItem icon="mdi:eye-outline" value={`${viewCount.toLocaleString()}`} color="purple" withGap />
                 </div>
-              )}
+                <div className="relative flex items-center px-2 py-1.5 bg-gray-100 dark:bg-gray-800/50 rounded-lg">
+                  <button
+                    ref={ratingButtonRef}
+                    className="flex items-center gap-1.5 transition-colors hover:text-amber-400"
+                    onClick={() => setShowRatingPopup(!showRatingPopup)}
+                    aria-label="Rate novel"
+                  >
+                    <Icon 
+                      icon="pepicons-print:star-filled"
+                      className="text-lg text-amber-400"
+                    />
+                    <span className="text-gray-700 dark:text-gray-200 font-medium text-sm">{localRating.toFixed(1)}</span>
+                    <span className="text-gray-500 dark:text-gray-400 text-sm">({localRatingCount})</span>
+                  </button>
+                  {showRatingPopup && (
+                    <RatingPopup
+                      onRate={handleRate}
+                      currentRating={localUserRating}
+                      isRating={isRating}
+                    />
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>
