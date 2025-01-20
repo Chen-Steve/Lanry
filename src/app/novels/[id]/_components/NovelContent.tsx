@@ -5,7 +5,8 @@ import { Volume } from '@/types/novel';
 import { NovelRecommendations } from './NovelRecommendations';
 import { NovelComments } from './NovelComments';
 import { NovelHeader } from './NovelHeader';
-import { TabGroup } from '@/app/_components/TabGroup';
+import { TabGroup } from '@/app/novels/[id]/_components/TabGroup';
+import { TranslatorLinks } from './TranslatorLinks';
 
 interface NovelContentProps {
   title: string;
@@ -21,6 +22,9 @@ interface NovelContentProps {
   translator?: { 
     username: string | null;
     profile_id: string;
+    kofiUrl?: string;
+    patreonUrl?: string;
+    customUrl?: string;
   } | null;
   novelSlug: string;
   firstChapterNumber?: number;
@@ -28,7 +32,6 @@ interface NovelContentProps {
   isBookmarked: boolean;
   isBookmarkLoading: boolean;
   onBookmarkClick: () => void;
-  showActionButtons: boolean;
   coverImageUrl?: string;
   chapters: Chapter[];
   volumes?: Volume[];
@@ -67,7 +70,6 @@ export const NovelContent = ({
   isBookmarked,
   isBookmarkLoading,
   onBookmarkClick,
-  showActionButtons,
   coverImageUrl,
   chapters,
   volumes = [],
@@ -87,6 +89,7 @@ export const NovelContent = ({
 
   const tabs = [
     { label: 'Chapters', value: 'chapters' },
+    ...(translator && translator.kofiUrl || translator?.patreonUrl || translator?.customUrl ? [{ label: 'Support Author', value: 'support' }] : []),
     { label: 'Comments', value: 'comments' },
     { label: 'Recommendations', value: 'recommendations' },
   ];
@@ -118,6 +121,12 @@ export const NovelContent = ({
             isAuthenticated={isAuthenticated}
           />
         );
+      case 'support':
+        return translator && (
+          <div className="p-4 sm:p-6 flex justify-center">
+            <TranslatorLinks translator={translator} />
+          </div>
+        );
       default:
         return null;
     }
@@ -138,7 +147,6 @@ export const NovelContent = ({
           categories={categories}
           tags={tags}
           description={description}
-          showActionButtons={showActionButtons}
           firstChapterNumber={firstChapterNumber}
           novelSlug={novelSlug}
           isAuthenticated={isAuthenticated}

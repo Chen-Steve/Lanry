@@ -6,9 +6,9 @@ import { TranslatorLinks } from './TranslatorLinks';
 import { useState, useRef, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import supabase from '@/lib/supabaseClient';
-import { NovelActionButtons } from './NovelActionButtons';
 import { generateUUID } from '@/lib/utils';
 import { NovelSynopsis } from './NovelSynopsis';
+import { RatingPopup } from './RatingPopup';
 
 interface NovelHeaderProps {
   title: string;
@@ -25,7 +25,6 @@ interface NovelHeaderProps {
   categories?: NovelCategory[];
   tags?: Tag[];
   description: string;
-  showActionButtons?: boolean;
   firstChapterNumber?: number;
   novelSlug: string;
   isAuthenticated: boolean;
@@ -74,74 +73,6 @@ const StatsItem = ({
     <span className="text-gray-700 dark:text-gray-200">{value}</span>
   </div>
 );
-
-const RatingPopup = ({ 
-  onRate, 
-  currentRating,
-  isRating,
-}: { 
-  onRate: (rating: number) => void;
-  currentRating?: number;
-  isRating: boolean;
-}) => {
-  const [hoveredRating, setHoveredRating] = useState(0);
-  const ratingContainerRef = useRef<HTMLDivElement>(null);
-  
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!ratingContainerRef.current) return;
-    
-    const rect = ratingContainerRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const starWidth = rect.width / 5;
-    const rating = Math.ceil(x / starWidth);
-    // console.log('Mouse move - calculated rating:', rating);
-    setHoveredRating(rating);
-  };
-
-  const handleMouseLeave = () => {
-    // console.log('Mouse leave - resetting hover');
-    setHoveredRating(0);
-  };
-
-  const handleClick = () => {
-    // console.log('Click - current hover rating:', hoveredRating);
-    if (!isRating && hoveredRating > 0) {
-      // console.log('Submitting rating:', hoveredRating);
-      onRate(hoveredRating);
-    }
-  };
-
-  const renderStars = () => {
-    const displayRating = hoveredRating || currentRating || 0;
-    // console.log('Rendering stars with rating:', displayRating);
-    
-    return [...Array(5)].map((_, index) => (
-      <Icon
-        key={index}
-        icon={index < displayRating ? "pepicons-print:star-filled" : "pepicons-print:star"}
-        className={`text-2xl ${index < displayRating ? 'text-amber-400' : 'text-gray-300'}`}
-      />
-    ));
-  };
-
-  return (
-    <div className="absolute top-full mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-3 border border-gray-200 dark:border-gray-700 z-50 rating-popup-container">
-      <div 
-        ref={ratingContainerRef}
-        className="flex cursor-pointer gap-1"
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
-        onClick={handleClick}
-        style={{ minWidth: '130px' }}
-      >
-        {renderStars()}
-      </div>
-      <div className="text-xs text-center text-gray-500 dark:text-gray-400 mt-1">
-        {hoveredRating || currentRating || 0} stars
-      </div>
-    </div>
-  );
-};
 
 const ageRatingIcons = {
   EVERYONE: 'mdi:account-multiple',
@@ -200,7 +131,6 @@ export const NovelHeader = ({
   isAuthorNameCustom = true,
   tags,
   description,
-  showActionButtons,
   firstChapterNumber,
   novelSlug,
   isAuthenticated,
@@ -370,7 +300,7 @@ export const NovelHeader = ({
           {/* Right Side - Content */}
           <div className="flex-1 min-w-0 space-y-2">
             {/* Title and Author Info */}
-            <div className="space-y-2">
+            <div className="space-y-1">
               <div className="sm:block overflow-x-auto scrollbar-hide">
                 <h1 className="text-md sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-gray-50 leading-tight whitespace-nowrap pr-4 sm:pr-0 sm:whitespace-normal">
                   {title}
@@ -419,24 +349,24 @@ export const NovelHeader = ({
 
             {/* Mobile Stats */}
             <div className="sm:hidden space-y-2">
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-3 px-2 py-1.5 bg-gray-100 dark:bg-gray-800/50 rounded-lg text-sm">
+              <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-2 px-1.5 py-1 bg-gray-100 dark:bg-gray-800/50 rounded-lg text-xs">
                   <StatsItem icon="pepicons-print:bookmark" value={`${bookmarkCount}`} withGap />
                   <StatsItem icon="mdi:eye-outline" value={`${viewCount.toLocaleString()}`} color="purple" withGap />
                 </div>
-                <div className="relative flex items-center px-2 py-1.5 bg-gray-100 dark:bg-gray-800/50 rounded-lg">
+                <div className="relative flex items-center px-1.5 py-1 bg-gray-100 dark:bg-gray-800/50 rounded-lg">
                   <button
                     ref={ratingButtonRef}
-                    className="flex items-center gap-1.5 transition-colors hover:text-amber-400"
+                    className="flex items-center gap-1 transition-colors hover:text-amber-400"
                     onClick={() => setShowRatingPopup(!showRatingPopup)}
                     aria-label="Rate novel"
                   >
                     <Icon 
                       icon="pepicons-print:star-filled"
-                      className="text-lg text-amber-400"
+                      className="text-base text-amber-400"
                     />
-                    <span className="text-gray-700 dark:text-gray-200 font-medium text-sm">{localRating.toFixed(1)}</span>
-                    <span className="text-gray-500 dark:text-gray-400 text-sm">({localRatingCount})</span>
+                    <span className="text-gray-700 dark:text-gray-200 font-medium text-xs">{localRating.toFixed(1)}</span>
+                    <span className="text-gray-500 dark:text-gray-400 text-xs">({localRatingCount})</span>
                   </button>
                   {showRatingPopup && (
                     <RatingPopup
@@ -448,16 +378,42 @@ export const NovelHeader = ({
                 </div>
               </div>
 
-              {/* Mobile Translator Links */}
-              {translator && <TranslatorLinks translator={translator} />}
-            </div>
-
-            {/* Description */}
-            <div className="hidden sm:block">
-              <NovelSynopsis
-                description={description}
-                characters={characters}
-              />
+              {/* Mobile Action Buttons */}
+              <div className="flex items-center gap-2">
+                {firstChapterNumber !== undefined && (
+                  <Link 
+                    href={`/novels/${novelSlug}/c${firstChapterNumber}`}
+                    className="flex-1 inline-flex items-center justify-center gap-1 px-4 h-10 rounded-lg bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 transition-colors text-white font-medium"
+                  >
+                    <Icon icon="pepicons-print:book-open" className="text-xl" />
+                    <span className="text-sm">Read Now</span>
+                  </Link>
+                )}
+                <button 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (!isBookmarkLoading) {
+                      onBookmarkClick();
+                    }
+                  }}
+                  type="button"
+                  disabled={isBookmarkLoading}
+                  aria-label={isBookmarked ? "Remove Bookmark" : "Add Bookmark"}
+                  className={`inline-flex items-center justify-center w-10 h-10 rounded-lg transition-colors touch-manipulation ${
+                    !isAuthenticated 
+                      ? 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-800/50 dark:hover:bg-gray-700/50'
+                      : isBookmarked 
+                        ? 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-800/50 dark:hover:bg-gray-700/50'
+                        : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-800/50 dark:hover:bg-gray-700/50'
+                  } ${isBookmarkLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  <Icon 
+                    icon={isBookmarked ? "pepicons-print:checkmark" : "pepicons-print:bookmark"} 
+                    className={`text-[20px] text-gray-700 dark:text-gray-200 flex-shrink-0 ${isBookmarkLoading ? 'animate-pulse' : ''}`}
+                  />
+                </button>
+              </div>
             </div>
 
             {/* Desktop Stats and Tags */}
@@ -492,6 +448,43 @@ export const NovelHeader = ({
                 {translator && <TranslatorLinks translator={translator} />}
               </div>
 
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2">
+                {firstChapterNumber !== undefined && (
+                  <Link 
+                    href={`/novels/${novelSlug}/c${firstChapterNumber}`}
+                    className="inline-flex items-center justify-center gap-1 px-4 h-10 rounded-lg bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 transition-colors text-white font-medium"
+                  >
+                    <Icon icon="pepicons-print:book-open" className="text-xl" />
+                    <span className="text-sm">Read Now</span>
+                  </Link>
+                )}
+                <button 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (!isBookmarkLoading) {
+                      onBookmarkClick();
+                    }
+                  }}
+                  type="button"
+                  disabled={isBookmarkLoading}
+                  aria-label={isBookmarked ? "Remove Bookmark" : "Add Bookmark"}
+                  className={`inline-flex items-center justify-center w-10 h-10 rounded-lg transition-colors touch-manipulation ${
+                    !isAuthenticated 
+                      ? 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-800/50 dark:hover:bg-gray-700/50'
+                      : isBookmarked 
+                        ? 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-800/50 dark:hover:bg-gray-700/50'
+                        : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-800/50 dark:hover:bg-gray-700/50'
+                  } ${isBookmarkLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  <Icon 
+                    icon={isBookmarked ? "pepicons-print:checkmark" : "pepicons-print:bookmark"} 
+                    className={`text-[20px] text-gray-700 dark:text-gray-200 flex-shrink-0 ${isBookmarkLoading ? 'animate-pulse' : ''}`}
+                  />
+                </button>
+              </div>
+
               {/* Desktop Tags */}
               {tags && tags.length > 0 && (
                 <div className="flex flex-wrap items-center gap-1.5">
@@ -522,6 +515,14 @@ export const NovelHeader = ({
           </div>
         </div>
 
+        {/* Mobile Synopsis - Full Width */}
+        <div className="sm:hidden mt-3">
+          <NovelSynopsis
+            description={description}
+            characters={characters}
+          />
+        </div>
+
         {/* Mobile Tags - Scrollable */}
         <div className="sm:hidden mt-3 mb-1 overflow-x-auto scrollbar-hide">
           {tags && tags.length > 0 && (
@@ -538,27 +539,7 @@ export const NovelHeader = ({
             </div>
           )}
         </div>
-
-        {/* Mobile Description */}
-        <div className="sm:hidden">
-          <NovelSynopsis
-            description={description}
-            characters={characters}
-          />
-        </div>
       </div>
-
-      {/* Floating Action Buttons */}
-      {showActionButtons && (
-        <NovelActionButtons
-          firstChapterNumber={firstChapterNumber}
-          novelSlug={novelSlug}
-          isAuthenticated={isAuthenticated}
-          isBookmarked={isBookmarked}
-          isBookmarkLoading={isBookmarkLoading}
-          onBookmarkClick={onBookmarkClick}
-        />
-      )}
     </>
   );
 }; 
