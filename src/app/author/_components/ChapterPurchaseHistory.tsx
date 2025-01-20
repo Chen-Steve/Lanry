@@ -146,7 +146,7 @@ export default function ChapterPurchaseHistory() {
                   <span className="truncate">{purchase.novel.title}</span>
                   <span className="text-xs text-muted-foreground ml-1">Ch.{purchase.chapter_number}</span>
                 </div>
-                <span className="text-primary font-medium ml-2 shrink-0">{Math.floor(purchase.cost * 0.9)} coins</span>
+                <span className="text-primary font-medium ml-2 shrink-0">{Math.floor(purchase.cost * 0.8)} coins</span>
               </div>
             </div>
           ))}
