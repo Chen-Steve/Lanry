@@ -8,13 +8,14 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import Image from 'next/image';
 
-// Extend the base type to include avatar_url
 interface NovelComment extends Omit<BaseNovelComment, 'profile'> {
   profile: {
     username: string | null;
     avatar_url?: string;
     role: 'USER' | 'AUTHOR' | 'TRANSLATOR' | 'ADMIN' | 'SUPER_ADMIN';
   };
+  likeCount: number;
+  isLiked?: boolean;
 }
 
 interface SupabaseComment {
@@ -24,6 +25,7 @@ interface SupabaseComment {
   profile_id: string;
   novel_id: string;
   updated_at: string;
+  like_count: number;
   profile: {
     id: string;
     username: string | null;
@@ -61,12 +63,14 @@ export const NovelComments = ({ novelId, isAuthenticated }: NovelCommentsProps) 
       created_at: comment.created_at,
       profile_id: comment.profile_id,
       novel_id: novelId,
-      profile: comment.profile
+      profile: comment.profile,
+      likeCount: comment.like_count || 0
     };
   }, [novelId]);
 
   const fetchComments = useCallback(async () => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('novel_comments')
         .select(`
@@ -82,7 +86,24 @@ export const NovelComments = ({ novelId, isAuthenticated }: NovelCommentsProps) 
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setComments(data.map(transformDatabaseComment));
+
+      if (user) {
+        // Fetch likes for the current user
+        const { data: likes } = await supabase
+          .from('comment_likes')
+          .select('comment_id')
+          .eq('profile_id', user.id)
+          .in('comment_id', data.map(comment => comment.id));
+
+        const likedCommentIds = new Set(likes?.map(like => like.comment_id) || []);
+        
+        setComments(data.map(comment => ({
+          ...transformDatabaseComment(comment),
+          isLiked: likedCommentIds.has(comment.id)
+        })));
+      } else {
+        setComments(data.map(transformDatabaseComment));
+      }
     } catch (error) {
       console.error('Error fetching comments:', error);
       toast.error('Failed to load comments');
@@ -297,6 +318,68 @@ const CommentItem = ({
 }: CommentItemProps) => {
   const isEditing = editingCommentId === comment.id;
   const isOwnComment = currentUserId === comment.profile_id;
+  const [isLiked, setIsLiked] = useState(comment.isLiked);
+  const [likeCount, setLikeCount] = useState(comment.likeCount);
+  const [isLiking, setIsLiking] = useState(false);
+
+  const handleLike = async () => {
+    if (!currentUserId) {
+      toast.error('Please sign in to like comments');
+      return;
+    }
+
+    if (isLiking) return;
+
+    setIsLiking(true);
+    try {
+      if (!isLiked) {
+        const { error: insertError } = await supabase
+          .from('comment_likes')
+          .insert({
+            id: generateUUID(),
+            comment_id: comment.id,
+            profile_id: currentUserId,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
+
+        if (insertError) throw insertError;
+
+        const { error: updateError } = await supabase
+          .from('novel_comments')
+          .update({ like_count: likeCount + 1 })
+          .eq('id', comment.id);
+
+        if (updateError) throw updateError;
+
+        setIsLiked(true);
+        setLikeCount(prev => prev + 1);
+      } else {
+        const { error: deleteError } = await supabase
+          .from('comment_likes')
+          .delete()
+          .eq('comment_id', comment.id)
+          .eq('profile_id', currentUserId);
+
+        if (deleteError) throw deleteError;
+
+        const { error: updateError } = await supabase
+          .from('novel_comments')
+          .update({ like_count: likeCount - 1 })
+          .eq('id', comment.id);
+
+        if (updateError) throw updateError;
+
+        setIsLiked(false);
+        setLikeCount(prev => prev - 1);
+      }
+    } catch (error) {
+      console.error('Error toggling like:', error);
+      toast.error('Failed to update like');
+    } finally {
+      setIsLiking(false);
+    }
+  };
 
   return (
     <div className="flex gap-3 p-4 rounded-lg bg-card border border-border">
@@ -376,7 +459,27 @@ const CommentItem = ({
             </div>
           </div>
         ) : (
-          <p className="text-foreground whitespace-pre-wrap break-words">{comment.content}</p>
+          <>
+            <div className="flex justify-between items-start gap-2">
+              <p className="text-foreground whitespace-pre-wrap break-words">{comment.content}</p>
+              <button
+                onClick={handleLike}
+                disabled={isLiking}
+                className={`flex items-center gap-1 text-sm transition-colors flex-shrink-0 ${
+                  isLiked 
+                    ? 'text-primary hover:text-primary/80' 
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+                aria-label={isLiked ? 'Unlike comment' : 'Like comment'}
+              >
+                <Icon 
+                  icon={isLiked ? 'mdi:heart' : 'mdi:heart-outline'} 
+                  className={`text-lg ${isLiking ? 'animate-pulse' : ''}`}
+                />
+                <span>{likeCount}</span>
+              </button>
+            </div>
+          </>
         )}
       </div>
     </div>

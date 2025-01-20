@@ -159,6 +159,7 @@ model Profile {
   novelRequestVotes  NovelRequestVote[]
   novelRatings       NovelRating[]
   chapterLikes       ChapterLike[]
+  commentLikes       CommentLike[]
 
   @@map("profiles")
 }
@@ -368,6 +369,8 @@ model NovelComment {
   profileId String   @map("profile_id")
   novel     Novel    @relation(fields: [novelId], references: [id], onDelete: Cascade)
   novelId   String   @map("novel_id")
+  likes     CommentLike[]
+  likeCount Int      @default(0) @map("like_count")
 
   @@index([profileId])
   @@index([novelId])
@@ -500,4 +503,19 @@ model NovelCharacter {
 
   @@index([novelId])
   @@map("novel_characters")
+}
+
+model CommentLike {
+  id          String       @id @default(uuid())
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+  comment     NovelComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  commentId   String       @map("comment_id")
+  profile     Profile      @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  profileId   String       @map("profile_id")
+
+  @@unique([profileId, commentId])
+  @@index([commentId])
+  @@index([profileId])
+  @@map("comment_likes")
 }

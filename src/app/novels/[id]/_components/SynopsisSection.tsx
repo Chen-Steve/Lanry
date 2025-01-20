@@ -1,4 +1,3 @@
-import { formatDateMDY } from '@/lib/utils';
 import { formatText } from '@/lib/textFormatting';
 import { useState } from 'react';
 import { ChapterList } from './ChapterList';
@@ -15,10 +14,7 @@ interface SynopsisSectionProps {
   chaptersCount: number;
   bookmarkCount: number;
   viewCount: number;
-  status: string;
   ageRating?: 'EVERYONE' | 'TEEN' | 'MATURE' | 'ADULT';
-  createdAt: string;
-  updatedAt: string;
   author: string;
   translator?: { 
     username: string | null;
@@ -82,10 +78,7 @@ export const SynopsisSection = ({
   chaptersCount, 
   bookmarkCount, 
   viewCount,
-  status,
   ageRating = 'EVERYONE',
-  createdAt,
-  updatedAt,
   author,
   translator,
   novelSlug,
@@ -211,17 +204,6 @@ export const SynopsisSection = ({
               dangerouslySetInnerHTML={{ __html: formatText(description) }}
             />
           </div>
-
-          {/* Details Card */}
-          <div className="bg-card rounded-xl shadow-sm border border-border p-4">
-            <h2 className="font-semibold text-foreground mb-2">Novel Details</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
-              <DetailItem label="Status" value={status} />
-              <DetailItem label="Age Rating" value={ageRating} />
-              <DetailItem label="Uploaded" value={formatDateMDY(createdAt)} />
-              <DetailItem label="Updated" value={formatDateMDY(updatedAt)} />
-            </div>
-          </div>
         </>
       ) : activeTab === 'chapters' ? (
         <ChapterList
@@ -255,11 +237,4 @@ export const SynopsisSection = ({
       )}
     </div>
   );
-};
-
-const DetailItem = ({ label, value }: { label: string; value: string }) => (
-  <div className="flex items-center gap-2">
-    <span className="text-muted-foreground min-w-[5rem]">{label}:</span>
-    <span className="text-foreground font-medium">{value}</span>
-  </div>
-); 
+}; 
