@@ -131,10 +131,12 @@ export async function createChapter(
     }
   }
 
+  // Create the chapter
+  const chapterId = generateUUID();
   const { error } = await supabase
     .from('chapters')
     .insert({
-      id: generateUUID(),
+      id: chapterId,
       novel_id: novelId,
       ...chapterData,
       volume_id: chapterData.volumeId,
@@ -144,6 +146,11 @@ export async function createChapter(
     });
 
   if (error) throw error;
+
+  // Apply auto-release schedule if no publish date is set
+  if (!chapterData.publish_at) {
+    await applyAutoReleaseSchedule(novelId, userId, chapterId);
+  }
 }
 
 export async function deleteChapter(chapterId: string, novelId: string, userId: string) {
@@ -270,6 +277,132 @@ export async function updateAdvancedChapterCoins(
     .gt('publish_at', new Date().toISOString());
 
   if (error) throw error;
+}
+
+export async function updateGlobalSettings(
+  novelId: string,
+  userId: string,
+  settings: {
+    autoReleaseEnabled: boolean;
+    autoReleaseInterval: number;
+    fixedPriceEnabled: boolean;
+    fixedPriceAmount: number;
+  }
+) {
+  await verifyNovelAuthor(novelId, userId);
+
+  const { error: novelError } = await supabase
+    .from('novels')
+    .update({
+      auto_release_enabled: settings.autoReleaseEnabled,
+      auto_release_interval: settings.autoReleaseInterval,
+      fixed_price_enabled: settings.fixedPriceEnabled,
+      fixed_price_amount: settings.fixedPriceAmount,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', novelId);
+
+  if (novelError) throw novelError;
+
+  // If fixed price is enabled, update all future chapters with the fixed price
+  if (settings.fixedPriceEnabled) {
+    const { error: chapterError } = await supabase
+      .from('chapters')
+      .update({ coins: settings.fixedPriceAmount })
+      .eq('novel_id', novelId)
+      .gt('publish_at', new Date().toISOString());
+
+    if (chapterError) throw chapterError;
+  }
+}
+
+export async function getGlobalSettings(novelId: string, userId: string) {
+  await verifyNovelAuthor(novelId, userId);
+
+  const { data, error } = await supabase
+    .from('novels')
+    .select(`
+      auto_release_enabled,
+      auto_release_interval,
+      fixed_price_enabled,
+      fixed_price_amount
+    `)
+    .eq('id', novelId)
+    .single();
+
+  if (error) throw error;
+
+  return {
+    autoReleaseEnabled: data.auto_release_enabled,
+    autoReleaseInterval: data.auto_release_interval,
+    fixedPriceEnabled: data.fixed_price_enabled,
+    fixedPriceAmount: data.fixed_price_amount
+  };
+}
+
+// Function to apply auto-release schedule to a new chapter
+export async function applyAutoReleaseSchedule(
+  novelId: string,
+  userId: string,
+  chapterId: string
+) {
+  await verifyNovelAuthor(novelId, userId);
+
+  // Get novel settings
+  const { data: novel, error: novelError } = await supabase
+    .from('novels')
+    .select(`
+      auto_release_enabled,
+      auto_release_interval,
+      fixed_price_enabled,
+      fixed_price_amount
+    `)
+    .eq('id', novelId)
+    .single();
+
+  if (novelError) throw novelError;
+
+  if (!novel.auto_release_enabled) return;
+
+  // Get the latest published chapter's publish date
+  const { data: latestChapter, error: chapterError } = await supabase
+    .from('chapters')
+    .select('publish_at')
+    .eq('novel_id', novelId)
+    .not('id', 'eq', chapterId) // Exclude the current chapter
+    .order('publish_at', { ascending: false })
+    .limit(1)
+    .single();
+
+  if (chapterError && chapterError.message !== 'No rows found') throw chapterError;
+
+  // Calculate the next publish date
+  const baseDate = latestChapter?.publish_at 
+    ? new Date(latestChapter.publish_at) 
+    : new Date();
+  const publishAt = new Date(baseDate);
+  publishAt.setDate(publishAt.getDate() + novel.auto_release_interval);
+
+  // Update the chapter with the calculated publish date and price
+  interface ChapterUpdateData {
+    publish_at: string;
+    coins?: number;
+  }
+
+  const updateData: ChapterUpdateData = {
+    publish_at: publishAt.toISOString()
+  };
+
+  if (novel.fixed_price_enabled) {
+    updateData.coins = novel.fixed_price_amount;
+  }
+
+  const { error: updateError } = await supabase
+    .from('chapters')
+    .update(updateData)
+    .eq('id', chapterId);
+
+  if (updateError) throw updateError;
 }
 
 async function verifyNovelAuthor(novelId: string, userId: string) {

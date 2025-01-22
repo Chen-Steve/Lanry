@@ -30,6 +30,10 @@ model Novel {
   rating         Float     @default(0) @map("rating")
   ratingCount    Int       @default(0) @map("rating_count")
   isAuthorNameCustom Boolean @default(true) @map("is_author_name_custom")
+  autoReleaseEnabled Boolean @default(false) @map("auto_release_enabled")
+  autoReleaseInterval Int @default(7) @map("auto_release_interval")
+  fixedPriceEnabled Boolean @default(false) @map("fixed_price_enabled")
+  fixedPriceAmount Int @default(10) @map("fixed_price_amount")
   chapters       Chapter[]
   volumes        Volume[]
   arcs           Arc[]

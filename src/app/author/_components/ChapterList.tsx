@@ -7,7 +7,7 @@ import { toast } from 'react-hot-toast';
 import ChapterEditForm from './ChapterEditForm';
 import ChapterBulkUpload from './ChapterBulkUpload';
 import * as authorChapterService from '../_services/authorChapterService';
-import { VolumeModal, DeleteConfirmationModal, AssignChaptersModal, DefaultCoinsModal } from './ChapterListModals';
+import { VolumeModal, DeleteConfirmationModal, AssignChaptersModal, DefaultCoinsModal, GlobalSettingsModal } from './ChapterListModals';
 
 const isAdvancedChapter = (chapter: ChapterListChapter): boolean => {
   const now = new Date();
@@ -48,6 +48,13 @@ export default function ChapterList({
   const [assigningVolumeId, setAssigningVolumeId] = useState<string | null>(null);
   const [collapsedVolumes, setCollapsedVolumes] = useState<Set<string>>(new Set());
   const [isDefaultCoinsModalOpen, setIsDefaultCoinsModalOpen] = useState(false);
+  const [isGlobalSettingsModalOpen, setIsGlobalSettingsModalOpen] = useState(false);
+  const [globalSettings, setGlobalSettings] = useState<{
+    releaseInterval: number;
+    fixedPrice: number;
+    autoReleaseEnabled: boolean;
+    fixedPriceEnabled: boolean;
+  } | null>(null);
 
   const chaptersGroupedByVolume = useMemo(() => {
     const noVolumeChapters = chapters.filter(chapter => !chapter.volumeId);
@@ -198,6 +205,50 @@ export default function ChapterList({
       console.error('Error updating default coins:', error);
       toast.error('Failed to update default coins');
     }
+  };
+
+  const handleGlobalSettingsSubmit = async (settings: {
+    releaseInterval: number;
+    fixedPrice: number;
+    autoReleaseEnabled: boolean;
+    fixedPriceEnabled: boolean;
+  }) => {
+    try {
+      await authorChapterService.updateGlobalSettings(novelId, userId, {
+        autoReleaseEnabled: settings.autoReleaseEnabled,
+        autoReleaseInterval: settings.releaseInterval,
+        fixedPriceEnabled: settings.fixedPriceEnabled,
+        fixedPriceAmount: settings.fixedPrice
+      });
+      
+      if (onLoadChapters) {
+        await onLoadChapters();
+      }
+      toast.success('Settings updated successfully');
+    } catch (error) {
+      console.error('Error updating settings:', error);
+      toast.error('Failed to update settings');
+    }
+  };
+
+  const fetchGlobalSettings = async () => {
+    try {
+      const settings = await authorChapterService.getGlobalSettings(novelId, userId);
+      setGlobalSettings({
+        releaseInterval: settings.autoReleaseInterval,
+        fixedPrice: settings.fixedPriceAmount,
+        autoReleaseEnabled: settings.autoReleaseEnabled,
+        fixedPriceEnabled: settings.fixedPriceEnabled
+      });
+    } catch (error) {
+      console.error('Error fetching global settings:', error);
+      toast.error('Failed to load settings');
+    }
+  };
+
+  const handleOpenGlobalSettings = () => {
+    fetchGlobalSettings();
+    setIsGlobalSettingsModalOpen(true);
   };
 
   const renderChapter = (chapter: ChapterListChapter) => (
@@ -402,10 +453,11 @@ export default function ChapterList({
                   Add Volume
                 </button>
                 <button
-                  onClick={() => setIsDefaultCoinsModalOpen(true)}
-                  className="inline-flex items-center gap-1 px-2.5 py-1.5 text-sm font-medium text-primary bg-primary/10 rounded-md hover:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors"
+                  onClick={handleOpenGlobalSettings}
+                  className="p-2 text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded-md transition-colors"
+                  title="Chapter Settings"
                 >
-                  Set Default Price
+                  <Icon icon="mdi:cog" className="w-5 h-5" />
                 </button>
                 <span className="text-sm text-muted-foreground ml-2 whitespace-nowrap">
                   {chapters.length} {chapters.length === 1 ? 'chapter' : 'chapters'}
@@ -476,6 +528,18 @@ export default function ChapterList({
             isOpen={isDefaultCoinsModalOpen}
             onClose={() => setIsDefaultCoinsModalOpen(false)}
             onSubmit={handleDefaultCoinsSubmit}
+          />
+
+          <GlobalSettingsModal
+            isOpen={isGlobalSettingsModalOpen}
+            onClose={() => setIsGlobalSettingsModalOpen(false)}
+            onSubmit={handleGlobalSettingsSubmit}
+            initialSettings={globalSettings || {
+              releaseInterval: 7,
+              fixedPrice: 10,
+              autoReleaseEnabled: false,
+              fixedPriceEnabled: false,
+            }}
           />
 
           <AssignChaptersModal
