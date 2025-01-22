@@ -25,6 +25,8 @@ interface NovelContentProps {
     kofiUrl?: string;
     patreonUrl?: string;
     customUrl?: string;
+    customUrlLabel?: string;
+    author_bio?: string;
   } | null;
   novelSlug: string;
   firstChapterNumber?: number;
@@ -89,7 +91,12 @@ export const NovelContent = ({
 
   const tabs = [
     { label: 'Chapters', value: 'chapters' },
-    ...(translator && translator.kofiUrl || translator?.patreonUrl || translator?.customUrl ? [{ label: 'About Author', value: 'support' }] : []),
+    ...(translator && (translator.kofiUrl || translator.patreonUrl || translator.customUrl) ? [
+      { 
+        label: `About ${translator.username || 'Translator'}`, 
+        value: 'support' 
+      }
+    ] : []),
     { label: 'Comments', value: 'comments' },
     { label: 'Recommendations', value: 'recommendations' },
   ];

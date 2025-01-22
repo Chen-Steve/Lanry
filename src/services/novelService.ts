@@ -24,7 +24,8 @@ export async function getNovel(id: string, userId?: string): Promise<Novel | nul
           kofi_url,
           patreon_url,
           custom_url,
-          custom_url_label
+          custom_url_label,
+          author_bio
         ),
         chapters (
           id,
@@ -134,7 +135,8 @@ export async function getNovel(id: string, userId?: string): Promise<Novel | nul
         kofiUrl: data.translator.kofi_url,
         patreonUrl: data.translator.patreon_url,
         customUrl: data.translator.custom_url,
-        customUrlLabel: data.translator.custom_url_label
+        customUrlLabel: data.translator.custom_url_label,
+        author_bio: data.translator.author_bio
       } : null,
       coverImageUrl: data.cover_image_url,
       isBookmarked: userId ? data.bookmarks?.some((b: { profile_id: string }) => b.profile_id === userId) : false,
@@ -230,7 +232,8 @@ export async function getNovels(): Promise<Novel[]> {
           kofi_url,
           patreon_url,
           custom_url,
-          custom_url_label
+          custom_url_label,
+          author_bio
         ),
         categories:categories_on_novels (
           category:category_id (
@@ -264,7 +267,8 @@ export async function getNovels(): Promise<Novel[]> {
         kofiUrl: novel.translator.kofi_url,
         patreonUrl: novel.translator.patreon_url,
         customUrl: novel.translator.custom_url,
-        customUrlLabel: novel.translator.custom_url_label
+        customUrlLabel: novel.translator.custom_url_label,
+        author_bio: novel.translator.author_bio
       } : null,
       coverImageUrl: novel.cover_image_url,
       categories: novel.categories?.map((item: { category: NovelCategory }) => item.category) || [],

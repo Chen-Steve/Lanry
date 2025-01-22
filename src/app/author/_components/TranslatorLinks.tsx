@@ -8,7 +8,8 @@ export default function TranslatorLinks() {
     kofiUrl: '',
     patreonUrl: '',
     customUrl: '',
-    customUrlLabel: ''
+    customUrlLabel: '',
+    authorBio: ''
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -21,7 +22,7 @@ export default function TranslatorLinks() {
 
         const { data, error } = await supabase
           .from('profiles')
-          .select('kofi_url, patreon_url, custom_url, custom_url_label')
+          .select('kofi_url, patreon_url, custom_url, custom_url_label, author_bio')
           .eq('id', user.id)
           .single();
 
@@ -32,7 +33,8 @@ export default function TranslatorLinks() {
             kofiUrl: data.kofi_url || '',
             patreonUrl: data.patreon_url || '',
             customUrl: data.custom_url || '',
-            customUrlLabel: data.custom_url_label || ''
+            customUrlLabel: data.custom_url_label || '',
+            authorBio: data.author_bio || ''
           });
         }
       } catch (error) {
@@ -61,16 +63,17 @@ export default function TranslatorLinks() {
           patreon_url: links.patreonUrl || null,
           custom_url: links.customUrl || null,
           custom_url_label: links.customUrlLabel || null,
+          author_bio: links.authorBio || null,
           updated_at: new Date().toISOString()
         })
         .eq('id', user.id);
 
       if (error) throw error;
 
-      toast.success('Links updated successfully');
+      toast.success('Profile updated successfully');
     } catch (error) {
-      console.error('Error saving links:', error);
-      toast.error('Failed to save links');
+      console.error('Error saving profile:', error);
+      toast.error('Failed to save profile');
     } finally {
       setIsSaving(false);
     }
@@ -86,9 +89,29 @@ export default function TranslatorLinks() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 w-full max-w-lg mx-auto">
-      <h2 className="text-lg font-semibold text-foreground mb-4">Manage Support Links</h2>
+      <h2 className="text-lg font-semibold text-foreground mb-4">Manage Profile</h2>
       
       <div className="space-y-3">
+        <div>
+          <label htmlFor="authorBio" className="block text-sm font-medium text-foreground mb-1">
+            Bio
+          </label>
+          <div className="relative">
+            <textarea
+              id="authorBio"
+              placeholder="Tell readers about yourself..."
+              value={links.authorBio}
+              onChange={(e) => setLinks(prev => ({ ...prev, authorBio: e.target.value }))}
+              rows={4}
+              className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:ring-1 focus:ring-primary focus:border-primary text-sm"
+              maxLength={500}
+            />
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Maximum 500 characters
+          </p>
+        </div>
+
         <div>
           <label htmlFor="kofi" className="block text-sm font-medium text-foreground mb-1">
             Ko-fi URL
@@ -170,7 +193,7 @@ export default function TranslatorLinks() {
           `}
         >
           {isSaving && <Icon icon="mdi:loading" className="animate-spin text-sm" />}
-          Save Links
+          Save Profile
         </button>
       </div>
     </form>
