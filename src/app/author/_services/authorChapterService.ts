@@ -151,6 +151,8 @@ export async function createChapter(
   if (!chapterData.publish_at) {
     await applyAutoReleaseSchedule(novelId, userId, chapterId);
   }
+
+  return chapterId; // Return the generated chapterId
 }
 
 export async function deleteChapter(chapterId: string, novelId: string, userId: string) {
@@ -344,7 +346,8 @@ export async function getGlobalSettings(novelId: string, userId: string) {
 export async function applyAutoReleaseSchedule(
   novelId: string,
   userId: string,
-  chapterId: string
+  chapterId: string,
+  baseDate?: Date // Optional base date for bulk uploads
 ) {
   await verifyNovelAuthor(novelId, userId);
 
@@ -364,24 +367,32 @@ export async function applyAutoReleaseSchedule(
 
   if (!novel.auto_release_enabled) return;
 
-  // Get the latest published chapter's publish date
-  const { data: latestChapter, error: chapterError } = await supabase
-    .from('chapters')
-    .select('publish_at')
-    .eq('novel_id', novelId)
-    .not('id', 'eq', chapterId) // Exclude the current chapter
-    .order('publish_at', { ascending: false })
-    .limit(1)
-    .single();
+  let publishAt: Date;
 
-  if (chapterError && chapterError.message !== 'No rows found') throw chapterError;
+  if (baseDate) {
+    // If a base date is provided (for bulk uploads), use it directly
+    publishAt = new Date(baseDate);
+    publishAt.setDate(publishAt.getDate() + novel.auto_release_interval);
+  } else {
+    // Get the latest published chapter's publish date
+    const { data: latestChapter, error: chapterError } = await supabase
+      .from('chapters')
+      .select('publish_at')
+      .eq('novel_id', novelId)
+      .not('id', 'eq', chapterId) // Exclude the current chapter
+      .order('publish_at', { ascending: false })
+      .limit(1)
+      .single();
 
-  // Calculate the next publish date
-  const baseDate = latestChapter?.publish_at 
-    ? new Date(latestChapter.publish_at) 
-    : new Date();
-  const publishAt = new Date(baseDate);
-  publishAt.setDate(publishAt.getDate() + novel.auto_release_interval);
+    if (chapterError && chapterError.message !== 'No rows found') throw chapterError;
+
+    // Calculate the next publish date
+    const baseDate = latestChapter?.publish_at 
+      ? new Date(latestChapter.publish_at) 
+      : new Date();
+    publishAt = new Date(baseDate);
+    publishAt.setDate(publishAt.getDate() + novel.auto_release_interval);
+  }
 
   // Update the chapter with the calculated publish date and price
   interface ChapterUpdateData {
@@ -403,6 +414,8 @@ export async function applyAutoReleaseSchedule(
     .eq('id', chapterId);
 
   if (updateError) throw updateError;
+
+  return publishAt; // Return the publish date for sequential scheduling
 }
 
 async function verifyNovelAuthor(novelId: string, userId: string) {

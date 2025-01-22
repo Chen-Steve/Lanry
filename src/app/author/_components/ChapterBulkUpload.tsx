@@ -120,7 +120,18 @@ export default function ChapterBulkUpload({ novelId, userId, onUploadComplete }:
     const failedUploads: { name: string; reason: string }[] = [];
 
     try {
-      for (const file of files) {
+      // Sort files by chapter number to ensure sequential scheduling
+      const sortedFiles = [...files].sort((a, b) => {
+        const aMatch = a.name.match(/^chapter[\s-]?(\d+)/i);
+        const bMatch = b.name.match(/^chapter[\s-]?(\d+)/i);
+        const aNum = aMatch ? parseInt(aMatch[1]) : 0;
+        const bNum = bMatch ? parseInt(bMatch[1]) : 0;
+        return aNum - bNum;
+      });
+
+      let lastPublishDate: Date | undefined;
+
+      for (const file of sortedFiles) {
         try {
           const content = await getFileContent(file);
           
@@ -148,13 +159,28 @@ export default function ChapterBulkUpload({ novelId, userId, onUploadComplete }:
             title = titleMatch[2].trim();
           }
 
-          await authorChapterService.createChapter(novelId, userId, {
+          // Create the chapter with null publish_at and coins
+          const chapterId = await authorChapterService.createChapter(novelId, userId, {
             chapter_number: chapterNumber,
             title,
             content,
-            publish_at: null,
-            coins: 0,
+            publish_at: null, // Let the service handle auto-release scheduling
+            coins: 0, // Let the service handle fixed pricing
           });
+
+          // Apply auto-release schedule with the last publish date
+          const newPublishDate = await authorChapterService.applyAutoReleaseSchedule(
+            novelId,
+            userId,
+            chapterId,
+            lastPublishDate
+          );
+
+          // Update the last publish date for the next chapter
+          if (newPublishDate) {
+            lastPublishDate = newPublishDate;
+          }
+
         } catch (error) {
           console.error(`Error uploading ${file.name}:`, error);
           const errorMessage = error instanceof Error ? error.message : 'unknown error';
