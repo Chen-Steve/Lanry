@@ -40,19 +40,19 @@ const NovelCover = ({
     )}
     
     {(showRating || (showStatus && status)) && (
-      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent pt-8 pb-2 px-2 transition-opacity group-hover:opacity-100">
-        <div className="flex items-center justify-between gap-2">
+      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent pt-6 pb-1.5 px-1.5 sm:pt-8 sm:pb-2 sm:px-2 transition-opacity group-hover:opacity-100">
+        <div className="flex items-center justify-between gap-1.5 sm:gap-2">
           {showRating && (
-            <div className="flex items-center gap-1">
-              <Icon icon="pepicons-print:star-filled" className="text-amber-400 text-sm" />
-              <span className="text-white text-xs font-medium">
+            <div className="flex items-center gap-0.5 sm:gap-1">
+              <Icon icon="pepicons-print:star-filled" className="text-amber-400 text-[10px] sm:text-sm" />
+              <span className="text-white text-[10px] sm:text-xs font-medium">
                 {rating > 0 ? rating.toFixed(1) : 'N/A'}
               </span>
             </div>
           )}
           
           {showStatus && status && (
-            <span className="text-xs font-medium text-white/90 capitalize px-2 py-0.5 rounded-full bg-white/10 backdrop-blur-[2px]">
+            <span className="text-[10px] sm:text-xs font-medium text-white/90 capitalize px-1.5 py-0.5 sm:px-2 rounded-full bg-white/10 backdrop-blur-[2px]">
               {status.toLowerCase()}
             </span>
           )}
