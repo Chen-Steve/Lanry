@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Icon } from '@iconify/react';
 import { ChapterListProps, ChapterListChapter, Volume } from '../_types/authorTypes';
 import { toast } from 'react-hot-toast';
@@ -55,6 +55,13 @@ export default function ChapterList({
     autoReleaseEnabled: boolean;
     fixedPriceEnabled: boolean;
   } | null>(null);
+  const [isLoadingSettings, setIsLoadingSettings] = useState(false);
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
+
+  // Load settings on component mount
+  useEffect(() => {
+    fetchGlobalSettings();
+  }, [novelId, userId]);
 
   const chaptersGroupedByVolume = useMemo(() => {
     const noVolumeChapters = chapters.filter(chapter => !chapter.volumeId);
@@ -213,6 +220,7 @@ export default function ChapterList({
     autoReleaseEnabled: boolean;
     fixedPriceEnabled: boolean;
   }) => {
+    setIsSavingSettings(true);
     try {
       await authorChapterService.updateGlobalSettings(novelId, userId, {
         autoReleaseEnabled: settings.autoReleaseEnabled,
@@ -228,10 +236,13 @@ export default function ChapterList({
     } catch (error) {
       console.error('Error updating settings:', error);
       toast.error('Failed to update settings');
+    } finally {
+      setIsSavingSettings(false);
     }
   };
 
   const fetchGlobalSettings = async () => {
+    setIsLoadingSettings(true);
     try {
       const settings = await authorChapterService.getGlobalSettings(novelId, userId);
       setGlobalSettings({
@@ -242,12 +253,15 @@ export default function ChapterList({
       });
     } catch (error) {
       console.error('Error fetching global settings:', error);
-      toast.error('Failed to load settings');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      toast.error(`Failed to load settings: ${errorMessage}`);
+    } finally {
+      setIsLoadingSettings(false);
     }
   };
 
   const handleOpenGlobalSettings = () => {
-    fetchGlobalSettings();
+    // No need to fetch settings here since they're already loaded
     setIsGlobalSettingsModalOpen(true);
   };
 
@@ -540,6 +554,8 @@ export default function ChapterList({
               autoReleaseEnabled: false,
               fixedPriceEnabled: false,
             }}
+            isLoading={isLoadingSettings}
+            isSaving={isSavingSettings}
           />
 
           <AssignChaptersModal
