@@ -48,14 +48,13 @@ export const RatingPopup = ({
   };
 
   return (
-    <div className="absolute top-full mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-3 border border-gray-200 dark:border-gray-700 z-50 rating-popup-container">
+    <div className="absolute top-full left-0 sm:left-auto mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-3 border border-gray-200 dark:border-gray-700 z-50 rating-popup-container w-[130px] sm:w-auto">
       <div 
         ref={ratingContainerRef}
-        className="flex cursor-pointer gap-1"
+        className="flex cursor-pointer gap-1 justify-center"
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
         onClick={handleClick}
-        style={{ minWidth: '130px' }}
       >
         {renderStars()}
       </div>
