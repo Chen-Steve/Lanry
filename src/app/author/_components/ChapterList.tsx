@@ -64,18 +64,28 @@ export default function ChapterList({
   }, [novelId, userId]);
 
   const chaptersGroupedByVolume = useMemo(() => {
-    const noVolumeChapters = chapters.filter(chapter => !chapter.volumeId);
+    // Filter chapters based on search query
+    const filteredChapters = chapters.filter(chapter => {
+      const searchLower = searchQuery.toLowerCase();
+      return (
+        chapter.title?.toLowerCase().includes(searchLower) ||
+        chapter.chapter_number.toString().includes(searchLower) ||
+        (chapter.part_number && chapter.part_number.toString().includes(searchLower))
+      );
+    });
+
+    const noVolumeChapters = filteredChapters.filter(chapter => !chapter.volumeId);
     const volumeChapters = new Map<string, ChapterListChapter[]>();
     
     volumes.forEach(volume => {
-      volumeChapters.set(volume.id, chapters.filter(chapter => chapter.volumeId === volume.id));
+      volumeChapters.set(volume.id, filteredChapters.filter(chapter => chapter.volumeId === volume.id));
     });
 
     return {
       noVolumeChapters,
       volumeChapters
     };
-  }, [chapters, volumes]);
+  }, [chapters, volumes, searchQuery]);
 
   const handleVolumeSubmit = (e: React.FormEvent) => {
     e.preventDefault();
