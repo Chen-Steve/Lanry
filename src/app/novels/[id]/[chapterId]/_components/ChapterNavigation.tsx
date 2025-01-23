@@ -49,7 +49,7 @@ export default function ChapterNavigation({
   };
 
   const formatChapterTitle = (chapterNumber: number, partNumber?: number | null) => {
-    return `Ch. ${chapterNumber}${partNumber ? `-${partNumber}` : ''}`;
+    return `Ch. ${chapterNumber}${partNumber ? `.${partNumber}` : ''}`;
   };
 
   // Group chapters by volume
