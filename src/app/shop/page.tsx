@@ -53,57 +53,59 @@ export default function ShopPage() {
               </p>
 
               {isAuthenticated && userId ? (
-                <PayPalButtons
-                  style={{ layout: "horizontal", height: 35 }}
-                  createOrder={async () => {
-                    try {
-                      if (!isAuthenticated || !userId) {
-                        throw new Error("Please sign in to make a purchase");
-                      }
+                <div className="flex justify-center">
+                  <PayPalButtons
+                    style={{ layout: "horizontal", height: 35, tagline: false }}
+                    createOrder={async () => {
+                      try {
+                        if (!isAuthenticated || !userId) {
+                          throw new Error("Please sign in to make a purchase");
+                        }
 
-                      console.log("Making request with userId:", userId); // Debug log
-                      const response = await fetch("/api/payments/create-order", {
-                        method: "POST",
-                        headers: {
-                          "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify({
-                          userId,
-                          coins: pkg.coins,
-                          amount: pkg.price,
-                        }),
-                        credentials: "include",
-                      });
+                        console.log("Making request with userId:", userId); // Debug log
+                        const response = await fetch("/api/payments/create-order", {
+                          method: "POST",
+                          headers: {
+                            "Content-Type": "application/json",
+                          },
+                          body: JSON.stringify({
+                            userId,
+                            coins: pkg.coins,
+                            amount: pkg.price,
+                          }),
+                          credentials: "include",
+                        });
 
-                      const data = await response.json();
-                      if (data.error) {
-                        throw new Error(data.error);
+                        const data = await response.json();
+                        if (data.error) {
+                          throw new Error(data.error);
+                        }
+                        if (!data.id) {
+                          throw new Error("Failed to create order");
+                        }
+                        return data.id;
+                      } catch (error) {
+                        console.error("Create order error:", error);
+                        toast.error(error instanceof Error ? error.message : "Failed to create order");
+                        throw error;
                       }
-                      if (!data.id) {
-                        throw new Error("Failed to create order");
+                    }}
+                    onApprove={async (data) => {
+                      try {
+                        await onApprove(userId, data.orderID);
+                        toast.success(`Successfully purchased ${pkg.coins} coins!`);
+                        router.refresh();
+                      } catch (error) {
+                        console.error("Approve error:", error);
+                        toast.error("Failed to complete purchase");
                       }
-                      return data.id;
-                    } catch (error) {
-                      console.error("Create order error:", error);
-                      toast.error(error instanceof Error ? error.message : "Failed to create order");
-                      throw error;
-                    }
-                  }}
-                  onApprove={async (data) => {
-                    try {
-                      await onApprove(userId, data.orderID);
-                      toast.success(`Successfully purchased ${pkg.coins} coins!`);
-                      router.refresh();
-                    } catch (error) {
-                      console.error("Approve error:", error);
-                      toast.error("Failed to complete purchase");
-                    }
-                  }}
-                  onError={(err) => {
-                    console.error("PayPal error:", err);
-                    toast.error("Payment failed");
-                  }}
-                />
+                    }}
+                    onError={(err) => {
+                      console.error("PayPal error:", err);
+                      toast.error("Payment failed");
+                    }}
+                  />
+                </div>
               ) : (
                 <button
                   className="bg-muted text-muted-foreground cursor-not-allowed w-full py-1.5 px-3 rounded-md text-sm font-medium"

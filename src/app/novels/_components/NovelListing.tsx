@@ -100,7 +100,7 @@ const NovelListing = () => {
         selectedCategories={selectedCategories}
         onCategoriesChange={handleCategoriesChange}
         categoryCounts={categoryCounts}
-        className="mb-6"
+        className="mb-2"
       />
       
       {/* Advanced Chapters Section */}
