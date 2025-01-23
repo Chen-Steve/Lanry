@@ -144,23 +144,6 @@ export type CategoryBasicInfo = {
   latest_thread: string | null;
 };
 
-export type NovelRequest = {
-  id: string;
-  title: string;
-  author: string;
-  description: string;
-  originalLanguage: string;
-  coverImage: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-  profileId: string;
-  voteCount: number;
-  hasVoted: boolean;
-  profile?: {
-    username: string | null;
-  };
-};
-
 export interface NovelComment {
   id: string;
   content: string;
