@@ -235,6 +235,16 @@ export async function getNovels(): Promise<Novel[]> {
           custom_url_label,
           author_bio
         ),
+        chapters (
+          id,
+          title,
+          chapter_number,
+          part_number,
+          publish_at,
+          coins,
+          volume_id,
+          age_rating
+        ),
         categories:categories_on_novels (
           category:category_id (
             id,
