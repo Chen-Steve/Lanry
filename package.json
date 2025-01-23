@@ -11,7 +11,8 @@
   },
   "dependencies": {
     "@iconify/react": "^5.1.0",
-    "@paypal/react-paypal-js": "^8.7.0",
+    "@paypal/checkout-server-sdk": "^1.0.3",
+    "@paypal/react-paypal-js": "^8.8.1",
     "@prisma/client": "^6.2.1",
     "@supabase/auth-helpers-nextjs": "^0.10.0",
     "@supabase/auth-helpers-react": "^0.5.0",
@@ -35,6 +36,7 @@
     "react-error-boundary": "^4.1.2",
     "react-hot-toast": "^2.4.1",
     "react-use": "^17.5.1",
+    "sonner": "^1.7.2",
     "uuid": "^11.0.3"
   },
   "devDependencies": {
