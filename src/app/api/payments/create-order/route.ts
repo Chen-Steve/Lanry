@@ -8,12 +8,15 @@ const supabase = createClient(
 );
 
 // Initialize PayPal environment
-const clientId = process.env.PAYPAL_CLIENT_ID!;
-const clientSecret = process.env.PAYPAL_CLIENT_SECRET!;
-
 const environment = process.env.NODE_ENV === "production"
-  ? new checkoutNodeJssdk.core.LiveEnvironment(clientId, clientSecret)
-  : new checkoutNodeJssdk.core.SandboxEnvironment(clientId, clientSecret);
+  ? new checkoutNodeJssdk.core.LiveEnvironment(
+      process.env.PAYPAL_CLIENT_ID!,
+      process.env.PAYPAL_CLIENT_SECRET!
+    )
+  : new checkoutNodeJssdk.core.SandboxEnvironment(
+      process.env.PAYPAL_SANDBOX_CLIENT_ID!,
+      process.env.PAYPAL_SANDBOX_CLIENT_SECRET!
+    );
 
 const client = new checkoutNodeJssdk.core.PayPalHttpClient(environment);
 

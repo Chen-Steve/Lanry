@@ -14,8 +14,8 @@ const environment = process.env.NODE_ENV === "production"
       process.env.PAYPAL_CLIENT_SECRET!
     )
   : new checkoutNodeJssdk.core.SandboxEnvironment(
-      process.env.PAYPAL_CLIENT_ID!,
-      process.env.PAYPAL_CLIENT_SECRET!
+      process.env.PAYPAL_SANDBOX_CLIENT_ID!,
+      process.env.PAYPAL_SANDBOX_CLIENT_SECRET!
     );
 
 const client = new checkoutNodeJssdk.core.PayPalHttpClient(environment);
