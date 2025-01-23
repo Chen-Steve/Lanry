@@ -36,14 +36,16 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const supabase = createClientComponentClient();
 
-  const paypalClientId = process.env.NEXT_PUBLIC_PAYPAL_SANDBOX_CLIENT_ID;
+  const paypalClientId = process.env.NODE_ENV === 'production'
+    ? process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID
+    : process.env.NEXT_PUBLIC_PAYPAL_SANDBOX_CLIENT_ID;
 
   if (!paypalClientId) {
     console.error('PayPal Client ID is not configured');
   }
 
   const paypalInitialOptions = {
-    clientId: process.env.NEXT_PUBLIC_PAYPAL_SANDBOX_CLIENT_ID!,
+    clientId: paypalClientId!,
     currency: "USD",
     intent: "capture",
     "enable-funding": "paypal",
