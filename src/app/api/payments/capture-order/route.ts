@@ -20,6 +20,21 @@ const environment = process.env.NODE_ENV === "production"
 
 const client = new checkoutNodeJssdk.core.PayPalHttpClient(environment);
 
+interface PayPalCaptureResult {
+  id: string;
+  status: string;
+  purchase_units: Array<{
+    payments: {
+      captures: Array<{
+        amount: {
+          currency_code: string;
+          value: string;
+        };
+      }>;
+    };
+  }>;
+}
+
 export async function POST(req: Request) {
   try {
     const { orderId, userId } = await req.json();
@@ -38,39 +53,46 @@ export async function POST(req: Request) {
 
     // Capture the PayPal order
     const request = new checkoutNodeJssdk.orders.OrdersCaptureRequest(orderId);
-    const response = await client.execute<checkoutNodeJssdk.orders.OrderResult>(request);
+    const response = await client.execute<PayPalCaptureResult>(request);
+
+    console.log("PayPal response:", JSON.stringify(response.result, null, 2)); // Debug log
 
     if (response.result.status !== "COMPLETED") {
       throw new Error("Payment not completed");
     }
 
-    const description = response.result.purchase_units[0].description;
-    const coins = parseInt(description.split(" ")[0]);
+    // Get the amount from the capture response
+    const result = response.result as PayPalCaptureResult;
+    const amount = parseFloat(result.purchase_units[0].payments.captures[0].amount.value);
+    // Calculate coins based on amount (matching our packages)
+    const coins = amount === 1 ? 10 :
+                 amount === 5 ? 50 :
+                 amount === 10 ? 100 :
+                 amount === 20 ? 200 : 0;
+
+    if (coins === 0) {
+      throw new Error("Invalid payment amount");
+    }
 
     // Start a transaction to update user's coins and create transaction record
-    const result = await prisma.$transaction(async (tx) => {
-      // Add coins to user's balance
-      const updatedProfile = await tx.profile.update({
-        where: { id: userId },
-        data: {
-          coins: { increment: coins },
-        },
-      });
-
-      // Create transaction record
-      const transaction = await tx.coinTransaction.create({
-        data: {
-          profileId: userId,
-          amount: coins,
-          type: "PURCHASE",
-          orderId,
-        },
-      });
-
-      return { profile: updatedProfile, transaction };
+    const updatedProfile = await prisma.profile.update({
+      where: { id: userId },
+      data: {
+        coins: { increment: coins },
+      },
     });
 
-    return NextResponse.json(result);
+    // Create transaction record
+    const transaction = await prisma.coinTransaction.create({
+      data: {
+        profileId: userId,
+        amount: coins,
+        type: "PURCHASE",
+        orderId,
+      },
+    });
+
+    return NextResponse.json({ profile: updatedProfile, transaction });
   } catch (error) {
     console.error("Error capturing PayPal order:", error);
     return NextResponse.json(
