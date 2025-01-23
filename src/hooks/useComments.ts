@@ -242,7 +242,57 @@ export function useComments(novelId: string, chapterNumber: number) {
     }
   };
 
+  const updateComment = async (commentId: string, content: string) => {
+    if (!userId) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('chapter_comments')
+        .update({ 
+          content,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', commentId)
+        .eq('profile_id', userId)
+        .select(`
+          *,
+          profile:profiles (
+            username,
+            avatar_url,
+            role
+          )
+        `)
+        .single();
+
+      if (error) throw error;
+
+      // Update local state by updating the comment in all paragraphs
+      setComments(prevComments => {
+        const newComments = { ...prevComments };
+        for (const paragraphId in newComments) {
+          newComments[paragraphId] = newComments[paragraphId].map(comment => 
+            comment.id === commentId 
+              ? {
+                  ...comment,
+                  content,
+                  profile: {
+                    username: data.profile?.username ?? 'Anonymous',
+                    avatar_url: data.profile?.avatar_url,
+                    role: data.profile?.role ?? 'USER'
+                  }
+                }
+              : comment
+          );
+        }
+        return newComments;
+      });
+    } catch (error) {
+      console.error('Error updating comment:', error);
+      throw error;
+    }
+  };
+
   const isAuthenticated = !!userId;
 
-  return { comments, addComment, deleteComment, isAuthenticated, isLoading, userId };
+  return { comments, addComment, deleteComment, updateComment, isAuthenticated, isLoading, userId };
 } 

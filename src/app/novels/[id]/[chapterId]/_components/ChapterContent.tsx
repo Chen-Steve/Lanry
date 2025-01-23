@@ -53,7 +53,7 @@ export default function ChapterContent({
   ageRating,
 }: ChapterContentProps) {
   const [selectedParagraphId, setSelectedParagraphId] = useState<string | null>(null);
-  const { comments, addComment, deleteComment, isAuthenticated, isLoading, userId } = useComments(novelId, chapterNumber);
+  const { comments, addComment, deleteComment, updateComment, isAuthenticated, isLoading, userId } = useComments(novelId, chapterNumber);
   const isMobile = useMediaQuery('(max-width: 768px)');
 
   const handleCloseComment = () => {
@@ -428,6 +428,7 @@ export default function ChapterContent({
           onClose={handleCloseComment}
           onAddComment={(content) => handleAddComment(selectedParagraphId, content)}
           onDeleteComment={deleteComment}
+          onUpdateComment={updateComment}
           isAuthenticated={isAuthenticated}
           isLoading={isLoading}
           userId={userId}

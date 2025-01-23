@@ -25,6 +25,7 @@ interface CommentBarProps {
   onClose: () => void;
   onAddComment: (content: string) => void;
   onDeleteComment: (commentId: string) => Promise<void>;
+  onUpdateComment: (commentId: string, content: string) => Promise<void>;
   isAuthenticated: boolean;
   isLoading: boolean;
   userId: string | null;
@@ -38,11 +39,14 @@ export default function CommentBar({
   onClose,
   onAddComment,
   onDeleteComment,
+  onUpdateComment,
   isAuthenticated,
   isLoading,
   userId,
 }: CommentBarProps) {
   const [newComment, setNewComment] = useState('');
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState('');
   const barRef = useRef<HTMLDivElement>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -51,6 +55,23 @@ export default function CommentBar({
     
     onAddComment(newComment.trim());
     setNewComment('');
+  };
+
+  const handleEdit = (commentId: string, content: string) => {
+    setEditingCommentId(commentId);
+    setEditContent(content);
+  };
+
+  const handleUpdate = async (commentId: string) => {
+    if (!editContent.trim()) return;
+    await onUpdateComment(commentId, editContent.trim());
+    setEditingCommentId(null);
+    setEditContent('');
+  };
+
+  const handleCancelEdit = () => {
+    setEditingCommentId(null);
+    setEditContent('');
   };
 
   useEffect(() => {
@@ -164,16 +185,56 @@ export default function CommentBar({
                         </span>
                       </div>
                       {userId === comment.profile_id && (
-                        <button
-                          onClick={() => onDeleteComment(comment.id)}
-                          className="p-1 hover:bg-[#F2EEE5] dark:hover:bg-gray-700 rounded-full transition-colors flex-shrink-0"
-                          aria-label="Delete comment"
-                        >
-                          <Icon icon="mdi:delete-outline" className="text-gray-500 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 w-4 h-4" />
-                        </button>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => handleEdit(comment.id, comment.content)}
+                            className="p-1 hover:bg-[#F2EEE5] dark:hover:bg-gray-700 rounded-full transition-colors flex-shrink-0"
+                            aria-label="Edit comment"
+                          >
+                            <Icon icon="mdi:pencil-outline" className="text-gray-500 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => onDeleteComment(comment.id)}
+                            className="p-1 hover:bg-[#F2EEE5] dark:hover:bg-gray-700 rounded-full transition-colors flex-shrink-0"
+                            aria-label="Delete comment"
+                          >
+                            <Icon icon="mdi:delete-outline" className="text-gray-500 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 w-4 h-4" />
+                          </button>
+                        </div>
                       )}
                     </div>
-                    <p className="text-sm mt-1 text-black dark:text-gray-200">{comment.content}</p>
+                    {editingCommentId === comment.id ? (
+                      <div className="mt-2">
+                        <textarea
+                          value={editContent}
+                          onChange={(e) => setEditContent(e.target.value)}
+                          placeholder="Edit your comment..."
+                          className="w-full p-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm resize-none 
+                                   bg-[#F7F4ED] dark:bg-gray-800 focus:ring-2 focus:ring-amber-500 focus:border-transparent 
+                                   text-black dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                          rows={2}
+                        />
+                        <div className="flex gap-2 mt-2">
+                          <button
+                            onClick={() => handleUpdate(comment.id)}
+                            className="px-3 py-1 bg-amber-500 text-white rounded-lg text-sm font-medium 
+                                     hover:bg-amber-600 transition-colors"
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={handleCancelEdit}
+                            className="px-3 py-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 
+                                     rounded-lg text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-600 
+                                     transition-colors"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-sm mt-1 text-black dark:text-gray-200">{comment.content}</p>
+                    )}
                   </div>
                 </div>
               </div>
