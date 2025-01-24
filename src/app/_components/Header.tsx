@@ -75,15 +75,6 @@ const Header = () => {
     if (isAuthenticated) {
       return (
         <div className="flex items-center gap-3">
-          {userProfile?.role && (userProfile.role === 'AUTHOR' || userProfile.role === 'TRANSLATOR') && (
-            <Link
-              href="/author/dashboard"
-              className="hidden lg:flex text-muted-foreground hover:text-foreground transition-colors items-center gap-1"
-            >
-              <Icon icon="mdi:pencil" className="text-lg" />
-              <span>Author</span>
-            </Link>
-          )}
           <UserProfileButton
             userProfile={userProfile}
             isProfileDropdownOpen={isProfileDropdownOpen}

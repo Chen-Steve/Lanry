@@ -11,6 +11,7 @@ interface UserProfile {
   last_visit: string | null;
   coins: number;
   avatar_url?: string;
+  role?: string;
 }
 
 interface UserProfileButtonProps {
@@ -101,6 +102,18 @@ const UserProfileButton = ({
                 </div>
               </div>
             </Link>
+            {userProfile?.role && (userProfile.role === 'AUTHOR' || userProfile.role === 'TRANSLATOR') && (
+              <Link
+                href="/author/dashboard"
+                className="block px-4 py-2 text-sm text-foreground border-b border-border hover:bg-accent transition-colors"
+                onClick={onMenuClose}
+              >
+                <div className="flex items-center gap-2">
+                  <Icon icon="mdi:pencil" className="text-lg" />
+                  <span>Author Dashboard</span>
+                </div>
+              </Link>
+            )}
             <button
               type="button"
               onClick={onSignOut}
@@ -140,6 +153,21 @@ const UserProfileButton = ({
               </div>
             </div>
           </Link>
+          {userProfile?.role && (userProfile.role === 'AUTHOR' || userProfile.role === 'TRANSLATOR') && (
+            <Link
+              href="/author/dashboard"
+              className="block px-4 py-2 text-sm text-foreground border-b border-border hover:bg-accent transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsProfileDropdownOpen(false);
+              }}
+            >
+              <div className="flex items-center gap-2">
+                <Icon icon="mdi:pencil" className="text-lg" />
+                <span>Author Dashboard</span>
+              </div>
+            </Link>
+          )}
           <button
             type="button"
             onClick={onSignOut}
