@@ -33,8 +33,11 @@ export function useAuth() {
         if (session?.user) {
           console.log('Session user found:', session.user.id, 'isAuthChange:', isAuthChange);
           
-          // Skip profile check on initial page load if not from auth change
-          if (isInitialCheck && !isAuthChange) {
+          // For Google Sign In, we want to check immediately
+          const isGoogleSignIn = session.user.app_metadata.provider === 'google';
+          
+          // Skip profile check on initial page load if not from auth change and not Google
+          if (isInitialCheck && !isAuthChange && !isGoogleSignIn) {
             console.log('Skipping initial check, waiting for auth state change');
             return;
           }
@@ -74,8 +77,14 @@ export function useAuth() {
 
             console.log('New profile created:', newProfile);
             
-            // Only redirect if this was triggered by an auth change
-            if (isAuthChange) {
+            // Redirect for both auth change and Google sign in
+            if (isAuthChange || isGoogleSignIn) {
+              router.push('/');
+              router.refresh();
+            }
+          } else {
+            // If profile exists and it's a sign in, redirect
+            if (isAuthChange || isGoogleSignIn) {
               router.push('/');
               router.refresh();
             }
@@ -94,7 +103,7 @@ export function useAuth() {
     // Subscribe to auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Auth state changed:', event, session?.user?.id);
-      if (event === 'SIGNED_IN' && session?.user) {
+      if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && session?.user) {
         // Add a small delay to ensure the session is fully established
         await new Promise(resolve => setTimeout(resolve, 500));
         await checkAndCreateProfile(true);
@@ -213,16 +222,32 @@ export function useAuth() {
   const handleGoogleSignIn = async () => {
     try {
       setGoogleLoading(true);
+      
+      // Get the current URL from window location
+      const redirectUrl = typeof window !== 'undefined' 
+        ? `${window.location.origin}/auth/callback`
+        : process.env.NEXT_PUBLIC_BASE_URL 
+          ? `${process.env.NEXT_PUBLIC_BASE_URL}/auth/callback`
+          : null;
+
+      if (!redirectUrl) {
+        throw new Error('No redirect URL available');
+      }
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`
+          redirectTo: redirectUrl,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
         }
       });
 
       if (error) throw error;
-
-      // Profile creation will be handled by the useEffect hook after redirect
+      
+      // Profile creation will be handled by auth state change
     } catch (error) {
       console.error('Google sign-in error:', error);
       setError(error instanceof Error ? error.message : 'Google sign-in failed');
