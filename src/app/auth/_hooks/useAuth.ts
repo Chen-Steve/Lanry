@@ -57,22 +57,49 @@ export function useAuth() {
 
           if (!profile) {
             console.log('Creating new profile for user:', session.user.id);
+            
+            // Get user details from Google auth if available
+            const username = session.user.app_metadata.provider === 'google'
+              ? session.user.email?.split('@')[0] || generateUsername()
+              : generateUsername();
+
             const { data: newProfile, error: createError } = await supabase
               .from('profiles')
               .upsert([{
                 id: session.user.id,
-                username: generateUsername(),
+                username,
+                email: session.user.email,
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString(),
                 current_streak: 0,
                 last_visit: new Date().toISOString(),
                 coins: 0,
-                role: 'USER'
-              }], { onConflict: 'id' });
+                role: 'USER',
+                reading_time: {
+                  total_minutes: 0,
+                  last_read: new Date().toISOString()
+                }
+              }], { 
+                onConflict: 'id',
+                ignoreDuplicates: false
+              });
 
             if (createError) {
               console.error('Error creating profile:', createError);
               return;
+            }
+
+            // Create initial reading_time record
+            const { error: readingTimeError } = await supabase
+              .from('reading_time')
+              .upsert([{
+                profile_id: session.user.id,
+                total_minutes: 0,
+                last_read: new Date().toISOString()
+              }]);
+
+            if (readingTimeError) {
+              console.error('Error creating reading time record:', readingTimeError);
             }
 
             console.log('New profile created:', newProfile);
