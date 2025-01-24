@@ -277,14 +277,6 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
         ageRating={chapter.age_rating}
       />
 
-      {/* Chapter Comments */}
-      <div className="mt-8 border-t pt-8">
-        <ChapterComments
-          chapterId={chapter.id}
-          authorId={chapter.novel.author_profile_id}
-        />
-      </div>
-
       {/* Bottom Navigation */}
       <div className="border-t pt-4">
         <ChapterNavigation
@@ -299,6 +291,14 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
           setIsDropdownOpen={setIsDropdownOpen}
           handleChapterSelect={handleChapterSelect}
           position="bottom"
+        />
+      </div>
+
+      {/* Chapter Comments */}
+      <div className="mt-8 border-t pt-8">
+        <ChapterComments
+          chapterId={chapter.id}
+          authorId={chapter.novel.author_profile_id}
         />
       </div>
 
