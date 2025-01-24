@@ -68,20 +68,14 @@ export function useAuth() {
               .upsert([{
                 id: session.user.id,
                 username,
-                email: session.user.email,
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString(),
                 current_streak: 0,
                 last_visit: new Date().toISOString(),
                 coins: 0,
-                role: 'USER',
-                reading_time: {
-                  total_minutes: 0,
-                  last_read: new Date().toISOString()
-                }
+                role: 'USER'
               }], { 
-                onConflict: 'id',
-                ignoreDuplicates: false
+                onConflict: 'id'
               });
 
             if (createError) {
@@ -92,7 +86,7 @@ export function useAuth() {
             // Create initial reading_time record
             const { error: readingTimeError } = await supabase
               .from('reading_time')
-              .upsert([{
+              .insert([{
                 profile_id: session.user.id,
                 total_minutes: 0,
                 last_read: new Date().toISOString()
