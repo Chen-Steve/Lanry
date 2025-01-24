@@ -31,14 +31,20 @@ export function useAuth() {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
-          console.log('Session user found:', session.user.id, 'isAuthChange:', isAuthChange);
+          console.log('[Auth] User session found:', {
+            id: session.user.id,
+            email: session.user.email,
+            provider: session.user.app_metadata.provider,
+            isAuthChange
+          });
           
           // For Google Sign In, we want to check immediately
           const isGoogleSignIn = session.user.app_metadata.provider === 'google';
+          console.log('[Auth] Sign-in type:', { isGoogleSignIn, provider: session.user.app_metadata.provider });
           
           // Skip profile check on initial page load if not from auth change and not Google
           if (isInitialCheck && !isAuthChange && !isGoogleSignIn) {
-            console.log('Skipping initial check, waiting for auth state change');
+            console.log('[Auth] Skipping initial check, waiting for auth state change');
             return;
           }
 
@@ -48,20 +54,29 @@ export function useAuth() {
             .eq('id', session.user.id)
             .single();
 
-          if (profileError && profileError.code !== 'PGRST116') {
-            console.error('Error fetching profile:', profileError);
-            return;
+          if (profileError) {
+            if (profileError.code === 'PGRST116') {
+              console.log('[Profile] No existing profile found for user:', session.user.id);
+            } else {
+              console.error('[Profile] Error fetching profile:', { error: profileError, userId: session.user.id });
+              return;
+            }
+          } else {
+            console.log('[Profile] Existing profile found:', { 
+              profileId: profile.id, 
+              username: profile.username 
+            });
           }
 
-          console.log('Profile check result:', { profile, profileError });
-
           if (!profile) {
-            console.log('Creating new profile for user:', session.user.id);
+            console.log('[Profile] Starting profile creation for user:', session.user.id);
             
             // Get user details from Google auth if available
             const username = session.user.app_metadata.provider === 'google'
               ? session.user.email?.split('@')[0] || generateUsername()
               : generateUsername();
+            
+            console.log('[Profile] Generated username:', username);
 
             const { data: newProfile, error: createError } = await supabase
               .from('profiles')
@@ -79,40 +94,65 @@ export function useAuth() {
               });
 
             if (createError) {
-              console.error('Error creating profile:', createError);
+              console.error('[Profile] Error creating profile:', { 
+                error: createError, 
+                userId: session.user.id,
+                username 
+              });
               return;
             }
 
+            console.log('[Profile] Successfully created profile:', { 
+              userId: session.user.id, 
+              username,
+              newProfile 
+            });
+
             // Create initial reading_time record
+            console.log('[ReadingTime] Creating initial reading time record for user:', session.user.id);
+            
             const { error: readingTimeError } = await supabase
               .from('reading_time')
               .insert([{
                 profile_id: session.user.id,
-                total_minutes: 0,
-                last_read: new Date().toISOString()
+                total_minutes: 0
               }]);
 
             if (readingTimeError) {
-              console.error('Error creating reading time record:', readingTimeError);
+              console.error('[ReadingTime] Error creating reading time record:', { 
+                error: readingTimeError, 
+                userId: session.user.id 
+              });
+            } else {
+              console.log('[ReadingTime] Successfully created reading time record for user:', session.user.id);
             }
 
-            console.log('New profile created:', newProfile);
-            
             // Redirect for both auth change and Google sign in
             if (isAuthChange || isGoogleSignIn) {
+              console.log('[Auth] Redirecting after successful profile creation:', {
+                isAuthChange,
+                isGoogleSignIn
+              });
               router.push('/');
               router.refresh();
             }
           } else {
             // If profile exists and it's a sign in, redirect
             if (isAuthChange || isGoogleSignIn) {
+              console.log('[Auth] Redirecting existing user:', {
+                isAuthChange,
+                isGoogleSignIn,
+                userId: session.user.id
+              });
               router.push('/');
               router.refresh();
             }
           }
+        } else {
+          console.log('[Auth] No user session found');
         }
       } catch (error) {
-        console.error('Profile check error:', error);
+        console.error('[Auth] Profile check error:', error);
       } finally {
         isInitialCheck = false;
       }
