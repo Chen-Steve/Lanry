@@ -25,149 +25,84 @@ export function useAuth() {
 
   // Check and create profile if needed
   useEffect(() => {
-    let isInitialCheck = true;
+    const createProfileAndReadingTime = async (session: { user: { id: string; email?: string; app_metadata: { provider?: string } } }) => {
+      console.log('[Profile] Starting profile creation for user:', session.user.id);
+      
+      // Get user details from Google auth if available
+      const username = session.user.app_metadata.provider === 'google'
+        ? session.user.email?.split('@')[0] || generateUsername()
+        : generateUsername();
+      
+      console.log('[Profile] Generated username:', username);
 
-    const checkAndCreateProfile = async (isAuthChange = false) => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user) {
-          console.log('[Auth] User session found:', {
-            id: session.user.id,
-            email: session.user.email,
-            provider: session.user.app_metadata.provider,
-            isAuthChange
-          });
-          
-          // For Google Sign In, we want to check immediately
-          const isGoogleSignIn = session.user.app_metadata.provider === 'google';
-          console.log('[Auth] Sign-in type:', { isGoogleSignIn, provider: session.user.app_metadata.provider });
-          
-          // Skip profile check on initial page load if not from auth change and not Google
-          if (isInitialCheck && !isAuthChange && !isGoogleSignIn) {
-            console.log('[Auth] Skipping initial check, waiting for auth state change');
-            return;
-          }
+      const { error: createError } = await supabase
+        .from('profiles')
+        .insert([{
+          id: session.user.id,
+          username,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }]);
 
-          const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-
-          if (profileError) {
-            if (profileError.code === 'PGRST116') {
-              console.log('[Profile] No existing profile found for user:', session.user.id);
-            } else {
-              console.error('[Profile] Error fetching profile:', { error: profileError, userId: session.user.id });
-              return;
-            }
-          } else {
-            console.log('[Profile] Existing profile found:', { 
-              profileId: profile.id, 
-              username: profile.username 
-            });
-          }
-
-          if (!profile) {
-            console.log('[Profile] Starting profile creation for user:', session.user.id);
-            
-            // Get user details from Google auth if available
-            const username = session.user.app_metadata.provider === 'google'
-              ? session.user.email?.split('@')[0] || generateUsername()
-              : generateUsername();
-            
-            console.log('[Profile] Generated username:', username);
-
-            const { data: newProfile, error: createError } = await supabase
-              .from('profiles')
-              .upsert([{
-                id: session.user.id,
-                username,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-                current_streak: 0,
-                last_visit: new Date().toISOString(),
-                coins: 0,
-                role: 'USER'
-              }], { 
-                onConflict: 'id'
-              });
-
-            if (createError) {
-              console.error('[Profile] Error creating profile:', { 
-                error: createError, 
-                userId: session.user.id,
-                username 
-              });
-              return;
-            }
-
-            console.log('[Profile] Successfully created profile:', { 
-              userId: session.user.id, 
-              username,
-              newProfile 
-            });
-
-            // Create initial reading_time record
-            console.log('[ReadingTime] Creating initial reading time record for user:', session.user.id);
-            
-            const { error: readingTimeError } = await supabase
-              .from('reading_time')
-              .insert([{
-                profile_id: session.user.id,
-                total_minutes: 0
-              }]);
-
-            if (readingTimeError) {
-              console.error('[ReadingTime] Error creating reading time record:', { 
-                error: readingTimeError, 
-                userId: session.user.id 
-              });
-            } else {
-              console.log('[ReadingTime] Successfully created reading time record for user:', session.user.id);
-            }
-
-            // Redirect for both auth change and Google sign in
-            if (isAuthChange || isGoogleSignIn) {
-              console.log('[Auth] Redirecting after successful profile creation:', {
-                isAuthChange,
-                isGoogleSignIn
-              });
-              router.push('/');
-              router.refresh();
-            }
-          } else {
-            // If profile exists and it's a sign in, redirect
-            if (isAuthChange || isGoogleSignIn) {
-              console.log('[Auth] Redirecting existing user:', {
-                isAuthChange,
-                isGoogleSignIn,
-                userId: session.user.id
-              });
-              router.push('/');
-              router.refresh();
-            }
-          }
-        } else {
-          console.log('[Auth] No user session found');
-        }
-      } catch (error) {
-        console.error('[Auth] Profile check error:', error);
-      } finally {
-        isInitialCheck = false;
+      if (createError) {
+        console.error('[Profile] Error creating profile:', { 
+          error: createError, 
+          userId: session.user.id,
+          username 
+        });
+        return false;
       }
-    };
 
-    // Initial check
-    checkAndCreateProfile(false);
+      console.log('[Profile] Successfully created profile');
+      return true;
+    };
 
     // Subscribe to auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event, session?.user?.id);
-      if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && session?.user) {
-        // Add a small delay to ensure the session is fully established
+      console.log('[Auth] Auth state changed:', { 
+        event, 
+        userId: session?.user?.id,
+        provider: session?.user?.app_metadata?.provider 
+      });
+
+      if (event === 'SIGNED_IN' && session?.user) {
+        console.log('[Auth] Processing sign in for user:', {
+          id: session.user.id,
+          email: session.user.email,
+          provider: session.user.app_metadata.provider
+        });
+
+        // Check if profile exists
+        const { data: existingProfile, error: profileCheckError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+
+        if (profileCheckError) {
+          if (profileCheckError.code === 'PGRST116') {
+            console.log('[Auth] No existing profile found, creating new profile');
+            const success = await createProfileAndReadingTime(session);
+            if (!success) {
+              console.error('[Auth] Failed to create profile and reading time');
+              return;
+            }
+          } else {
+            console.error('[Auth] Error checking existing profile:', profileCheckError);
+            return;
+          }
+        } else {
+          console.log('[Auth] Existing profile found:', {
+            profileId: existingProfile.id,
+            username: existingProfile.username
+          });
+        }
+
+        // Add a small delay before redirect
         await new Promise(resolve => setTimeout(resolve, 500));
-        await checkAndCreateProfile(true);
+        console.log('[Auth] Redirecting to home page');
+        router.push('/');
+        router.refresh();
       }
     });
 
@@ -229,16 +164,26 @@ export function useAuth() {
 
   const createUserProfile = async (userId: string) => {
     const generatedUsername = generateUsername();
-    const { error: profileError } = await supabase
+    
+    // First check if profile exists
+    const { data: existingProfile } = await supabase
       .from('profiles')
-      .insert([{
-        id: userId,
-        username: generatedUsername,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      }]);
+      .select('id')
+      .eq('id', userId)
+      .single();
 
-    if (profileError) throw new Error('Failed to create user profile');
+    if (!existingProfile) {
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert([{
+          id: userId,
+          username: generatedUsername,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }]);
+
+      if (profileError) throw new Error('Failed to create user profile');
+    }
   };
 
   const autoSignIn = async () => {
@@ -307,8 +252,8 @@ export function useAuth() {
       });
 
       if (error) throw error;
+      // Profile creation will happen in the callback route
       
-      // Profile creation will be handled by auth state change
     } catch (error) {
       console.error('Google sign-in error:', error);
       setError(error instanceof Error ? error.message : 'Google sign-in failed');
