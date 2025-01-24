@@ -7,20 +7,28 @@ import { Icon } from '@iconify/react';
 interface SearchSectionProps {
   onSearch?: (query: string, results: Novel[]) => void;
   minSearchLength?: number;
+  onExpandChange?: (expanded: boolean) => void;
 }
 
 const SearchSection: React.FC<SearchSectionProps> = ({ 
   onSearch = () => {}, 
-  minSearchLength = 2 
+  minSearchLength = 2,
+  onExpandChange
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<Novel[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const blurTimeoutRef = useRef<NodeJS.Timeout>();
+
+  useEffect(() => {
+    onExpandChange?.(isExpanded);
+  }, [isExpanded, onExpandChange]);
 
   const debouncedSearch = useRef(
     debounce(async (query: string) => {
@@ -69,6 +77,7 @@ const SearchSection: React.FC<SearchSectionProps> = ({
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setShowDropdown(false);
         setIsFocused(false);
+        setIsExpanded(false);
       }
     };
 
@@ -83,14 +92,15 @@ const SearchSection: React.FC<SearchSectionProps> = ({
   }, [debouncedSearch]);
 
   const handleBlur = () => {
-    // Clear any existing timeout
     if (blurTimeoutRef.current) {
       clearTimeout(blurTimeoutRef.current);
     }
     
-    // Set a new timeout
     blurTimeoutRef.current = setTimeout(() => {
       setIsFocused(false);
+      if (!searchQuery) {
+        setIsExpanded(false);
+      }
     }, 300);
   };
 
@@ -107,25 +117,66 @@ const SearchSection: React.FC<SearchSectionProps> = ({
     debouncedSearch(value);
   };
 
+  const handleSearchClick = () => {
+    setIsExpanded(true);
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 150); // Wait for animation to start
+  };
+
   return (
-    <div className="relative w-72" ref={dropdownRef}>
+    <div 
+      className={`relative transition-all duration-300 ease-in-out ${
+        isExpanded ? 'w-full sm:w-[24rem]' : 'w-10 sm:w-[24rem]'
+      }`} 
+      ref={dropdownRef}
+    >
       <div className="relative">
         <input
+          ref={inputRef}
           type="text"
           value={searchQuery}
           onChange={handleInputChange}
           onFocus={handleFocus}
           onBlur={handleBlur}
           placeholder="Search for novels..."
-          className="w-full pl-10 pr-4 py-2 bg-secondary text-foreground placeholder:text-muted-foreground border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+          className={`
+            w-full pl-11 pr-10 py-2 
+            bg-secondary text-foreground placeholder:text-muted-foreground 
+            border border-border rounded-lg 
+            focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary 
+            transition-all duration-300 ease-in-out
+            ${isExpanded ? 'opacity-100' : 'sm:opacity-100 opacity-0'}
+          `}
         />
-        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-          <Icon icon="material-symbols:search" className="w-5 h-5" />
-        </div>
+        <button 
+          onClick={handleSearchClick}
+          aria-label="Search novels"
+          className={`
+            absolute left-2 top-1/2 -translate-y-1/2 
+            text-muted-foreground hover:text-foreground 
+            transition-all duration-300 ease-in-out
+            ${isExpanded 
+              ? 'pointer-events-none' 
+              : 'sm:pointer-events-none bg-secondary hover:bg-secondary/80 p-2 rounded-lg'
+            }
+          `}
+        >
+          <Icon icon="ph:magnifying-glass-bold" className="w-5 h-5" />
+        </button>
         {isLoading && (
           <div className="absolute right-3 top-1/2 -translate-y-1/2">
             <Icon icon="eos-icons:loading" className="w-5 h-5 text-primary animate-spin" />
           </div>
+        )}
+        {isExpanded && (
+          <button
+            onClick={() => setIsExpanded(false)}
+            className="absolute right-2 top-1/2 -translate-y-1/2 sm:hidden p-2 text-muted-foreground hover:text-foreground"
+            aria-label="Close search"
+          >
+            <Icon icon="ph:x-bold" className="w-5 h-5" />
+          </button>
         )}
       </div>
 
@@ -142,7 +193,10 @@ const SearchSection: React.FC<SearchSectionProps> = ({
                   href={`/novels/${novel.id}`} 
                   key={novel.id}
                   className="block px-4 py-2 hover:bg-accent transition-colors cursor-pointer border-b border-border last:border-b-0"
-                  onClick={() => setShowDropdown(false)}
+                  onClick={() => {
+                    setShowDropdown(false);
+                    setIsExpanded(false);
+                  }}
                 >
                   <span className="text-foreground">{novel.title}</span>
                   <span className="text-muted-foreground text-sm ml-2">by {novel.author}</span>
@@ -151,6 +205,7 @@ const SearchSection: React.FC<SearchSectionProps> = ({
               <Link
                 href="/search"
                 className="block px-4 py-2 text-sm text-muted-foreground hover:bg-accent transition-colors text-center border-t border-border"
+                onClick={() => setIsExpanded(false)}
               >
                 Advanced Search
               </Link>
@@ -167,6 +222,7 @@ const SearchSection: React.FC<SearchSectionProps> = ({
               <Link
                 href="/search"
                 className="block text-sm text-primary hover:text-primary/80 transition-colors text-center"
+                onClick={() => setIsExpanded(false)}
               >
                 Try Advanced Search
               </Link>
@@ -176,6 +232,7 @@ const SearchSection: React.FC<SearchSectionProps> = ({
               <Link
                 href="/search"
                 className="text-sm text-primary hover:text-primary/80 transition-colors"
+                onClick={() => setIsExpanded(false)}
               >
                 Advanced Search
               </Link>

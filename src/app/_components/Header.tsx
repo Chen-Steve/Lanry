@@ -3,22 +3,20 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
-import Image from 'next/image';
 import SearchSection from '@/app/_components/SearchSection';
 import UserProfileButton from '@/app/_components/UserProfileButton';
 import ThemeToggle from '@/app/_components/ThemeToggle';
 import { useStreak } from '@/hooks/useStreak';
 import { useAuth } from '@/hooks/useAuth';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 
 const Header = () => {
-  const router = useRouter();
   const pathname = usePathname();
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const { isAuthenticated, userId, isLoading, handleSignOut } = useAuth();
   const { userProfile } = useStreak(userId, true);
-  const [isRandomizing, setIsRandomizing] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -28,27 +26,6 @@ const Header = () => {
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
-
-  const handleRandomNovel = async () => {
-    if (isRandomizing) return;
-    
-    try {
-      setIsRandomizing(true);
-      const response = await fetch('/api/novels/random');
-      const data = await response.json();
-      
-      if (data.error) {
-        console.error('Error fetching random novel:', data.error);
-        return;
-      }
-      
-      router.push(`/novels/${data.slug}`);
-    } catch (error) {
-      console.error('Error fetching random novel:', error);
-    } finally {
-      setIsRandomizing(false);
-    }
-  };
 
   // Don't render header on auth page when on mobile
   if (isMobile && pathname === '/auth') {
@@ -83,91 +60,69 @@ const Header = () => {
               handleSignOut();
               setIsProfileDropdownOpen(false);
             }}
+            isMobile={isMobile}
           />
         </div>
       );
     }
 
     return (
-      <Link href="/auth" className="text-muted-foreground hover:text-foreground transition-colors">
-        Sign In
+      <Link 
+        href="/auth" 
+        className="bg-secondary p-2 text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-secondary/80 inline-flex items-center gap-2"
+      >
+        <Icon icon="ph:user-bold" className="w-5 h-5" />
+        <span className="hidden sm:inline">Sign in/up</span>
       </Link>
     );
   };
 
   return (
-    <header className="w-full bg-background">
-      <div className="max-w-5xl mx-auto px-3 sm:px-4 mt-4 mb-4 md:mb-8">
-        <div className="bg-background border-b border-border rounded-md px-2 sm:px-4 md:px-6 py-2 md:py-3">
-          <div className="flex items-center justify-between max-w-full">
-            {/* Logo */}
-            <Link href="/" className="flex-shrink-0">
-              <Image
-                src="/lanry.jpg"
-                alt="Lanry Logo"
-                width={32}
-                height={32}
-                className="hidden md:block w-8 h-8 sm:w-10 sm:h-10 rounded-full"
-                quality={95}
-                priority
-                sizes="(max-width: 640px) 28px, 32px"
-              />
-            </Link>
-
-            {/* Search and Theme Toggle */}
-            <div className="flex items-center flex-1 ml-0 md:ml-4">
-              <div className="relative flex-1 min-w-0 flex items-center">
-                <SearchSection />
-                <div className="flex items-center">
-                  <button
-                    onClick={handleRandomNovel}
-                    disabled={isRandomizing}
-                    className="flex-none p-2 text-muted-foreground hover:text-foreground transition-colors"
-                    title="Go to random novel"
-                  >
-                    <Icon 
-                      icon={isRandomizing ? "eos-icons:loading" : "mdi:dice-6"} 
-                      className={`text-xl ${isRandomizing ? 'animate-spin' : ''}`}
-                    />
-                  </button>
-                  <div className="flex-none flex items-center">
-                    <ThemeToggle />
-                  </div>
-                </div>
-              </div>
+    <header className="w-full bg-background sticky top-0 z-50 mb-4 sm:mb-6">
+      <div className="max-w-5xl mx-auto">
+        <div className="px-3 sm:px-4 py-2 md:py-3 border-b border-border">
+          <div className="flex items-center justify-between gap-4">
+            {/* Search Bar */}
+            <div className="flex-1">
+              <SearchSection onExpandChange={setIsSearchExpanded} />
             </div>
 
-            {/* Desktop Navigation */}
-            <nav className="hidden md:block flex-shrink-0 ml-4">
-              <ul className="flex items-center gap-4">
-                <li>
-                  <Link 
-                    href="https://discord.gg/DXHRpV3sxF"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer p-2 inline-flex items-center"
-                  >
-                    <Icon icon="ic:baseline-discord" className="text-2xl" />
-                  </Link>
-                </li>
-                <li>
-                  <Link 
-                    href="/shop" 
-                    className="bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-100 px-2 lg:px-2.5 py-1 rounded-md hover:bg-amber-200 dark:hover:bg-amber-800 transition-colors flex items-center gap-1.5 h-[32px]"
-                  >
-                    <span>Coins</span>
-                    {userProfile && (
-                      <span className="rounded-md text-sm">
-                        {userProfile.coins || 0}
-                      </span>
-                    )}
-                  </Link>
-                </li>
-                <li>
-                  {renderAuthLink()}
-                </li>
-              </ul>
-            </nav>
+            {/* Actions */}
+            <div className={`flex items-center gap-2 sm:gap-4 transition-all duration-300 ${
+              isSearchExpanded ? 'hidden sm:flex' : 'flex'
+            }`}>
+              {/* Theme Toggle */}
+              <div className="flex-none">
+                <ThemeToggle />
+              </div>
+
+              {/* Shop Link */}
+              <div className="flex-none">
+                <Link 
+                  href="/shop"
+                  className="bg-secondary p-2 text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-secondary/80 inline-flex items-center"
+                >
+                  <Icon icon="ph:shopping-cart-simple-bold" className="w-5 h-5" />
+                </Link>
+              </div>
+
+              {/* Discord Link */}
+              <div className="flex-none">
+                <Link 
+                  href="https://discord.gg/DXHRpV3sxF"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-secondary p-2 text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-secondary/80 inline-flex items-center"
+                >
+                  <Icon icon="ic:baseline-discord" className="w-5 h-5" />
+                </Link>
+              </div>
+
+              {/* Auth Button */}
+              <div className="flex-none">
+                {renderAuthLink()}
+              </div>
+            </div>
           </div>
         </div>
       </div>

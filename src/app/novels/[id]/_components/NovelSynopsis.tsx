@@ -91,7 +91,7 @@ export const NovelSynopsis = ({
               <div className="flex justify-center">
                 <button
                   onClick={() => setIsExpanded(true)}
-                  className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 font-medium border border-black/20 dark:border-white/20 px-2 py-1 rounded-b-md bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800"
+                  className="flex items-center text-xs text-primary hover:text-primary/80 font-medium border border-black/20 dark:border-white/20 px-2 py-1 rounded-b-md bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800"
                 >
                   <span>Show More</span>
                   <Icon 

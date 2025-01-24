@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Icon } from '@iconify/react';
+import { useRouter } from 'next/navigation';
 
 interface UserProfile {
   username: string;
@@ -31,6 +32,8 @@ const UserProfileButton = ({
   isMobile = false,
   onMenuClose
 }: UserProfileButtonProps) => {
+  const router = useRouter();
+  const [isRandomizing, setIsRandomizing] = useState(false);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -78,49 +81,107 @@ const UserProfileButton = ({
     );
   };
 
+  const handleRandomNovel = async () => {
+    if (isRandomizing) return;
+    
+    try {
+      setIsRandomizing(true);
+      const response = await fetch('/api/novels/random');
+      const data = await response.json();
+      
+      if (data.error) {
+        console.error('Error fetching random novel:', data.error);
+        return;
+      }
+      
+      setIsProfileDropdownOpen(false);
+      router.push(`/novels/${data.slug}`);
+    } catch (error) {
+      console.error('Error fetching random novel:', error);
+    } finally {
+      setIsRandomizing(false);
+    }
+  };
+
+  const dropdownContent = (
+    <>
+      <Link
+        href="/user-dashboard"
+        className="block px-4 py-2 text-sm text-foreground border-b border-border hover:bg-accent transition-colors"
+        onClick={(e) => {
+          e.stopPropagation();
+          setIsProfileDropdownOpen(false);
+          onMenuClose?.();
+        }}
+      >
+        <div>
+          <div>{userProfile?.username || 'Error loading profile'}</div>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <Icon icon="heroicons:fire" className="w-4 h-4 text-amber-500" />
+              {userProfile?.current_streak || 0} day streak
+            </div>
+            <div className="flex items-center gap-1">
+              <Icon icon="ph:coins-fill" className="w-4 h-4 text-amber-500" />
+              {userProfile?.coins || 0} coins
+            </div>
+          </div>
+        </div>
+      </Link>
+      {userProfile?.role && (userProfile.role === 'AUTHOR' || userProfile.role === 'TRANSLATOR') && (
+        <Link
+          href="/author/dashboard"
+          className="block px-4 py-2 text-sm text-foreground border-b border-border hover:bg-accent transition-colors"
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsProfileDropdownOpen(false);
+            onMenuClose?.();
+          }}
+        >
+          <div className="flex items-center gap-2">
+            <Icon icon="mdi:pencil" className="text-lg" />
+            <span>Author Dashboard</span>
+          </div>
+        </Link>
+      )}
+      <button
+        onClick={handleRandomNovel}
+        disabled={isRandomizing}
+        className="block w-full text-left px-4 py-2 text-sm text-foreground border-b border-border hover:bg-accent transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <Icon 
+            icon={isRandomizing ? "eos-icons:loading" : "mdi:dice-6"} 
+            className={`text-lg ${isRandomizing ? 'animate-spin' : ''}`}
+          />
+          <span>Random Novel</span>
+        </div>
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          onSignOut();
+          onMenuClose?.();
+        }}
+        className="block w-full text-left px-4 py-2 text-sm text-foreground hover:bg-accent transition-colors"
+      >
+        Sign Out
+      </button>
+    </>
+  );
+
   if (isMobile) {
     return (
-      <div>
+      <div className="relative" ref={profileDropdownRef}>
         <button 
           onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
-          className="flex items-center w-full px-2 py-2 text-muted-foreground hover:text-foreground transition-colors"
+          className="flex items-center p-2 text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-accent"
         >
           {renderAvatar()}
         </button>
         {isProfileDropdownOpen && (
-          <div className="bg-background py-1">
-            <Link
-              href="/user-dashboard"
-              className="block px-4 py-2 text-sm text-foreground border-b border-border hover:bg-accent transition-colors"
-              onClick={onMenuClose}
-            >
-              <div>
-                <div>{userProfile?.username}</div>
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <Icon icon="heroicons:fire" className="w-4 h-4 text-amber-500" />
-                  {userProfile?.current_streak || 0} day streak
-                </div>
-              </div>
-            </Link>
-            {userProfile?.role && (userProfile.role === 'AUTHOR' || userProfile.role === 'TRANSLATOR') && (
-              <Link
-                href="/author/dashboard"
-                className="block px-4 py-2 text-sm text-foreground border-b border-border hover:bg-accent transition-colors"
-                onClick={onMenuClose}
-              >
-                <div className="flex items-center gap-2">
-                  <Icon icon="mdi:pencil" className="text-lg" />
-                  <span>Author Dashboard</span>
-                </div>
-              </Link>
-            )}
-            <button
-              type="button"
-              onClick={onSignOut}
-              className="block w-full text-left px-4 py-2 text-sm text-foreground hover:bg-accent transition-colors"
-            >
-              Sign Out
-            </button>
+          <div className="absolute right-0 top-full mt-1 w-64 bg-background rounded-lg shadow-lg py-1 z-50 border border-border">
+            {dropdownContent}
           </div>
         )}
       </div>
@@ -131,50 +192,13 @@ const UserProfileButton = ({
     <div className="relative" ref={profileDropdownRef}>
       <button
         onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
-        className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+        className="flex items-center gap-2 p-2 text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-accent"
       >
         {renderAvatar()}
       </button>
       {isProfileDropdownOpen && (
-        <div className="absolute right-0 mt-2 w-48 bg-background rounded-md shadow-lg py-1 z-10 border border-border">
-          <Link
-            href="/user-dashboard"
-            className="block px-4 py-2 text-sm text-foreground border-b border-border hover:bg-accent transition-colors"
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsProfileDropdownOpen(false);
-            }}
-          >
-            <div>
-              <div>{userProfile?.username || 'Error loading profile'}</div>
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <Icon icon="heroicons:fire" className="w-4 h-4 text-amber-500" />
-                {userProfile?.current_streak || 0} day streak
-              </div>
-            </div>
-          </Link>
-          {userProfile?.role && (userProfile.role === 'AUTHOR' || userProfile.role === 'TRANSLATOR') && (
-            <Link
-              href="/author/dashboard"
-              className="block px-4 py-2 text-sm text-foreground border-b border-border hover:bg-accent transition-colors"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsProfileDropdownOpen(false);
-              }}
-            >
-              <div className="flex items-center gap-2">
-                <Icon icon="mdi:pencil" className="text-lg" />
-                <span>Author Dashboard</span>
-              </div>
-            </Link>
-          )}
-          <button
-            type="button"
-            onClick={onSignOut}
-            className="block w-full text-left px-4 py-2 text-sm text-foreground hover:bg-accent transition-colors"
-          >
-            Sign Out
-          </button>
+        <div className="absolute right-0 mt-1 w-64 bg-background rounded-lg shadow-lg py-1 z-50 border border-border">
+          {dropdownContent}
         </div>
       )}
     </div>
