@@ -8,6 +8,9 @@ import supabase from '@/lib/supabaseClient';
 import { generateUUID } from '@/lib/utils';
 import { NovelSynopsis } from './NovelSynopsis';
 import { RatingPopup } from './RatingPopup';
+import { TagsModal } from './TagsModal';
+import { StatsItem } from './StatsItem';
+import { NovelAgeRating } from './NovelAgeRating';
 
 interface NovelHeaderProps {
   title: string;
@@ -44,80 +47,6 @@ interface NovelHeaderProps {
     orderIndex: number;
   }[];
 }
-
-const StatsItem = ({ 
-  icon, 
-  value, 
-  color = 'gray', 
-  withGap = false,
-  className = ''
-}: { 
-  icon: string; 
-  value: string; 
-  color?: string; 
-  withGap?: boolean;
-  className?: string;
-}) => (
-  <div className={`flex items-center ${withGap ? 'gap-1' : ''} ${className}`}>
-    <Icon 
-      icon={icon} 
-      className={`text-lg ${
-        color === 'blue' 
-          ? 'text-blue-600 dark:text-blue-400' 
-          : color === 'purple' 
-            ? 'text-purple-600 dark:text-purple-400' 
-            : 'text-gray-600 dark:text-gray-400'
-      }`} 
-    />
-    <span className="text-gray-700 dark:text-gray-200">{value}</span>
-  </div>
-);
-
-const ageRatingIcons = {
-  EVERYONE: 'mdi:account-multiple',
-  TEEN: 'mdi:account-school',
-  MATURE: 'mdi:account-alert',
-  ADULT: 'mdi:account-lock'
-} as const;
-
-const ageRatingColors = {
-  EVERYONE: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200',
-  TEEN: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200',
-  MATURE: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200',
-  ADULT: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200'
-} as const;
-
-const TagsModal = ({ tags, isOpen, onClose }: { tags: Tag[], isOpen: boolean, onClose: () => void }) => {
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 w-full max-w-md max-h-[80vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">All Tags</h3>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-            aria-label="Close tags modal"
-          >
-            <Icon icon="mdi:close" className="text-xl" />
-          </button>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {tags.map((tag) => (
-            <Link
-              key={tag.id}
-              href={`/search?tags=${tag.id}`}
-              className="flex items-center gap-1 px-2 py-1 text-sm font-medium rounded-full transition-colors bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200"
-            >
-              {tag.name}
-            </Link>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-};
 
 export const NovelHeader = ({
   title,
@@ -268,7 +197,7 @@ export const NovelHeader = ({
 
   return (
     <>
-      <div className="-mt-2 sm:-mt-3">
+      <div className="-mt-2 sm:-mt-3 -mb-4">
         <div className="flex gap-4">
           {/* Left Side - Cover Image */}
           <div className="w-28 sm:w-36 lg:w-44 flex flex-col">
@@ -284,10 +213,7 @@ export const NovelHeader = ({
                     sizes="(max-width: 640px) 112px, (max-width: 768px) 144px, 176px"
                   />
                   <div className="absolute top-1.5 left-1.5">
-                    <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium backdrop-blur-md ${ageRatingColors[ageRating]}`}>
-                      <Icon icon={ageRatingIcons[ageRating]} className="w-3 h-3" />
-                      {ageRating}
-                    </div>
+                    <NovelAgeRating rating={ageRating} />
                   </div>
                 </>
               ) : (
@@ -524,7 +450,7 @@ export const NovelHeader = ({
         </div>
 
         {/* Mobile Synopsis - Full Width */}
-        <div className="sm:hidden mt-3">
+        <div className="sm:hidden mt-3 mb-3">
           <NovelSynopsis
             description={description}
             characters={characters}
@@ -532,7 +458,7 @@ export const NovelHeader = ({
         </div>
 
         {/* Mobile Tags - Scrollable */}
-        <div className="sm:hidden mt-3 mb-1 overflow-x-auto scrollbar-hide">
+        <div className="sm:hidden overflow-x-auto scrollbar-hide">
           {tags && tags.length > 0 && (
             <div className="flex items-center gap-1.5">
               {tags.map((tag) => (
