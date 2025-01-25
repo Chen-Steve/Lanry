@@ -81,10 +81,22 @@ const Header = () => {
     <header className="w-full bg-background sticky top-0 z-50 mb-0 sm:mb-6">
       <div className="max-w-5xl mx-auto">
         <div className="px-3 sm:px-4 py-2 md:py-3">
-          <div className="flex items-center justify-between gap-4">
-            {/* Search Bar */}
-            <div className="flex-1">
-              <SearchSection onExpandChange={setIsSearchExpanded} />
+          <div className="flex items-center justify-between gap-2 sm:gap-4">
+            <div className="flex items-center gap-2 flex-1">
+              {/* Home Icon */}
+              <div className="flex-none">
+                <Link
+                  href="/"
+                  className="bg-secondary p-2 text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-secondary/80 inline-flex items-center"
+                >
+                  <Icon icon="ph:house-bold" className="w-5 h-5" />
+                </Link>
+              </div>
+
+              {/* Search Bar */}
+              <div className="flex-1">
+                <SearchSection onExpandChange={setIsSearchExpanded} />
+              </div>
             </div>
 
             {/* Actions */}
