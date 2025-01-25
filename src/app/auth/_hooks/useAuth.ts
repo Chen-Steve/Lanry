@@ -23,41 +23,47 @@ export function useAuth() {
   const [emailError, setEmailError] = useState('');
   const router = useRouter();
 
-  // Check and create profile if needed
+  const createUserProfile = async (userId: string, email?: string) => {
+    console.log('[Profile] Starting profile creation for user:', userId);
+    
+    // Generate username from email or random
+    const username = email ? email.split('@')[0] : generateUsername();
+    console.log('[Profile] Generated username:', username);
+
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .insert([{
+        id: userId,
+        username,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }]);
+
+    if (profileError) {
+      console.error('[Profile] Error creating profile:', profileError);
+      throw new Error('Failed to create user profile');
+    }
+
+    console.log('[Profile] Successfully created profile for:', userId);
+  };
+
+  const handleSignup = async () => {
+    const { data, error: signUpError } = await supabase.auth.signUp({
+      email: credentials.email,
+      password: credentials.password,
+    });
+
+    if (signUpError) throw new Error(signUpError.message);
+    
+    if (data.user) {
+      console.log('[Auth] User created, creating profile...');
+      await createUserProfile(data.user.id, data.user.email);
+      await autoSignIn();
+    }
+  };
+
+  // Subscribe to auth changes
   useEffect(() => {
-    const createProfileAndReadingTime = async (session: { user: { id: string; email?: string; app_metadata: { provider?: string } } }) => {
-      console.log('[Profile] Starting profile creation for user:', session.user.id);
-      
-      // Get user details from Google auth if available
-      const username = session.user.app_metadata.provider === 'google'
-        ? session.user.email?.split('@')[0] || generateUsername()
-        : generateUsername();
-      
-      console.log('[Profile] Generated username:', username);
-
-      const { error: createError } = await supabase
-        .from('profiles')
-        .insert([{
-          id: session.user.id,
-          username,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        }]);
-
-      if (createError) {
-        console.error('[Profile] Error creating profile:', { 
-          error: createError, 
-          userId: session.user.id,
-          username 
-        });
-        return false;
-      }
-
-      console.log('[Profile] Successfully created profile');
-      return true;
-    };
-
-    // Subscribe to auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('[Auth] Auth state changed:', { 
         event, 
@@ -73,29 +79,18 @@ export function useAuth() {
         });
 
         // Check if profile exists
-        const { data: existingProfile, error: profileCheckError } = await supabase
+        const { error: profileCheckError } = await supabase
           .from('profiles')
-          .select('*')
+          .select('id')
           .eq('id', session.user.id)
           .single();
 
-        if (profileCheckError) {
-          if (profileCheckError.code === 'PGRST116') {
-            console.log('[Auth] No existing profile found, creating new profile');
-            const success = await createProfileAndReadingTime(session);
-            if (!success) {
-              console.error('[Auth] Failed to create profile and reading time');
-              return;
-            }
-          } else {
-            console.error('[Auth] Error checking existing profile:', profileCheckError);
-            return;
+        if (profileCheckError && profileCheckError.code === 'PGRST116') {
+          // Only create profile for Google sign-in here, email signup handles it separately
+          if (session.user.app_metadata.provider === 'google') {
+            console.log('[Auth] Creating profile for Google user');
+            await createUserProfile(session.user.id, session.user.email);
           }
-        } else {
-          console.log('[Auth] Existing profile found:', {
-            profileId: existingProfile.id,
-            username: existingProfile.username
-          });
         }
 
         // Add a small delay before redirect
@@ -145,44 +140,6 @@ export function useAuth() {
       setError(error instanceof Error ? error.message : 'Authentication failed');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleSignup = async () => {
-    const { data, error: signUpError } = await supabase.auth.signUp({
-      email: credentials.email,
-      password: credentials.password,
-    });
-
-    if (signUpError) throw new Error(signUpError.message);
-    
-    if (data.user) {
-      await createUserProfile(data.user.id);
-      await autoSignIn();
-    }
-  };
-
-  const createUserProfile = async (userId: string) => {
-    const generatedUsername = generateUsername();
-    
-    // First check if profile exists
-    const { data: existingProfile } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('id', userId)
-      .single();
-
-    if (!existingProfile) {
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert([{
-          id: userId,
-          username: generatedUsername,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        }]);
-
-      if (profileError) throw new Error('Failed to create user profile');
     }
   };
 
