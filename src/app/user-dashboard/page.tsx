@@ -275,7 +275,7 @@ export default function UserDashboard() {
             <h1 className="text-xl font-bold text-foreground">
               {profile?.username || 'User'}
             </h1>
-            {isOwnProfile && (
+            {isOwnProfile && (profile?.role === 'AUTHOR' || profile?.role === 'TRANSLATOR') && (
               <Link
                 href="/author/dashboard"
                 className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"

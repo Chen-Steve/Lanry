@@ -232,7 +232,7 @@ export const NovelHeader = ({
                 </h1>
               </div>
               
-              <div className="flex flex-wrap items-center gap-1.5 text-[11px] sm:text-sm">
+              <div className="flex flex-wrap items-center gap-1.5 text-[11px] sm:text-sm mt-2">
                 {isAuthorNameCustom ? (
                   <>
                     <span className="text-gray-600 dark:text-gray-400">by</span>
@@ -371,7 +371,7 @@ export const NovelHeader = ({
               )}
 
               {/* Desktop Synopsis */}
-              <div className="hidden sm:block">
+              <div className="hidden sm:block mt-4">
                 <NovelSynopsis
                   description={description}
                   characters={characters}

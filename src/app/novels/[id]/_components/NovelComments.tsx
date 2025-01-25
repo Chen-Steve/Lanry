@@ -390,12 +390,22 @@ const CommentItem = ({
             alt={comment.profile.username || 'User avatar'}
             width={40}
             height={40}
-            className="w-full h-full object-cover"
             unoptimized
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.style.display = 'none';
+              // Show initials fallback
+              const parent = target.parentElement;
+              if (parent) {
+                parent.innerHTML = comment.profile.username?.[0]?.toUpperCase() || 'U';
+                parent.className = "w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-semibold";
+              }
+            }}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-primary-foreground font-semibold">
-            {comment.profile.username?.[0]?.toUpperCase() || '?'}
+            {comment.profile.username?.[0]?.toUpperCase() || 'U'}
           </div>
         )}
       </div>
@@ -403,7 +413,7 @@ const CommentItem = ({
         <div className="flex items-center gap-2 mb-1">
           <Link 
             href={`/user-dashboard?id=${comment.profile_id}`}
-            className="font-medium text-foreground hover:text-primary transition-colors"
+            className="font-medium text-foreground hover:text-primary transition-colors mb-0 sm:mb-1"
           >
             {comment.profile.username || 'Anonymous'}
           </Link>
