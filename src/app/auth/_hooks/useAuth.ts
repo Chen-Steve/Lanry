@@ -20,6 +20,7 @@ export function useAuth() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [discordLoading, setDiscordLoading] = useState(false);
   const [emailError, setEmailError] = useState('');
   const router = useRouter();
 
@@ -219,6 +220,38 @@ export function useAuth() {
     }
   };
 
+  const handleDiscordSignIn = async () => {
+    try {
+      setDiscordLoading(true);
+      
+      const redirectUrl = typeof window !== 'undefined' 
+        ? `${window.location.origin}/auth/callback`
+        : process.env.NEXT_PUBLIC_BASE_URL 
+          ? `${process.env.NEXT_PUBLIC_BASE_URL}/auth/callback`
+          : null;
+
+      if (!redirectUrl) {
+        throw new Error('No redirect URL available');
+      }
+
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'discord',
+        options: {
+          redirectTo: redirectUrl,
+          scopes: 'identify email',
+        }
+      });
+
+      if (error) throw error;
+      
+    } catch (error) {
+      console.error('Discord sign-in error:', error);
+      setError(error instanceof Error ? error.message : 'Discord sign-in failed');
+    } finally {
+      setDiscordLoading(false);
+    }
+  };
+
   const checkAndRedirect = async () => {
     await new Promise(resolve => setTimeout(resolve, 500));
     const { data: sessionCheck } = await supabase.auth.getSession();
@@ -242,10 +275,12 @@ export function useAuth() {
     error,
     loading,
     googleLoading,
+    discordLoading,
     emailError,
     setCredentials,
     handleSubmit,
     handleGoogleSignIn,
+    handleDiscordSignIn,
     resetForm,
     validateEmail
   };
