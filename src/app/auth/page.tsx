@@ -16,7 +16,6 @@ export default function AuthPage() {
     handleSubmit,
     resetForm,
     validateEmail,
-    handleDiscordSignIn,
     googleLoading,
     discordLoading
   } = useAuth();
@@ -40,7 +39,6 @@ export default function AuthPage() {
           />
           
           <DiscordSignInButton
-            onClick={handleDiscordSignIn}
             loading={discordLoading}
           />
         </div>
