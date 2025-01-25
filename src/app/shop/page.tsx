@@ -118,6 +118,16 @@ export default function ShopPage() {
           ))}
         </div>
       </PayPalScriptProvider>
+
+      <div className="mt-8 text-center text-muted-foreground">
+        <p className="text-sm">
+          Questions or issues with your funds? Contact us directly on{' '}
+          <a href="https://discord.gg/DXHRpV3sxF" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">
+            Discord
+          </a>
+          {' '}for immediate support.
+        </p>
+      </div>
     </div>
   );
 } 

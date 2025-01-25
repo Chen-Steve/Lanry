@@ -51,6 +51,7 @@ model Novel {
   tags          TagsOnNovels[]
   chapterLikes  ChapterLike[]
   characters     NovelCharacter[]
+  viewLogs      NovelViewLog[]
 
   @@index([title])
   @@index([author])
@@ -414,4 +415,16 @@ model CommentLike {
   @@index([commentId])
   @@index([profileId])
   @@map("comment_likes")
+}
+
+model NovelViewLog {
+  id          String   @id @default(uuid())
+  createdAt   DateTime @default(now()) @map("created_at")
+  viewedAt    DateTime @default(now()) @map("viewed_at")
+  novel       Novel    @relation(fields: [novelId], references: [id], onDelete: Cascade)
+  novelId     String   @map("novel_id")
+
+  @@index([novelId])
+  @@index([viewedAt])
+  @@map("novel_view_logs")
 }
