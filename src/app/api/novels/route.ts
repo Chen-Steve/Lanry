@@ -81,17 +81,35 @@ export async function POST(request: Request) {
 export async function GET() {
   try {
     const novels = await prisma.novel.findMany({
-      orderBy: {
-        createdAt: 'desc',
-      },
       include: {
         _count: {
           select: { chapters: true },
         },
+        chapters: {
+          orderBy: {
+            createdAt: 'desc',
+          },
+          take: 1,
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
       },
     });
 
-    return NextResponse.json(novels);
+    // Sort novels by latest chapter date, falling back to novel creation date
+    const sortedNovels = novels.sort((a, b) => {
+      const aLatestChapter = a.chapters[0]?.createdAt;
+      const bLatestChapter = b.chapters[0]?.createdAt;
+      
+      if (!aLatestChapter && !bLatestChapter) return 0;
+      if (!aLatestChapter) return 1;
+      if (!bLatestChapter) return -1;
+      
+      return bLatestChapter.getTime() - aLatestChapter.getTime();
+    });
+
+    return NextResponse.json(sortedNovels);
   } catch (error) {
     console.error('Error fetching novels:', error);
     return NextResponse.json({ error: 'Error fetching novels' }, { status: 500 });

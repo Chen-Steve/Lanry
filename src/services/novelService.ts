@@ -11,6 +11,10 @@ interface NovelCharacterFromDB {
   order_index: number;
 }
 
+interface ChapterWithDate {
+  created_at: string;
+}
+
 export async function getNovel(id: string, userId?: string): Promise<Novel | null> {
   try {
     const isNumericId = !isNaN(Number(id));
@@ -243,7 +247,8 @@ export async function getNovels(): Promise<Novel[]> {
           publish_at,
           coins,
           volume_id,
-          age_rating
+          age_rating,
+          created_at
         ),
         categories:categories_on_novels (
           category:category_id (
@@ -269,7 +274,23 @@ export async function getNovels(): Promise<Novel[]> {
 
     if (error || !data) return [];
 
-    return data.map(novel => ({
+    // Sort novels by latest chapter date, falling back to novel creation date
+    const sortedData = data.sort((a, b) => {
+      const aLatestChapter = a.chapters?.sort((c1: ChapterWithDate, c2: ChapterWithDate) => 
+        new Date(c2.created_at).getTime() - new Date(c1.created_at).getTime()
+      )[0]?.created_at;
+      const bLatestChapter = b.chapters?.sort((c1: ChapterWithDate, c2: ChapterWithDate) => 
+        new Date(c2.created_at).getTime() - new Date(c1.created_at).getTime()
+      )[0]?.created_at;
+
+      if (!aLatestChapter && !bLatestChapter) return 0;
+      if (!aLatestChapter) return 1;
+      if (!bLatestChapter) return -1;
+
+      return new Date(bLatestChapter).getTime() - new Date(aLatestChapter).getTime();
+    });
+
+    return sortedData.map(novel => ({
       ...novel,
       translator: novel.translator ? {
         username: novel.translator.username,
