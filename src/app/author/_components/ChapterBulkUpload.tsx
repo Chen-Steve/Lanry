@@ -21,6 +21,12 @@ interface FileToProcess {
   content: ArrayBuffer;
 }
 
+interface ProcessedContent {
+  title: string | null;
+  content: string;
+  chapterNumber: number | null;
+}
+
 export default function ChapterBulkUpload({ novelId, userId, onUploadComplete }: ChapterBulkUploadProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -100,14 +106,48 @@ export default function ChapterBulkUpload({ novelId, userId, onUploadComplete }:
     setFiles(prev => prev.filter((_, i) => i !== index));
   };
 
-  const getFileContent = async (file: FileToProcess): Promise<string> => {
+  const getFileContent = async (file: FileToProcess): Promise<ProcessedContent> => {
     if (file.name.endsWith('.txt')) {
       const decoder = new TextDecoder('utf-8');
-      return decoder.decode(file.content);
+      const content = decoder.decode(file.content);
+      const lines = content.split('\n').filter(line => line.trim());
+      return extractChapterInfo(lines);
     } else {
+      // For docx files, extract all content
       const result = await mammoth.extractRawText({ arrayBuffer: file.content });
-      return result.value;
+      const lines = result.value.split('\n').filter(line => line.trim());
+      return extractChapterInfo(lines);
     }
+  };
+
+  const extractChapterInfo = (lines: string[]): ProcessedContent => {
+    if (lines.length === 0) {
+      return { content: '', title: null, chapterNumber: null };
+    }
+
+    const firstLine = lines[0].trim();
+    
+    // Try to match patterns like "Chapter 1: The Dragon's Awakening" or "Chapter 1 - The Dragon's Awakening"
+    const chapterMatch = firstLine.match(/^(?:chapter|ch\.?)\s*(\d+)(?:[\s:-]+(.+))?/i);
+    
+    if (chapterMatch) {
+      const chapterNumber = parseInt(chapterMatch[1]);
+      const title = chapterMatch[2]?.trim() || null;
+      const content = lines.slice(1).join('\n\n');
+      
+      return {
+        chapterNumber,
+        title,
+        content
+      };
+    }
+    
+    // If no chapter pattern found, return content as is
+    return {
+      content: lines.join('\n\n'),
+      title: null,
+      chapterNumber: null
+    };
   };
 
   const handleUpload = async () => {
@@ -120,10 +160,24 @@ export default function ChapterBulkUpload({ novelId, userId, onUploadComplete }:
     const failedUploads: { name: string; reason: string }[] = [];
 
     try {
-      // Sort files by chapter number to ensure sequential scheduling
-      const sortedFiles = [...files].sort((a, b) => {
-        const aMatch = a.name.match(/^chapter[\s-]?(\d+)/i);
-        const bMatch = b.name.match(/^chapter[\s-]?(\d+)/i);
+      // First extract all file contents
+      const filesWithContent = await Promise.all(
+        files.map(async (file) => ({
+          file,
+          content: await getFileContent(file)
+        }))
+      );
+
+      // Then sort based on chapter numbers
+      const sortedFiles = filesWithContent.sort((a, b) => {
+        // If both files have chapter numbers in content, use those
+        if (a.content.chapterNumber !== null && b.content.chapterNumber !== null) {
+          return a.content.chapterNumber - b.content.chapterNumber;
+        }
+        
+        // Fall back to filename sorting if needed
+        const aMatch = a.file.name.match(/^chapter[\s-]?(\d+)/i);
+        const bMatch = b.file.name.match(/^chapter[\s-]?(\d+)/i);
         const aNum = aMatch ? parseInt(aMatch[1]) : 0;
         const bNum = bMatch ? parseInt(bMatch[1]) : 0;
         return aNum - bNum;
@@ -131,38 +185,42 @@ export default function ChapterBulkUpload({ novelId, userId, onUploadComplete }:
 
       let lastPublishDate: Date | undefined;
 
-      for (const file of sortedFiles) {
+      for (const { file, content: { content, title: contentTitle, chapterNumber } } of sortedFiles) {
         try {
-          const content = await getFileContent(file);
-          
-          // First try to match the standard format (chapter2.docx or chapter2.txt)
-          const standardMatch = /^chapter[\s-]?(\d+)\.(docx|txt)$/i.test(file.name);
-          
-          // Then try to match formats with titles
-          // Matches: chapter2-title.docx, chapter 2-title.docx, chapter2: title.docx, chapter2_title.docx
-          // And the same patterns for .txt files
-          const titleMatch = file.name.match(/^chapter[\s-]?(\d+)(?:[-:_\s]+(.+?))?\.(docx|txt)$/i);
-
-          if (!titleMatch) {
-            failedUploads.push({ 
-              name: file.name, 
-              reason: 'invalid filename format'
-            });
-            continue;
+          // If we couldn't extract chapter number from content, try filename
+          let finalChapterNumber = chapterNumber;
+          if (finalChapterNumber === null) {
+            const titleMatch = file.name.match(/^chapter[\s-]?(\d+)/i);
+            if (!titleMatch) {
+              failedUploads.push({ 
+                name: file.name, 
+                reason: 'could not determine chapter number'
+              });
+              continue;
+            }
+            finalChapterNumber = parseInt(titleMatch[1]);
           }
 
-          const chapterNumber = parseInt(titleMatch[1]);
-          let title = '';
-
-          if (!standardMatch && titleMatch[2]) {
-            // Clean up the title: remove extension, trim spaces
-            title = titleMatch[2].trim();
+          // Title priority:
+          // 1. Check filename for title
+          // 2. If no filename title, use content title
+          // 3. If neither exists, leave empty (will show as just "Chapter X")
+          let finalTitle = '';
+          
+          // First check filename for title
+          const filenameTitleMatch = file.name.match(/^chapter[\s-]?(\d+)(?:[-:_\s]+(.+?))?\.(docx|txt)$/i);
+          if (filenameTitleMatch && filenameTitleMatch[2]) {
+            finalTitle = filenameTitleMatch[2].trim();
+          } 
+          // If no filename title, try content title
+          else if (contentTitle) {
+            finalTitle = contentTitle;
           }
 
           // Create the chapter with null publish_at and coins
           const chapterId = await authorChapterService.createChapter(novelId, userId, {
-            chapter_number: chapterNumber,
-            title,
+            chapter_number: finalChapterNumber,
+            title: finalTitle,
             content,
             publish_at: null, // Let the service handle auto-release scheduling
             coins: 0, // Let the service handle fixed pricing
