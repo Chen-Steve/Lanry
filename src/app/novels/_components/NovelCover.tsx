@@ -12,6 +12,8 @@ interface NovelCoverProps {
   status?: string;
   showStatus?: boolean;
   hasChapters?: boolean;
+  contentType?: 'BL' | 'GL';
+  category?: 'yaoi' | 'yuri';
 }
 
 const NovelCover = ({ 
@@ -22,7 +24,9 @@ const NovelCover = ({
   showRating = false,
   status = '',
   showStatus = false,
-  hasChapters = true
+  hasChapters = true,
+  contentType,
+  category
 }: NovelCoverProps) => (
   <div className="relative aspect-[2/3] w-full rounded overflow-hidden bg-muted group">
     {coverUrl ? (
@@ -50,6 +54,36 @@ const NovelCover = ({
         </div>
       </div>
     )}
+
+    <div className="absolute top-1.5 left-1.5 sm:top-2 sm:left-2 flex flex-col gap-1">
+      {contentType && (
+        <div className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded-md backdrop-blur-[2px] ${
+          contentType === 'BL' ? 'bg-blue-500/80' : 'bg-pink-500/80'
+        }`}>
+          <Icon 
+            icon={contentType === 'BL' ? 'ph:heart-duotone' : 'ph:heart-straight-duotone'} 
+            className="text-white text-[10px] sm:text-sm" 
+          />
+          <span className="text-white text-[10px] sm:text-xs font-medium">
+            {contentType}
+          </span>
+        </div>
+      )}
+      
+      {category && (
+        <div className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded-md backdrop-blur-[2px] ${
+          category === 'yaoi' ? 'bg-violet-500/80' : 'bg-rose-400/80'
+        }`}>
+          <Icon 
+            icon={category === 'yaoi' ? 'ph:sparkle-duotone' : 'ph:flower-lotus-duotone'} 
+            className="text-white text-[10px] sm:text-sm" 
+          />
+          <span className="text-white text-[10px] sm:text-xs font-medium capitalize">
+            {category}
+          </span>
+        </div>
+      )}
+    </div>
 
     {showRating && hasChapters && (
       <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2">

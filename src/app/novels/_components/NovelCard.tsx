@@ -49,6 +49,11 @@ const NovelCard = ({ novel, isPriority = false }: NovelCardProps) => {
     }
   };
 
+  // Find yaoi/yuri category if it exists and only if there are chapters
+  const category = totalChapters > 0 ? novel.categories?.find(cat => 
+    cat.name.toLowerCase() === 'yaoi' || cat.name.toLowerCase() === 'yuri'
+  ) : undefined;
+
   return (
     <Link 
       href={`/novels/${novel.slug}`} 
@@ -61,10 +66,11 @@ const NovelCard = ({ novel, isPriority = false }: NovelCardProps) => {
           title={novel.title}
           isPriority={isPriority}
           rating={novel.rating}
-          showRating={true}
+          showRating={totalChapters > 0}
           status={novel.status}
-          showStatus={true}
+          showStatus={totalChapters > 0}
           hasChapters={totalChapters > 0}
+          category={category?.name.toLowerCase() as 'yaoi' | 'yuri'}
         />
         <div className="mt-1 sm:mt-2 flex-1 min-h-[3rem] flex flex-col justify-between">
           <h3 className="text-xs sm:text-sm text-foreground font-medium leading-tight max-h-[2.5rem] line-clamp-2 overflow-hidden">
