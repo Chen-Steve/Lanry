@@ -35,9 +35,9 @@ export async function getChapter(novelId: string, chapterNumber: number, partNum
       .eq('chapter_number', chapterNumber);
 
     // Handle part number filter differently for null values
-    if (partNumber === null) {
+    if (partNumber === null || partNumber === undefined) {
       query = query.is('part_number', null);
-    } else if (partNumber !== undefined) {
+    } else {
       query = query.eq('part_number', partNumber);
     }
 

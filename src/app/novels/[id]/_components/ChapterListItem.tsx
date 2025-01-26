@@ -83,7 +83,7 @@ export function ChapterListItem({
 
       setIsUnlocked(true);
       toast.success('Chapter unlocked successfully!');
-      router.push(`/novels/${novelSlug}/c${chapterNumber}`);
+      router.push(`/novels/${novelSlug}/c${chapterNumber}${chapter.part_number ? `-p${chapter.part_number}` : ''}`);
       return true;
     } catch (error) {
       console.error('Unlock error:', error);
@@ -138,7 +138,7 @@ export function ChapterListItem({
       }
 
       if (existingUnlock) {
-        router.push(`/novels/${novelSlug}/c${chapter.chapter_number}`);
+        router.push(`/novels/${novelSlug}/c${chapter.chapter_number}${chapter.part_number ? `-p${chapter.part_number}` : ''}`);
         return;
       }
 
@@ -146,7 +146,7 @@ export function ChapterListItem({
         <div className="bg-background shadow-lg rounded-lg p-4 max-w-md mx-auto border-2 border-primary">
           <div className="flex flex-col gap-3">
             <div className="font-medium text-foreground">
-              Unlock Chapter {chapter.chapter_number} for {chapter.coins} coins?
+              Unlock Chapter {chapter.chapter_number}{chapter.part_number ? `.${chapter.part_number}` : ''} for {chapter.coins} coins?
             </div>
             <div className="flex gap-2">
               <button
@@ -250,7 +250,7 @@ export function ChapterListItem({
 
   return (
     <Link
-      href={`/novels/${novelSlug}/c${chapter.chapter_number}`}
+      href={`/novels/${novelSlug}/c${chapter.chapter_number}${chapter.part_number ? `-p${chapter.part_number}` : ''}`}
       className="w-full hover:bg-accent/50 transition-colors"
     >
       {chapterContent}
