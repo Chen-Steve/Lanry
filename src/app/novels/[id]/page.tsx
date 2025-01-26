@@ -10,6 +10,7 @@ import { getNovel, toggleBookmark } from '@/services/novelService';
 import { track } from '@vercel/analytics';
 import { NovelContent } from '@/app/novels/[id]/_components/NovelContent';
 import AdultContentWarning from './_components/AdultContentWarning';
+import { generateUUID } from '@/lib/utils';
 
 export default function NovelPage({ params }: { params: { id: string } }) {
   const { id } = params;
@@ -67,12 +68,26 @@ export default function NovelPage({ params }: { params: { id: string } }) {
         if (data) {
           setNovel(data);
           setIsBookmarked(data.isBookmarked || false);
-          setViewCount(data.views || 0);
-          
           track('novel-view', {
             novelId: id,
             novelTitle: data.title
           });
+          
+          // Log the view in novel_view_logs
+          const { error: viewLogError } = await supabase
+            .from('novel_view_logs')
+            .insert({
+              id: generateUUID(),
+              novel_id: data.id,
+              created_at: new Date().toISOString(),
+              viewed_at: new Date().toISOString()
+            });
+
+          if (viewLogError) {
+            console.error('Error logging view:', viewLogError);
+          }
+          
+          setViewCount(data.views || 0);
         }
       } catch (error) {
         console.error('Error:', error);
