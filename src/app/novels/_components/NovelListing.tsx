@@ -263,6 +263,30 @@ const NovelListing = () => {
                 }
               }}
             >
+              {/* Left Arrow */}
+              <button 
+                onClick={(e) => {
+                  e.preventDefault();
+                  setFeaturedIndex(prev => prev === 0 ? featuredNovels.length - 1 : prev - 1);
+                }}
+                className="sm:hidden absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 flex items-center justify-center bg-black/50 hover:bg-black/70 text-white rounded-full"
+                aria-label="Previous novel"
+              >
+                <Icon icon="mdi:chevron-left" className="text-xl" />
+              </button>
+
+              {/* Right Arrow */}
+              <button 
+                onClick={(e) => {
+                  e.preventDefault();
+                  setFeaturedIndex(prev => prev === featuredNovels.length - 1 ? 0 : prev + 1);
+                }}
+                className="sm:hidden absolute right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 flex items-center justify-center bg-black/50 hover:bg-black/70 text-white rounded-full"
+                aria-label="Next novel"
+              >
+                <Icon icon="mdi:chevron-right" className="text-xl" />
+              </button>
+
               <div className="h-full aspect-[3/4] relative rounded-md overflow-hidden">
                 <NovelCover
                   coverUrl={featuredNovels[featuredIndex].coverImageUrl}
