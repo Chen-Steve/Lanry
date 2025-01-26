@@ -20,7 +20,7 @@ export async function getChapter(novelId: string, chapterNumber: number, partNum
     if (novelError || !novel) return null;
 
     // Get the chapter
-    const query = supabase
+    let query = supabase
       .from('chapters')
       .select(`
         *,
@@ -34,9 +34,11 @@ export async function getChapter(novelId: string, chapterNumber: number, partNum
       .eq('novel_id', novel.id)
       .eq('chapter_number', chapterNumber);
 
-    // Add part number filter if provided
-    if (partNumber !== undefined) {
-      query.eq('part_number', partNumber);
+    // Handle part number filter differently for null values
+    if (partNumber === null) {
+      query = query.is('part_number', null);
+    } else if (partNumber !== undefined) {
+      query = query.eq('part_number', partNumber);
     }
 
     const { data: chapter, error } = await query.single();
