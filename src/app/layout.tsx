@@ -5,7 +5,6 @@ import Header from './_components/Header';
 import Footer from './_components/Footer';
 import Providers from './providers';
 import { Toaster } from 'react-hot-toast';
-import MobileNavigation from './_components/MobileNavigation';
 import { ThemeProvider } from '@/lib/ThemeContext';
 import CookieConsent from './_components/CookieConsent';
 
@@ -57,12 +56,9 @@ export default function RootLayout({
               <main className="flex-grow">
                 {children}
               </main>
-              <div className="hidden md:block">
-                <Footer />
-              </div>
+              <Footer />
             </div>
             <Toaster position="bottom-right" />
-            <MobileNavigation />
             <CookieConsent />
           </ThemeProvider>
         </Providers>
