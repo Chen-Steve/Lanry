@@ -371,7 +371,7 @@ export const NovelHeader = ({
               )}
 
               {/* Desktop Synopsis */}
-              <div className="hidden sm:block mt-4">
+              <div className="hidden sm:block">
                 <NovelSynopsis
                   description={description}
                   characters={characters}

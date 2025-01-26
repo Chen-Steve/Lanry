@@ -3,6 +3,12 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export async function middleware(req: NextRequest) {
+  // Check country restriction first
+  const country = req.geo?.country;
+  if (["CN", "KR"].includes(country ?? "")) {
+    return new NextResponse("Access Denied", { status: 403 });
+  }
+
   const res = NextResponse.next();
   const supabase = createMiddlewareClient({ req, res });
 
