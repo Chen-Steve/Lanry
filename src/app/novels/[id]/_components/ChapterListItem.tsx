@@ -5,6 +5,7 @@ import { toast } from 'react-hot-toast';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import supabase from '@/lib/supabaseClient';
+import { ChapterCountdown } from './ChapterCountdown';
 
 interface ChapterListItemProps {
   chapter: Chapter & {
@@ -186,11 +187,6 @@ export function ChapterListItem({
 
   const isPublished = !chapter.publish_at || new Date(chapter.publish_at) <= new Date();
 
-  const formatPublishDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return `${date.getMonth() + 1}/${date.getDate()}/${String(date.getFullYear()).slice(2)}`;
-  };
-
   const chapterContent = (
     <div className="flex items-center justify-between w-full">
       <div className="flex items-center gap-2 min-w-0">
@@ -218,8 +214,8 @@ export function ChapterListItem({
                 null
               )}
               <span>{chapter.coins}c</span>
-              <span className="text-muted-foreground">
-                · unlocks {formatPublishDate(chapter.publish_at)}
+              <span className="text-muted-foreground flex items-center gap-1">
+                · <ChapterCountdown publishDate={chapter.publish_at} />
               </span>
             </>
           )
