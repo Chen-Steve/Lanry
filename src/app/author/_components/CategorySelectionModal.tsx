@@ -12,6 +12,7 @@ interface CategorySelectionModalProps {
   novelId: string;
   selectedCategories: NovelCategory[];
   onCategoriesChange: (categories: NovelCategory[]) => void;
+  isNewNovel?: boolean;
 }
 
 export default function CategorySelectionModal({
@@ -20,6 +21,7 @@ export default function CategorySelectionModal({
   novelId,
   selectedCategories,
   onCategoriesChange,
+  isNewNovel = false
 }: CategorySelectionModalProps) {
   const [categories, setCategories] = useState<NovelCategory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -54,37 +56,47 @@ export default function CategorySelectionModal({
     
     if (selectedIds.has(category.id)) {
       // Remove category
-      try {
-        const success = await categoryService.removeNovelCategory(novelId, category.id);
-        if (success) {
-          newSelectedIds.delete(category.id);
-          setSelectedIds(newSelectedIds);
-          const updatedCategories = selectedCategories.filter(c => c.id !== category.id);
-          onCategoriesChange(updatedCategories);
-          toast.success(`Removed category: ${category.name}`);
-        } else {
+      if (!isNewNovel) {
+        try {
+          const success = await categoryService.removeNovelCategory(novelId, category.id);
+          if (!success) {
+            toast.error('Failed to remove category');
+            return;
+          }
+        } catch (error) {
+          console.error('Error removing category:', error);
           toast.error('Failed to remove category');
+          return;
         }
-      } catch (error) {
-        console.error('Error removing category:', error);
-        toast.error('Failed to remove category');
+      }
+      newSelectedIds.delete(category.id);
+      setSelectedIds(newSelectedIds);
+      const updatedCategories = selectedCategories.filter(c => c.id !== category.id);
+      onCategoriesChange(updatedCategories);
+      if (!isNewNovel) {
+        toast.success(`Removed category: ${category.name}`);
       }
     } else {
       // Add category
-      try {
-        const success = await categoryService.addNovelCategories(novelId, [category.id]);
-        if (success) {
-          newSelectedIds.add(category.id);
-          setSelectedIds(newSelectedIds);
-          const updatedCategories = [...selectedCategories, category];
-          onCategoriesChange(updatedCategories);
-          toast.success(`Added category: ${category.name}`);
-        } else {
+      if (!isNewNovel) {
+        try {
+          const success = await categoryService.addNovelCategories(novelId, [category.id]);
+          if (!success) {
+            toast.error('Failed to add category');
+            return;
+          }
+        } catch (error) {
+          console.error('Error adding category:', error);
           toast.error('Failed to add category');
+          return;
         }
-      } catch (error) {
-        console.error('Error adding category:', error);
-        toast.error('Failed to add category');
+      }
+      newSelectedIds.add(category.id);
+      setSelectedIds(newSelectedIds);
+      const updatedCategories = [...selectedCategories, category];
+      onCategoriesChange(updatedCategories);
+      if (!isNewNovel) {
+        toast.success(`Added category: ${category.name}`);
       }
     }
   };

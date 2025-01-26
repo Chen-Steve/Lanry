@@ -170,7 +170,9 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
         description,
         status,
         ageRating,
-        slug
+        slug,
+        categories: selectedCategories,
+        tags: selectedTags
       };
       await onUpdate(updatedNovel);
       toast.success('Save successful!');
@@ -460,6 +462,7 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
         novelId={novel.id}
         selectedCategories={selectedCategories}
         onCategoriesChange={setSelectedCategories}
+        isNewNovel={!novel.id}
       />
 
       {/* Tag Selection Modal */}
@@ -469,6 +472,7 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
         novelId={novel.id}
         selectedTags={selectedTags}
         onTagsChange={setSelectedTags}
+        isNewNovel={!novel.id}
       />
     </main>
   );

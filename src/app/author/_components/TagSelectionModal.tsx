@@ -12,6 +12,7 @@ interface TagSelectionModalProps {
   novelId: string;
   selectedTags: Tag[];
   onTagsChange: (tags: Tag[]) => void;
+  isNewNovel?: boolean;
 }
 
 export default function TagSelectionModal({
@@ -20,6 +21,7 @@ export default function TagSelectionModal({
   novelId,
   selectedTags,
   onTagsChange,
+  isNewNovel = false
 }: TagSelectionModalProps) {
   const [tags, setTags] = useState<Tag[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -56,37 +58,47 @@ export default function TagSelectionModal({
     
     if (selectedIds.has(tag.id)) {
       // Remove tag
-      try {
-        const success = await tagService.removeNovelTag(novelId, tag.id);
-        if (success) {
-          newSelectedIds.delete(tag.id);
-          setSelectedIds(newSelectedIds);
-          const updatedTags = selectedTags.filter(t => t.id !== tag.id);
-          onTagsChange(updatedTags);
-          toast.success(`Removed tag: ${tag.name}`);
-        } else {
+      if (!isNewNovel) {
+        try {
+          const success = await tagService.removeNovelTag(novelId, tag.id);
+          if (!success) {
+            toast.error('Failed to remove tag');
+            return;
+          }
+        } catch (error) {
+          console.error('Error removing tag:', error);
           toast.error('Failed to remove tag');
+          return;
         }
-      } catch (error) {
-        console.error('Error removing tag:', error);
-        toast.error('Failed to remove tag');
+      }
+      newSelectedIds.delete(tag.id);
+      setSelectedIds(newSelectedIds);
+      const updatedTags = selectedTags.filter(t => t.id !== tag.id);
+      onTagsChange(updatedTags);
+      if (!isNewNovel) {
+        toast.success(`Removed tag: ${tag.name}`);
       }
     } else {
       // Add tag
-      try {
-        const success = await tagService.addNovelTags(novelId, [tag.id]);
-        if (success) {
-          newSelectedIds.add(tag.id);
-          setSelectedIds(newSelectedIds);
-          const updatedTags = [...selectedTags, tag];
-          onTagsChange(updatedTags);
-          toast.success(`Added tag: ${tag.name}`);
-        } else {
+      if (!isNewNovel) {
+        try {
+          const success = await tagService.addNovelTags(novelId, [tag.id]);
+          if (!success) {
+            toast.error('Failed to add tag');
+            return;
+          }
+        } catch (error) {
+          console.error('Error adding tag:', error);
           toast.error('Failed to add tag');
+          return;
         }
-      } catch (error) {
-        console.error('Error adding tag:', error);
-        toast.error('Failed to add tag');
+      }
+      newSelectedIds.add(tag.id);
+      setSelectedIds(newSelectedIds);
+      const updatedTags = [...selectedTags, tag];
+      onTagsChange(updatedTags);
+      if (!isNewNovel) {
+        toast.success(`Added tag: ${tag.name}`);
       }
     }
   };
