@@ -14,6 +14,8 @@ import NovelCover from './NovelCover';
 const NovelListing = () => {
   const [novels, setNovels] = useState<Novel[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [featuredNovels, setFeaturedNovels] = useState<Novel[]>([]);
+  const [featuredIndex, setFeaturedIndex] = useState(0);
   const [showAdvancedSection, setShowAdvancedSection] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('showAdvancedSection');
@@ -28,11 +30,33 @@ const NovelListing = () => {
     [searchParams]
   );
 
+  // Function to get a seeded random number based on the current date and an index
+  const getSeededRandom = (index: number) => {
+    const today = new Date();
+    const dateString = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
+    let hash = 0;
+    for (let i = 0; i < dateString.length; i++) {
+      hash = ((hash << 5) - hash) + dateString.charCodeAt(i);
+      hash = hash & hash;
+    }
+    // Add the index to get different random numbers from the same date
+    const finalHash = (hash + index) / 10000000;
+    return finalHash - Math.floor(finalHash);
+  };
+
   useEffect(() => {
     const fetchNovels = async () => {
       try {
         const data = await getNovels();
         setNovels(data);
+        
+        // Create a deterministic shuffle based on the current date
+        const shuffled = [...data].sort((a, b) => {
+          const indexA = data.indexOf(a);
+          const indexB = data.indexOf(b);
+          return getSeededRandom(indexA) - getSeededRandom(indexB);
+        });
+        setFeaturedNovels(shuffled.slice(0, 5));
       } catch (error) {
         console.error('Error fetching novels:', error);
       } finally {
@@ -185,11 +209,69 @@ const NovelListing = () => {
         </div>
       ) : (
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-1.5 pb-20">
+          {/* Featured Novel Container */}
+          {featuredNovels.length > 0 && (
+            <Link
+              href={`/novels/${featuredNovels[featuredIndex].slug}`}
+              className="col-span-3 group relative flex gap-4 p-3 bg-card hover:bg-accent/50 border-2 border-black dark:border-white rounded-lg transition-colors h-full"
+            >
+              <div className="h-full aspect-[3/4] relative rounded-md overflow-hidden">
+                <NovelCover
+                  coverUrl={featuredNovels[featuredIndex].coverImageUrl}
+                  title={featuredNovels[featuredIndex].title}
+                  isPriority={true}
+                />
+              </div>
+              
+              <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
+                <div>
+                  <h3 className="text-base font-medium text-foreground group-hover:text-primary transition-colors line-clamp-2">
+                    {featuredNovels[featuredIndex].title}
+                  </h3>
+                  <p className="mt-2 text-sm text-muted-foreground line-clamp-3">
+                    {featuredNovels[featuredIndex].description}
+                  </p>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <Icon icon="pepicons-print:book" className="text-base" />
+                      {featuredNovels[featuredIndex].chapters?.length || 0} Chapters
+                    </span>
+                    {featuredNovels[featuredIndex].status && (
+                      <span className="flex items-center gap-1">
+                        <Icon icon="mdi:circle-small" className="text-base" />
+                        {featuredNovels[featuredIndex].status}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex justify-center gap-2.5">
+                    {featuredNovels.map((_, idx) => (
+                      <button
+                        key={idx}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setFeaturedIndex(idx);
+                        }}
+                        className={`w-3.5 h-3.5 rounded-full transition-all duration-200 border-2 ${
+                          idx === featuredIndex 
+                            ? 'bg-primary border-black dark:border-white scale-110' 
+                            : 'bg-muted-foreground/40 hover:bg-muted-foreground/60 hover:scale-105 border-black dark:border-white'
+                        }`}
+                        aria-label={`Show featured novel ${idx + 1}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </Link>
+          )}
+
           {filteredNovels.map((novel, index) => (
             <NovelCard 
               key={novel.id} 
               novel={novel}
-              isPriority={index < 6}
+              isPriority={index < 7}
             />
           ))}
         </div>
