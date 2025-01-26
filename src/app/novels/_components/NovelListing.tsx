@@ -29,6 +29,39 @@ const NovelListing = () => {
     searchParams.get('categories')?.split(',').filter(Boolean) || [], 
     [searchParams]
   );
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
+  // Minimum swipe distance in pixels
+  const minSwipeDistance = 50;
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+    
+    if (isLeftSwipe) {
+      setFeaturedIndex(prev => 
+        prev === featuredNovels.length - 1 ? 0 : prev + 1
+      );
+    }
+    if (isRightSwipe) {
+      setFeaturedIndex(prev => 
+        prev === 0 ? featuredNovels.length - 1 : prev - 1
+      );
+    }
+  };
 
   // Function to get a seeded random number based on the current date and an index
   const getSeededRandom = (index: number) => {
@@ -56,7 +89,13 @@ const NovelListing = () => {
           const indexB = data.indexOf(b);
           return getSeededRandom(indexA) - getSeededRandom(indexB);
         });
-        setFeaturedNovels(shuffled.slice(0, 5));
+        
+        // Get 5 random novels for featured section, excluding the first 6
+        const featuredSelection = shuffled
+          .slice(6)
+          .slice(0, 5);
+        
+        setFeaturedNovels(featuredSelection);
       } catch (error) {
         console.error('Error fetching novels:', error);
       } finally {
@@ -213,7 +252,16 @@ const NovelListing = () => {
           {featuredNovels.length > 0 && (
             <Link
               href={`/novels/${featuredNovels[featuredIndex].slug}`}
-              className="col-span-3 group relative flex gap-4 p-3 bg-card hover:bg-accent/50 border-2 border-black dark:border-white rounded-lg transition-colors h-full"
+              className="col-span-3 group relative flex gap-4 p-3 bg-card hover:bg-accent/50 border-2 border-black dark:border-white rounded-lg transition-colors h-full touch-pan-y"
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              onClick={(e) => {
+                // Only navigate if we haven't just finished a swipe
+                if (touchStart && touchEnd && Math.abs(touchStart - touchEnd) > minSwipeDistance) {
+                  e.preventDefault();
+                }
+              }}
             >
               <div className="h-full aspect-[3/4] relative rounded-md overflow-hidden">
                 <NovelCover
@@ -223,17 +271,33 @@ const NovelListing = () => {
                 />
               </div>
               
-              <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
-                <div>
-                  <h3 className="text-base font-medium text-foreground group-hover:text-primary transition-colors line-clamp-2">
+              <div className="flex-1 min-w-0 flex flex-col py-0.5 overflow-hidden">
+                <div className="flex-1 min-h-0">
+                  <h3 className="text-base font-medium text-foreground group-hover:text-primary transition-colors line-clamp-2 mb-2">
                     {featuredNovels[featuredIndex].title}
                   </h3>
-                  <p className="mt-2 text-sm text-muted-foreground line-clamp-3">
+                  <p className="text-sm text-muted-foreground line-clamp-3 overflow-hidden">
                     {featuredNovels[featuredIndex].description}
                   </p>
+                  <div className="hidden sm:flex items-center gap-1.5 mt-3">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Icon 
+                        key={star}
+                        icon="material-symbols:star-rounded"
+                        className={`text-lg ${
+                          star <= (featuredNovels[featuredIndex].rating || 0)
+                            ? 'text-yellow-500'
+                            : 'text-yellow-500/30'
+                        }`}
+                      />
+                    ))}
+                    <span className="text-sm font-medium ml-1">
+                      {featuredNovels[featuredIndex].rating?.toFixed(1) || 'N/A'}
+                    </span>
+                  </div>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <Icon icon="pepicons-print:book" className="text-base" />
                       {featuredNovels[featuredIndex].chapters?.length || 0} Chapters
@@ -245,7 +309,7 @@ const NovelListing = () => {
                       </span>
                     )}
                   </div>
-                  <div className="flex justify-center gap-2.5">
+                  <div className="hidden sm:flex justify-center gap-1.5">
                     {featuredNovels.map((_, idx) => (
                       <button
                         key={idx}
