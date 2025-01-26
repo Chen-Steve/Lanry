@@ -25,10 +25,10 @@ const NovelListing = () => {
   });
   const searchParams = useSearchParams();
   const router = useRouter();
-  const selectedCategories = useMemo(() => 
-    searchParams.get('categories')?.split(',').filter(Boolean) || [], 
-    [searchParams]
-  );
+  const selectedCategories = useMemo(() => ({
+    included: searchParams.get('include')?.split(',').filter(Boolean) || [],
+    excluded: searchParams.get('exclude')?.split(',').filter(Boolean) || []
+  }), [searchParams]);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
@@ -113,11 +113,12 @@ const NovelListing = () => {
   }, [showAdvancedSection]);
 
   const filteredNovels = useMemo(() => {
-    if (selectedCategories.length === 0) return novels;
+    if (selectedCategories.included.length === 0 && selectedCategories.excluded.length === 0) return novels;
     return novels.filter(novel => 
-      novel.categories?.some(category => 
-        selectedCategories.includes(category.name.toLowerCase())
-      )
+      novel.categories?.some(category => {
+        const catName = category.name.toLowerCase();
+        return selectedCategories.included.includes(catName) && !selectedCategories.excluded.includes(catName);
+      })
     );
   }, [novels, selectedCategories]);
 
@@ -140,12 +141,15 @@ const NovelListing = () => {
     return counts;
   }, [novels]);
 
-  const handleCategoriesChange = (categoryNames: string[]) => {
-    if (categoryNames.length > 0) {
-      router.push(`/novels?categories=${categoryNames.map(cat => cat.toLowerCase()).join(',')}`);
-    } else {
-      router.push('/novels');
+  const handleCategoriesChange = (categories: { included: string[]; excluded: string[] }) => {
+    const params = new URLSearchParams();
+    if (categories.included.length > 0) {
+      params.set('include', categories.included.join(','));
     }
+    if (categories.excluded.length > 0) {
+      params.set('exclude', categories.excluded.join(','));
+    }
+    router.push(params.toString() ? `/novels?${params.toString()}` : '/novels');
   };
 
   if (isLoading) {

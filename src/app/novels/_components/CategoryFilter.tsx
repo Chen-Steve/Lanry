@@ -4,8 +4,11 @@ import { getCategories } from '@/services/categoryService';
 import { Icon } from '@iconify/react';
 
 interface CategoryFilterProps {
-  selectedCategories: string[];
-  onCategoriesChange: (categoryNames: string[]) => void;
+  selectedCategories: {
+    included: string[];
+    excluded: string[];
+  };
+  onCategoriesChange: (categories: { included: string[]; excluded: string[] }) => void;
   categoryCounts: Record<string, number>;
   className?: string;
 }
@@ -45,10 +48,25 @@ export default function CategoryFilter({
   }, []);
 
   const handleCategoryToggle = (categoryName: string) => {
-    const newSelectedCategories = selectedCategories.includes(categoryName.toLowerCase())
-      ? selectedCategories.filter(cat => cat !== categoryName.toLowerCase())
-      : [...selectedCategories, categoryName.toLowerCase()];
-    onCategoriesChange(newSelectedCategories);
+    const normalizedName = categoryName.toLowerCase();
+    const { included, excluded } = selectedCategories;
+
+    let newIncluded = [...included];
+    let newExcluded = [...excluded];
+
+    if (included.includes(normalizedName)) {
+      // If it's included, move to excluded
+      newIncluded = newIncluded.filter(cat => cat !== normalizedName);
+      newExcluded.push(normalizedName);
+    } else if (excluded.includes(normalizedName)) {
+      // If it's excluded, remove from all (unselected)
+      newExcluded = newExcluded.filter(cat => cat !== normalizedName);
+    } else {
+      // If it's unselected, add to included
+      newIncluded.push(normalizedName);
+    }
+
+    onCategoriesChange({ included: newIncluded, excluded: newExcluded });
   };
 
   if (isLoading) {
@@ -76,14 +94,17 @@ export default function CategoryFilter({
         {categories
           .slice(0, (!isExpanded && isMobile) ? 5 : categories.length)
           .map((category) => {
-            const isSelected = selectedCategories.includes(category.name.toLowerCase());
+            const isIncluded = selectedCategories.included.includes(category.name.toLowerCase());
+            const isExcluded = selectedCategories.excluded.includes(category.name.toLowerCase());
             return (
               <button
                 key={category.id}
                 onClick={() => handleCategoryToggle(category.name)}
                 className={`flex items-center justify-between px-1.5 py-0.5 rounded-md text-xs transition-colors ${
-                  isSelected
+                  isIncluded
                     ? 'bg-emerald-100 dark:bg-emerald-400/20 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-400/30'
+                    : isExcluded
+                    ? 'bg-red-100 dark:bg-red-400/20 text-red-800 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-400/30'
                     : 'bg-secondary text-secondary-foreground hover:bg-accent'
                 }`}
               >
