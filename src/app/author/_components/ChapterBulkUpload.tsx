@@ -25,6 +25,7 @@ interface ProcessedContent {
   title: string | null;
   content: string;
   chapterNumber: number | null;
+  partNumber: number | null;
 }
 
 export default function ChapterBulkUpload({ novelId, userId, onUploadComplete }: ChapterBulkUploadProps) {
@@ -122,23 +123,31 @@ export default function ChapterBulkUpload({ novelId, userId, onUploadComplete }:
 
   const extractChapterInfo = (lines: string[]): ProcessedContent => {
     if (lines.length === 0) {
-      return { content: '', title: null, chapterNumber: null };
+      return { content: '', title: null, chapterNumber: null, partNumber: null };
     }
 
     const firstLine = lines[0].trim();
     
-    // Try to match patterns like "Chapter 1: The Dragon's Awakening" or "Chapter 1 - The Dragon's Awakening"
-    const chapterMatch = firstLine.match(/^(?:chapter|ch\.?)\s*(\d+)(?:[\s:-]+(.+))?/i);
+    // Try to match patterns like:
+    // "Chapter 1.1: Title" or "Chapter 1 Part 1: Title" or "Chapter 1-1: Title"
+    const chapterMatch = firstLine.match(/^(?:chapter|ch\.?)\s*(\d+)(?:[\s-.](\d+)|[\s-]part[\s-](\d+))?(?:[\s:-]+(.+))?/i);
     
     if (chapterMatch) {
-      const chapterNumber = parseInt(chapterMatch[1]);
-      const title = chapterMatch[2]?.trim() || null;
+      const mainChapter = parseInt(chapterMatch[1]);
+      // Check for decimal notation (1.1) or "part" notation (Part 1)
+      const partNumber = chapterMatch[2] 
+        ? parseInt(chapterMatch[2]) 
+        : chapterMatch[3] 
+          ? parseInt(chapterMatch[3])
+          : null;
+      const title = chapterMatch[4]?.trim() || null;
       const content = lines.slice(1).join('\n\n');
       
       return {
-        chapterNumber,
+        chapterNumber: mainChapter,
         title,
-        content
+        content,
+        partNumber
       };
     }
     
@@ -146,7 +155,8 @@ export default function ChapterBulkUpload({ novelId, userId, onUploadComplete }:
     return {
       content: lines.join('\n\n'),
       title: null,
-      chapterNumber: null
+      chapterNumber: null,
+      partNumber: null
     };
   };
 
@@ -168,29 +178,49 @@ export default function ChapterBulkUpload({ novelId, userId, onUploadComplete }:
         }))
       );
 
-      // Then sort based on chapter numbers
+      // Then sort based on chapter numbers and part numbers
       const sortedFiles = filesWithContent.sort((a, b) => {
         // If both files have chapter numbers in content, use those
         if (a.content.chapterNumber !== null && b.content.chapterNumber !== null) {
-          return a.content.chapterNumber - b.content.chapterNumber;
+          // First compare chapter numbers
+          if (a.content.chapterNumber !== b.content.chapterNumber) {
+            return a.content.chapterNumber - b.content.chapterNumber;
+          }
+          // If chapter numbers are the same, compare part numbers
+          const aPartNum = a.content.partNumber || 0;
+          const bPartNum = b.content.partNumber || 0;
+          return aPartNum - bPartNum;
         }
         
         // Fall back to filename sorting if needed
-        const aMatch = a.file.name.match(/^chapter[\s-]?(\d+)/i);
-        const bMatch = b.file.name.match(/^chapter[\s-]?(\d+)/i);
+        const aMatch = a.file.name.match(/^chapter[\s-]?(\d+)(?:\.(\d+))?/i);
+        const bMatch = b.file.name.match(/^chapter[\s-]?(\d+)(?:\.(\d+))?/i);
         const aNum = aMatch ? parseInt(aMatch[1]) : 0;
         const bNum = bMatch ? parseInt(bMatch[1]) : 0;
-        return aNum - bNum;
+        
+        // If chapter numbers are different, sort by them
+        if (aNum !== bNum) return aNum - bNum;
+        
+        // If chapter numbers are the same, sort by part numbers
+        const aPartNum = aMatch?.[2] ? parseInt(aMatch[2]) : 0;
+        const bPartNum = bMatch?.[2] ? parseInt(bMatch[2]) : 0;
+        return aPartNum - bPartNum;
       });
 
       let lastPublishDate: Date | undefined;
 
-      for (const { file, content: { content, title: contentTitle, chapterNumber } } of sortedFiles) {
+      for (const { file, content: { content, title: contentTitle, chapterNumber, partNumber } } of sortedFiles) {
         try {
           // If we couldn't extract chapter number from content, try filename
           let finalChapterNumber = chapterNumber;
+          let finalPartNumber = partNumber;
+          
           if (finalChapterNumber === null) {
-            const titleMatch = file.name.match(/^chapter[\s-]?(\d+)/i);
+            // Updated pattern to better handle decimal chapter numbers
+            const titleMatch = file.name.match(/^chapter[\s-]?(\d+)(?:[-\s.](\d+))?\.(docx|txt)$/i);
+            console.log('Filename:', file.name);
+            console.log('Title match result:', titleMatch);
+            
             if (!titleMatch) {
               failedUploads.push({ 
                 name: file.name, 
@@ -199,6 +229,8 @@ export default function ChapterBulkUpload({ novelId, userId, onUploadComplete }:
               continue;
             }
             finalChapterNumber = parseInt(titleMatch[1]);
+            finalPartNumber = titleMatch[2] ? parseInt(titleMatch[2]) : null;
+            console.log('Extracted from filename:', { finalChapterNumber, finalPartNumber });
           }
 
           // Title priority:
@@ -207,19 +239,27 @@ export default function ChapterBulkUpload({ novelId, userId, onUploadComplete }:
           // 3. If neither exists, leave empty (will show as just "Chapter X")
           let finalTitle = '';
           
-          // First check filename for title
-          const filenameTitleMatch = file.name.match(/^chapter[\s-]?(\d+)(?:[-:_\s]+(.+?))?\.(docx|txt)$/i);
-          if (filenameTitleMatch && filenameTitleMatch[2]) {
-            finalTitle = filenameTitleMatch[2].trim();
+          // First check filename for title - updated pattern to match after part number
+          const filenameTitleMatch = file.name.match(/^chapter[\s-]?(\d+)(?:[-\s.](\d+))?(?:[-:_\s]+(.+?))?\.(docx|txt)$/i);
+          console.log('Title match:', filenameTitleMatch);
+          if (filenameTitleMatch && filenameTitleMatch[3]) {
+            finalTitle = filenameTitleMatch[3].trim();
           } 
           // If no filename title, try content title
           else if (contentTitle) {
             finalTitle = contentTitle;
           }
 
+          console.log('Final values before creation:', {
+            chapter_number: finalChapterNumber,
+            part_number: finalPartNumber,
+            title: finalTitle
+          });
+
           // Create the chapter with null publish_at and coins
           const chapterId = await authorChapterService.createChapter(novelId, userId, {
             chapter_number: finalChapterNumber,
+            part_number: finalPartNumber,
             title: finalTitle,
             content,
             publish_at: null, // Let the service handle auto-release scheduling

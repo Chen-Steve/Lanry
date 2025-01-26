@@ -71,35 +71,37 @@ export const ChapterList = ({
     <div className="max-w-5xl mx-auto">
       <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
         {/* Chapter Type Selector */}
-        <div className="flex items-center gap-2 p-2 bg-accent/50 border-b border-border">
-          <button
-            onClick={() => setShowAdvancedChapters(false)}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-2
-              ${!showAdvancedChapters 
-                ? 'bg-primary text-primary-foreground' 
-                : 'hover:bg-accent text-muted-foreground hover:text-foreground'
-              }`}
-          >
-            <Icon icon="solar:book-linear" className="w-4 h-4" />
-            Regular Chapters
-            <span className="text-xs">
-              ({regularChapters.length})
-            </span>
-          </button>
-          <button
-            onClick={() => setShowAdvancedChapters(true)}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-2
-              ${showAdvancedChapters 
-                ? 'bg-primary text-primary-foreground' 
-                : 'hover:bg-accent text-muted-foreground hover:text-foreground'
-              }`}
-          >
-            <Icon icon="solar:crown-linear" className="w-4 h-4" />
-            Advanced Chapters
-            <span className="text-xs">
-              ({advancedChapters.length})
-            </span>
-          </button>
+        <div className="flex items-center p-2 bg-accent/50 border-b border-border overflow-x-auto scrollbar-hide">
+          <div className="flex items-center gap-2 min-w-full">
+            <button
+              onClick={() => setShowAdvancedChapters(false)}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-2
+                ${!showAdvancedChapters 
+                  ? 'bg-primary text-primary-foreground' 
+                  : 'hover:bg-accent text-muted-foreground hover:text-foreground'
+                }`}
+            >
+              <Icon icon="solar:book-linear" className="w-4 h-4" />
+              Regular Chapters
+              <span className="text-xs">
+                ({regularChapters.length})
+              </span>
+            </button>
+            <button
+              onClick={() => setShowAdvancedChapters(true)}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-2
+                ${showAdvancedChapters 
+                  ? 'bg-primary text-primary-foreground' 
+                  : 'hover:bg-accent text-muted-foreground hover:text-foreground'
+                }`}
+            >
+              <Icon icon="solar:crown-linear" className="w-4 h-4" />
+              Advanced Chapters
+              <span className="text-xs">
+                ({advancedChapters.length})
+              </span>
+            </button>
+          </div>
         </div>
 
         {/* Volume Selector */}
