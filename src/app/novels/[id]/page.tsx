@@ -73,16 +73,6 @@ export default function NovelPage({ params }: { params: { id: string } }) {
             novelId: id,
             novelTitle: data.title
           });
-          
-          const { error: rpcError } = await supabase
-            .rpc('increment_novel_view', { novel_id: id });
-
-          if (rpcError) {
-            console.error('Error updating view count:', rpcError);
-            return;
-          }
-
-          setViewCount((data.views || 0) + 1);
         }
       } catch (error) {
         console.error('Error:', error);
