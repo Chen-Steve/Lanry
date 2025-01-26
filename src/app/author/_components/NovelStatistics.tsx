@@ -135,22 +135,6 @@ export default function NovelStatistics() {
 
   const handleNovelClick = async (novelId: string) => {
     setSelectedNovel(novelId);
-    
-    try {
-      // Increment the views count and log the view
-      const { error: updateError } = await supabase
-        .rpc('increment_novel_view', { novel_id: novelId });
-
-      if (updateError) {
-        console.error('Error incrementing views:', updateError);
-        return;
-      }
-
-      // Refresh the stats
-      fetchStats();
-    } catch (error) {
-      console.error('Error handling novel click:', error);
-    }
   };
 
   useEffect(() => {
@@ -275,41 +259,38 @@ export default function NovelStatistics() {
           </div>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {stats.map((novel) => (
+        <div className="bg-background border border-border rounded-lg shadow-sm">
+          {stats.map((novel, index) => (
             <div 
               key={novel.id}
-              className={`bg-background border border-border rounded-lg p-6 shadow-sm hover:shadow-md transition-all ${
-                selectedNovel === novel.id ? 'ring-2 ring-primary' : ''
-              }`}
+              className={`flex items-center gap-4 p-3 hover:bg-muted/50 transition-colors cursor-pointer ${
+                selectedNovel === novel.id ? 'bg-muted' : ''
+              } ${index !== 0 ? 'border-t border-border' : ''}`}
               onClick={() => handleNovelClick(novel.id)}
             >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold line-clamp-1 text-foreground flex-1 mr-4">{novel.title}</h3>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Icon icon="pepicons-print:book" className="text-base" />
-                  <span>{novel.total_chapters} chapters</span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-medium line-clamp-1 text-foreground">{novel.title}</h3>
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Icon icon="pepicons-print:book" className="text-sm" />
+                    <span>{novel.total_chapters}</span>
+                  </div>
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-6">
-                <div className="flex flex-col items-center">
-                  <span className="text-2xl font-bold text-foreground mb-1">{novel.bookmarks}</span>
-                  <span className="text-xs text-muted-foreground flex items-center gap-1">
-                    Bookmarks
-                  </span>
+              
+              <div className="flex items-center gap-6">
+                <div className="flex items-center gap-1.5">
+                  <Icon icon="mdi:bookmark-outline" className="text-muted-foreground" />
+                  <span className="text-sm font-medium">{novel.bookmarks}</span>
                 </div>
-                <div className="flex flex-col items-center">
-                  <span className="text-2xl font-bold text-foreground mb-1">{novel.total_comments}</span>
-                  <span className="text-xs text-muted-foreground flex items-center gap-1">
-                    Comments
-                  </span>
+                <div className="flex items-center gap-1.5">
+                  <Icon icon="mdi:comment-outline" className="text-muted-foreground" />
+                  <span className="text-sm font-medium">{novel.total_comments}</span>
                 </div>
-                <div className="flex flex-col items-center">
-                  <span className="text-2xl font-bold text-foreground mb-1">
+                <div className="flex items-center gap-1.5">
+                  <Icon icon="mdi:eye-outline" className="text-muted-foreground" />
+                  <span className="text-sm font-medium">
                     {viewType === 'monthly' ? novel.monthly_views : novel.views}
-                  </span>
-                  <span className="text-xs text-muted-foreground flex items-center gap-1">
-                    {viewType === 'monthly' ? 'Monthly Views' : 'Total Views'}
                   </span>
                 </div>
               </div>

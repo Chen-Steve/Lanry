@@ -85,9 +85,10 @@ export default function NovelPage({ params }: { params: { id: string } }) {
 
           if (viewLogError) {
             console.error('Error logging view:', viewLogError);
+          } else {
+            // Update local state with the incremented view count
+            setViewCount((data.views || 0) + 1);
           }
-          
-          setViewCount(data.views || 0);
         }
       } catch (error) {
         console.error('Error:', error);
