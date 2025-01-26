@@ -34,7 +34,7 @@ const Footer = () => {
               <h3 className="text-xs sm:text-sm font-semibold text-foreground">Connect</h3>
               <div className="flex space-x-3">
                 <a
-                  href="https://discord.gg/4CyamqVt"
+                  href="https://discord.gg/DXHRpV3sxF"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-muted-foreground hover:text-foreground transition-colors"

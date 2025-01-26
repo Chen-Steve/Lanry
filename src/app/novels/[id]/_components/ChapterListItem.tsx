@@ -194,7 +194,7 @@ export function ChapterListItem({
           {!isPublished && !isUnlocked && (
             <Icon icon="material-symbols:lock" className="text-xs" />
           )}
-          Ch. {chapter.chapter_number}
+          Ch. {chapter.chapter_number}{chapter.part_number ? `.${chapter.part_number}` : ''}
         </span>
         {chapter.title && (
           <span className="text-sm text-muted-foreground truncate">

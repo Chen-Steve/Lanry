@@ -52,6 +52,17 @@ export default function ChapterNavigation({
     return `Ch. ${chapterNumber}${partNumber ? `.${partNumber}` : ''}`;
   };
 
+  // Custom sort function for chapters
+  const sortChapters = (a: { chapter_number: number; part_number?: number | null }, b: { chapter_number: number; part_number?: number | null }) => {
+    if (a.chapter_number !== b.chapter_number) {
+      return a.chapter_number - b.chapter_number;
+    }
+    // If chapter numbers are equal, sort by part number
+    const aPart = a.part_number ?? 0;
+    const bPart = b.part_number ?? 0;
+    return aPart - bPart;
+  };
+
   // Group chapters by volume
   const chaptersGroupedByVolume = useMemo(() => {
     const noVolumeChapters = availableChapters.filter(chapter => !chapter.volume_id);
@@ -86,8 +97,8 @@ export default function ChapterNavigation({
               </div>
             </Link>
           ) : (
-            <div className="flex items-center justify-center w-full px-1.5 sm:px-2 py-2 text-muted-foreground text-xs sm:text-sm border border-border rounded-lg">
-              <span>{formatChapterTitle(availableChapters[0]?.chapter_number || 1, availableChapters[0]?.part_number)}</span>
+            <div className="flex items-center justify-center w-full px-1.5 sm:px-2 py-2 text-muted-foreground text-xs sm:text-sm border border-border rounded-lg opacity-50">
+              <span>First Ch.</span>
             </div>
           )}
         </div>
@@ -117,7 +128,7 @@ export default function ChapterNavigation({
                         Volume {volume.volume_number}{volume.title ? `: ${volume.title}` : ''}
                       </div>
                       {volumeChapters
-                        .sort((a, b) => a.chapter_number - b.chapter_number)
+                        .sort(sortChapters)
                         .map((chapter) => (
                           <button
                             key={`${chapter.chapter_number}-${chapter.part_number || ''}`}
@@ -141,7 +152,7 @@ export default function ChapterNavigation({
               {chaptersGroupedByVolume.noVolumeChapters.length > 0 && (
                 <>
                   {chaptersGroupedByVolume.noVolumeChapters
-                    .sort((a, b) => a.chapter_number - b.chapter_number)
+                    .sort(sortChapters)
                     .map((chapter) => (
                       <button
                         key={`${chapter.chapter_number}-${chapter.part_number || ''}`}
@@ -184,15 +195,12 @@ export default function ChapterNavigation({
               </div>
             </Link>
           ) : (
-            <div className="flex items-center justify-center w-full px-1.5 sm:px-2 py-2 text-muted-foreground text-xs sm:text-sm border border-border rounded-lg">
-              <span>{formatChapterTitle(
-                availableChapters[availableChapters.length - 1]?.chapter_number || 1,
-                availableChapters[availableChapters.length - 1]?.part_number
-              )}</span>
+            <div className="flex items-center justify-center w-full px-1.5 sm:px-2 py-2 text-muted-foreground text-xs sm:text-sm border border-border rounded-lg opacity-50">
+              <span>Last Ch.</span>
             </div>
           )}
         </div>
       </div>
     </div>
   );
-} 
+}

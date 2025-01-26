@@ -124,60 +124,47 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
   useReadingTimeTracker();
 
   useEffect(() => {
-    const fetchData = async () => {
+    const loadChapterData = async () => {
       try {
         setIsLoading(true);
         setError(null);
-        
-        const chapterData = await getChapter(novelId, chapterId);
-        
-        if (!chapterData) {
-          setError('Chapter not found');
+
+        // Extract chapter number and part number from chapterId
+        const match = chapterId.match(/^c(\d+)(?:-p(\d+))?$/);
+        if (!match) {
+          setError('Invalid chapter ID format');
+          setIsLoading(false);
           return;
         }
 
-        // Check if chapter is locked
-        if (chapterData.isLocked) {
-          setError('This chapter is not yet available');
-          setChapter(chapterData); // We still set the chapter to show publish date if available
+        const chapterNumber = parseInt(match[1]);
+        const partNumber = match[2] ? parseInt(match[2]) : null;
+
+        const [chapterData, navigationData, totalChaptersCount] = await Promise.all([
+          getChapter(novelId, chapterNumber, partNumber),
+          getChapterNavigation(novelId, chapterNumber, partNumber),
+          getTotalChapters(novelId)
+        ]);
+
+        if (!chapterData) {
+          setError('Chapter not found');
+          setIsLoading(false);
           return;
         }
 
         setChapter(chapterData);
-        
-        // Fetch navigation and total chapters only if the chapter is accessible
-        const [nav, total] = await Promise.all([
-          getChapterNavigation(novelId, chapterData.chapter_number),
-          getTotalChapters(novelId)
-        ]);
-        
-        setNavigation(nav);
-        setTotalChapters(total);
-      } catch (err) {
-        console.error('Error:', err);
+        setNavigation(navigationData);
+        setTotalChapters(totalChaptersCount);
+      } catch (error) {
+        console.error('Error loading chapter:', error);
         setError('Failed to load chapter');
       } finally {
         setIsLoading(false);
       }
     };
-    
-    fetchData();
 
-    // Add an interval to check publish status
-    if (chapter?.publish_at) {
-      const publishDate = new Date(chapter.publish_at);
-      const now = new Date();
-      
-      if (publishDate > now) {
-        const timeUntilPublish = publishDate.getTime() - now.getTime();
-        const timer = setTimeout(() => {
-          fetchData(); // Refresh data when publish time is reached
-        }, timeUntilPublish);
-        
-        return () => clearTimeout(timer);
-      }
-    }
-  }, [novelId, chapterId, chapter?.publish_at]);
+    loadChapterData();
+  }, [novelId, chapterId]);
 
   useEffect(() => {
     if (chapter) {

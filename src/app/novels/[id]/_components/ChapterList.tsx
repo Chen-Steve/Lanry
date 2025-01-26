@@ -43,11 +43,31 @@ export const ChapterList = ({
     const chaptersToShow = showAdvancedChapters ? advancedChapters : regularChapters;
     
     if (showAllChapters || !selectedVolumeId) {
-      return chaptersToShow.sort((a, b) => a.chapter_number - b.chapter_number);
+      return chaptersToShow.sort((a, b) => {
+        // First sort by chapter number
+        if (a.chapter_number !== b.chapter_number) {
+          return a.chapter_number - b.chapter_number;
+        }
+        // If chapter numbers are equal, sort by part number
+        // Treat null/undefined part numbers as 0 for sorting purposes
+        const partA = a.part_number || 0;
+        const partB = b.part_number || 0;
+        return partA - partB;
+      });
     }
     return chaptersToShow
       .filter(chapter => chapter.volume_id === selectedVolumeId)
-      .sort((a, b) => a.chapter_number - b.chapter_number);
+      .sort((a, b) => {
+        // First sort by chapter number
+        if (a.chapter_number !== b.chapter_number) {
+          return a.chapter_number - b.chapter_number;
+        }
+        // If chapter numbers are equal, sort by part number
+        // Treat null/undefined part numbers as 0 for sorting purposes
+        const partA = a.part_number || 0;
+        const partB = b.part_number || 0;
+        return partA - partB;
+      });
   }, [selectedVolumeId, showAdvancedChapters, advancedChapters, regularChapters, showAllChapters]);
 
   const renderChapter = (chapter: Chapter) => (

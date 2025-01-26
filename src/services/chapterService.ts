@@ -6,152 +6,77 @@ type ChapterWithNovel = Chapter & {
   isLocked?: boolean;
 };
 
-export async function getChapter(novelId: string, chapterId: string): Promise<ChapterWithNovel | null> {
+export async function getChapter(novelId: string, chapterNumber: number, partNumber?: number | null): Promise<ChapterWithNovel | null> {
   try {
-    // Parse chapter number and part number from the URL
-    const match = chapterId.match(/^c(\d+)(?:-p(\d+))?$/);
-    if (!match) {
-      console.error('Invalid chapter ID format');
-      return null;
-    }
-    
-    const chapterNumber = parseInt(match[1]);
-    const partNumber = match[2] ? parseInt(match[2]) : null;
+    const { data: { user } } = await supabase.auth.getUser();
 
-    if (isNaN(chapterNumber)) {
-      console.error('Invalid chapter number format');
-      return null;
-    }
-
-    // Get the novel first to verify it exists
+    // First get the novel to check if user is author
     const { data: novel, error: novelError } = await supabase
       .from('novels')
-      .select('id, slug, author_profile_id')
+      .select('id, author_profile_id')
       .or(`id.eq.${novelId},slug.eq.${novelId}`)
       .single();
 
-    if (novelError || !novel) {
-      console.error('Novel not found:', novelError);
-      return null;
-    }
+    if (novelError || !novel) return null;
 
-    // console.log('Found novel:', novel);
-
-    // Get the user first
-    const { data: { user } } = await supabase.auth.getUser();
-
-    // First get the chapter
-    let query = supabase
+    // Get the chapter
+    const query = supabase
       .from('chapters')
       .select(`
         *,
-        id,
-        title,
-        content,
-        chapter_number,
-        part_number,
-        publish_at,
-        coins,
-        author_thoughts,
-        age_rating,
-        novel:novels!inner (
+        novel:novels(
           id,
           title,
-          author
+          author,
+          author_profile_id
         )
       `)
       .eq('novel_id', novel.id)
       .eq('chapter_number', chapterNumber);
 
-    // Add part number to query if it exists
-    if (partNumber !== null) {
-      query = query.eq('part_number', partNumber);
+    // Add part number filter if provided
+    if (partNumber !== undefined) {
+      query.eq('part_number', partNumber);
     }
 
-    // First try to get the exact match
-    let { data: chapter, error: chapterError } = await query.maybeSingle();
+    const { data: chapter, error } = await query.single();
 
-    // If no exact match found and no part number was specified, try without part number condition
-    if (!chapter && partNumber === null) {
-      // console.log('No exact match found, trying without part number condition');
-      query = supabase
-        .from('chapters')
-        .select(`
-          *,
-          id,
-          title,
-          content,
-          chapter_number,
-          part_number,
-          publish_at,
-          coins,
-          author_thoughts,
-          age_rating,
-          novel:novels!inner (
-            id,
-            title,
-            author
-          )
-        `)
+    if (error || !chapter) return null;
+
+    // Check if user is the author
+    const isAuthor = user && novel.author_profile_id === user.id;
+
+    // If user is author, they can access all chapters
+    if (isAuthor) {
+      return chapter;
+    }
+
+    // Check if chapter is published or user has unlocked it
+    const isPublished = !chapter.publish_at || new Date(chapter.publish_at) <= new Date();
+    
+    if (!isPublished && chapter.coins > 0) {
+      // Check if user has unlocked this chapter
+      if (!user) return { ...chapter, isLocked: true };
+
+      const { data: unlock } = await supabase
+        .from('chapter_unlocks')
+        .select('*')
         .eq('novel_id', novel.id)
         .eq('chapter_number', chapterNumber)
-        .order('part_number', { ascending: true })
-        .limit(1);
+        .eq('profile_id', user.id)
+        .single();
 
-      const result = await query;
-      chapter = result.data?.[0];
-      chapterError = result.error;
+      if (!unlock) return { ...chapter, isLocked: true };
     }
 
-    if (chapterError || !chapter) {
-      // console.error('Chapter fetch error:', chapterError);
-      return null;
-    }
-
-    const isPublished = !chapter.publish_at || new Date(chapter.publish_at) <= new Date();
-    let isUnlocked = false;
-
-    // If user is authenticated, check for unlocks and author status
-    if (user) {
-      // Check if user is the author
-      const isAuthor = novel.author_profile_id === user.id;
-      
-      // If user is the author, they have access to all chapters
-      if (isAuthor) {
-        isUnlocked = true;
-      } else {
-        // Otherwise check for unlocks
-        try {
-          const { data: unlocks, error: unlockError } = await supabase
-            .from('chapter_unlocks')
-            .select('profile_id')
-            .eq('novel_id', novel.id)
-            .eq('chapter_number', chapterNumber)
-            .eq('profile_id', user.id)
-            .maybeSingle();
-
-          if (!unlockError && unlocks) {
-            isUnlocked = true;
-          }
-        } catch (error) {
-          console.error('Error checking chapter unlock status:', error);
-          isUnlocked = false;
-        }
-      }
-    }
-
-    return {
-      ...chapter,
-      isLocked: !isPublished && !isUnlocked
-    } as ChapterWithNovel;
-
+    return chapter;
   } catch (error) {
-    console.error('Error in getChapter:', error);
+    console.error('Error fetching chapter:', error);
     return null;
   }
 }
 
-export async function getChapterNavigation(novelId: string, currentChapterNumber: number) {
+export async function getChapterNavigation(novelId: string, currentChapterNumber: number, currentPartNumber?: number | null) {
   try {
     const { data: novel, error: novelError } = await supabase
       .from('novels')
@@ -169,7 +94,8 @@ export async function getChapterNavigation(novelId: string, currentChapterNumber
         .from('chapters')
         .select('id, chapter_number, part_number, title, publish_at, coins, volume_id')
         .eq('novel_id', novel.id)
-        .order('chapter_number'),
+        .order('chapter_number')
+        .order('part_number', { nullsFirst: true }),
       supabase
         .from('volumes')
         .select('id, title, volume_number')
@@ -204,7 +130,11 @@ export async function getChapterNavigation(novelId: string, currentChapterNumber
       return isPublished || isUnlocked;
     });
 
-    const currentIndex = accessibleChapters.findIndex(ch => ch.chapter_number === currentChapterNumber);
+    // Find the current chapter index considering both chapter number and part number
+    const currentIndex = accessibleChapters.findIndex(ch => 
+      ch.chapter_number === currentChapterNumber && 
+      ch.part_number === currentPartNumber
+    );
     
     return {
       prevChapter: currentIndex > 0 ? accessibleChapters[currentIndex - 1] : null,
