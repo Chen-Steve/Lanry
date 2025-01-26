@@ -64,6 +64,7 @@ const NovelCard = ({ novel, isPriority = false }: NovelCardProps) => {
           showRating={true}
           status={novel.status}
           showStatus={true}
+          hasChapters={totalChapters > 0}
         />
         <div className="mt-1 sm:mt-2 flex-1 min-h-[3rem] flex flex-col justify-between">
           <h3 className="text-xs sm:text-sm text-foreground font-medium leading-tight max-h-[2.5rem] line-clamp-2 overflow-hidden">
