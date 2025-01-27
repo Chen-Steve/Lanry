@@ -31,11 +31,35 @@ const NovelListing = () => {
   }), [searchParams]);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const [isAutoRotationPaused, setIsAutoRotationPaused] = useState(false);
 
   // Minimum swipe distance in pixels
   const minSwipeDistance = 50;
 
+  useEffect(() => {
+    // Auto-rotate featured novels every 5 seconds if not paused
+    const interval = setInterval(() => {
+      if (!isAutoRotationPaused && featuredNovels.length > 0) {
+        setFeaturedIndex(prev => prev === featuredNovels.length - 1 ? 0 : prev + 1);
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [featuredNovels.length, isAutoRotationPaused]);
+
+  // Reset auto-rotation after 10 seconds of no interaction
+  useEffect(() => {
+    if (isAutoRotationPaused) {
+      const timeout = setTimeout(() => {
+        setIsAutoRotationPaused(false);
+      }, 10000);
+
+      return () => clearTimeout(timeout);
+    }
+  }, [isAutoRotationPaused]);
+
   const handleTouchStart = (e: React.TouchEvent) => {
+    setIsAutoRotationPaused(true);
     setTouchEnd(null);
     setTouchStart(e.targetTouches[0].clientX);
   };
@@ -271,6 +295,7 @@ const NovelListing = () => {
               <button 
                 onClick={(e) => {
                   e.preventDefault();
+                  setIsAutoRotationPaused(true);
                   setFeaturedIndex(prev => prev === 0 ? featuredNovels.length - 1 : prev - 1);
                 }}
                 className="sm:hidden absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 flex items-center justify-center bg-black/50 hover:bg-black/70 text-white rounded-full"
@@ -283,6 +308,7 @@ const NovelListing = () => {
               <button 
                 onClick={(e) => {
                   e.preventDefault();
+                  setIsAutoRotationPaused(true);
                   setFeaturedIndex(prev => prev === featuredNovels.length - 1 ? 0 : prev + 1);
                 }}
                 className="sm:hidden absolute right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 flex items-center justify-center bg-black/50 hover:bg-black/70 text-white rounded-full"
@@ -344,6 +370,7 @@ const NovelListing = () => {
                         key={idx}
                         onClick={(e) => {
                           e.preventDefault();
+                          setIsAutoRotationPaused(true);
                           setFeaturedIndex(idx);
                         }}
                         className={`w-3.5 h-3.5 rounded-full transition-all duration-200 border-2 ${
