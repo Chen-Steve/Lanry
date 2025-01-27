@@ -21,9 +21,10 @@ const NovelStats = ({ totalChapters }: NovelStatsProps) => (
 interface NovelCardProps {
   novel: Novel;
   isPriority?: boolean;
+  size?: 'thumbnail' | 'small' | 'medium' | 'large';
 }
 
-const NovelCard = ({ novel, isPriority = false }: NovelCardProps) => {
+const NovelCard = ({ novel, isPriority = false, size = 'small' }: NovelCardProps) => {
   const [totalChapters, setTotalChapters] = useState(0);
 
   useEffect(() => {
@@ -71,6 +72,7 @@ const NovelCard = ({ novel, isPriority = false }: NovelCardProps) => {
           showStatus={totalChapters > 0}
           hasChapters={totalChapters > 0}
           category={category?.name.toLowerCase() as 'yaoi' | 'yuri'}
+          size={size}
         />
         <div className="mt-1 sm:mt-2 flex-1 min-h-[3rem] flex flex-col justify-between">
           <h3 className="text-xs sm:text-sm text-foreground font-medium leading-tight max-h-[2.5rem] line-clamp-2 overflow-hidden">

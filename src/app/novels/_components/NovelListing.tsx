@@ -296,6 +296,7 @@ const NovelListing = () => {
                   coverUrl={featuredNovels[featuredIndex].coverImageUrl}
                   title={featuredNovels[featuredIndex].title}
                   isPriority={true}
+                  size="medium"
                 />
               </div>
               
@@ -364,6 +365,7 @@ const NovelListing = () => {
               key={novel.id} 
               novel={novel}
               isPriority={index < 7}
+              size="small"
             />
           ))}
         </div>

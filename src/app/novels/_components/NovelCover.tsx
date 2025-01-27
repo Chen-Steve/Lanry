@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { Icon } from '@iconify/react';
+import { getResponsiveImageUrl } from '@/services/imageService';
 
 interface NovelCoverProps {
   coverUrl?: string;
@@ -14,6 +15,7 @@ interface NovelCoverProps {
   hasChapters?: boolean;
   contentType?: 'BL' | 'GL';
   category?: 'yaoi' | 'yuri';
+  size?: 'thumbnail' | 'small' | 'medium' | 'large';
 }
 
 const NovelCover = ({ 
@@ -26,12 +28,13 @@ const NovelCover = ({
   showStatus = false,
   hasChapters = true,
   contentType,
-  category
+  category,
+  size = 'small'
 }: NovelCoverProps) => (
   <div className="relative aspect-[2/3] w-full rounded overflow-hidden bg-muted group">
     {coverUrl ? (
       <Image
-        src={coverUrl.startsWith('http') ? coverUrl : `/novel-covers/${coverUrl}`}
+        src={coverUrl.startsWith('http') ? getResponsiveImageUrl(coverUrl, size) : `/novel-covers/${coverUrl}`}
         alt={`Cover for ${title}`}
         fill
         priority={isPriority}

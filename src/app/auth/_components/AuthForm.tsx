@@ -1,5 +1,6 @@
 import { PasswordInput } from './PasswordInput';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import HCaptcha from '@hcaptcha/react-hcaptcha';
 
 const LoadingSpinner = () => (
   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
@@ -15,7 +16,7 @@ interface AuthFormProps {
   error: string;
   emailError: string;
   loading: boolean;
-  onSubmit: (e: React.FormEvent) => Promise<void>;
+  onSubmit: (e: React.FormEvent, captchaToken?: string) => Promise<void>;
   onEmailChange: (email: string) => void;
   onPasswordChange: (password: string) => void;
   onConfirmPasswordChange: (password: string) => void;
@@ -34,9 +35,29 @@ export function AuthForm({
   validateEmail
 }: AuthFormProps) {
   const [showPassword, setShowPassword] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string>();
+  const captchaRef = useRef<HCaptcha>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (mode === 'signup' && !captchaToken) {
+      // Execute hCaptcha when the form is submitted without a token
+      captchaRef.current?.execute();
+      return;
+    }
+
+    await onSubmit(e, captchaToken);
+    
+    // Reset the captcha after submission
+    if (mode === 'signup') {
+      setCaptchaToken(undefined);
+      captchaRef.current?.resetCaptcha();
+    }
+  };
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <div className="relative">
         <input
           title="Email"
@@ -65,13 +86,25 @@ export function AuthForm({
       />
 
       {mode === 'signup' && (
-        <PasswordInput
-          value={credentials.confirmPassword}
-          onChange={onConfirmPasswordChange}
-          placeholder="Confirm Password"
-          showPassword={showPassword}
-          onTogglePassword={() => setShowPassword(!showPassword)}
-        />
+        <>
+          <PasswordInput
+            value={credentials.confirmPassword}
+            onChange={onConfirmPasswordChange}
+            placeholder="Confirm Password"
+            showPassword={showPassword}
+            onTogglePassword={() => setShowPassword(!showPassword)}
+          />
+          
+          <div className="flex justify-center">
+            <HCaptcha
+              ref={captchaRef}
+              sitekey={process.env.NEXT_PUBLIC_SUPABASE_HCAPTCHA_SITE_KEY || ''}
+              onVerify={(token) => setCaptchaToken(token)}
+              onExpire={() => setCaptchaToken(undefined)}
+              size="invisible"
+            />
+          </div>
+        </>
       )}
 
       <button

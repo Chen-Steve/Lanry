@@ -48,10 +48,17 @@ export function useAuth() {
     console.log('[Profile] Successfully created profile for:', userId);
   };
 
-  const handleSignup = async () => {
+  const handleSignup = async (captchaToken?: string) => {
+    if (!captchaToken) {
+      throw new Error('Please complete the captcha verification');
+    }
+
     const { data, error: signUpError } = await supabase.auth.signUp({
       email: credentials.email,
       password: credentials.password,
+      options: {
+        captchaToken
+      }
     });
 
     if (signUpError) throw new Error(signUpError.message);
@@ -117,7 +124,7 @@ export function useAuth() {
     return true;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, captchaToken?: string) => {
     e.preventDefault();
     setError('');
     
@@ -132,7 +139,7 @@ export function useAuth() {
 
     try {
       if (mode === 'signup') {
-        await handleSignup();
+        await handleSignup(captchaToken);
       } else {
         await handleSignin();
       }
@@ -274,14 +281,14 @@ export function useAuth() {
     credentials,
     error,
     loading,
+    emailError,
     googleLoading,
     discordLoading,
-    emailError,
     setCredentials,
     handleSubmit,
-    handleGoogleSignIn,
-    handleDiscordSignIn,
     resetForm,
-    validateEmail
+    validateEmail,
+    handleGoogleSignIn,
+    handleDiscordSignIn
   };
 } 
