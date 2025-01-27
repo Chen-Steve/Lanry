@@ -34,6 +34,8 @@ export default function ChapterBulkUpload({ novelId, userId, onUploadComplete }:
   const [files, setFiles] = useState<FileToProcess[]>([]);
   const [mounted, setMounted] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [bulkPublishDate, setBulkPublishDate] = useState<string>('');
+  const [useAutoRelease, setUseAutoRelease] = useState(true);
 
   useEffect(() => {
     setMounted(true);
@@ -256,27 +258,29 @@ export default function ChapterBulkUpload({ novelId, userId, onUploadComplete }:
             title: finalTitle
           });
 
-          // Create the chapter with null publish_at and coins
+          // Create the chapter with publish_at based on settings
           const chapterId = await authorChapterService.createChapter(novelId, userId, {
             chapter_number: finalChapterNumber,
             part_number: finalPartNumber,
             title: finalTitle,
             content,
-            publish_at: null, // Let the service handle auto-release scheduling
+            publish_at: !useAutoRelease && bulkPublishDate ? bulkPublishDate : null,
             coins: 0, // Let the service handle fixed pricing
           });
 
-          // Apply auto-release schedule with the last publish date
-          const newPublishDate = await authorChapterService.applyAutoReleaseSchedule(
-            novelId,
-            userId,
-            chapterId,
-            lastPublishDate
-          );
+          // Only apply auto-release schedule if useAutoRelease is true
+          if (useAutoRelease) {
+            const newPublishDate = await authorChapterService.applyAutoReleaseSchedule(
+              novelId,
+              userId,
+              chapterId,
+              lastPublishDate
+            );
 
-          // Update the last publish date for the next chapter
-          if (newPublishDate) {
-            lastPublishDate = newPublishDate;
+            // Update the last publish date for the next chapter
+            if (newPublishDate) {
+              lastPublishDate = newPublishDate;
+            }
           }
 
         } catch (error) {
@@ -395,6 +399,45 @@ export default function ChapterBulkUpload({ novelId, userId, onUploadComplete }:
                     <span className="sr-only">Close</span>
                   </button>
                 </div>
+              </div>
+
+              {/* Release Schedule Options */}
+              <div className="space-y-3 p-3 bg-accent/50 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Release Schedule</span>
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs text-muted-foreground">Auto Release</label>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={useAutoRelease}
+                        onChange={(e) => setUseAutoRelease(e.target.checked)}
+                        className="sr-only peer"
+                        aria-label="Enable auto release scheduling"
+                        title="Enable auto release scheduling"
+                      />
+                      <div className="w-9 h-5 bg-muted rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                    </label>
+                  </div>
+                </div>
+
+                {!useAutoRelease && (
+                  <div className="space-y-2">
+                    <label className="text-xs text-muted-foreground">Set Future Release Date</label>
+                    <input
+                      type="datetime-local"
+                      value={bulkPublishDate}
+                      min={new Date().toISOString().slice(0, 16)}
+                      onChange={(e) => setBulkPublishDate(e.target.value)}
+                      className="w-full p-2 text-sm border border-border rounded bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                      aria-label="Set future release date and time for all chapters"
+                      title="Set future release date and time for all chapters"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      All chapters will be released at this date and time
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div {...getRootProps()} className={`
