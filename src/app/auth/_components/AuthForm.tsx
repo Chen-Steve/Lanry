@@ -42,8 +42,7 @@ export function AuthForm({
     e.preventDefault();
     
     if (mode === 'signup' && !captchaToken) {
-      // Execute hCaptcha when the form is submitted without a token
-      captchaRef.current?.execute();
+      alert('Please complete the captcha verification');
       return;
     }
 
@@ -101,7 +100,7 @@ export function AuthForm({
               sitekey={process.env.NEXT_PUBLIC_SUPABASE_HCAPTCHA_SITE_KEY || ''}
               onVerify={(token) => setCaptchaToken(token)}
               onExpire={() => setCaptchaToken(undefined)}
-              size="invisible"
+              size="normal"
             />
           </div>
         </>
