@@ -27,11 +27,6 @@ const Header = () => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Don't render header on auth page when on mobile
-  if (isMobile && pathname === '/auth') {
-    return null;
-  }
-
   // Don't render header on more page or user dashboard on mobile
   if (pathname === '/more' || 
       (isMobile && pathname === '/user-dashboard') || 
