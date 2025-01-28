@@ -117,11 +117,15 @@ const SearchSection: React.FC<SearchSectionProps> = ({
     debouncedSearch(value);
   };
 
-  const handleSearchClick = () => {
-    setIsExpanded(true);
-    setTimeout(() => {
-      inputRef.current?.focus();
-    }, 150); // Wait for animation to start
+  const handleSearchClick = (e: React.MouseEvent) => {
+    if (!isExpanded) {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsExpanded(true);
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 150);
+    }
   };
 
   return (
@@ -190,7 +194,7 @@ const SearchSection: React.FC<SearchSectionProps> = ({
             <>
               {results.map((novel) => (
                 <Link 
-                  href={`/novels/${novel.id}`} 
+                  href={`/novels/${novel.slug}`} 
                   key={novel.id}
                   className="block px-4 py-2 hover:bg-accent transition-colors cursor-pointer border-b border-border last:border-b-0"
                   onClick={() => {
