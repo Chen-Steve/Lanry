@@ -39,10 +39,22 @@ export const NovelSynopsis = ({
     return () => window.removeEventListener('resize', handleResize);
   }, [isMobile]);
 
+  // Function to append size parameters to Supabase URLs
+  const getOptimizedImageUrl = (url: string) => {
+    if (url.includes('supabase')) {
+      // For mobile (4 columns): 25vw of viewport width, max ~150px
+      // For tablet (6 columns): 12.5vw of viewport width, max ~120px
+      // For desktop: 10vw of viewport width, max ~100px
+      // Using 150x200 as the largest size needed
+      return `${url}?width=150&height=200&resize=contain`;
+    }
+    return url;
+  };
+
   return (
     <div>
-      {/* Characters Grid - Only show if expanded */}
-      {characters.length > 0 && isExpanded && (
+      {/* Characters Grid - Show on mobile regardless of expansion, hide on desktop if not expanded */}
+      {characters.length > 0 && (isMobile || isExpanded) && (
         <div className="mb-4">
           <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Characters</h4>
           <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
@@ -53,11 +65,12 @@ export const NovelSynopsis = ({
               >
                 <div className="aspect-[3/4] relative">
                   <Image
-                    src={character.imageUrl}
+                    src={getOptimizedImageUrl(character.imageUrl)}
                     alt={character.name}
                     fill
                     className="object-cover"
-                    sizes="(max-width: 640px) 25vw, (max-width: 768px) 12.5vw, 10vw"
+                    sizes="(max-width: 640px) 80px, (max-width: 768px) 100px, 120px"
+                    quality={80}
                   />
                   <div className="absolute inset-x-0 bottom-0 bg-black/60 p-1">
                     <p className="text-xs font-medium text-white leading-tight truncate">
