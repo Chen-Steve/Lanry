@@ -3,7 +3,7 @@ import { Volume } from '@/types/novel';
 import { ChapterListItem as ChapterListItemComponent } from './ChapterListItem';
 import { useMemo, useState, useEffect } from 'react';
 import { Icon } from '@iconify/react';
-import { getChaptersForList, ChapterListItem } from '@/services/chapterService';
+import { getChaptersForList, ChapterListItem, getChapterCounts, ChapterCounts } from '@/services/chapterService';
 import { useInView } from 'react-intersection-observer';
 
 interface ChapterListProps {
@@ -29,12 +29,23 @@ export const ChapterList = ({
   const [showAllChapters, setShowAllChapters] = useState(true);
   const [showAdvancedChapters, setShowAdvancedChapters] = useState(false);
   const [chapters, setChapters] = useState<ChapterListItem[]>(initialChapters || []);
+  const [chapterCounts, setChapterCounts] = useState<ChapterCounts>({ regularCount: 0, advancedCount: 0, total: 0 });
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
 
   const { ref: loadMoreRef, inView } = useInView();
 
+  // Load total counts
+  useEffect(() => {
+    const loadCounts = async () => {
+      const counts = await getChapterCounts(novelId);
+      setChapterCounts(counts);
+    };
+    loadCounts();
+  }, [novelId]);
+
+  // Initial load of chapters
   useEffect(() => {
     const loadInitialChapters = async () => {
       if (chapters.length === 0) {
@@ -184,10 +195,10 @@ export const ChapterList = ({
               <Icon icon="solar:book-linear" className="w-4 h-4" />
               Regular Chapters
               <span className="text-xs">
-                ({regularChapters.length})
+                ({chapterCounts.regularCount})
               </span>
             </button>
-            {advancedChapters.length > 0 && (
+            {chapterCounts.advancedCount > 0 && (
               <button
                 onClick={() => setShowAdvancedChapters(true)}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-2
@@ -199,7 +210,7 @@ export const ChapterList = ({
                 <Icon icon="solar:crown-linear" className="w-4 h-4" />
                 Advanced Chapters
                 <span className="text-xs">
-                  ({advancedChapters.length})
+                  ({chapterCounts.advancedCount})
                 </span>
               </button>
             )}

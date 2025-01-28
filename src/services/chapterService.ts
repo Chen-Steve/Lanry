@@ -323,4 +323,46 @@ export async function getChaptersForList({
     console.error('Error fetching chapters for list:', error);
     return { chapters: [], total: 0 };
   }
+}
+
+export interface ChapterCounts {
+  regularCount: number;
+  advancedCount: number;
+  total: number;
+}
+
+export async function getChapterCounts(novelId: string): Promise<ChapterCounts> {
+  try {
+    const { data: novel } = await supabase
+      .from('novels')
+      .select('id')
+      .or(`id.eq.${novelId},slug.eq.${novelId}`)
+      .single();
+
+    if (!novel) return { regularCount: 0, advancedCount: 0, total: 0 };
+
+    const { count } = await supabase
+      .from('chapters')
+      .select('*', { count: 'exact', head: true })
+      .eq('novel_id', novel.id);
+
+    const now = new Date().toISOString();
+
+    const { count: advancedCount } = await supabase
+      .from('chapters')
+      .select('*', { count: 'exact', head: true })
+      .eq('novel_id', novel.id)
+      .gt('publish_at', now);
+
+    const regularCount = (count || 0) - (advancedCount || 0);
+
+    return {
+      regularCount,
+      advancedCount: advancedCount || 0,
+      total: count || 0
+    };
+  } catch (error) {
+    console.error('Error getting chapter counts:', error);
+    return { regularCount: 0, advancedCount: 0, total: 0 };
+  }
 } 
