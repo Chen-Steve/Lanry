@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { formatDate } from '@/lib/utils';
 import { getTextStyles, formatText } from '@/lib/textFormatting';
+import { filterExplicitContent } from '@/lib/contentFiltering';
 import CommentPopover from './CommentBar';
 import { useComments } from '@/hooks/useComments';
 import { useChapterLikes } from '@/hooks/useChapterLikes';
@@ -101,7 +102,7 @@ export default function ChapterContent({
     onCommentStateChange(true);
   }, [onCommentStateChange]);
 
-  const paragraphs = content
+  const paragraphs = filterExplicitContent(content)
     .split('\n\n')
     .filter(p => p.trim());
 
@@ -308,7 +309,7 @@ export default function ChapterContent({
             <div 
               className="prose prose-sm md:prose-base text-gray-700 dark:text-gray-300 dark:prose-invert"
               style={getTextStyles(fontFamily, fontSize - 1)}
-              dangerouslySetInnerHTML={{ __html: formatText(authorThoughts) }}
+              dangerouslySetInnerHTML={{ __html: formatText(filterExplicitContent(authorThoughts)) }}
             />
           </div>
         </div>
