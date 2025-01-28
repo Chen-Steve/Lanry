@@ -106,7 +106,7 @@ export const NovelContent = ({
       case 'chapters':
         return (
           <ChapterList
-            chapters={chapters}
+            initialChapters={chapters}
             volumes={volumes}
             novelId={novelId}
             novelSlug={novelSlug}
