@@ -222,4 +222,105 @@ export async function getTotalAllChapters(novelId: string): Promise<number> {
     console.error('Error getting total chapters:', error);
     return 0;
   }
+}
+
+export interface ChapterListParams {
+  novelId: string;
+  page?: number;
+  limit?: number;
+  userId?: string | null;
+}
+
+export type ChapterListItem = Pick<Chapter, 
+  'id' | 
+  'chapter_number' | 
+  'part_number' | 
+  'title' | 
+  'publish_at' | 
+  'coins' | 
+  'age_rating'
+> & {
+  volume_id?: string;
+};
+
+export async function getChaptersForList({
+  novelId,
+  page = 1,
+  limit = 50,
+  userId
+}: ChapterListParams) {
+  try {
+    const { data: novel } = await supabase
+      .from('novels')
+      .select('id, author_profile_id')
+      .or(`id.eq.${novelId},slug.eq.${novelId}`)
+      .single();
+
+    if (!novel) return { chapters: [], total: 0 };
+
+    // Check if user is author
+    const isAuthor = userId && novel.author_profile_id === userId;
+
+    // Base query with minimal fields needed for list
+    const query = supabase
+      .from('chapters')
+      .select(`
+        id,
+        chapter_number,
+        part_number,
+        title,
+        publish_at,
+        coins,
+        volume_id,
+        age_rating
+      `, { count: 'exact' })
+      .eq('novel_id', novel.id)
+      .order('chapter_number')
+      .order('part_number', { nullsFirst: true })
+      .range((page - 1) * limit, page * limit - 1);
+
+    // If not author, we need to check unlocks
+    if (!isAuthor) {
+      // Get user unlocks in a separate query to avoid joins
+      let unlockedChapterNumbers: number[] = [];
+      if (userId) {
+        const { data: unlocks } = await supabase
+          .from('chapter_unlocks')
+          .select('chapter_number')
+          .eq('novel_id', novel.id)
+          .eq('profile_id', userId);
+        
+        unlockedChapterNumbers = unlocks?.map(u => u.chapter_number) || [];
+      }
+
+      const now = new Date();
+      const { data: chapters, count } = await query;
+
+      // Show all chapters, the locking logic is handled in the UI
+      const filteredChapters = chapters || [];
+
+      console.log('Filtered chapters:', {
+        total: chapters?.length || 0,
+        filtered: filteredChapters.length,
+        advanced: filteredChapters.filter(ch => ch.publish_at && new Date(ch.publish_at) > now).length,
+        unlocked: unlockedChapterNumbers.length
+      });
+
+      return {
+        chapters: filteredChapters as ChapterListItem[],
+        total: count || 0
+      };
+    }
+
+    // For authors, return all chapters
+    const { data: chapters, count } = await query;
+    
+    return {
+      chapters: (chapters || []) as ChapterListItem[],
+      total: count || 0
+    };
+  } catch (error) {
+    console.error('Error fetching chapters for list:', error);
+    return { chapters: [], total: 0 };
+  }
 } 

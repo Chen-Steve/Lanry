@@ -1,11 +1,13 @@
-import { Chapter, UserProfile } from '@/types/database';
+import { UserProfile } from '@/types/database';
 import { Volume } from '@/types/novel';
-import { ChapterListItem } from './ChapterListItem';
-import { useMemo, useState } from 'react';
+import { ChapterListItem as ChapterListItemComponent } from './ChapterListItem';
+import { useMemo, useState, useEffect } from 'react';
 import { Icon } from '@iconify/react';
+import { getChaptersForList, ChapterListItem } from '@/services/chapterService';
+import { useInView } from 'react-intersection-observer';
 
 interface ChapterListProps {
-  chapters: (Chapter & { volume_id?: string })[];
+  initialChapters: ChapterListItem[];
   novelId: string;
   novelSlug: string;
   userProfile: UserProfile | null;
@@ -15,7 +17,7 @@ interface ChapterListProps {
 }
 
 export const ChapterList = ({
-  chapters,
+  initialChapters,
   novelId,
   novelSlug,
   userProfile,
@@ -24,32 +26,109 @@ export const ChapterList = ({
   volumes = []
 }: ChapterListProps) => {
   const [selectedVolumeId, setSelectedVolumeId] = useState<string | null>(volumes[0]?.id || null);
-  const [showAllChapters, setShowAllChapters] = useState(false);
+  const [showAllChapters, setShowAllChapters] = useState(true);
   const [showAdvancedChapters, setShowAdvancedChapters] = useState(false);
+  const [chapters, setChapters] = useState<ChapterListItem[]>(initialChapters || []);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const { ref: loadMoreRef, inView } = useInView();
+
+  useEffect(() => {
+    const loadInitialChapters = async () => {
+      if (chapters.length === 0) {
+        setIsLoading(true);
+        try {
+          const result = await getChaptersForList({
+            novelId,
+            page: 1,
+            userId: userProfile?.id
+          });
+          setChapters(result.chapters);
+          setHasMore(result.chapters.length === 50);
+        } catch (error) {
+          console.error('Error loading initial chapters:', error);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadInitialChapters();
+  }, [novelId, userProfile?.id]);
+
+  const loadMoreChapters = async () => {
+    if (isLoading || !hasMore) return;
+
+    setIsLoading(true);
+    try {
+      const nextPage = page + 1;
+      const result = await getChaptersForList({
+        novelId,
+        page: nextPage,
+        userId: userProfile?.id
+      });
+
+      if (result.chapters.length === 0) {
+        setHasMore(false);
+      } else {
+        setChapters(prev => [...prev, ...result.chapters]);
+        setPage(nextPage);
+        setHasMore(result.chapters.length === 50);
+      }
+    } catch (error) {
+      console.error('Error loading more chapters:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (inView && !isLoading) {
+      loadMoreChapters();
+    }
+  }, [inView]);
 
   const { advancedChapters, regularChapters } = useMemo(() => {
+    if (!chapters || chapters.length === 0) {
+      return {
+        advancedChapters: [],
+        regularChapters: []
+      };
+    }
+
     const now = new Date();
     return chapters.reduce((acc, chapter) => {
-      if (chapter.publish_at && new Date(chapter.publish_at) > now) {
+      if (!chapter) return acc;
+      
+      // Advanced chapters are those with a future publish date
+      const publishDate = chapter.publish_at ? new Date(chapter.publish_at) : null;
+      if (publishDate && publishDate > now) {
         acc.advancedChapters.push(chapter);
       } else {
         acc.regularChapters.push(chapter);
       }
       return acc;
-    }, { advancedChapters: [] as Chapter[], regularChapters: [] as Chapter[] });
+    }, { advancedChapters: [] as ChapterListItem[], regularChapters: [] as ChapterListItem[] });
   }, [chapters]);
+
+  // Debug log to check chapters distribution
+  useEffect(() => {
+    console.log('Advanced Chapters:', advancedChapters.length);
+    console.log('Regular Chapters:', regularChapters.length);
+    console.log('Show Advanced:', showAdvancedChapters);
+  }, [advancedChapters.length, regularChapters.length, showAdvancedChapters]);
 
   const currentChapters = useMemo(() => {
     const chaptersToShow = showAdvancedChapters ? advancedChapters : regularChapters;
+    console.log('Chapters to show:', chaptersToShow.length);
     
     if (showAllChapters || !selectedVolumeId) {
       return chaptersToShow.sort((a, b) => {
-        // First sort by chapter number
         if (a.chapter_number !== b.chapter_number) {
           return a.chapter_number - b.chapter_number;
         }
-        // If chapter numbers are equal, sort by part number
-        // Treat null/undefined part numbers as 0 for sorting purposes
         const partA = a.part_number || 0;
         const partB = b.part_number || 0;
         return partA - partB;
@@ -58,24 +137,25 @@ export const ChapterList = ({
     return chaptersToShow
       .filter(chapter => chapter.volume_id === selectedVolumeId)
       .sort((a, b) => {
-        // First sort by chapter number
         if (a.chapter_number !== b.chapter_number) {
           return a.chapter_number - b.chapter_number;
         }
-        // If chapter numbers are equal, sort by part number
-        // Treat null/undefined part numbers as 0 for sorting purposes
         const partA = a.part_number || 0;
         const partB = b.part_number || 0;
         return partA - partB;
       });
   }, [selectedVolumeId, showAdvancedChapters, advancedChapters, regularChapters, showAllChapters]);
 
-  const renderChapter = (chapter: Chapter) => (
+  const renderChapter = (chapter: ChapterListItem) => (
     <div key={chapter.id} className="w-full h-10 flex items-center px-4">
-      <ChapterListItem
+      <ChapterListItemComponent
         chapter={{
           ...chapter,
-          novel_id: novelId
+          novel_id: novelId,
+          content: '',
+          created_at: '',
+          slug: '',
+          author_profile_id: novelAuthorId
         }}
         novelSlug={novelSlug}
         userProfile={userProfile}
@@ -107,20 +187,22 @@ export const ChapterList = ({
                 ({regularChapters.length})
               </span>
             </button>
-            <button
-              onClick={() => setShowAdvancedChapters(true)}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-2
-                ${showAdvancedChapters 
-                  ? 'bg-primary text-primary-foreground' 
-                  : 'hover:bg-accent text-muted-foreground hover:text-foreground'
-                }`}
-            >
-              <Icon icon="solar:crown-linear" className="w-4 h-4" />
-              Advanced Chapters
-              <span className="text-xs">
-                ({advancedChapters.length})
-              </span>
-            </button>
+            {advancedChapters.length > 0 && (
+              <button
+                onClick={() => setShowAdvancedChapters(true)}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-2
+                  ${showAdvancedChapters 
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'hover:bg-accent text-muted-foreground hover:text-foreground'
+                  }`}
+              >
+                <Icon icon="solar:crown-linear" className="w-4 h-4" />
+                Advanced Chapters
+                <span className="text-xs">
+                  ({advancedChapters.length})
+                </span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -179,14 +261,28 @@ export const ChapterList = ({
         {/* Chapter List */}
         <div className="grid grid-cols-1 md:grid-cols-2">
           {currentChapters.length > 0 ? (
-            currentChapters.map(chapter => (
-              <div 
-                key={chapter.id} 
-                className="h-10"
-              >
-                {renderChapter(chapter)}
-              </div>
-            ))
+            <>
+              {currentChapters.map(chapter => (
+                <div 
+                  key={chapter.id} 
+                  className="h-10"
+                >
+                  {renderChapter(chapter)}
+                </div>
+              ))}
+              {hasMore && (
+                <div 
+                  ref={loadMoreRef} 
+                  className="col-span-2 py-4 text-center"
+                >
+                  {isLoading ? (
+                    <Icon icon="solar:spinner-line-duotone" className="w-6 h-6 animate-spin" />
+                  ) : (
+                    <span className="text-sm text-muted-foreground">Loading more chapters...</span>
+                  )}
+                </div>
+              )}
+            </>
           ) : (
             <div className="col-span-2 py-8 text-center text-muted-foreground">
               <Icon icon="solar:empty-file-linear" className="w-12 h-12 mx-auto mb-2" />
