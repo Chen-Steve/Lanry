@@ -131,6 +131,15 @@ export async function createChapter(
     }
   }
 
+  // Get novel settings for fixed pricing
+  const { data: novel, error: novelError } = await supabase
+    .from('novels')
+    .select('fixed_price_enabled, fixed_price_amount')
+    .eq('id', novelId)
+    .single();
+
+  if (novelError) throw novelError;
+
   // Create the chapter
   const chapterId = generateUUID();
   const { error } = await supabase
@@ -139,6 +148,8 @@ export async function createChapter(
       id: chapterId,
       novel_id: novelId,
       ...chapterData,
+      // Apply fixed price if enabled, otherwise use provided coins value
+      coins: novel.fixed_price_enabled ? novel.fixed_price_amount : chapterData.coins,
       volume_id: chapterData.volumeId,
       slug: generateChapterSlug(chapterData.chapter_number, chapterData.part_number),
       created_at: new Date().toISOString(),

@@ -311,21 +311,22 @@ export default function ChapterList({
               )}
             </h4>
             {chapter.publish_at && (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground flex items-center gap-2">
                 {new Date(chapter.publish_at) > new Date() 
                   ? `Scheduled: ${new Date(chapter.publish_at).toLocaleDateString()}`
                   : `Published: ${new Date(chapter.publish_at).toLocaleDateString()}`
                 }
+                {isAdvancedChapter(chapter) && (
+                  <>
+                    <span className="inline-flex items-center gap-1 text-primary">
+                      {chapter.coins}c
+                    </span>
+                    <span className="text-primary">Advanced</span>
+                  </>
+                )}
               </p>
             )}
           </div>
-          
-          {isAdvancedChapter(chapter) && (
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
-              <Icon icon="ph:coins" className="w-4 h-4 mr-1" />
-              Advanced
-            </span>
-          )}
         </div>
       </div>
 
