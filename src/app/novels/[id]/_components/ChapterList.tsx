@@ -84,7 +84,12 @@ export const ChapterList = ({
       if (result.chapters.length === 0) {
         setHasMore(false);
       } else {
-        setChapters(prev => [...prev, ...result.chapters]);
+        // Use a Set to track unique chapter IDs and prevent duplicates
+        setChapters(prev => {
+          const existingIds = new Set(prev.map(ch => ch.id));
+          const newChapters = result.chapters.filter(ch => !existingIds.has(ch.id));
+          return [...prev, ...newChapters];
+        });
         setPage(nextPage);
         setHasMore(result.chapters.length === 50);
       }
