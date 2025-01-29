@@ -10,7 +10,6 @@ export async function GET() {
     
     const chapters = await prisma.chapter.findMany({
       where: {
-        coins: 0,
         publishAt: {
           lte: new Date()
         }
@@ -27,7 +26,7 @@ export async function GET() {
     if (!chapters.length) {
       console.log('No free chapters found');
       // Return empty feed with proper structure instead of error
-      const baseUrl = 'https://www.lanry.space';
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.lanry.space';
       const xml = generateChapterFeedXML(null, [], baseUrl);
       return new NextResponse(xml, {
         headers: {
@@ -45,7 +44,7 @@ export async function GET() {
       coins: chapters[0].coins
     });
 
-    const baseUrl = 'https://www.lanry.space';
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.lanry.space';
     const xml = generateChapterFeedXML(null, chapters, baseUrl);
 
     return new NextResponse(xml, {
@@ -57,7 +56,7 @@ export async function GET() {
   } catch (error) {
     console.error('Error generating free chapters RSS feed:', error);
     // Return empty feed instead of error
-    const baseUrl = 'https://www.lanry.space';
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.lanry.space';
     const xml = generateChapterFeedXML(null, [], baseUrl);
     return new NextResponse(xml, {
       headers: {
