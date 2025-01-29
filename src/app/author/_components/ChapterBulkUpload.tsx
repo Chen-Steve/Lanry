@@ -9,6 +9,7 @@ import { useDropzone } from 'react-dropzone';
 import { useEffect } from 'react';
 import mammoth from 'mammoth';
 import JSZip from 'jszip';
+import supabase from '@/lib/supabaseClient';
 
 interface ChapterBulkUploadProps {
   novelId: string;
@@ -209,7 +210,26 @@ export default function ChapterBulkUpload({ novelId, userId, onUploadComplete }:
         return aPartNum - bPartNum;
       });
 
+      // Get the latest published chapter's date before we start uploading
       let lastPublishDate: Date | undefined;
+      if (useAutoRelease) {
+        try {
+          const { data: latestChapter } = await supabase
+            .from('chapters')
+            .select('publish_at')
+            .eq('novel_id', novelId)
+            .order('publish_at', { ascending: false })
+            .limit(1)
+            .single();
+            
+          if (latestChapter?.publish_at) {
+            lastPublishDate = new Date(latestChapter.publish_at);
+          }
+        } catch (error) {
+          // Ignore error - this just means no previous chapters exist
+          console.debug('No previous chapters found:', error);
+        }
+      }
 
       for (const { file, content: { content, title: contentTitle, chapterNumber, partNumber } } of sortedFiles) {
         try {
