@@ -8,10 +8,11 @@ import ChapterEditForm from './ChapterEditForm';
 import ChapterBulkUpload from './ChapterBulkUpload';
 import * as authorChapterService from '../_services/authorChapterService';
 import { VolumeModal, DeleteConfirmationModal, AssignChaptersModal, DefaultCoinsModal, GlobalSettingsModal } from './ChapterListModals';
+import { formatLocalDateTime, isFutureDate } from '@/utils/dateUtils';
 
 const isAdvancedChapter = (chapter: ChapterListChapter): boolean => {
   const now = new Date();
-  const publishDate = chapter.publish_at ? new Date(chapter.publish_at) : null;
+  const publishDate = chapter.publish_at ? new Date(chapter.publish_at.replace(/\[[-+]?\d+\]$/, '')) : null;
   
   return (publishDate !== null && publishDate > now) && 
          (chapter.coins !== undefined && chapter.coins > 0);
@@ -312,9 +313,9 @@ export default function ChapterList({
             </h4>
             {chapter.publish_at && (
               <p className="text-sm text-muted-foreground flex items-center gap-2">
-                {new Date(chapter.publish_at) > new Date() 
-                  ? `Scheduled: ${new Date(chapter.publish_at).toLocaleDateString()}`
-                  : `Published: ${new Date(chapter.publish_at).toLocaleDateString()}`
+                {isFutureDate(chapter.publish_at)
+                  ? `Scheduled: ${formatLocalDateTime(chapter.publish_at)}`
+                  : `Published: ${formatLocalDateTime(chapter.publish_at)}`
                 }
                 {isAdvancedChapter(chapter) && (
                   <>

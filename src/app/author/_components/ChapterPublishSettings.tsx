@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { Icon } from '@iconify/react';
+import { formatLocalDateTime, toLocalDatetimeValue, fromLocalDatetimeValue, isFutureDate } from '@/utils/dateUtils';
 
 interface ChapterPublishSettingsProps {
   publishAt: string;
@@ -18,7 +19,7 @@ export default function ChapterPublishSettings({
 }: ChapterPublishSettingsProps) {
   useEffect(() => {
     // When publishAt is set to a future date and coins is 0, set it to default from localStorage
-    if (publishAt && new Date(publishAt) > new Date() && (coins === '0' || !coins)) {
+    if (publishAt && isFutureDate(publishAt) && (coins === '0' || !coins)) {
       const defaultCoins = localStorage.getItem('defaultChapterCoins') || '1';
       onSettingsChange({ publishAt, coins: defaultCoins });
     }
@@ -53,21 +54,32 @@ export default function ChapterPublishSettings({
                 
                 <div className="space-y-4 p-4 bg-accent rounded-lg">
                   <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Icon icon="mdi:calendar" className="w-5 h-5 text-muted-foreground" />
-                      <input
-                        type="datetime-local"
-                        value={publishAt}
-                        onChange={(e) => {
-                          const newPublishAt = e.target.value;
-                          onSettingsChange({
-                            publishAt: newPublishAt,
-                            coins: newPublishAt ? coins : '0'
-                          });
-                        }}
-                        className="flex-1 p-2 text-sm border border-border rounded bg-background text-foreground focus:ring-primary"
-                        aria-label="Publication date and time"
-                      />
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-center gap-2">
+                        <Icon icon="mdi:calendar" className="w-5 h-5 text-muted-foreground" />
+                        <input
+                          type="datetime-local"
+                          value={toLocalDatetimeValue(publishAt)}
+                          onChange={(e) => {
+                            const newPublishAt = fromLocalDatetimeValue(e.target.value);
+                            onSettingsChange({
+                              publishAt: newPublishAt,
+                              coins: newPublishAt ? coins : '0'
+                            });
+                          }}
+                          className="flex-1 p-2 text-sm border border-border rounded bg-background text-foreground focus:ring-primary"
+                          aria-label="Publication date and time"
+                        />
+                      </div>
+                      {publishAt && (
+                        <p className="text-xs text-muted-foreground pl-7">
+                          Will be released at: {formatLocalDateTime(publishAt)}
+                          <br />
+                          <span className="text-xs text-primary">
+                            (Releases at this local time for all readers in their timezone)
+                          </span>
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
