@@ -20,6 +20,11 @@ export const formatText = (text: string): string => {
   return lines.join('\n\n');
 };
 
+const getWordCount = (text: string): number => {
+  // Split by whitespace and filter out empty strings
+  return text.trim().split(/\s+/).filter(word => word.length > 0).length;
+};
+
 export default function ChapterEditor({ 
   value, 
   onChange, 
@@ -239,7 +244,7 @@ export default function ChapterEditor({
         </button>
         <div className="flex-1 text-right px-2 mr-8">
           <span className="text-xs md:text-sm text-muted-foreground">
-            {value.length} characters
+            {getWordCount(value)} words
           </span>
         </div>
       </div>
