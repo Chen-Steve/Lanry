@@ -385,22 +385,30 @@ export async function applyAutoReleaseSchedule(
     publishAt = new Date(baseDate);
     publishAt.setDate(publishAt.getDate() + novel.auto_release_interval);
   } else {
-    // Get the latest published chapter's publish date
-    const { data: latestChapter, error: chapterError } = await supabase
+    const now = new Date();
+    
+    // First, try to find the latest advanced chapter (chapter with future publish date)
+    const { data: advancedChapters, error: advancedError } = await supabase
       .from('chapters')
-      .select('publish_at')
+      .select('publish_at, chapter_number')
       .eq('novel_id', novelId)
       .not('id', 'eq', chapterId) // Exclude the current chapter
-      .order('publish_at', { ascending: false })
-      .limit(1)
-      .single();
+      .gt('publish_at', now.toISOString()) // Only get chapters with future dates
+      .order('publish_at', { ascending: false }) // Get the latest scheduled chapter
+      .limit(1);
 
-    if (chapterError && chapterError.message !== 'No rows found') throw chapterError;
+    if (advancedError) throw advancedError;
 
-    // Calculate the next publish date
-    const baseDate = latestChapter?.publish_at 
-      ? new Date(latestChapter.publish_at) 
-      : new Date();
+    let baseDate: Date;
+    
+    if (advancedChapters && advancedChapters.length > 0) {
+      // If we found an advanced chapter, use its publish date
+      baseDate = new Date(advancedChapters[0].publish_at);
+    } else {
+      // If no advanced chapters exist, use current date
+      baseDate = now;
+    }
+    
     publishAt = new Date(baseDate);
     publishAt.setDate(publishAt.getDate() + novel.auto_release_interval);
   }
