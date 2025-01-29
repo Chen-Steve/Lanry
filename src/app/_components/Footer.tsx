@@ -7,17 +7,17 @@ const Footer = () => {
   return (
     <footer className="bg-background border-t border-border mt-8 sm:mt-16">
       <div className="px-3 py-4 sm:px-4 sm:py-6 max-w-5xl mx-auto">
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          {/* Left Column - Brand */}
-          <div className="col-span-1 sm:col-span-2">
-            <div className="flex flex-col items-start sm:items-start text-left sm:text-left">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+          {/* Brand */}
+          <div className="col-span-1">
+            <div className="flex flex-col items-start">
               <Link href="/" className="text-base sm:text-lg font-bold text-foreground">
                 Lanry
               </Link>
               <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
                 Read light novels with ease.
               </p>
-              <div className="flex flex-wrap justify-start sm:justify-start gap-2 mt-2">
+              <div className="flex flex-wrap gap-2 mt-2">
                 <Link 
                   href="https://forms.gle/DV9X9C5wQjUxKece7" 
                   className="text-xs sm:text-sm text-amber-800 dark:text-amber-100 hover:text-amber-900 dark:hover:text-amber-50 hover:underline bg-amber-100 dark:bg-amber-900 px-2 py-0.5 rounded transition-colors"
@@ -28,28 +28,12 @@ const Footer = () => {
                 </Link>
               </div>
             </div>
-
-            {/* Connect Section - Only visible on mobile */}
-            <div className="space-y-2 flex flex-col items-start mt-4 sm:hidden">
-              <h3 className="text-xs sm:text-sm font-semibold text-foreground">Connect</h3>
-              <div className="flex space-x-3">
-                <a
-                  href="https://discord.gg/DXHRpV3sxF"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
-                  aria-label="Discord"
-                >
-                  <Icon icon="mdi:discord" className="text-xl sm:text-2xl" />
-                </a>
-              </div>
-            </div>
           </div>
 
           {/* Quick Links */}
-          <div className="col-span-1 space-y-2 flex flex-col items-end sm:items-start">
+          <div className="col-span-1 space-y-2">
             <h3 className="text-xs sm:text-sm font-semibold text-foreground">Quick Links</h3>
-            <ul className="space-y-1 sm:space-y-2 text-right sm:text-left">
+            <ul className="space-y-1 sm:space-y-2">
               <li>
                 <Link 
                   href="/" 
@@ -72,12 +56,12 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Connect Section - Only visible on desktop */}
-          <div className="hidden sm:flex space-y-2 flex-col items-start">
+          {/* Connect */}
+          <div className="col-span-1 space-y-2">
             <h3 className="text-xs sm:text-sm font-semibold text-foreground">Connect</h3>
             <div className="flex space-x-3">
               <a
-                href="https://discord.gg/4CyamqVt"
+                href="https://discord.gg/DXHRpV3sxF"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-muted-foreground hover:text-foreground transition-colors"
@@ -92,7 +76,7 @@ const Footer = () => {
         {/* Bottom Bar */}
         <div className="border-t border-border mt-4 sm:mt-6 pt-4 sm:pt-6">
           <div className="flex flex-col items-center space-y-2 sm:flex-row sm:justify-between sm:space-y-0">
-            <p className="text-xs sm:text-sm text-muted-foreground text-center sm:text-left">
+            <p className="text-xs sm:text-sm text-muted-foreground">
               © {new Date().getFullYear()} Lanry. All rights reserved.
             </p>
             <div className="flex space-x-4">
