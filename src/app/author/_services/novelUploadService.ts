@@ -186,6 +186,87 @@ export const deleteNovel = async (novelId: string) => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) throw new Error('Not authenticated');
 
+    // Delete all chapter unlocks first
+    const { error: unlockError } = await supabase
+      .from('chapter_unlocks')
+      .delete()
+      .eq('novel_id', novelId);
+
+    if (unlockError) throw unlockError;
+
+    // Delete all bookmarks
+    const { error: bookmarkError } = await supabase
+      .from('bookmarks')
+      .delete()
+      .eq('novel_id', novelId);
+
+    if (bookmarkError) throw bookmarkError;
+
+    // Delete all reading history
+    const { error: historyError } = await supabase
+      .from('reading_history')
+      .delete()
+      .eq('novel_id', novelId);
+
+    if (historyError) throw historyError;
+
+    // Delete all novel ratings
+    const { error: ratingError } = await supabase
+      .from('novel_ratings')
+      .delete()
+      .eq('novel_id', novelId);
+
+    if (ratingError) throw ratingError;
+
+    // Delete all novel comments
+    const { error: commentError } = await supabase
+      .from('novel_comments')
+      .delete()
+      .eq('novel_id', novelId);
+
+    if (commentError) throw commentError;
+
+    // Delete all chapters
+    const { error: chapterError } = await supabase
+      .from('chapters')
+      .delete()
+      .eq('novel_id', novelId);
+
+    if (chapterError) throw chapterError;
+
+    // Delete all volumes
+    const { error: volumeError } = await supabase
+      .from('volumes')
+      .delete()
+      .eq('novel_id', novelId);
+
+    if (volumeError) throw volumeError;
+
+    // Delete all categories associations
+    const { error: categoryError } = await supabase
+      .from('categories_on_novels')
+      .delete()
+      .eq('novel_id', novelId);
+
+    if (categoryError) throw categoryError;
+
+    // Delete all tags associations
+    const { error: tagError } = await supabase
+      .from('tags_on_novels')
+      .delete()
+      .eq('novel_id', novelId);
+
+    if (tagError) throw tagError;
+
+    // Delete all characters
+    const { error: characterError } = await supabase
+      .from('novel_characters')
+      .delete()
+      .eq('novel_id', novelId);
+
+    if (characterError) throw characterError;
+
+    // Finally delete the novel
     const { error } = await supabase
       .from('novels')
       .delete()
