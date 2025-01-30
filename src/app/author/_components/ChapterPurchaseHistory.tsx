@@ -185,7 +185,7 @@ export default function ChapterPurchaseHistory() {
                 <div className="flex flex-col items-end gap-1 shrink-0">
                   <div className="flex items-center gap-1 text-primary font-medium">
                     <Icon icon="solar:dollar-minimalistic-bold" className="text-base shrink-0" />
-                    <span className="text-sm">{Math.floor(purchase.cost * 0.7)}</span>
+                    <span className="text-sm">{Math.floor(purchase.cost * 0.8)}</span>
                   </div>
                   <time className="text-xs text-muted-foreground">
                     {formatDate(purchase.created_at)}

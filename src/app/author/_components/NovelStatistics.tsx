@@ -238,7 +238,12 @@ export default function NovelStatistics() {
                   ))}
                 </Pie>
                 <Tooltip 
-                  formatter={(value: number) => [`${value.toLocaleString()} views`, '']}
+                  formatter={(value: number) => [
+                    <span key="tooltip-text" className="text-foreground dark:text-white">
+                      {`${value.toLocaleString()} views`}
+                    </span>, 
+                    ''
+                  ]}
                   contentStyle={{
                     backgroundColor: 'var(--background)',
                     border: '1px solid var(--border)',
