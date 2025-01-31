@@ -53,13 +53,20 @@ const SearchSection: React.FC<SearchSectionProps> = ({
         );
         
         if (!response.ok) {
-          throw new Error('Search failed');
+          const errorData = await response.json();
+          console.error('Search failed:', errorData);
+          throw new Error(errorData.error || 'Search failed');
         }
 
         const data = await response.json();
-        setResults(data);
+        
+        if (!Array.isArray(data.novels)) {
+          throw new Error('Invalid response format');
+        }
+        
+        setResults(data.novels);
         setShowDropdown(true);
-        onSearch(query, data);
+        onSearch(query, data.novels);
       } catch (error: unknown) {
         if (error instanceof Error && error.name === 'AbortError') {
           return;
@@ -109,11 +116,13 @@ const SearchSection: React.FC<SearchSectionProps> = ({
       clearTimeout(blurTimeoutRef.current);
     }
     setIsFocused(true);
+    setShowDropdown(true);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchQuery(value);
+    setShowDropdown(true);
     debouncedSearch(value);
   };
 
@@ -203,7 +212,9 @@ const SearchSection: React.FC<SearchSectionProps> = ({
                   }}
                 >
                   <span className="text-foreground">{novel.title}</span>
-                  <span className="text-muted-foreground text-sm ml-2">by {novel.author}</span>
+                  {novel.author && (
+                    <span className="text-muted-foreground text-sm ml-2">by {novel.author}</span>
+                  )}
                 </Link>
               ))}
               <Link

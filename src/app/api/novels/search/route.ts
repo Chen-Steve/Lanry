@@ -15,23 +15,21 @@ export async function GET(request: Request) {
     const skip = (page - 1) * ITEMS_PER_PAGE;
 
     // Build the where clause
-    let where: Prisma.NovelWhereInput = {
-      // Add any default filters here if needed
-      // For example, only published novels
-      // published: true,
-    };
+    let where: Prisma.NovelWhereInput = {};
 
     // Add title search if query exists
     if (query?.trim()) {
       where = {
         ...where,
-        title: { contains: query.trim(), mode: 'insensitive' }
+        OR: [
+          { title: { contains: query.trim(), mode: 'insensitive' } },
+          { description: { contains: query.trim(), mode: 'insensitive' } }
+        ]
       };
     }
 
     // Add author search if author exists
     if (author?.trim()) {
-      // First find the user ID by username
       const user = await prisma.profile.findFirst({
         where: {
           username: {
@@ -49,9 +47,6 @@ export async function GET(request: Request) {
           ...where,
           authorProfileId: user.id
         };
-      } else {
-        // If no user found, return empty array
-        return NextResponse.json({ novels: [], totalPages: 0 });
       }
     }
 
@@ -99,8 +94,8 @@ export async function GET(request: Request) {
       take: ITEMS_PER_PAGE,
       skip,
       orderBy: [
-        { updatedAt: 'desc' }, // Show newest novels first
-        { bookmarkCount: 'desc' } // Then by popularity
+        { updatedAt: 'desc' },
+        { bookmarkCount: 'desc' }
       ]
     });
 
@@ -109,7 +104,7 @@ export async function GET(request: Request) {
       ...novel,
       author: novel.authorProfile?.username || novel.author,
       tags: novel.tags.map(t => t.tag),
-      authorProfile: undefined // Remove the authorProfile object from the response
+      authorProfile: undefined
     }));
 
     return NextResponse.json({
@@ -119,7 +114,7 @@ export async function GET(request: Request) {
   } catch (error) {
     console.error('Search error:', error);
     return NextResponse.json(
-      { error: 'Failed to search novels' },
+      { error: 'Failed to search novels', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }
