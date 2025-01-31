@@ -82,13 +82,17 @@ export default function ChapterProgressBar({
     const handleTouchStart = (e: TouchEvent) => {
       if (isCommentOpen || isDropdownOpen) return;
       
-      // Ignore if the touch is on a link or button
+      // Ignore if the touch is on a link, button, or form element
       const target = e.target as HTMLElement;
       if (
         target.tagName.toLowerCase() === 'a' || 
         target.tagName.toLowerCase() === 'button' ||
+        target.tagName.toLowerCase() === 'textarea' ||
+        target.tagName.toLowerCase() === 'form' ||
         target.closest('a') ||
-        target.closest('button')
+        target.closest('button') ||
+        target.closest('textarea') ||
+        target.closest('form')
       ) {
         return;
       }
@@ -103,12 +107,16 @@ export default function ChapterProgressBar({
       if (!touchStartY || !isTouching) return;
 
       const target = e.target as HTMLElement;
-      // Ignore if the touch ended on a link or button
+      // Ignore if the touch ended on a link, button, or form element
       if (
         target.tagName.toLowerCase() === 'a' || 
         target.tagName.toLowerCase() === 'button' ||
+        target.tagName.toLowerCase() === 'textarea' ||
+        target.tagName.toLowerCase() === 'form' ||
         target.closest('a') ||
-        target.closest('button')
+        target.closest('button') ||
+        target.closest('textarea') ||
+        target.closest('form')
       ) {
         setTouchStartY(null);
         setIsTouching(false);

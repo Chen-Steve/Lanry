@@ -281,7 +281,7 @@ export function ChapterComments({ chapterId, authorId }: ChapterCommentsProps) {
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
             placeholder="Write a comment..."
-            className="w-full min-h-[100px]"
+            className="w-full min-h-[100px] dark:text-black"
           />
           <Button 
             type="submit" 
