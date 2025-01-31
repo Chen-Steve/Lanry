@@ -9,6 +9,7 @@ import ThemeToggle from '@/app/_components/ThemeToggle';
 import { useStreak } from '@/hooks/useStreak';
 import { useAuth } from '@/hooks/useAuth';
 import { usePathname } from 'next/navigation';
+import { useScrollDirection } from '@/hooks/useScrollDirection';
 
 const Header = () => {
   const pathname = usePathname();
@@ -17,6 +18,7 @@ const Header = () => {
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const { isAuthenticated, userId, isLoading, handleSignOut } = useAuth();
   const { userProfile } = useStreak(userId, true);
+  const isVisible = useScrollDirection();
 
   useEffect(() => {
     const checkMobile = () => {
@@ -73,7 +75,9 @@ const Header = () => {
   };
 
   return (
-    <header className="w-full bg-background sticky top-0 z-50 mb-0 sm:mb-6">
+    <header className={`w-full bg-background sticky top-0 z-50 mb-0 sm:mb-6 transition-transform duration-300 ${
+      isVisible ? 'translate-y-0' : '-translate-y-full'
+    }`}>
       <div className="max-w-5xl mx-auto">
         <div className="px-3 sm:px-4 py-2 md:py-3">
           <div className="flex items-center justify-between gap-2 sm:gap-4">
