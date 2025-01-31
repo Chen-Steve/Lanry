@@ -19,6 +19,7 @@ function uuidv4() {
 export async function POST(req: Request) {
   try {
     const { fromUserId, toUserId, amount } = await req.json();
+    const authorShare = Math.floor(amount * 0.5); // Calculate 50% share for author
 
     // Verify both users exist
     const { data: users, error: userError } = await supabase
@@ -42,7 +43,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Insufficient coins" }, { status: 400 });
     }
 
-    // Update sender's coins
+    // Update sender's coins (deduct full amount)
     const { error: senderError } = await supabase
       .from('profiles')
       .update({ coins: sender.coins - amount })
@@ -50,10 +51,10 @@ export async function POST(req: Request) {
 
     if (senderError) throw senderError;
 
-    // Update recipient's coins
+    // Update recipient's coins (author gets 50%)
     const { error: recipientError } = await supabase
       .from('profiles')
-      .update({ coins: recipient.coins + amount })
+      .update({ coins: recipient.coins + authorShare }) // Use calculated authorShare
       .eq('id', toUserId);
 
     if (recipientError) throw recipientError;
@@ -74,7 +75,7 @@ export async function POST(req: Request) {
         {
           id: uuidv4(),
           profile_id: toUserId,
-          amount: amount,
+          amount: authorShare, // Use calculated authorShare
           type: 'DONATION_RECEIVED',
           order_id: donationId
         }

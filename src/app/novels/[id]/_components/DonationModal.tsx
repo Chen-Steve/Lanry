@@ -12,7 +12,7 @@ interface DonationModalProps {
   recipientName: string;
 }
 
-const PRESET_AMOUNTS = [5, 10, 25, 50, 100];
+const PRESET_AMOUNTS = [10, 20, 40];
 
 export function DonationModal({ isOpen, onClose, recipientId, recipientName }: DonationModalProps) {
   const [amount, setAmount] = useState('');
