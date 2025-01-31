@@ -1,4 +1,5 @@
 import NovelListing from '@/app/novels/_components/NovelListing';
+import CookieSettingsButton from '@/app/_components/CookieSettingsButton';
 
 export const metadata = {
   title: 'Browse Novels | Lanry',
@@ -11,6 +12,7 @@ export default function NovelsPage() {
       <div className="max-w-5xl mx-auto">
         <NovelListing />
       </div>
+      <CookieSettingsButton />
     </main>
   );
 } 
