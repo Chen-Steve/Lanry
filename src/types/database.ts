@@ -179,4 +179,5 @@ export interface Tag {
   description?: string | null;
   createdAt: Date;
   updatedAt: Date;
+  usageCount?: number;
 } 

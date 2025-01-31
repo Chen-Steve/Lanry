@@ -15,6 +15,7 @@ interface SearchFilters {
   tags: Tag[];
   status?: NovelStatus;
   category?: string;
+  page: number;
 }
 
 export default function AdvancedSearch() {
@@ -22,15 +23,18 @@ export default function AdvancedSearch() {
     query: '',
     author: '',
     tags: [],
+    page: 1
   });
   const [results, setResults] = useState<Novel[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [totalPages, setTotalPages] = useState(1);
   const [hasSearched, setHasSearched] = useState(false);
   const [availableTags, setAvailableTags] = useState<Tag[]>([]);
   const [authorSuggestions, setAuthorSuggestions] = useState<Array<{ username: string; role: string }>>([]);
   const [showAuthorDropdown, setShowAuthorDropdown] = useState(false);
   const authorInputRef = useRef<HTMLInputElement>(null);
   const authorDropdownRef = useRef<HTMLDivElement>(null);
+  const [showFilters, setShowFilters] = useState(false);
 
   const categories = [
     { id: 'action', name: 'Action' },
@@ -102,44 +106,52 @@ export default function AdvancedSearch() {
   }, [debouncedFetchAuthors]);
 
   useEffect(() => {
-    // Fetch available tags
+    // Cache tags in localStorage
+    const cachedTags = localStorage.getItem('availableTags');
+    if (cachedTags) {
+      setAvailableTags(JSON.parse(cachedTags));
+    }
+
+    // Fetch available tags if not cached or expired
     const fetchTags = async () => {
       try {
         const response = await fetch('/api/tags');
         if (!response.ok) throw new Error('Failed to fetch tags');
         const data = await response.json();
         setAvailableTags(data);
+        localStorage.setItem('availableTags', JSON.stringify(data));
+        localStorage.setItem('tagsTimestamp', Date.now().toString());
       } catch (error) {
         console.error('Error fetching tags:', error);
       }
     };
-    fetchTags();
+
+    const tagsTimestamp = localStorage.getItem('tagsTimestamp');
+    const ONE_HOUR = 60 * 60 * 1000;
+    if (!tagsTimestamp || Date.now() - parseInt(tagsTimestamp) > ONE_HOUR) {
+      fetchTags();
+    }
   }, []);
 
-  // Fetch all novels on initial load
+  // Add initial load effect
   useEffect(() => {
-    const fetchAllNovels = async () => {
-      try {
-        const response = await fetch('/api/novels');
-        if (!response.ok) throw new Error('Failed to fetch novels');
-        const data = await response.json();
-        setResults(data);
-      } catch (error) {
-        console.error('Error fetching novels:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    handleSearch(true);
+  }, []); // Empty dependency array for initial load only
 
-    fetchAllNovels();
-  }, []);
-
-  const handleSearch = async () => {
+  const handleSearch = async (resetPage: boolean = false) => {
+    const newPage = resetPage ? 1 : filters.page;
+    
+    if (resetPage) {
+      setFilters(prev => ({ ...prev, page: 1 }));
+    }
+    
     setIsLoading(true);
     setHasSearched(true);
+    
     try {
       const queryParams = new URLSearchParams();
       
+      // Only add search parameters if they exist
       if (filters.query.trim()) {
         queryParams.append('q', filters.query);
       }
@@ -148,9 +160,11 @@ export default function AdvancedSearch() {
         queryParams.append('author', filters.author);
       }
       
-      filters.tags.forEach(tag => {
-        queryParams.append('tags', tag.id);
-      });
+      if (filters.tags.length > 0) {
+        filters.tags.forEach(tag => {
+          queryParams.append('tags', tag.id);
+        });
+      }
       
       if (filters.status) {
         queryParams.append('status', filters.status);
@@ -160,15 +174,24 @@ export default function AdvancedSearch() {
         queryParams.append('category', filters.category);
       }
 
+      queryParams.append('page', newPage.toString());
+
       const response = await fetch(`/api/novels/search?${queryParams.toString()}`);
       if (!response.ok) throw new Error('Search failed');
       const data = await response.json();
-      setResults(data);
+      
+      setResults(data.novels);
+      setTotalPages(data.totalPages);
     } catch (error) {
       console.error('Search error:', error);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setFilters(prev => ({ ...prev, page: newPage }));
+    handleSearch(false);
   };
 
   // Handle tag selection
@@ -202,28 +225,43 @@ export default function AdvancedSearch() {
     }));
   };
 
-  return (
-    <div className="flex flex-col-reverse lg:flex-row justify-end gap-4 lg:gap-6">
-      {/* Results Section */}
-      <div className="flex-1 max-w-3xl w-full">
-        <NovelList 
-          novels={results} 
-          isLoading={isLoading}
-          emptyMessage={hasSearched ? "No novels match your search criteria" : "No novels found"}
-        />
-      </div>
+  // Function to check if any filters are active
+  const hasActiveFilters = () => {
+    return filters.query.trim() !== '' ||
+           filters.author.trim() !== '' ||
+           filters.tags.length > 0 ||
+           filters.status !== undefined ||
+           filters.category !== undefined;
+  };
 
-      {/* Search Form */}
-      <div className="w-full lg:w-80 lg:shrink-0">
-        <div className="space-y-4 bg-secondary/50 rounded-lg p-4 border border-border lg:sticky lg:top-4">
-          {/* Filter Types */}
-          <div className="space-y-4">
-            {/* Basic Filters */}
-            <div className="space-y-3">
-              <h3 className="font-medium text-sm flex items-center gap-1.5">
-                <Icon icon="material-symbols:filter-list" className="w-4 h-4" />
-                Filters
-              </h3>
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-col gap-4">
+        {/* Filter Button */}
+        <div className="flex justify-end">
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center gap-2 px-4 py-2 bg-secondary text-foreground rounded-lg hover:bg-secondary/80 transition-colors"
+          >
+            <Icon icon="material-symbols:filter-list" className="w-5 h-5" />
+            <span className="flex items-center gap-2">
+              Filters
+              {hasActiveFilters() && (
+                <span className="w-2 h-2 rounded-full bg-primary" />
+              )}
+            </span>
+            <Icon 
+              icon={showFilters ? "material-symbols:expand-less" : "material-symbols:expand-more"} 
+              className="w-5 h-5" 
+            />
+          </button>
+        </div>
+
+        {/* Filter Form */}
+        {showFilters && (
+          <div className="w-full bg-secondary/50 rounded-lg p-4 border border-border">
+            <div className="space-y-4">
+              {/* Basic Filters */}
               <div className="space-y-2">
                 {/* Title Search */}
                 <div>
@@ -237,94 +275,129 @@ export default function AdvancedSearch() {
                 </div>
 
                 {/* Author Search */}
-                <div className="relative" ref={authorDropdownRef}>
-                  <input
-                    ref={authorInputRef}
-                    type="text"
-                    value={filters.author}
-                    onChange={handleAuthorChange}
-                    onFocus={() => {
-                      if (filters.author.trim()) {
-                        setShowAuthorDropdown(true);
-                        debouncedFetchAuthors(filters.author);
-                      }
-                    }}
-                    placeholder="Search by author..."
-                    className="w-full px-3 py-1.5 bg-background text-foreground placeholder:text-muted-foreground border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
-                  />
-                  {showAuthorDropdown && authorSuggestions.length > 0 && (
-                    <div className="absolute left-0 mt-1 bg-background border border-border rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto w-full">
-                      {authorSuggestions.map((author, index) => (
-                        <button
-                          key={index}
-                          onClick={() => handleAuthorSelect(author)}
-                          className="w-full px-3 py-1.5 text-left hover:bg-accent transition-colors text-sm flex items-center justify-between"
-                        >
-                          <span>{author.username}</span>
-                          <span className="text-xs text-muted-foreground capitalize">
-                            {author.role.toLowerCase()}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                <div>
+                  <div className="relative" ref={authorDropdownRef}>
+                    <input
+                      ref={authorInputRef}
+                      type="text"
+                      value={filters.author}
+                      onChange={handleAuthorChange}
+                      onFocus={() => {
+                        if (filters.author.trim()) {
+                          setShowAuthorDropdown(true);
+                          debouncedFetchAuthors(filters.author);
+                        }
+                      }}
+                      placeholder="Search by author..."
+                      className="w-full px-3 py-1.5 bg-background text-foreground placeholder:text-muted-foreground border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                    />
+                    {showAuthorDropdown && authorSuggestions.length > 0 && (
+                      <div className="absolute left-0 mt-1 bg-background border border-border rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto w-full">
+                        {authorSuggestions.map((author, index) => (
+                          <button
+                            key={index}
+                            onClick={() => handleAuthorSelect(author)}
+                            className="w-full px-3 py-1.5 text-left hover:bg-accent transition-colors text-sm flex items-center justify-between"
+                          >
+                            <span>{author.username}</span>
+                            <span className="text-xs text-muted-foreground capitalize">
+                              {author.role.toLowerCase()}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Status Filter */}
-                <select
-                  value={filters.status || ''}
-                  onChange={e => setFilters(prev => ({ 
-                    ...prev, 
-                    status: e.target.value ? e.target.value as NovelStatus : undefined 
-                  }))}
-                  className="w-full px-3 py-1.5 bg-background text-foreground border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
-                  aria-label="Filter by novel status"
-                >
-                  <option value="">Any status</option>
-                  <option value="ONGOING">Ongoing</option>
-                  <option value="COMPLETED">Completed</option>
-                  <option value="HIATUS">Hiatus</option>
-                </select>
+                <div>
+                  <select
+                    value={filters.status || ''}
+                    onChange={e => setFilters(prev => ({ 
+                      ...prev, 
+                      status: e.target.value ? e.target.value as NovelStatus : undefined 
+                    }))}
+                    className="w-full px-3 py-1.5 bg-background text-foreground border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                    aria-label="Filter by novel status"
+                  >
+                    <option value="">Any status</option>
+                    <option value="ONGOING">Ongoing</option>
+                    <option value="COMPLETED">Completed</option>
+                    <option value="HIATUS">Hiatus</option>
+                  </select>
+                </div>
 
                 {/* Category Filter */}
-                <CategorySelector
-                  categories={categories}
-                  selectedCategory={filters.category}
-                  onCategorySelect={handleCategorySelect}
-                  onCategoryRemove={handleCategoryRemove}
-                />
+                <div>
+                  <CategorySelector
+                    categories={categories}
+                    selectedCategory={filters.category}
+                    onCategorySelect={handleCategorySelect}
+                    onCategoryRemove={handleCategoryRemove}
+                  />
+                </div>
+
+                {/* Tag Filters */}
+                <div>
+                  <TagSelector
+                    availableTags={availableTags}
+                    selectedTags={filters.tags}
+                    onTagSelect={handleTagSelect}
+                    onTagRemove={handleTagRemove}
+                  />
+                </div>
+              </div>
+
+              {/* Search and Clear Buttons */}
+              <div className="flex gap-2 pt-2">
+                <button
+                  onClick={() => {
+                    handleSearch(true);
+                    setShowFilters(false);
+                  }}
+                  disabled={isLoading}
+                  className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {isLoading ? (
+                    <Icon icon="eos-icons:loading" className="w-5 h-5 mx-auto animate-spin" />
+                  ) : (
+                    'Apply Filters'
+                  )}
+                </button>
+                {hasActiveFilters() && (
+                  <button
+                    onClick={() => {
+                      setFilters({
+                        query: '',
+                        author: '',
+                        tags: [],
+                        page: 1
+                      });
+                      handleSearch(true);
+                      setShowFilters(false);
+                    }}
+                    disabled={isLoading}
+                    className="px-4 py-2 bg-secondary text-foreground rounded-lg hover:bg-secondary/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Clear
+                  </button>
+                )}
               </div>
             </div>
-
-            {/* Tag Filters */}
-            <div className="space-y-3">
-              <TagSelector
-                availableTags={availableTags}
-                selectedTags={filters.tags}
-                onTagSelect={handleTagSelect}
-                onTagRemove={handleTagRemove}
-              />
-            </div>
           </div>
+        )}
 
-          {/* Search Button */}
-          <button
-            onClick={handleSearch}
-            disabled={isLoading}
-            className="w-full px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 font-medium"
-          >
-            {isLoading ? (
-              <span className="flex items-center justify-center gap-2">
-                <Icon icon="eos-icons:loading" className="w-4 h-4 animate-spin" />
-                Searching...
-              </span>
-            ) : (
-              <span className="flex items-center justify-center gap-2">
-                <Icon icon="material-symbols:search" className="w-4 h-4" />
-                Search
-              </span>
-            )}
-          </button>
+        {/* Results Section */}
+        <div className="w-full">
+          <NovelList 
+            novels={results} 
+            isLoading={isLoading}
+            emptyMessage={hasSearched && results.length === 0 ? "No novels match your search criteria" : "Loading novels..."}
+            currentPage={filters.page}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
         </div>
       </div>
     </div>

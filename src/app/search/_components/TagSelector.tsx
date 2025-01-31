@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Icon } from '@iconify/react';
 import type { Tag } from '@/types/database';
 
@@ -15,47 +15,80 @@ export default function TagSelector({
   onTagSelect,
   onTagRemove,
 }: TagSelectorProps) {
-  const [showTagDropdown, setShowTagDropdown] = useState(false);
-  const [tagSearch, setTagSearch] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('All');
-  const tagDropdownRef = useRef<HTMLDivElement>(null);
-  const tagInputRef = useRef<HTMLInputElement>(null);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [search, setSearch] = useState('');
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  // Group tags by first letter for better organization
-  const tagCategories = React.useMemo(() => {
-    const categories: Record<string, Tag[]> = {
-      'All': availableTags,
-    };
-
-    // Group remaining tags by first letter
-    availableTags.forEach(tag => {
-      const firstLetter = tag.name.charAt(0).toUpperCase();
-      if (!categories[firstLetter]) {
-        categories[firstLetter] = [];
-      }
-      categories[firstLetter].push(tag);
-    });
-
-    // Sort categories by name
-    return Object.fromEntries(
-      Object.entries(categories)
-        .sort(([a], [b]) => a === 'All' ? -1 : b === 'All' ? 1 : a.localeCompare(b))
-    );
+  // Get popular tags (top 5 by usage count if available)
+  const popularTags = React.useMemo(() => {
+    return availableTags
+      .slice()
+      .sort((a, b) => (b.usageCount || 0) - (a.usageCount || 0))
+      .slice(0, 5);
   }, [availableTags]);
 
-  // Filter tags based on search and selected category
+  // Filter and group tags based on search
   const filteredTags = React.useMemo(() => {
-    const searchTerm = tagSearch.toLowerCase().trim();
-    const categoryTags = selectedCategory === 'All' 
-      ? availableTags 
-      : tagCategories[selectedCategory] || [];
+    const searchTerm = search.toLowerCase().trim();
+    if (!searchTerm) return availableTags;
+    
+    return availableTags.filter(tag => 
+      tag.name.toLowerCase().includes(searchTerm)
+    );
+  }, [search, availableTags]);
 
-    return searchTerm
-      ? categoryTags.filter(tag => 
-          tag.name.toLowerCase().includes(searchTerm)
-        )
-      : categoryTags;
-  }, [tagSearch, selectedCategory, availableTags, tagCategories]);
+  // Handle keyboard navigation
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!showDropdown) return;
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setActiveIndex(prev => 
+          prev < filteredTags.length - 1 ? prev + 1 : prev
+        );
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setActiveIndex(prev => prev > 0 ? prev - 1 : prev);
+        break;
+      case 'Enter':
+        if (activeIndex >= 0 && activeIndex < filteredTags.length) {
+          e.preventDefault();
+          const selectedTag = filteredTags[activeIndex];
+          if (!selectedTags.find(t => t.id === selectedTag.id)) {
+            onTagSelect(selectedTag);
+          }
+        }
+        break;
+      case 'Escape':
+        setShowDropdown(false);
+        break;
+    }
+  };
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current && 
+        !dropdownRef.current.contains(event.target as Node) &&
+        !inputRef.current?.contains(event.target as Node)
+      ) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Reset active index when search changes
+  useEffect(() => {
+    setActiveIndex(-1);
+  }, [search]);
 
   return (
     <div className="space-y-2">
@@ -65,12 +98,13 @@ export default function TagSelector({
           {selectedTags.map((tag) => (
             <div
               key={tag.id}
-              className="flex items-center gap-1 px-2 py-0.5 bg-primary/10 text-primary rounded-full text-sm"
+              className="group flex items-center gap-1 px-2 py-0.5 bg-primary/10 text-primary rounded-full text-sm hover:bg-primary/20 transition-colors"
             >
+              <Icon icon="material-symbols:tag" className="w-3.5 h-3.5" />
               <span>{tag.name}</span>
               <button
                 onClick={() => onTagRemove(tag.id)}
-                className="hover:text-primary/80 transition-colors"
+                className="opacity-75 group-hover:opacity-100 hover:text-primary/80 transition-all"
                 aria-label={`Remove ${tag.name} tag`}
               >
                 <Icon icon="material-symbols:close" className="w-3.5 h-3.5" />
@@ -84,13 +118,14 @@ export default function TagSelector({
       <div className="relative">
         <div className="relative">
           <input
-            ref={tagInputRef}
+            ref={inputRef}
             type="text"
             placeholder="Search and select tags..."
             className="w-full pl-8 pr-3 py-1.5 bg-background text-foreground placeholder:text-muted-foreground border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
-            value={tagSearch}
-            onChange={(e) => setTagSearch(e.target.value)}
-            onFocus={() => setShowTagDropdown(true)}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onFocus={() => setShowDropdown(true)}
+            onKeyDown={handleKeyDown}
           />
           <Icon 
             icon="material-symbols:search" 
@@ -98,46 +133,87 @@ export default function TagSelector({
           />
         </div>
 
-        {showTagDropdown && (
-          <div ref={tagDropdownRef} className="absolute left-0 mt-1 bg-background border border-border rounded-lg shadow-lg z-50 w-full">
-            <div className="flex divide-x divide-border max-h-[300px]">
-              {/* Category List */}
-              <div className="w-1/3 overflow-y-auto border-r border-border">
-                {Object.keys(tagCategories).map(category => (
-                  <button
-                    key={category}
-                    onClick={() => setSelectedCategory(category)}
-                    className={`w-full px-3 py-2 text-left text-sm hover:bg-accent transition-colors ${
-                      selectedCategory === category ? 'bg-accent/50 font-medium' : ''
-                    }`}
-                  >
-                    {category}
-                    <span className="ml-1 text-muted-foreground">
-                      ({tagCategories[category].length})
-                    </span>
-                  </button>
-                ))}
-              </div>
-
-              {/* Tags in Category */}
-              <div className="w-2/3 overflow-y-auto p-1">
-                <div className="grid grid-cols-2 gap-1">
-                  {filteredTags.map(tag => (
+        {showDropdown && (
+          <div 
+            ref={dropdownRef}
+            className="absolute left-0 mt-1 bg-background border border-border rounded-lg shadow-lg z-50 w-full max-h-[350px] overflow-y-auto"
+          >
+            {/* Popular Tags Section */}
+            {!search && popularTags.length > 0 && (
+              <div className="p-2 border-b border-border">
+                <div className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-muted-foreground">
+                  <Icon icon="material-symbols:trending-up" className="w-4 h-4" />
+                  Popular Tags
+                </div>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {popularTags.map((tag) => (
                     <button
                       key={tag.id}
-                      onClick={() => onTagSelect(tag)}
+                      onClick={() => {
+                        if (!selectedTags.find(t => t.id === tag.id)) {
+                          onTagSelect(tag);
+                        }
+                      }}
                       disabled={selectedTags.some(t => t.id === tag.id)}
-                      className={`px-2 py-1.5 text-left text-sm rounded hover:bg-accent transition-colors ${
-                        selectedTags.some(t => t.id === tag.id)
-                          ? 'opacity-50 cursor-not-allowed'
-                          : ''
-                      }`}
+                      className={`flex items-center gap-1 px-2 py-0.5 text-sm rounded-full border border-border
+                        ${selectedTags.some(t => t.id === tag.id)
+                          ? 'opacity-50 cursor-not-allowed bg-accent/50'
+                          : 'hover:bg-accent hover:border-accent-foreground/20 transition-colors'
+                        }`}
                     >
-                      {tag.name}
+                      <span>{tag.name}</span>
+                      {tag.usageCount && (
+                        <span className="text-xs text-muted-foreground">
+                          ({tag.usageCount})
+                        </span>
+                      )}
                     </button>
                   ))}
                 </div>
               </div>
+            )}
+
+            {/* Filtered Tags */}
+            <div className="p-1">
+              {filteredTags.length === 0 ? (
+                <div className="px-3 py-2 text-sm text-muted-foreground text-center">
+                  No tags found
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-1">
+                  {filteredTags.map((tag, index) => (
+                    <button
+                      key={tag.id}
+                      onClick={() => {
+                        if (!selectedTags.find(t => t.id === tag.id)) {
+                          onTagSelect(tag);
+                        }
+                      }}
+                      disabled={selectedTags.some(t => t.id === tag.id)}
+                      className={`flex items-center gap-2 px-3 py-1.5 text-sm rounded-md text-left
+                        ${activeIndex === index ? 'bg-accent' : ''}
+                        ${selectedTags.some(t => t.id === tag.id)
+                          ? 'opacity-50 cursor-not-allowed'
+                          : 'hover:bg-accent transition-colors'
+                        }`}
+                    >
+                      <Icon 
+                        icon={selectedTags.some(t => t.id === tag.id) 
+                          ? "material-symbols:check-circle" 
+                          : "material-symbols:radio-button-unchecked"
+                        } 
+                        className="w-4 h-4 text-primary/75" 
+                      />
+                      <span className="flex-1">{tag.name}</span>
+                      {tag.usageCount && (
+                        <span className="text-xs text-muted-foreground">
+                          {tag.usageCount}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}

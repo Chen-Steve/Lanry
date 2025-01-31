@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Icon } from '@iconify/react';
 
 interface Category {
@@ -34,18 +34,42 @@ export default function CategorySelector({
       : categories;
   }, [search, categories]);
 
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current && 
+        !dropdownRef.current.contains(event.target as Node) &&
+        !inputRef.current?.contains(event.target as Node)
+      ) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Handle keyboard navigation
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      setShowDropdown(false);
+    }
+  };
+
   return (
     <div className="space-y-2">
       {/* Selected Category */}
       {selectedCategory && (
         <div className="flex flex-wrap gap-1.5 mb-2">
-          <div className="flex items-center gap-1 px-2 py-0.5 bg-primary/10 text-primary rounded-full text-sm">
+          <div className="group flex items-center gap-1 px-2 py-0.5 bg-primary/10 text-primary rounded-full text-sm hover:bg-primary/20 transition-colors">
+            <Icon icon="material-symbols:category" className="w-3.5 h-3.5" />
             <span>
               {categories.find(c => c.id === selectedCategory)?.name}
             </span>
             <button
               onClick={onCategoryRemove}
-              className="hover:text-primary/80 transition-colors"
+              className="opacity-75 group-hover:opacity-100 hover:text-primary/80 transition-all"
               aria-label="Remove category filter"
             >
               <Icon icon="material-symbols:close" className="w-3.5 h-3.5" />
@@ -65,6 +89,7 @@ export default function CategorySelector({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onFocus={() => setShowDropdown(true)}
+            onKeyDown={handleKeyDown}
           />
           <Icon 
             icon="material-symbols:search" 
@@ -77,24 +102,37 @@ export default function CategorySelector({
             ref={dropdownRef}
             className="absolute left-0 mt-1 bg-background border border-border rounded-lg shadow-lg z-50 w-full max-h-[200px] overflow-y-auto"
           >
-            {filteredCategories.map(category => (
-              <button
-                key={category.id}
-                onClick={() => {
-                  onCategorySelect(category.id);
-                  setShowDropdown(false);
-                  setSearch('');
-                }}
-                disabled={selectedCategory === category.id}
-                className={`w-full px-3 py-2 text-left text-sm hover:bg-accent transition-colors ${
-                  selectedCategory === category.id
-                    ? 'opacity-50 cursor-not-allowed'
-                    : ''
-                }`}
-              >
-                {category.name}
-              </button>
-            ))}
+            {filteredCategories.length === 0 ? (
+              <div className="px-3 py-2 text-sm text-muted-foreground text-center">
+                No categories found
+              </div>
+            ) : (
+              filteredCategories.map(category => (
+                <button
+                  key={category.id}
+                  onClick={() => {
+                    onCategorySelect(category.id);
+                    setShowDropdown(false);
+                    setSearch('');
+                  }}
+                  disabled={selectedCategory === category.id}
+                  className={`w-full px-3 py-2 text-left text-sm hover:bg-accent transition-colors flex items-center gap-2
+                    ${selectedCategory === category.id
+                      ? 'opacity-50 cursor-not-allowed'
+                      : ''
+                    }`}
+                >
+                  <Icon 
+                    icon={selectedCategory === category.id 
+                      ? "material-symbols:check-circle" 
+                      : "material-symbols:radio-button-unchecked"
+                    } 
+                    className="w-4 h-4 text-primary/75" 
+                  />
+                  <span>{category.name}</span>
+                </button>
+              ))
+            )}
           </div>
         )}
       </div>

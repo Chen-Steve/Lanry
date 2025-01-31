@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { Prisma, NovelStatus } from '@prisma/client';
 
+const ITEMS_PER_PAGE = 6;
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -9,9 +11,15 @@ export async function GET(request: Request) {
     const author = searchParams.get('author');
     const tags = searchParams.getAll('tags');
     const status = searchParams.get('status') as NovelStatus | null;
+    const page = parseInt(searchParams.get('page') || '1');
+    const skip = (page - 1) * ITEMS_PER_PAGE;
 
     // Build the where clause
-    let where: Prisma.NovelWhereInput = {};
+    let where: Prisma.NovelWhereInput = {
+      // Add any default filters here if needed
+      // For example, only published novels
+      // published: true,
+    };
 
     // Add title search if query exists
     if (query?.trim()) {
@@ -43,7 +51,7 @@ export async function GET(request: Request) {
         };
       } else {
         // If no user found, return empty array
-        return NextResponse.json([]);
+        return NextResponse.json({ novels: [], totalPages: 0 });
       }
     }
 
@@ -69,11 +77,11 @@ export async function GET(request: Request) {
       };
     }
 
-    // If no search conditions are provided, return empty array
-    if (!query?.trim() && !author?.trim() && tags.length === 0 && !status) {
-      return NextResponse.json([]);
-    }
+    // Get total count for pagination
+    const totalCount = await prisma.novel.count({ where });
+    const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
 
+    // Get paginated novels
     const novels = await prisma.novel.findMany({
       where,
       include: {
@@ -88,10 +96,12 @@ export async function GET(request: Request) {
           }
         }
       },
-      take: 20,
-      orderBy: {
-        bookmarkCount: 'desc'
-      }
+      take: ITEMS_PER_PAGE,
+      skip,
+      orderBy: [
+        { updatedAt: 'desc' }, // Show newest novels first
+        { bookmarkCount: 'desc' } // Then by popularity
+      ]
     });
 
     // Transform the response to include flat tag array and author username
@@ -102,7 +112,10 @@ export async function GET(request: Request) {
       authorProfile: undefined // Remove the authorProfile object from the response
     }));
 
-    return NextResponse.json(transformedNovels);
+    return NextResponse.json({
+      novels: transformedNovels,
+      totalPages
+    });
   } catch (error) {
     console.error('Search error:', error);
     return NextResponse.json(
