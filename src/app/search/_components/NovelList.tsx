@@ -96,7 +96,7 @@ export default function NovelList({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {novels.map((novel) => (
               <Link
-                href={`/novels/${novel.id}`}
+                href={`/novels/${novel.slug}`}
                 key={novel.id}
                 className="block p-3 bg-secondary rounded-lg border border-border hover:border-primary hover:bg-secondary/80 transition-colors h-full"
               >
