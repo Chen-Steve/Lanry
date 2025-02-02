@@ -5,113 +5,194 @@ import Link from 'next/link';
 import { formatRelativeDate } from '@/lib/utils';
 import { Icon } from '@iconify/react';
 import Image from 'next/image';
+import { memo, useState } from 'react';
+import { Button } from '@/components/ui/button';
 
-const fetchReadingHistory = async (userId: string | undefined) => {
+const ITEMS_PER_PAGE = 6;
+
+const fetchReadingHistory = async (userId: string | undefined, page: number = 1) => {
   if (!userId) throw new Error('Not authenticated');
 
-  const { data, error } = await supabase
-    .from('reading_history')
-    .select(`
-      *,
-      novel:novels (
-        id,
-        title,
-        slug,
-        author,
-        cover_image_url
-      )
-    `)
-    .eq('profile_id', userId)
-    .order('last_read', { ascending: false });
+  const from = (page - 1) * ITEMS_PER_PAGE;
+  const to = from + ITEMS_PER_PAGE - 1;
+
+  const [{ data, error }, { count }] = await Promise.all([
+    supabase
+      .from('reading_history')
+      .select(`
+        *,
+        novel:novels (
+          id,
+          title,
+          slug,
+          cover_image_url
+        )
+      `)
+      .eq('profile_id', userId)
+      .order('last_read', { ascending: false })
+      .range(from, to),
+    supabase
+      .from('reading_history')
+      .select('*', { count: 'exact', head: true })
+      .eq('profile_id', userId)
+  ]);
 
   if (error) throw error;
   
   // Map the data to match our Novel type
-  return (data || []).map(item => ({
-    ...item,
-    novel: {
-      ...item.novel,
-      coverImageUrl: item.novel.cover_image_url
-    }
-  }));
+  return {
+    items: (data || []).map(item => ({
+      ...item,
+      novel: {
+        ...item.novel,
+        coverImageUrl: item.novel.cover_image_url
+      }
+    })),
+    totalPages: Math.ceil((count || 0) / ITEMS_PER_PAGE),
+    currentPage: page
+  };
 };
 
 interface ReadingHistorySectionProps {
   userId: string | undefined;
 }
 
+const LoadingState = () => (
+  <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12 gap-2">
+    {Array.from({ length: ITEMS_PER_PAGE }).map((_, i) => (
+      <div key={i} className="animate-pulse">
+        <div className="aspect-[2/3] bg-muted rounded-sm" />
+        <div className="mt-1 h-2 bg-muted rounded w-3/4" />
+        <div className="mt-1 h-2 bg-muted rounded w-1/2" />
+      </div>
+    ))}
+  </div>
+);
+
+const HistoryItem = memo(({ item, index }: { item: ReadingHistory; index: number }) => {
+  const isPriority = index < 4;
+
+  return (
+    <div className="relative group space-y-0.5">
+      <Link 
+        href={`/novels/${item.novel.slug}`}
+        className="block space-y-0.5"
+      >
+        <div className="aspect-[2/3] relative overflow-hidden rounded-sm shadow-sm hover:shadow transition-shadow">
+          <Image
+            src={item.novel.coverImageUrl?.startsWith('http') 
+              ? item.novel.coverImageUrl 
+              : item.novel.coverImageUrl 
+                ? `/novel-covers/${item.novel.coverImageUrl}` 
+                : '/images/default-cover.jpg'}
+            alt={item.novel.title}
+            fill
+            sizes="(max-width: 640px) 25vw, (max-width: 768px) 16.67vw, (max-width: 1024px) 12.5vw, 8.33vw"
+            loading={isPriority ? "eager" : "lazy"}
+            priority={isPriority}
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+          <Link
+            href={`/novels/${item.novel.slug}/c${item.last_chapter}`}
+            className="absolute top-0.5 right-0.5 text-[10px] px-1.5 py-0.5 bg-black/60 hover:bg-black/80 text-white rounded-sm transition-colors"
+          >
+            Ch.{item.last_chapter}
+          </Link>
+        </div>
+        <div className="px-0.5">
+          <h3 className="text-[10px] font-medium truncate leading-tight hover:text-primary transition-colors">
+            {item.novel.title}
+          </h3>
+          <span className="text-[10px] text-muted-foreground">
+            {formatRelativeDate(item.last_read)}
+          </span>
+        </div>
+      </Link>
+    </div>
+  );
+});
+HistoryItem.displayName = 'HistoryItem';
+
+const PaginationControls = ({ currentPage, totalPages, onPageChange }: { 
+  currentPage: number; 
+  totalPages: number; 
+  onPageChange: (page: number) => void;
+}) => {
+  if (totalPages <= 1) return null;
+
+  return (
+    <div className="flex items-center justify-center gap-2 mt-6">
+      {currentPage > 1 && (
+        <Button
+          variant="outline"
+          onClick={() => onPageChange(currentPage - 1)}
+          className="h-8 px-2 border-border hover:bg-accent hover:text-accent-foreground dark:border-border dark:hover:bg-gray-800"
+        >
+          <Icon icon="mdi:chevron-left" className="w-4 h-4" />
+        </Button>
+      )}
+      <span className="text-sm text-foreground">
+        Page {currentPage} of {totalPages}
+      </span>
+      {currentPage < totalPages && (
+        <Button
+          variant="outline"
+          onClick={() => onPageChange(currentPage + 1)}
+          className="h-8 px-2 border-border hover:bg-accent hover:text-accent-foreground dark:border-border dark:hover:bg-gray-800"
+        >
+          <Icon icon="mdi:chevron-right" className="w-4 h-4" />
+        </Button>
+      )}
+    </div>
+  );
+};
+
 const ReadingHistorySection = ({ userId }: ReadingHistorySectionProps) => {
-  const { data: history, isLoading, error } = useQuery<ReadingHistory[]>({
-    queryKey: ['readingHistory', userId],
-    queryFn: () => fetchReadingHistory(userId),
+  const [currentPage, setCurrentPage] = useState(1);
+  
+  const { data: historyData, isLoading, error } = useQuery({
+    queryKey: ['readingHistory', userId, currentPage],
+    queryFn: () => fetchReadingHistory(userId, currentPage),
     staleTime: 1000 * 60 * 5,
     enabled: !!userId,
   });
 
   if (isLoading) {
-    return <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />;
+    return <LoadingState />;
   }
 
   if (error) {
     return (
-      <>
+      <div className="text-center py-8">
         <Icon icon="mdi:alert" className="w-12 h-12 mx-auto mb-2 text-red-500 dark:text-red-400" />
-        <p className="text-center text-red-500 dark:text-red-400">Error loading reading history</p>
-      </>
+        <p className="text-red-500 dark:text-red-400">Error loading reading history</p>
+      </div>
     );
   }
 
-  if (!history || history.length === 0) {
+  if (!historyData?.items || historyData.items.length === 0) {
     return (
-      <>
+      <div className="text-center py-12">
         <Icon icon="mdi:book-open-page-variant" className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
         <p className="text-center text-muted-foreground text-lg">
           No reading history yet. Start reading some novels!
         </p>
-      </>
+      </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-2">
-      {history.map((item) => (
-        <article
-          key={item.id}
-          className="flex gap-2 items-center min-w-0 px-3 py-1 border-b border-border/40 first:border-t md:first:border-t-0 md:even:border-l hover:bg-accent/5 transition-colors"
-        >
-          <Link 
-            href={`/novels/${item.novel.slug}`} 
-            className="hover:opacity-80 transition-opacity flex-shrink-0"
-          >
-            <Image
-              src={item.novel.coverImageUrl?.startsWith('http') ? item.novel.coverImageUrl : item.novel.coverImageUrl ? `/novel-covers/${item.novel.coverImageUrl}` : '/images/default-cover.jpg'}
-              alt={item.novel.title}
-              width={80}
-              priority
-              height={80}
-              className="object-cover shadow-sm w-[40px] h-[40px] sm:w-[50px] sm:h-[50px]"
-            />
-          </Link>
-          <div className="flex-grow min-w-0 space-y-0">
-            <Link 
-              href={`/novels/${item.novel.slug}`}
-              className="text-foreground font-medium text-sm hover:text-primary transition-colors block truncate"
-            >
-              {item.novel.title}
-            </Link>
-            <div className="flex items-center gap-2 text-xs">
-              <span className="text-foreground truncate">by {item.novel.author}</span>
-              <span className="text-muted-foreground truncate">· {formatRelativeDate(item.last_read)}</span>
-            </div>
-          </div>
-          <Link
-            href={`/novels/${item.novel.slug}/c${item.last_chapter}`}
-            className="flex items-center gap-1 text-foreground px-2 py-0.5 border border-border/60 rounded touch-action-manipulation whitespace-nowrap flex-shrink-0 text-xs transition-colors hover:bg-accent"
-          >
-            <span>Ch.{item.last_chapter}</span>
-          </Link>
-        </article>
-      ))}
+    <div className="space-y-4">
+      <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12 gap-2">
+        {historyData.items.map((item, index) => (
+          <HistoryItem key={item.id} item={item} index={index} />
+        ))}
+      </div>
+      <PaginationControls
+        currentPage={historyData.currentPage}
+        totalPages={historyData.totalPages}
+        onPageChange={setCurrentPage}
+      />
     </div>
   );
 };

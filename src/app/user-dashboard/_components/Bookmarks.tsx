@@ -61,7 +61,6 @@ const fetchBookmarkPage = async (userId: string | undefined, page: number): Prom
       novel:novels (
         id,
         title,
-        author,
         slug,
         cover_image_url
       )
@@ -175,18 +174,6 @@ const ErrorFallback = ({ error, resetErrorBoundary }: { error: Error; resetError
   );
 };
 
-const LoadingState = () => (
-  <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12 gap-2">
-    {Array.from({ length: 12 }).map((_, i) => (
-      <div key={i} className="animate-pulse">
-        <div className="aspect-[2/3] bg-muted rounded-sm" />
-        <div className="mt-1 h-2 bg-muted rounded w-3/4" />
-        <div className="mt-1 h-2 bg-muted rounded w-1/2" />
-      </div>
-    ))}
-  </div>
-);
-
 const Bookmarks = ({ userId, isOwnProfile = false }: BookmarksProps) => {
   const queryClient = useQueryClient();
   const [deleteConfirmation, setDeleteConfirmation] = useState<{ id: string; title: string } | null>(null);
@@ -277,7 +264,11 @@ const Bookmarks = ({ userId, isOwnProfile = false }: BookmarksProps) => {
   });
 
   if (isLoading) {
-    return <LoadingState />;
+    return (
+      <div className="flex justify-center items-center py-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    );
   }
 
   if (error) {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, lazy, Suspense, useEffect } from 'react';
+import { useState, lazy, Suspense, useEffect, memo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import supabase from '@/lib/supabaseClient';
 import { Icon } from '@iconify/react';
@@ -18,10 +18,15 @@ const ReadingHistorySection = lazy(() =>
   })
 );
 
+const BookmarksFallback = memo(({ }: { userId: string | undefined, isOwnProfile: boolean }) => (
+  <div>Failed to load bookmarks</div>
+));
+BookmarksFallback.displayName = 'BookmarksFallback';
+
 const Bookmarks = lazy(() => 
   import('@/app/user-dashboard/_components/Bookmarks').catch(() => {
     console.error('Failed to load Bookmarks component');
-    return { default: () => <div>Failed to load bookmarks</div> };
+    return { default: BookmarksFallback };
   })
 );
 
