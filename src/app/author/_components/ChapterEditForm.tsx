@@ -6,6 +6,7 @@ import { toast } from 'react-hot-toast';
 import ChapterEditor from './ChapterEditor';
 import ChapterPublishSettings from './ChapterPublishSettings';
 import * as authorChapterService from '../_services/authorChapterService';
+import { toLocalDatetimeValue } from '@/utils/dateUtils';
 
 interface ChapterEditFormProps {
   novelId: string;
@@ -61,7 +62,7 @@ export default function ChapterEditForm({
           title: chapter.title || '',
           content: chapter.content || '',
           slug: chapter.slug || '',
-          publishAt: chapter.publish_at ? new Date(chapter.publish_at).toISOString().slice(0, 16) : '',
+          publishAt: chapter.publish_at ? toLocalDatetimeValue(chapter.publish_at) : '',
           coins: chapter.coins?.toString() || '0',
           authorThoughts: chapter.author_thoughts || '',
           ageRating: chapter.age_rating || 'EVERYONE',

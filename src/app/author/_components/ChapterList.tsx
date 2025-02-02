@@ -12,7 +12,7 @@ import { formatLocalDateTime, isFutureDate } from '@/utils/dateUtils';
 
 const isAdvancedChapter = (chapter: ChapterListChapter): boolean => {
   const now = new Date();
-  const publishDate = chapter.publish_at ? new Date(chapter.publish_at.replace(/\[[-+]?\d+\]$/, '')) : null;
+  const publishDate = chapter.publish_at ? new Date(chapter.publish_at) : null;
   
   return (publishDate !== null && publishDate > now) && 
          (chapter.coins !== undefined && chapter.coins > 0);
