@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import Image from 'next/image';
 import { Icon } from '@iconify/react';
 import Link from 'next/link';
 import supabase from '@/lib/supabaseClient';
 import { v4 as uuidv4 } from 'uuid';
+import { CommentItem } from './CommentItem';
 
 interface ChapterComment {
   id: string;
@@ -44,8 +44,6 @@ export function ChapterComments({ chapterId, authorId }: ChapterCommentsProps) {
   const [newComment, setNewComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
-  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
-  const [editContent, setEditContent] = useState('');
 
   // Auth setup
   useEffect(() => {
@@ -201,12 +199,12 @@ export function ChapterComments({ chapterId, authorId }: ChapterCommentsProps) {
     }
   };
 
-  const handleEdit = async (commentId: string) => {
+  const handleEdit = async (commentId: string, content: string) => {
     try {
       const { error } = await supabase
         .from('chapter_thread_comments')
         .update({
-          content: editContent.trim(),
+          content: content.trim(),
           updated_at: new Date().toISOString()
         })
         .eq('id', commentId)
@@ -216,51 +214,14 @@ export function ChapterComments({ chapterId, authorId }: ChapterCommentsProps) {
       
       setComments(prev => prev.map(comment => 
         comment.id === commentId 
-          ? { ...comment, content: editContent.trim() }
+          ? { ...comment, content: content.trim() }
           : comment
       ));
-      setEditingCommentId(null);
-      setEditContent('');
       toast.success('Comment updated successfully');
     } catch (err) {
       console.error('Error updating comment:', err);
       toast.error('Failed to update comment');
     }
-  };
-
-  const startEditing = (comment: ChapterComment) => {
-    setEditingCommentId(comment.id);
-    setEditContent(comment.content);
-  };
-
-  const renderAvatar = (username: string, avatarUrl?: string) => {
-    if (avatarUrl) {
-      return (
-        <Image
-          src={avatarUrl}
-          alt={username}
-          width={32}
-          height={32}
-          className="w-8 h-8 rounded-full object-cover"
-          unoptimized
-          onError={(e) => {
-            const target = e.target as HTMLImageElement;
-            target.style.display = 'none';
-            // Show initials fallback
-            const parent = target.parentElement;
-            if (parent) {
-              parent.innerHTML = username[0]?.toUpperCase() || '?';
-              parent.className = "w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-medium";
-            }
-          }}
-        />
-      );
-    }
-    return (
-      <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-medium">
-        {username[0]?.toUpperCase() || '?'}
-      </div>
-    );
   };
 
   if (isLoading || isFetching) {
@@ -315,91 +276,14 @@ export function ChapterComments({ chapterId, authorId }: ChapterCommentsProps) {
 
       <div className="space-y-4">
         {comments.map((comment) => (
-          <div key={comment.id} className="flex gap-3">
-            <div className="flex-shrink-0">
-              {renderAvatar(comment.profile.username, comment.profile.avatar_url)}
-            </div>
-            <div className="flex-grow space-y-1">
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium">{comment.profile.username}</span>
-                  {comment.profile.role && comment.profile.role !== 'USER' && (
-                    <span className={`px-1 py-0.5 text-xs font-medium rounded inline-flex items-center flex-shrink-0 ${
-                      comment.profile.role === 'AUTHOR' ? 'bg-yellow-100 dark:bg-yellow-900/30' :
-                      comment.profile.role === 'TRANSLATOR' ? 'bg-blue-100 dark:bg-blue-900/30' :
-                      comment.profile.role === 'ADMIN' ? 'bg-red-100 dark:bg-red-900/30' :
-                      comment.profile.role === 'SUPER_ADMIN' ? 'bg-purple-100 dark:bg-purple-900/30' :
-                      'bg-gray-100 dark:bg-gray-800'
-                    } text-black dark:text-gray-200`}>
-                      {comment.profile.role.charAt(0) + comment.profile.role.slice(1).toLowerCase()}
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <time dateTime={comment.createdAt}>
-                    {new Date(comment.createdAt).toLocaleDateString()}
-                  </time>
-                  {userId === comment.profile.id && (
-                    <>
-                      <button
-                        onClick={() => startEditing(comment)}
-                        className="text-blue-500 hover:text-blue-600 transition-colors"
-                        title="Edit comment"
-                      >
-                        <Icon icon="mdi:pencil" className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(comment.id)}
-                        className="text-red-500 hover:text-red-600 transition-colors"
-                        title="Delete comment"
-                      >
-                        <Icon icon="mdi:delete" className="w-4 h-4" />
-                      </button>
-                    </>
-                  )}
-                  {userId === authorId && userId !== comment.profile.id && (
-                    <button
-                      onClick={() => handleDelete(comment.id)}
-                      className="text-red-500 hover:text-red-600 transition-colors"
-                      title="Delete comment"
-                    >
-                      <Icon icon="mdi:delete" className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-              </div>
-              {editingCommentId === comment.id ? (
-                <div className="space-y-2">
-                  <Textarea
-                    value={editContent}
-                    onChange={(e) => setEditContent(e.target.value)}
-                    className="w-full min-h-[100px]"
-                  />
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={() => handleEdit(comment.id)}
-                      disabled={!editContent.trim() || editContent.trim() === comment.content}
-                      className="text-sm"
-                    >
-                      Save
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        setEditingCommentId(null);
-                        setEditContent('');
-                      }}
-                      variant="outline"
-                      className="text-sm"
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">{comment.content}</p>
-              )}
-            </div>
-          </div>
+          <CommentItem
+            key={comment.id}
+            comment={comment}
+            userId={userId}
+            authorId={authorId}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
         ))}
       </div>
     </div>

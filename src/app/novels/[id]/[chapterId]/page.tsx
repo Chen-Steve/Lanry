@@ -8,13 +8,13 @@ import { notFound } from 'next/navigation';
 import { formatDate, generateUUID } from '@/lib/utils';
 import { ChapterWithNovel } from '@/types/database';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
-import ChapterHeader from './_components/ChapterHeader';
-import ChapterContent from './_components/ChapterContent';
+import ChapterHeader from './_components/content/ChapterHeader';
+import ChapterContent from './_components/content/ChapterContent';
 import supabase from '@/lib/supabaseClient';
-import ChapterProgressBar from './_components/ChapterBar';
-import ChapterSidebar from './_components/ChapterSidebar';
-import ChapterNavigation from './_components/ChapterNavigation';
-import ChapterComments from './_components/ChapterComments';
+import ChapterProgressBar from './_components/navigation/ChapterBar';
+import ChapterSidebar from './_components/navigation/ChapterSidebar';
+import ChapterNavigation from './_components/navigation/ChapterNavigation';
+import ChapterComments from './_components/interaction/comments/ChapterComments';
 import { useReadingTimeTracker } from '@/hooks/useReadingTimeTracker';
 
 function ScrollToTopButton() {

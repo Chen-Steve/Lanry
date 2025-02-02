@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { formatDate } from '@/lib/utils';
 import { getTextStyles, formatText } from '@/lib/textFormatting';
 import { filterExplicitContent } from '@/lib/contentFiltering';
-import CommentPopover from './CommentBar';
+import CommentPopover from '../interaction/comments/CommentBar';
 import { useComments } from '@/hooks/useComments';
 import { useChapterLikes } from '@/hooks/useChapterLikes';
 import { Icon } from '@iconify/react';
@@ -12,7 +12,7 @@ import { useMediaQuery } from '@/hooks/useMediaQuery';
 import type { ChapterComment as BaseChapterComment } from '@/types/database';
 import FootnoteTooltip from './FootnoteTooltip';
 import { toast } from 'react-hot-toast';
-import ScreenshotProtection from './ScreenshotProtection';
+import ScreenshotProtection from '../ScreenshotProtection';
 import ChapterParagraph from './ChapterParagraph';
 
 // Extend the base type to include avatar_url

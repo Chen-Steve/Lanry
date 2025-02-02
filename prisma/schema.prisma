@@ -161,6 +161,7 @@ model Profile {
   novelRatings       NovelRating[]
   chapterLikes       ChapterLike[]
   commentLikes       CommentLike[]
+  chapterThreadCommentLikes ChapterThreadCommentLike[]
 
   @@map("profiles")
 }
@@ -224,6 +225,7 @@ model ChapterThreadComment {
   profile       Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
   profileId     String   @map("profile_id")
   chapter       Chapter  @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  likes         ChapterThreadCommentLike[]
 
   @@index([chapterId])
   @@index([profileId])
@@ -427,4 +429,19 @@ model NovelViewLog {
   @@index([novelId])
   @@index([viewedAt])
   @@map("novel_view_logs")
+}
+
+model ChapterThreadCommentLike {
+  id          String              @id @default(uuid())
+  createdAt   DateTime            @default(now()) @map("created_at")
+  updatedAt   DateTime            @updatedAt @map("updated_at")
+  comment     ChapterThreadComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  commentId   String              @map("comment_id")
+  profile     Profile             @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  profileId   String              @map("profile_id")
+
+  @@unique([profileId, commentId])
+  @@index([commentId])
+  @@index([profileId])
+  @@map("chapter_thread_comment_likes")
 }

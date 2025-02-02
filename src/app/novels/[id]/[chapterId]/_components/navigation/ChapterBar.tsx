@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { Icon } from '@iconify/react';
 import Link from 'next/link';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
-import TextCustomization from './TextCustomization';
+import TextCustomization from '../interaction/TextCustomization';
 
 interface ChapterProgressBarProps {
   novelId: string;
