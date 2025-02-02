@@ -14,9 +14,9 @@ interface StreakUpdate {
 }
 
 export const calculateStreak = (lastVisit: string | null, currentStreak: number = 0): StreakUpdate => {
-  // Get user's local timezone date
-  const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const today = new Date(new Date().toLocaleString('en-US', { timeZone: userTz }));
+  const now = new Date();
+  // Get the start of today in UTC
+  const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
   
   if (!lastVisit) {
     return {
@@ -26,42 +26,26 @@ export const calculateStreak = (lastVisit: string | null, currentStreak: number 
     };
   }
 
-  // Convert last visit to user's timezone
-  const lastVisitDate = new Date(new Date(lastVisit).toLocaleString('en-US', { timeZone: userTz }));
-  
-  // Get dates without time components in user's timezone
-  const lastVisitDay = new Date(
-    lastVisitDate.getFullYear(),
-    lastVisitDate.getMonth(),
-    lastVisitDate.getDate()
-  );
-  const todayDay = new Date(
-    today.getFullYear(),
-    today.getMonth(),
-    today.getDate()
-  );
-  
-  const diffTime = todayDay.getTime() - lastVisitDay.getTime();
+  const lastVisitDate = new Date(lastVisit);
+  // Convert lastVisit to its UTC day start
+  const lastVisitDay = new Date(Date.UTC(lastVisitDate.getUTCFullYear(), lastVisitDate.getUTCMonth(), lastVisitDate.getUTCDate()));
+
+  const diffTime = today.getTime() - lastVisitDay.getTime();
   const diffDays = diffTime / (1000 * 60 * 60 * 24);
-  
-  // If last visit was today, never update
+
   if (diffDays === 0) {
     return {
       newStreak: currentStreak,
       shouldUpdate: false,
-      lastVisitDate: lastVisit // Keep existing timestamp
+      lastVisitDate: lastVisit
     };
-  } 
-  // If last visit was yesterday, increment streak
-  else if (diffDays === 1) {
+  } else if (diffDays === 1) {
     return {
       newStreak: currentStreak + 1,
       shouldUpdate: true,
       lastVisitDate: today.toISOString()
     };
-  } 
-  // If more than 1 day has passed, reset streak
-  else {
+  } else {
     return {
       newStreak: 1,
       shouldUpdate: true,

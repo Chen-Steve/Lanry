@@ -91,30 +91,15 @@ export function useStreak(userId: string | null, checkStreak: boolean = false) {
       lastVisitDateRef.current = userProfile.last_visit;
     }
 
-    // Get current time
+    // Use UTC day boundaries for comparison
     const now = new Date();
-
-    // Prevent updates if last update attempt was within 5 minutes
-    if (lastUpdateAttemptRef.current && 
-        now.getTime() - lastUpdateAttemptRef.current.getTime() < 5 * 60 * 1000) {
-      return;
-    }
-
-    // Use the same timezone handling as streakUtils
-    const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    const todayLocal = new Date(new Date().toLocaleString('en-US', { timeZone: userTz }));
-    
-    // If there's a last visit, convert it to local date for comparison
-    let lastVisitLocal = null;
+    const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    let lastVisitUTC = null;
     if (userProfile.last_visit) {
-      lastVisitLocal = new Date(new Date(userProfile.last_visit).toLocaleString('en-US', { timeZone: userTz }));
+      const lastVisit = new Date(userProfile.last_visit);
+      lastVisitUTC = new Date(Date.UTC(lastVisit.getUTCFullYear(), lastVisit.getUTCMonth(), lastVisit.getUTCDate()));
     }
-
-    // Prevent updates if last visit was already today (in local time)
-    if (lastVisitLocal && 
-        todayLocal.getFullYear() === lastVisitLocal.getFullYear() &&
-        todayLocal.getMonth() === lastVisitLocal.getMonth() &&
-        todayLocal.getDate() === lastVisitLocal.getDate()) {
+    if (lastVisitUTC && todayUTC.getTime() === lastVisitUTC.getTime()) {
       return;
     }
 
