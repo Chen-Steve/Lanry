@@ -70,12 +70,13 @@ const LoadingState = () => (
 );
 
 const HistoryItem = memo(({ item, index }: { item: ReadingHistory; index: number }) => {
-  const isPriority = index < 4;
+  // Always prioritize first visible items since this is the default tab
+  const isPriority = index < 12; // First 12 items (first row across all breakpoints)
 
   return (
     <div className="relative group space-y-0.5">
       <Link 
-        href={`/novels/${item.novel.slug}`}
+        href={`/novels/${item.novel.slug}/c${item.last_chapter}`}
         className="block space-y-0.5"
       >
         <div className="aspect-[2/3] relative overflow-hidden rounded-sm shadow-sm hover:shadow transition-shadow">
@@ -92,12 +93,9 @@ const HistoryItem = memo(({ item, index }: { item: ReadingHistory; index: number
             priority={isPriority}
             className="object-cover transition-transform duration-300 group-hover:scale-105"
           />
-          <Link
-            href={`/novels/${item.novel.slug}/c${item.last_chapter}`}
-            className="absolute top-0.5 right-0.5 text-[10px] px-1.5 py-0.5 bg-black/60 hover:bg-black/80 text-white rounded-sm transition-colors"
-          >
+          <div className="absolute top-0.5 right-0.5 text-[10px] px-1.5 py-0.5 bg-black/60 text-white rounded-sm">
             Ch.{item.last_chapter}
-          </Link>
+          </div>
         </div>
         <div className="px-0.5">
           <h3 className="text-[10px] font-medium truncate leading-tight hover:text-primary transition-colors">
