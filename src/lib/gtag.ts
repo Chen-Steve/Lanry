@@ -47,13 +47,51 @@ export const initializeGoogleAnalytics = () => {
 
 // Update consent settings based on user choice
 export const updateAnalyticsConsent = (granted: boolean) => {
-  window.gtag('consent', 'update', {
+  if (typeof window === 'undefined') return;
+
+  const consentParams = {
     'analytics_storage': granted ? 'granted' : 'denied',
     'ad_storage': granted ? 'granted' : 'denied',
     'functionality_storage': granted ? 'granted' : 'denied',
     'personalization_storage': granted ? 'granted' : 'denied'
-  });
+  };
+
+  window.gtag('consent', 'update', consentParams);
 
   // Enable/disable GA tracking
   window[`ga-disable-${GA_MEASUREMENT_ID}`] = !granted;
+
+  // If granted, send a page view event to ensure tracking is working
+  if (granted) {
+    window.gtag('config', GA_MEASUREMENT_ID, {
+      page_path: window.location.pathname,
+      send_page_view: true
+    });
+  }
+};
+
+// Track page views
+export const pageView = (url: string) => {
+  if (typeof window === 'undefined') return;
+  
+  window.gtag('config', GA_MEASUREMENT_ID, {
+    page_path: url,
+    send_page_view: true
+  });
+};
+
+// Track specific events
+export const event = ({ action, category, label, value }: {
+  action: string;
+  category: string;
+  label: string;
+  value?: number;
+}) => {
+  if (typeof window === 'undefined') return;
+
+  window.gtag('event', action, {
+    event_category: category,
+    event_label: label,
+    value: value
+  });
 }; 
