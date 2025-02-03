@@ -17,7 +17,7 @@ const Header = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const { isAuthenticated, userId, isLoading, handleSignOut } = useAuth();
-  const { userProfile } = useStreak(userId, true);
+  const { userProfile } = useStreak(userId);
   const isVisible = useScrollDirection();
 
   useEffect(() => {

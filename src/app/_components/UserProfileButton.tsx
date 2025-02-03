@@ -114,17 +114,11 @@ const UserProfileButton = ({
           onMenuClose?.();
         }}
       >
-        <div>
-          <div>{userProfile?.username || 'Error loading profile'}</div>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <Icon icon="heroicons:fire" className="w-4 h-4 text-amber-500" />
-              {userProfile?.current_streak || 0} day streak
-            </div>
-            <div className="flex items-center gap-1">
-              <Icon icon="ph:coins-fill" className="w-4 h-4 text-amber-500" />
-              {userProfile?.coins || 0} coins
-            </div>
+        <div className="flex items-center justify-between">
+          <div>Profile: {userProfile?.username || 'Error loading profile'}</div>
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Icon icon="ph:coins-fill" className="w-4 h-4 text-amber-500" />
+            {userProfile?.coins || 0}
           </div>
         </div>
       </Link>
