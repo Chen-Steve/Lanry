@@ -30,7 +30,7 @@ export const initializeGoogleAnalytics = () => {
     window.dataLayer.push(args);
   };
 
-  // Initialize with default consent settings (all false)
+  // Initialize with default consent settings (all denied)
   window.gtag('js', new Date());
   window.gtag('consent', 'default', {
     'analytics_storage': 'denied',
@@ -39,11 +39,13 @@ export const initializeGoogleAnalytics = () => {
     'ad_personalization': 'denied',
     'functionality_storage': 'denied',
     'personalization_storage': 'denied',
-    'security_storage': 'granted' // Always granted as it's essential
+    'security_storage': 'granted', // Always granted as it's essential
+    'ads_data_redaction': 'true'  // Redact ad click identifiers when ad_storage is denied
   });
 
   window.gtag('config', GA_MEASUREMENT_ID, {
     page_path: window.location.pathname,
+    anonymize_ip: true // IP anonymization
   });
 };
 
@@ -55,25 +57,26 @@ export const updateAnalyticsConsent = ({ analytics, advertising }: {
   if (typeof window === 'undefined') return;
 
   const consentStatus = (granted: boolean) => granted ? 'granted' : 'denied';
+  const adStorage = consentStatus(advertising);
 
   const consentParams = {
     'analytics_storage': consentStatus(analytics),
-    'ad_storage': consentStatus(advertising),
-    'ad_user_data': consentStatus(advertising),
-    'ad_personalization': consentStatus(advertising),
+    'ad_storage': adStorage,
+    'ad_user_data': adStorage,
+    'ad_personalization': adStorage,
     'functionality_storage': consentStatus(analytics || advertising),
-    'personalization_storage': consentStatus(analytics || advertising)
+    'personalization_storage': consentStatus(analytics || advertising),
+    'ads_data_redaction': adStorage === 'denied' ? 'true' : 'false'
   };
 
   window.gtag('consent', 'update', consentParams);
 
-  // If analytics is granted, send a page view event
-  if (analytics) {
-    window.gtag('config', GA_MEASUREMENT_ID, {
-      page_path: window.location.pathname,
-      send_page_view: true
-    });
-  }
+  // Send page view after consent update
+  window.gtag('config', GA_MEASUREMENT_ID, {
+    page_path: window.location.pathname,
+    send_page_view: true,
+    anonymize_ip: true
+  });
 };
 
 // Track page views
