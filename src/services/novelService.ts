@@ -15,6 +15,15 @@ interface ChapterWithDate {
   created_at: string;
 }
 
+interface GetNovelsOptions {
+  limit?: number;
+  offset?: number;
+  categories?: {
+    included: string[];
+    excluded: string[];
+  };
+}
+
 export async function getNovel(id: string, userId?: string): Promise<Novel | null> {
   try {
     const isNumericId = !isNaN(Number(id));
@@ -224,9 +233,11 @@ export async function toggleBookmark(novelId: string, userId: string, isCurrentl
   }
 }
 
-export async function getNovels(): Promise<Novel[]> {
+export async function getNovels(options: GetNovelsOptions = {}): Promise<{ novels: Novel[]; total: number }> {
   try {
-    const { data, error } = await supabase
+    const { limit = 24, offset = 0, categories } = options;
+    
+    let query = supabase
       .from('novels')
       .select(`
         *,
@@ -257,57 +268,43 @@ export async function getNovels(): Promise<Novel[]> {
             created_at,
             updated_at
           )
-        ),
-        tags:tags_on_novels!left (
-          novel_id,
-          tag_id,
-          created_at,
-          tag:tag_id (
-            id,
-            name,
-            description
-          )
         )
-      `)
-      .order('created_at', { ascending: false })
-      .throwOnError();
+      `, { count: 'exact' });
 
-    if (error || !data) return [];
+    // Apply category filters if provided
+    if (categories?.included?.length > 0) {
+      query = query.contains('categories', categories.included);
+    }
+    if (categories?.excluded?.length > 0) {
+      query = query.not('categories', 'cs', `{${categories.excluded.join(',')}}`);
+    }
 
-    // Sort novels by latest chapter date, falling back to novel creation date
-    const sortedData = data.sort((a, b) => {
-      const aLatestChapter = a.chapters?.sort((c1: ChapterWithDate, c2: ChapterWithDate) => 
-        new Date(c2.created_at).getTime() - new Date(c1.created_at).getTime()
-      )[0]?.created_at;
-      const bLatestChapter = b.chapters?.sort((c1: ChapterWithDate, c2: ChapterWithDate) => 
-        new Date(c2.created_at).getTime() - new Date(c1.created_at).getTime()
-      )[0]?.created_at;
+    // Apply pagination
+    query = query.range(offset, offset + limit - 1);
 
-      if (!aLatestChapter && !bLatestChapter) return 0;
-      if (!aLatestChapter) return 1;
-      if (!bLatestChapter) return -1;
+    const { data, error, count } = await query;
 
-      return new Date(bLatestChapter).getTime() - new Date(aLatestChapter).getTime();
-    });
+    if (error) throw error;
 
-    return sortedData.map(novel => ({
-      ...novel,
-      translator: novel.translator ? {
-        username: novel.translator.username,
-        profile_id: novel.translator.id,
-        kofiUrl: novel.translator.kofi_url,
-        patreonUrl: novel.translator.patreon_url,
-        customUrl: novel.translator.custom_url,
-        customUrlLabel: novel.translator.custom_url_label,
-        author_bio: novel.translator.author_bio
-      } : null,
-      coverImageUrl: novel.cover_image_url,
-      categories: novel.categories?.map((item: { category: NovelCategory }) => item.category) || [],
-      tags: novel.tags?.map((t: { tag: { id: string; name: string; description: string | null } }) => t.tag) || [],
-      ageRating: novel.age_rating
-    }));
+    return {
+      novels: data?.map(novel => ({
+        ...novel,
+        coverImageUrl: novel.cover_image_url,
+        translator: novel.translator ? {
+          username: novel.translator.username,
+          profile_id: novel.translator.id,
+          kofiUrl: novel.translator.kofi_url,
+          patreonUrl: novel.translator.patreon_url,
+          customUrl: novel.translator.custom_url,
+          customUrlLabel: novel.translator.custom_url_label,
+          author_bio: novel.translator.author_bio
+        } : null,
+        categories: novel.categories?.map((item: { category: any }) => item.category) || []
+      })) || [],
+      total: count || 0
+    };
   } catch (error) {
-    console.error('Error in getNovels:', error);
-    return [];
+    console.error('Error fetching novels:', error);
+    return { novels: [], total: 0 };
   }
 }
