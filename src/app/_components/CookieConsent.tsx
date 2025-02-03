@@ -23,7 +23,7 @@ export default function CookieConsent() {
       setShowConsent(true);
     } else if (consent === 'accepted') {
       // If user has already accepted, update consent
-      updateAnalyticsConsent(true);
+      updateAnalyticsConsent({ analytics: true, advertising: true });
     }
 
     // Listen for the custom event to show cookie consent
@@ -39,13 +39,13 @@ export default function CookieConsent() {
 
   const acceptCookies = () => {
     localStorage.setItem('cookie-consent', 'accepted');
-    updateAnalyticsConsent(true);
+    updateAnalyticsConsent({ analytics: true, advertising: true });
     setShowConsent(false);
   };
 
   const declineCookies = () => {
     localStorage.setItem('cookie-consent', 'declined');
-    updateAnalyticsConsent(false);
+    updateAnalyticsConsent({ analytics: false, advertising: false });
     setShowConsent(false);
   };
 

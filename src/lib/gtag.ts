@@ -35,6 +35,8 @@ export const initializeGoogleAnalytics = () => {
   window.gtag('consent', 'default', {
     'analytics_storage': 'denied',
     'ad_storage': 'denied',
+    'ad_user_data': 'denied',
+    'ad_personalization': 'denied',
     'functionality_storage': 'denied',
     'personalization_storage': 'denied',
     'security_storage': 'granted' // Always granted as it's essential
@@ -46,20 +48,27 @@ export const initializeGoogleAnalytics = () => {
 };
 
 // Update consent settings based on user choice
-export const updateAnalyticsConsent = (granted: boolean) => {
+export const updateAnalyticsConsent = ({ analytics, advertising }: {
+  analytics: boolean;
+  advertising: boolean;
+}) => {
   if (typeof window === 'undefined') return;
 
+  const consentStatus = (granted: boolean) => granted ? 'granted' : 'denied';
+
   const consentParams = {
-    'ad_storage': granted ? 'granted' : 'denied',
-    'ad_user_data': granted ? 'granted' : 'denied',
-    'ad_personalization': granted ? 'granted' : 'denied',
-    'analytics_storage': granted ? 'granted' : 'denied'
+    'analytics_storage': consentStatus(analytics),
+    'ad_storage': consentStatus(advertising),
+    'ad_user_data': consentStatus(advertising),
+    'ad_personalization': consentStatus(advertising),
+    'functionality_storage': consentStatus(analytics || advertising),
+    'personalization_storage': consentStatus(analytics || advertising)
   };
 
   window.gtag('consent', 'update', consentParams);
 
-  // If granted, send a page view event to ensure tracking is working
-  if (granted) {
+  // If analytics is granted, send a page view event
+  if (analytics) {
     window.gtag('config', GA_MEASUREMENT_ID, {
       page_path: window.location.pathname,
       send_page_view: true
