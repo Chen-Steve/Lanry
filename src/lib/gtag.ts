@@ -8,7 +8,7 @@ if (!GA_MEASUREMENT_ID) {
 declare global {
   interface Window {
     gtag: (
-      command: 'js' | 'config' | 'consent' | 'event',
+      command: 'js' | 'config' | 'consent' | 'event' | 'set',
       target: Date | string,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       params?: any
@@ -50,16 +50,13 @@ export const updateAnalyticsConsent = (granted: boolean) => {
   if (typeof window === 'undefined') return;
 
   const consentParams = {
-    'analytics_storage': granted ? 'granted' : 'denied',
     'ad_storage': granted ? 'granted' : 'denied',
-    'functionality_storage': granted ? 'granted' : 'denied',
-    'personalization_storage': granted ? 'granted' : 'denied'
+    'ad_user_data': granted ? 'granted' : 'denied',
+    'ad_personalization': granted ? 'granted' : 'denied',
+    'analytics_storage': granted ? 'granted' : 'denied'
   };
 
   window.gtag('consent', 'update', consentParams);
-
-  // Enable/disable GA tracking
-  window[`ga-disable-${GA_MEASUREMENT_ID}`] = !granted;
 
   // If granted, send a page view event to ensure tracking is working
   if (granted) {

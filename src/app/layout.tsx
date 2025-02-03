@@ -36,25 +36,32 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <Script src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`} strategy="afterInteractive" />
-        <Script id="google-analytics" strategy="afterInteractive">
+        <Script id="google-analytics-init" strategy="beforeInteractive">
           {`
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            
-            // Initialize consent mode
+
+            // Set default consent mode with wait_for_update
             gtag('consent', 'default', {
-              'analytics_storage': 'denied',
               'ad_storage': 'denied',
-              'functionality_storage': 'denied',
-              'personalization_storage': 'denied',
-              'security_storage': 'granted'
+              'ad_user_data': 'denied',
+              'ad_personalization': 'denied',
+              'analytics_storage': 'denied',
+              'wait_for_update': 500
             });
+
+            // Enable URL passthrough for better measurement without cookies
+            gtag('set', 'url_passthrough', true);
             
-            // Configure GA4 with additional debugging parameters
+            // Enable ads data redaction when ad storage is denied
+            gtag('set', 'ads_data_redaction', true);
+          `}
+        </Script>
+        <Script src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`} strategy="afterInteractive" />
+        <Script id="google-analytics-config" strategy="afterInteractive">
+          {`
+            gtag('js', new Date());
             gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}', {
-              debug_mode: true,
               page_path: window.location.pathname,
               send_page_view: true
             });
