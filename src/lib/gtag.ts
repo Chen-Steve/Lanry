@@ -1,0 +1,59 @@
+// Google Analytics Measurement ID
+export const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_ID ?? '';
+
+if (!GA_MEASUREMENT_ID) {
+  console.warn('Google Analytics ID is not defined in environment variables');
+}
+
+declare global {
+  interface Window {
+    gtag: (
+      command: 'js' | 'config' | 'consent' | 'event',
+      target: Date | string,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      params?: any
+    ) => void;
+    [key: `ga-disable-${string}`]: boolean;
+    dataLayer: unknown[];
+  }
+}
+
+// Initialize Google Analytics with consent mode
+export const initializeGoogleAnalytics = () => {
+  const script = document.createElement('script');
+  script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`;
+  script.async = true;
+  document.head.appendChild(script);
+
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = function gtag(...args: Parameters<Window['gtag']>) {
+    window.dataLayer.push(args);
+  };
+
+  // Initialize with default consent settings (all false)
+  window.gtag('js', new Date());
+  window.gtag('consent', 'default', {
+    'analytics_storage': 'denied',
+    'ad_storage': 'denied',
+    'functionality_storage': 'denied',
+    'personalization_storage': 'denied',
+    'security_storage': 'granted' // Always granted as it's essential
+  });
+
+  window.gtag('config', GA_MEASUREMENT_ID, {
+    page_path: window.location.pathname,
+  });
+};
+
+// Update consent settings based on user choice
+export const updateAnalyticsConsent = (granted: boolean) => {
+  window.gtag('consent', 'update', {
+    'analytics_storage': granted ? 'granted' : 'denied',
+    'ad_storage': granted ? 'granted' : 'denied',
+    'functionality_storage': granted ? 'granted' : 'denied',
+    'personalization_storage': granted ? 'granted' : 'denied'
+  });
+
+  // Enable/disable GA tracking
+  window[`ga-disable-${GA_MEASUREMENT_ID}`] = !granted;
+}; 

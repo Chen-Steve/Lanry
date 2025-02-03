@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Icon } from '@iconify/react';
+import { updateAnalyticsConsent } from '@/lib/gtag';
 
 interface CookieSettings {
   essential: boolean;
@@ -45,14 +46,10 @@ export default function CookiePreferences() {
     
     if (newSettings.analytics && newSettings.preferences) {
       localStorage.setItem('cookie-consent', 'accepted');
-      if (typeof window !== 'undefined') {
-        delete window['ga-disable-G-PVZ6V89JEJ'];
-      }
+      updateAnalyticsConsent(true);
     } else {
       localStorage.setItem('cookie-consent', 'declined');
-      if (typeof window !== 'undefined') {
-        window['ga-disable-G-PVZ6V89JEJ'] = true;
-      }
+      updateAnalyticsConsent(false);
     }
   };
 
@@ -66,6 +63,8 @@ export default function CookiePreferences() {
             <p className="text-sm text-gray-600 dark:text-gray-300">Required for the website to function properly</p>
           </div>
           <button
+            type="button"
+            title="Toggle essential cookies"
             className="relative inline-flex h-6 w-11 items-center rounded-full bg-blue-500 cursor-not-allowed"
             disabled
             aria-label="Toggle essential cookies"
@@ -82,14 +81,13 @@ export default function CookiePreferences() {
             <p className="text-sm text-gray-600 dark:text-gray-300">Help us improve our website</p>
           </div>
           <button
+            type="button"
+            title="Toggle analytics cookies"
             onClick={() => handleToggle('analytics')}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
               settings.analytics ? 'bg-blue-500' : 'bg-gray-200 dark:bg-gray-700'
             }`}
             aria-label="Toggle analytics cookies"
-            aria-checked="false"
-            role="switch"
-            data-checked={settings.analytics}
           >
             <span className={`${settings.analytics ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition`} />
           </button>
@@ -101,14 +99,13 @@ export default function CookiePreferences() {
             <p className="text-sm text-gray-600 dark:text-gray-300">Remember your settings and preferences</p>
           </div>
           <button
+            type="button"
+            title="Toggle preference cookies"
             onClick={() => handleToggle('preferences')}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
               settings.preferences ? 'bg-blue-500' : 'bg-gray-200 dark:bg-gray-700'
             }`}
             aria-label="Toggle preference cookies"
-            aria-checked="false"
-            role="switch"
-            data-checked={settings.preferences}
           >
             <span className={`${settings.preferences ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition`} />
           </button>

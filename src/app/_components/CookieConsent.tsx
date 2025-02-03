@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Icon } from '@iconify/react';
 import Link from 'next/link';
+import { initializeGoogleAnalytics, updateAnalyticsConsent } from '@/lib/gtag';
 
 declare global {
   interface Window {
@@ -14,9 +15,15 @@ export default function CookieConsent() {
   const [showConsent, setShowConsent] = useState(false);
 
   useEffect(() => {
+    // Initialize Google Analytics with default (denied) consent
+    initializeGoogleAnalytics();
+
     const consent = localStorage.getItem('cookie-consent');
     if (!consent) {
       setShowConsent(true);
+    } else if (consent === 'accepted') {
+      // If user has already accepted, update consent
+      updateAnalyticsConsent(true);
     }
 
     // Listen for the custom event to show cookie consent
@@ -32,13 +39,14 @@ export default function CookieConsent() {
 
   const acceptCookies = () => {
     localStorage.setItem('cookie-consent', 'accepted');
+    updateAnalyticsConsent(true);
     setShowConsent(false);
   };
 
   const declineCookies = () => {
     localStorage.setItem('cookie-consent', 'declined');
+    updateAnalyticsConsent(false);
     setShowConsent(false);
-    window['ga-disable-G-PVZ6V89JEJ'] = true;
   };
 
   if (!showConsent) return null;
@@ -57,12 +65,14 @@ export default function CookieConsent() {
       </div>
       <div className="flex gap-2 justify-end">
         <button
+          type="button"
           onClick={declineCookies}
           className="px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
         >
           Decline
         </button>
         <button
+          type="button"
           onClick={acceptCookies}
           className="px-3 py-1.5 text-xs font-medium text-white bg-blue-500 hover:bg-blue-600 rounded-lg transition-colors flex items-center gap-1"
         >
