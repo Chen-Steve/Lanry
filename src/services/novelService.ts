@@ -11,10 +11,6 @@ interface NovelCharacterFromDB {
   order_index: number;
 }
 
-interface ChapterWithDate {
-  created_at: string;
-}
-
 interface GetNovelsOptions {
   limit?: number;
   offset?: number;
@@ -272,10 +268,10 @@ export async function getNovels(options: GetNovelsOptions = {}): Promise<{ novel
       `, { count: 'exact' });
 
     // Apply category filters if provided
-    if (categories?.included?.length > 0) {
+    if (categories?.included && categories.included.length > 0) {
       query = query.contains('categories', categories.included);
     }
-    if (categories?.excluded?.length > 0) {
+    if (categories?.excluded && categories.excluded.length > 0) {
       query = query.not('categories', 'cs', `{${categories.excluded.join(',')}}`);
     }
 
@@ -299,7 +295,7 @@ export async function getNovels(options: GetNovelsOptions = {}): Promise<{ novel
           customUrlLabel: novel.translator.custom_url_label,
           author_bio: novel.translator.author_bio
         } : null,
-        categories: novel.categories?.map((item: { category: any }) => item.category) || []
+        categories: novel.categories?.map((item: { category: NovelCategory }) => item.category) || []
       })) || [],
       total: count || 0
     };
