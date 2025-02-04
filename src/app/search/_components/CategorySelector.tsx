@@ -1,28 +1,53 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Icon } from '@iconify/react';
+import { getCategories } from '@/app/author/_services/categoryService';
 
 interface Category {
   id: string;
   name: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 interface CategorySelectorProps {
-  categories: Category[];
   selectedCategory?: string;
   onCategorySelect: (categoryId: string) => void;
   onCategoryRemove: () => void;
 }
 
 export default function CategorySelector({
-  categories,
   selectedCategory,
   onCategorySelect,
   onCategoryRemove,
 }: CategorySelectorProps) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [search, setSearch] = useState('');
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Fetch categories on component mount
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const data = await getCategories();
+        // Map NovelCategory to Category interface
+        const mappedCategories = data.map(category => ({
+          id: category.id,
+          name: category.name,
+          createdAt: new Date(category.created_at),
+          updatedAt: new Date(category.updated_at)
+        }));
+        setCategories(mappedCategories);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   // Filter categories based on search
   const filteredCategories = React.useMemo(() => {
@@ -90,10 +115,11 @@ export default function CategorySelector({
             onChange={(e) => setSearch(e.target.value)}
             onFocus={() => setShowDropdown(true)}
             onKeyDown={handleKeyDown}
+            disabled={isLoading}
           />
           <Icon 
-            icon="material-symbols:search" 
-            className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" 
+            icon={isLoading ? "eos-icons:loading" : "material-symbols:search"}
+            className={`absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground ${isLoading ? 'animate-spin' : ''}`}
           />
         </div>
 
@@ -102,7 +128,11 @@ export default function CategorySelector({
             ref={dropdownRef}
             className="absolute left-0 mt-1 bg-background border border-border rounded-lg shadow-lg z-50 w-full max-h-[200px] overflow-y-auto"
           >
-            {filteredCategories.length === 0 ? (
+            {isLoading ? (
+              <div className="px-3 py-2 text-sm text-muted-foreground text-center">
+                Loading categories...
+              </div>
+            ) : filteredCategories.length === 0 ? (
               <div className="px-3 py-2 text-sm text-muted-foreground text-center">
                 No categories found
               </div>

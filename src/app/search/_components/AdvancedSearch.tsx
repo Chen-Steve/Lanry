@@ -36,21 +36,6 @@ export default function AdvancedSearch() {
   const authorDropdownRef = useRef<HTMLDivElement>(null);
   const [showFilters, setShowFilters] = useState(false);
 
-  const categories = [
-    { id: 'action', name: 'Action' },
-    { id: 'adventure', name: 'Adventure' },
-    { id: 'comedy', name: 'Comedy' },
-    { id: 'drama', name: 'Drama' },
-    { id: 'fantasy', name: 'Fantasy' },
-    { id: 'horror', name: 'Horror' },
-    { id: 'mystery', name: 'Mystery' },
-    { id: 'romance', name: 'Romance' },
-    { id: 'sci-fi', name: 'Sci-Fi' },
-    { id: 'slice-of-life', name: 'Slice of Life' },
-    { id: 'supernatural', name: 'Supernatural' },
-    { id: 'thriller', name: 'Thriller' }
-  ];
-
   // Fetch author suggestions
   const debouncedFetchAuthors = useRef(
     debounce(async (query: string) => {
@@ -331,7 +316,6 @@ export default function AdvancedSearch() {
                 {/* Category Filter */}
                 <div>
                   <CategorySelector
-                    categories={categories}
                     selectedCategory={filters.category}
                     onCategorySelect={handleCategorySelect}
                     onCategoryRemove={handleCategoryRemove}
