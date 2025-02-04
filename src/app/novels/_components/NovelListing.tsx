@@ -16,6 +16,7 @@ const NovelListing = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [featuredNovels, setFeaturedNovels] = useState<Novel[]>([]);
+  const [recentAdvancedNovels, setRecentAdvancedNovels] = useState<Novel[]>([]);
 
   const ITEMS_PER_PAGE = 12;
 
@@ -49,6 +50,32 @@ const NovelListing = () => {
     fetchNovels();
   }, [currentPage]);
 
+  // Separate effect for fetching recent novels with advanced chapters
+  useEffect(() => {
+    const fetchRecentAdvanced = async () => {
+      try {
+        const { novels: allNovels } = await getNovels({ limit: 100, offset: 0 });
+        
+        // Filter novels with advanced chapters and sort by most recent
+        const novelsWithAdvanced = allNovels
+          .filter(novel => 
+            novel.chapters?.some(chapter => {
+              const publishDate = chapter.publish_at ? new Date(chapter.publish_at) : null;
+              return publishDate && publishDate > new Date() && chapter.coins > 0;
+            })
+          )
+          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+          .slice(0, 10);
+
+        setRecentAdvancedNovels(novelsWithAdvanced);
+      } catch (error) {
+        console.error('Error fetching recent advanced novels:', error);
+      }
+    };
+
+    fetchRecentAdvanced();
+  }, []);
+
   const advancedNovels = useMemo(() => {
     return novels.filter(novel => 
       novel.chapters?.some(chapter => {
@@ -76,20 +103,24 @@ const NovelListing = () => {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 -mt-6">      
+    <div className="max-w-5xl mx-auto px-4 -mt-4 sm:-mt-8">
+      {/* Featured Novels */}
+      {featuredNovels.length > 0 && (
+        <div className="relative pt-4 sm:pt-0">
+          <FeaturedNovel novels={featuredNovels} />
+        </div>
+      )}
+
       <NewReleases
-        recentNovels={novels
-          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-          .slice(0, 10)
-          .map(novel => ({
-            id: novel.id,
-            slug: novel.slug,
-            title: novel.title,
-            coverImageUrl: novel.coverImageUrl || null,
-            chaptersCount: novel.chapters?.length || 0,
-            status: novel.status,
-            created_at: new Date(novel.created_at)
-          }))}
+        recentNovels={recentAdvancedNovels.map(novel => ({
+          id: novel.id,
+          slug: novel.slug,
+          title: novel.title,
+          coverImageUrl: novel.coverImageUrl || null,
+          chaptersCount: novel.chapters?.length || 0,
+          status: novel.status,
+          created_at: new Date(novel.created_at)
+        }))}
       />
       
       {novels.length === 0 ? (
@@ -98,30 +129,21 @@ const NovelListing = () => {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-x-2 pb-20">
-            {/* Featured Novel */}
-            {featuredNovels.length > 0 && (
-              <FeaturedNovel novels={featuredNovels} />
-            )}
-
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-x-2 pb-8">
             {novels.map((novel, index) => (
               <NovelCard 
                 key={novel.id} 
                 novel={novel}
                 isPriority={index < 6}
                 size="small"
-                className="mt-[44px]"
+                className="mt-6"
               />
             ))}
           </div>
 
-          <AdvancedChapters
-            novels={advancedNovels}
-          />
-
           {/* Pagination Controls */}
           {totalPages > 1 && (
-            <div className="flex justify-center items-center gap-2 mt-8 mb-12">
+            <div className="flex justify-center items-center gap-2 mt-4 mb-8">
               <button
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
@@ -168,6 +190,10 @@ const NovelListing = () => {
               </button>
             </div>
           )}
+
+          <AdvancedChapters
+            novels={advancedNovels}
+          />
         </>
       )}
     </div>

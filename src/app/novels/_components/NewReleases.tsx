@@ -8,6 +8,11 @@ interface NewReleaseNovel {
   slug: string;
   title: string;
   coverImageUrl: string | null;
+  chapters?: {
+    chapter_number: number;
+    part_number?: number | null;
+    publish_at: string;
+  }[];
 }
 
 interface NewReleasesProps {
@@ -47,11 +52,7 @@ const NewReleases = ({ recentNovels }: NewReleasesProps) => {
   return (
     <div className="mb-4 mt-6">
       <div className="flex items-center gap-2.5 mb-4 px-4">
-        <div className="relative">
-          <Icon icon="solar:book-bold" className="text-2xl text-primary" />
-          <Icon icon="solar:sparkles-bold-duotone" className="absolute -top-2.5 -right-2.5 text-lg text-yellow-500" />
-        </div>
-        <h2 className="text-xl font-semibold border-b-2 border-primary pb-1">New Releases</h2>
+        <h2 className="text-xl font-semibold border-b-2 border-primary pb-1">Recent Releases</h2>
       </div>
 
       <div className="relative group px-4">
@@ -70,27 +71,38 @@ const NewReleases = ({ recentNovels }: NewReleasesProps) => {
         <div 
           ref={scrollContainerRef}
           onScroll={handleScroll}
-          className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth"
+          className="flex gap-2 sm:gap-4 overflow-x-auto scrollbar-hide scroll-smooth"
         >
-          {recentNovels.map(novel => (
-            <Link
-              key={novel.id}
-              href={`/novels/${novel.slug}`}
-              className="group/card flex-none w-[160px] flex flex-col p-3 bg-card hover:bg-accent/50 transition-colors"
-            >
-              <div className="w-full aspect-[2/3] relative rounded-md overflow-hidden mb-2">
-                <NovelCover
-                  coverUrl={novel.coverImageUrl || undefined}
-                  title={novel.title}
-                  isPriority={true}
-                />
-              </div>
-              
-              <h3 className="text-sm font-medium text-foreground line-clamp-2 group-hover/card:text-primary transition-colors text-center">
-                {novel.title}
-              </h3>
-            </Link>
-          ))}
+          {recentNovels.map(novel => {
+            const latestChapter = novel.chapters?.[0];
+            
+            return (
+              <Link
+                key={novel.id}
+                href={`/novels/${novel.slug}`}
+                className="group/card flex-none w-[120px] sm:w-[160px] flex flex-col p-2 sm:p-3 bg-card hover:bg-accent/50 transition-colors"
+              >
+                <div className="w-full aspect-[2/3] relative rounded-md overflow-hidden mb-2">
+                  <NovelCover
+                    coverUrl={novel.coverImageUrl || undefined}
+                    title={novel.title}
+                    isPriority={true}
+                  />
+                </div>
+                
+                <h3 className="text-sm font-medium text-foreground line-clamp-2 group-hover/card:text-primary transition-colors text-center">
+                  {novel.title}
+                </h3>
+                
+                {latestChapter && (
+                  <div className="mt-1 text-xs text-center text-muted-foreground">
+                    Ch.{latestChapter.chapter_number}
+                    {latestChapter.part_number && `.${latestChapter.part_number}`}
+                  </div>
+                )}
+              </Link>
+            );
+          })}
         </div>
 
         {/* Right Arrow */}

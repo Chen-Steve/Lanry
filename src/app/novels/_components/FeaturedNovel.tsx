@@ -3,6 +3,7 @@ import { Icon } from '@iconify/react';
 import Link from 'next/link';
 import NovelCover from './NovelCover';
 import { useEffect, useState } from 'react';
+import { formatText } from '@/lib/textFormatting';
 
 interface FeaturedNovelProps {
   novels: Novel[];
@@ -72,15 +73,9 @@ const FeaturedNovel = ({ novels }: FeaturedNovelProps) => {
 
   return (
     <div className="col-span-2 sm:col-span-2 md:col-span-3 lg:col-span-3 flex flex-col">
-      <div className="flex items-center gap-2.5 px-4 mb-3">
-        <div className="relative">
-          <Icon icon="solar:fire-bold" className="text-2xl text-red-500" />
-        </div>
-        <h2 className="text-xl font-semibold border-b-2 border-primary pb-1">Most Popular</h2>
-      </div>
       <Link
         href={`/novels/${novels[featuredIndex].slug}`}
-        className="group relative flex flex-col sm:flex-row gap-4 p-4 bg-card hover:bg-accent/50 rounded-lg transition-colors h-full touch-pan-y overflow-hidden"
+        className="group relative flex flex-row gap-4 p-6 sm:p-8 bg-card hover:bg-accent/50 rounded-lg transition-colors touch-pan-y overflow-hidden min-h-[200px] sm:min-h-[280px]"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -92,20 +87,20 @@ const FeaturedNovel = ({ novels }: FeaturedNovelProps) => {
       >
         {/* Background Cover Image */}
         <div 
-          className="absolute inset-0 opacity-20"
+          className="absolute inset-0"
           style={{
             backgroundImage: `url(${novels[featuredIndex].coverImageUrl})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
-            filter: 'blur(8px)',
-            transform: 'scale(1.05)', // Reduced scale for more detail
+            filter: 'blur(4px)',
+            transform: 'scale(1.05)',
           }}
         />
         {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-card via-card/70 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-black/30 to-black/20" />
 
         {/* Content */}
-        <div className="relative z-10 flex flex-col sm:flex-row gap-4 w-full">
+        <div className="relative z-10 flex flex-row gap-6 sm:gap-8 w-full items-center">
           {/* Left Arrow */}
           <button 
             onClick={(e) => {
@@ -113,7 +108,7 @@ const FeaturedNovel = ({ novels }: FeaturedNovelProps) => {
               setIsAutoRotationPaused(true);
               setFeaturedIndex(prev => prev === 0 ? novels.length - 1 : prev - 1);
             }}
-            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 flex items-center justify-center bg-black/50 hover:bg-black/70 text-white rounded-full"
+            className="hidden sm:flex absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 items-center justify-center bg-black/50 hover:bg-black/70 text-white rounded-full"
             aria-label="Previous novel"
           >
             <Icon icon="mdi:chevron-left" className="text-xl" />
@@ -126,13 +121,13 @@ const FeaturedNovel = ({ novels }: FeaturedNovelProps) => {
               setIsAutoRotationPaused(true);
               setFeaturedIndex(prev => prev === novels.length - 1 ? 0 : prev + 1);
             }}
-            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 flex items-center justify-center bg-black/50 hover:bg-black/70 text-white rounded-full"
+            className="hidden sm:flex absolute right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 items-center justify-center bg-black/50 hover:bg-black/70 text-white rounded-full"
             aria-label="Next novel"
           >
             <Icon icon="mdi:chevron-right" className="text-xl" />
           </button>
 
-          <div className="w-full sm:w-48 aspect-[3/4] relative rounded-md overflow-hidden">
+          <div className="w-32 sm:w-36 aspect-[3/4] relative rounded-md overflow-hidden shrink-0">
             <NovelCover
               coverUrl={novels[featuredIndex].coverImageUrl}
               title={novels[featuredIndex].title}
@@ -141,16 +136,24 @@ const FeaturedNovel = ({ novels }: FeaturedNovelProps) => {
             />
           </div>
           
-          <div className="flex-1 min-w-0 flex flex-col">
-            <div className="flex-1 min-h-0">
-              <h3 className="text-lg font-medium text-foreground group-hover:text-primary transition-colors line-clamp-2 mb-3">
-                {novels[featuredIndex].title}
-              </h3>
-              <p className="text-sm text-muted-foreground line-clamp-4 overflow-hidden leading-relaxed">
-                {novels[featuredIndex].description}
-              </p>
+          <div className="flex-1 min-w-0 flex flex-col h-full max-w-2xl py-1">
+            <h3 className="text-lg sm:text-2xl font-semibold text-white transition-colors mb-3 sm:mb-4 line-clamp-2">
+              {novels[featuredIndex].title}
+            </h3>
+
+            {/* Synopsis */}
+            <div className="relative h-[64px] sm:h-[72px]">
+              <div 
+                className="prose prose-sm max-w-none text-white/90 dark:prose-invert line-clamp-3 whitespace-pre-line"
+                dangerouslySetInnerHTML={{ 
+                  __html: formatText(novels[featuredIndex].description) 
+                }}
+              />
+              <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-card to-transparent" />
             </div>
-            <div className="flex justify-center gap-1.5 mt-4">
+
+            {/* Navigation Dots */}
+            <div className="flex justify-center gap-1.5 mt-auto pt-2">
               {novels.map((_, idx) => (
                 <button
                   key={idx}
@@ -159,7 +162,7 @@ const FeaturedNovel = ({ novels }: FeaturedNovelProps) => {
                     setIsAutoRotationPaused(true);
                     setFeaturedIndex(idx);
                   }}
-                  className={`w-3.5 h-3.5 rounded-full transition-all duration-200 border-2 ${
+                  className={`w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 rounded-full transition-all duration-200 border sm:border-2 ${
                     idx === featuredIndex 
                       ? 'bg-primary border-black dark:border-white scale-110' 
                       : 'bg-muted-foreground/40 hover:bg-muted-foreground/60 hover:scale-105 border-black dark:border-white'

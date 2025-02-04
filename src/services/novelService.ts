@@ -304,3 +304,41 @@ export async function getNovels(options: GetNovelsOptions = {}): Promise<{ novel
     return { novels: [], total: 0 };
   }
 }
+
+export async function getNovelsWithRecentUnlocks(limit: number = 10): Promise<Novel[]> {
+  try {
+    const now = new Date().toISOString();
+    
+    // Get novels with chapters that were recently unlocked (publish date just passed)
+    const { data: novels, error } = await supabase
+      .from('novels')
+      .select(`
+        *,
+        chapters!inner (
+          id,
+          chapter_number,
+          part_number,
+          title,
+          publish_at,
+          coins
+        )
+      `)
+      .lt('chapters.publish_at', now) // Only get chapters that are now published
+      .gt('chapters.publish_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()) // Within last 7 days
+      .gt('chapters.coins', 0) // Only chapters that required coins
+      .order('chapters.publish_at', { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+
+    // Process and return novels
+    return (novels || []).map(novel => ({
+      ...novel,
+      coverImageUrl: novel.cover_image_url,
+      slug: novel.slug
+    }));
+  } catch (error) {
+    console.error('Error fetching novels with recent unlocks:', error);
+    return [];
+  }
+}

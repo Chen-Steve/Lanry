@@ -75,7 +75,7 @@ const Header = () => {
   };
 
   return (
-    <header className={`w-full bg-background sticky top-0 z-50 mb-0 sm:mb-6 transition-transform duration-300 ${
+    <header className={`w-full sticky top-0 z-50 mb-0 sm:mb-6 transition-all duration-300 ${
       isVisible ? 'translate-y-0' : '-translate-y-full'
     }`}>
       <div className="max-w-5xl mx-auto">
@@ -86,7 +86,7 @@ const Header = () => {
               <div className="flex-none">
                 <Link
                   href="/"
-                  className="bg-secondary p-2 text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-secondary/80 inline-flex items-center"
+                  className="bg-secondary/80 backdrop-blur-sm p-2 text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-secondary/90 inline-flex items-center"
                 >
                   <Icon icon="ph:house-bold" className="w-5 h-5" />
                 </Link>
@@ -111,7 +111,7 @@ const Header = () => {
               <div className="flex-none">
                 <Link 
                   href="/shop"
-                  className="bg-secondary p-2 text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-secondary/80 inline-flex items-center"
+                  className="bg-secondary/80 backdrop-blur-sm p-2 text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-secondary/90 inline-flex items-center"
                 >
                   <Icon icon="ph:shopping-cart-simple-bold" className="w-5 h-5" />
                 </Link>
@@ -123,7 +123,7 @@ const Header = () => {
                   href="https://discord.gg/DXHRpV3sxF"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="bg-secondary p-2 text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-secondary/80 inline-flex items-center"
+                  className="bg-secondary/80 backdrop-blur-sm p-2 text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-secondary/90 inline-flex items-center"
                 >
                   <Icon icon="ic:baseline-discord" className="w-5 h-5" />
                 </Link>
