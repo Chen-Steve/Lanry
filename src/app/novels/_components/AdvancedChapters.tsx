@@ -1,38 +1,28 @@
-import { Icon } from '@iconify/react';
-import Link from 'next/link';
 import { Novel } from '@/types/database';
+import Link from 'next/link';
 import NovelCover from './NovelCover';
+import { Icon } from '@iconify/react';
 
 interface AdvancedChaptersProps {
   novels: Novel[];
-  showAdvancedSection: boolean;
-  onToggleSection: () => void;
 }
 
-const AdvancedChapters = ({ novels, showAdvancedSection, onToggleSection }: AdvancedChaptersProps) => {
+const AdvancedChapters = ({ novels }: AdvancedChaptersProps) => {
   if (novels.length === 0) return null;
+
+  // Take only the first 5 novels
+  const displayNovels = novels.slice(0, 5);
 
   return (
     <div className="mb-2">
-      <button
-        onClick={onToggleSection}
-        className="w-full flex items-center justify-between p-3 bg-card hover:bg-accent/50 border border-border rounded-lg transition-colors mb-2"
-      >
-        <div className="flex items-center gap-2">
-          <h2 className="text-base font-medium">Advanced Chapters</h2>
-        </div>
-        <Icon 
-          icon={showAdvancedSection ? "mdi:chevron-up" : "mdi:chevron-down"} 
-          className="w-5 h-5 text-muted-foreground"
-        />
-      </button>
+      <div className="flex items-center gap-2 p-3">
+        <Icon icon="mdi:lock" className="w-5 h-5 text-primary" />
+        <h2 className="text-xl font-semibold border-b-2 border-primary pb-1">Advanced Chapters</h2>
+      </div>
       
-      <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1 transition-all duration-300 ${
-        showAdvancedSection 
-          ? 'opacity-100 max-h-[2000px]' 
-          : 'opacity-0 max-h-0 overflow-hidden'
-      }`}>
-        {novels.map(novel => {
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2">
+        {displayNovels.map(novel => {
           const advancedChapters = novel.chapters?.filter(chapter => {
             const publishDate = chapter.publish_at ? new Date(chapter.publish_at) : null;
             return publishDate && publishDate > new Date() && chapter.coins > 0;

@@ -12,8 +12,8 @@ interface NovelStatsProps {
 }
 
 const NovelStats = ({ totalChapters }: NovelStatsProps) => (
-  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-    <Icon icon="pepicons-print:book" className="text-sm" />
+  <div className="flex items-center gap-1 text-[10px] leading-none text-muted-foreground">
+    <Icon icon="pepicons-print:book" className="text-xs" />
     <span>{totalChapters} Chapters</span>
   </div>
 );
@@ -22,9 +22,10 @@ interface NovelCardProps {
   novel: Novel;
   isPriority?: boolean;
   size?: 'thumbnail' | 'small' | 'medium' | 'large';
+  className?: string;
 }
 
-const NovelCard = ({ novel, isPriority = false, size = 'small' }: NovelCardProps) => {
+const NovelCard = ({ novel, isPriority = false, size = 'small', className = '' }: NovelCardProps) => {
   const [totalChapters, setTotalChapters] = useState(0);
 
   useEffect(() => {
@@ -58,10 +59,10 @@ const NovelCard = ({ novel, isPriority = false, size = 'small' }: NovelCardProps
   return (
     <Link 
       href={`/novels/${novel.slug}`} 
-      className="block p-0.5 sm:p-2 hover:bg-accent rounded-lg transition-colors h-full"
+      className={`block hover:bg-accent rounded-lg transition-colors ${className}`}
       onClick={handleClick}
     >
-      <div className="flex flex-col h-full">
+      <div className="flex flex-col">
         <NovelCover 
           coverUrl={novel.coverImageUrl} 
           title={novel.title}
@@ -74,8 +75,8 @@ const NovelCard = ({ novel, isPriority = false, size = 'small' }: NovelCardProps
           category={category?.name.toLowerCase() as 'yaoi' | 'yuri'}
           size={size}
         />
-        <div className="mt-1 sm:mt-2 flex-1 min-h-[3rem] flex flex-col justify-between">
-          <h3 className="text-xs sm:text-sm text-foreground font-medium leading-tight max-h-[2.5rem] line-clamp-2 overflow-hidden">
+        <div className="mt-0.5 flex flex-col">
+          <h3 className="text-xs sm:text-sm text-foreground font-medium leading-none line-clamp-2">
             {novel.title}
           </h3>
           <NovelStats totalChapters={totalChapters} />

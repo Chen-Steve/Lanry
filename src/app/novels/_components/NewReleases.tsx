@@ -1,7 +1,6 @@
 import { Icon } from '@iconify/react';
 import Link from 'next/link';
 import NovelCover from './NovelCover';
-import { formatDistanceToNow } from 'date-fns';
 import { useState, useRef } from 'react';
 
 interface NewReleaseNovel {
@@ -9,9 +8,6 @@ interface NewReleaseNovel {
   slug: string;
   title: string;
   coverImageUrl: string | null;
-  chaptersCount: number;
-  status: string | null;
-  created_at: Date;
 }
 
 interface NewReleasesProps {
@@ -49,8 +45,14 @@ const NewReleases = ({ recentNovels }: NewReleasesProps) => {
   };
 
   return (
-    <div className="mb-4 mt-6 max-w-5xl mx-auto">
-
+    <div className="mb-4 mt-6">
+      <div className="flex items-center gap-2.5 mb-4 px-4">
+        <div className="relative">
+          <Icon icon="solar:book-bold" className="text-2xl text-primary" />
+          <Icon icon="solar:sparkles-bold-duotone" className="absolute -top-2.5 -right-2.5 text-lg text-yellow-500" />
+        </div>
+        <h2 className="text-xl font-semibold border-b-2 border-primary pb-1">New Releases</h2>
+      </div>
 
       <div className="relative group px-4">
         {/* Left Arrow */}
@@ -74,9 +76,9 @@ const NewReleases = ({ recentNovels }: NewReleasesProps) => {
             <Link
               key={novel.id}
               href={`/novels/${novel.slug}`}
-              className="group/card flex-none w-[300px] flex gap-3 p-3 bg-card hover:bg-accent/50 border border-border rounded-lg transition-colors"
+              className="group/card flex-none w-[160px] flex flex-col p-3 bg-card hover:bg-accent/50 transition-colors"
             >
-              <div className="w-20 h-28 relative rounded-md overflow-hidden">
+              <div className="w-full aspect-[2/3] relative rounded-md overflow-hidden mb-2">
                 <NovelCover
                   coverUrl={novel.coverImageUrl || undefined}
                   title={novel.title}
@@ -84,27 +86,9 @@ const NewReleases = ({ recentNovels }: NewReleasesProps) => {
                 />
               </div>
               
-              <div className="flex-1 min-w-0">
-                <h3 className="text-sm font-medium text-foreground line-clamp-2 group-hover/card:text-primary transition-colors mb-1">
-                  {novel.title}
-                </h3>
-                
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    {novel.chaptersCount} Chapters
-                  </span>
-                  {novel.status && (
-                    <span className="flex items-center gap-1">
-                      <Icon icon="mdi:circle-small" className="text-base" />
-                      {novel.status}
-                    </span>
-                  )}
-                </div>
-                
-                <div className="mt-1 text-xs text-primary">
-                  Added {novel.created_at && formatDistanceToNow(new Date(novel.created_at), { addSuffix: true })}
-                </div>
-              </div>
+              <h3 className="text-sm font-medium text-foreground line-clamp-2 group-hover/card:text-primary transition-colors text-center">
+                {novel.title}
+              </h3>
             </Link>
           ))}
         </div>
