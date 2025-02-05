@@ -353,6 +353,50 @@ export async function getGlobalSettings(novelId: string, userId: string) {
   };
 }
 
+// Helper function to get next publishing date based on selected days
+function getNextPublishingDate(currentDate: Date, selectedDays: string[]): Date {
+  if (!selectedDays || selectedDays.length === 0) return currentDate;
+
+  const dayMap: { [key: string]: number } = {
+    'SUNDAY': 0,
+    'MONDAY': 1,
+    'TUESDAY': 2,
+    'WEDNESDAY': 3,
+    'THURSDAY': 4,
+    'FRIDAY': 5,
+    'SATURDAY': 6
+  };
+
+  // Convert selected days to numbers and sort them
+  const selectedDayNumbers = selectedDays
+    .map(day => dayMap[day])
+    .sort((a, b) => a - b);
+
+  const currentDay = currentDate.getDay();
+  const nextDate = new Date(currentDate);
+
+  // Find the next available day
+  let daysToAdd = 1;
+  let foundNextDay = false;
+
+  for (let i = 0; i < 7; i++) {
+    const checkingDay = (currentDay + i) % 7;
+    if (selectedDayNumbers.includes(checkingDay) && (i > 0 || currentDay !== checkingDay)) {
+      daysToAdd = i;
+      foundNextDay = true;
+      break;
+    }
+  }
+
+  // If no day found in the current week, get the first day of next week
+  if (!foundNextDay) {
+    daysToAdd = 7 - currentDay + selectedDayNumbers[0];
+  }
+
+  nextDate.setDate(nextDate.getDate() + daysToAdd);
+  return nextDate;
+}
+
 // Function to apply auto-release schedule to a new chapter
 export async function applyAutoReleaseSchedule(
   novelId: string,
@@ -379,38 +423,68 @@ export async function applyAutoReleaseSchedule(
   if (!novel.auto_release_enabled) return;
 
   let publishAt: Date;
+  const now = new Date();
 
-  if (baseDate) {
-    // If a base date is provided (for bulk uploads), use it directly
-    publishAt = new Date(baseDate);
-    publishAt.setDate(publishAt.getDate() + novel.auto_release_interval);
-  } else {
-    const now = new Date();
-    
-    // First, try to find the latest advanced chapter (chapter with future publish date)
-    const { data: advancedChapters, error: advancedError } = await supabase
-      .from('chapters')
-      .select('publish_at, chapter_number')
-      .eq('novel_id', novelId)
-      .not('id', 'eq', chapterId) // Exclude the current chapter
-      .gt('publish_at', now.toISOString()) // Only get chapters with future dates
-      .order('publish_at', { ascending: false }) // Get the latest scheduled chapter
-      .limit(1);
+  // Check if using publishing days from localStorage
+  const savedUsePublishingDays = localStorage.getItem(`usePublishingDays_${novelId}`);
+  const usePublishingDays = savedUsePublishingDays ? JSON.parse(savedUsePublishingDays) : false;
 
-    if (advancedError) throw advancedError;
+  if (usePublishingDays) {
+    const savedDays = localStorage.getItem(`publishingDays_${novelId}`);
+    const publishingDays = savedDays ? JSON.parse(savedDays) : [];
 
-    let baseDate: Date;
-    
-    if (advancedChapters && advancedChapters.length > 0) {
-      // If we found an advanced chapter, use its publish date
-      baseDate = new Date(advancedChapters[0].publish_at);
+    if (baseDate) {
+      publishAt = getNextPublishingDate(new Date(baseDate), publishingDays);
     } else {
-      // If no advanced chapters exist, use current date
-      baseDate = now;
+      // First, try to find the latest advanced chapter
+      const { data: advancedChapters, error: advancedError } = await supabase
+        .from('chapters')
+        .select('publish_at, chapter_number')
+        .eq('novel_id', novelId)
+        .not('id', 'eq', chapterId)
+        .gt('publish_at', now.toISOString())
+        .order('publish_at', { ascending: false })
+        .limit(1);
+
+      if (advancedError) throw advancedError;
+
+      if (advancedChapters && advancedChapters.length > 0) {
+        // If we found an advanced chapter, use its publish date as base
+        publishAt = getNextPublishingDate(new Date(advancedChapters[0].publish_at), publishingDays);
+      } else {
+        // If no advanced chapters exist, use current date
+        publishAt = getNextPublishingDate(now, publishingDays);
+      }
     }
-    
-    publishAt = new Date(baseDate);
-    publishAt.setDate(publishAt.getDate() + novel.auto_release_interval);
+  } else {
+    // Use the original interval-based logic
+    if (baseDate) {
+      publishAt = new Date(baseDate);
+      publishAt.setDate(publishAt.getDate() + novel.auto_release_interval);
+    } else {
+      // First, try to find the latest advanced chapter
+      const { data: advancedChapters, error: advancedError } = await supabase
+        .from('chapters')
+        .select('publish_at, chapter_number')
+        .eq('novel_id', novelId)
+        .not('id', 'eq', chapterId)
+        .gt('publish_at', now.toISOString())
+        .order('publish_at', { ascending: false })
+        .limit(1);
+
+      if (advancedError) throw advancedError;
+
+      let baseDate: Date;
+      
+      if (advancedChapters && advancedChapters.length > 0) {
+        baseDate = new Date(advancedChapters[0].publish_at);
+      } else {
+        baseDate = now;
+      }
+      
+      publishAt = new Date(baseDate);
+      publishAt.setDate(publishAt.getDate() + novel.auto_release_interval);
+    }
   }
 
   // Update the chapter with the calculated publish date and price

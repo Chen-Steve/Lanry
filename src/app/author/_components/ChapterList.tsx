@@ -56,6 +56,8 @@ export default function ChapterList({
     fixedPrice: number;
     autoReleaseEnabled: boolean;
     fixedPriceEnabled: boolean;
+    publishingDays: string[];
+    usePublishingDays: boolean;
   } | null>(null);
   const [isLoadingSettings, setIsLoadingSettings] = useState(false);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
@@ -226,11 +228,38 @@ export default function ChapterList({
     }
   };
 
+  const fetchGlobalSettings = async () => {
+    setIsLoadingSettings(true);
+    try {
+      const settings = await authorChapterService.getGlobalSettings(novelId, userId);
+      // Load publishing days settings from localStorage
+      const savedDays = localStorage.getItem('publishingDays');
+      const savedUsePublishingDays = localStorage.getItem('usePublishingDays');
+
+      setGlobalSettings({
+        releaseInterval: settings.autoReleaseInterval,
+        fixedPrice: settings.fixedPriceAmount,
+        autoReleaseEnabled: settings.autoReleaseEnabled,
+        fixedPriceEnabled: settings.fixedPriceEnabled,
+        publishingDays: savedDays ? JSON.parse(savedDays) : [],
+        usePublishingDays: savedUsePublishingDays ? JSON.parse(savedUsePublishingDays) : false
+      });
+    } catch (error) {
+      console.error('Error fetching global settings:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      toast.error(`Failed to load settings: ${errorMessage}`);
+    } finally {
+      setIsLoadingSettings(false);
+    }
+  };
+
   const handleGlobalSettingsSubmit = async (settings: {
     releaseInterval: number;
     fixedPrice: number;
     autoReleaseEnabled: boolean;
     fixedPriceEnabled: boolean;
+    publishingDays: string[];
+    usePublishingDays: boolean;
   }) => {
     setIsSavingSettings(true);
     try {
@@ -241,6 +270,10 @@ export default function ChapterList({
         fixedPriceAmount: settings.fixedPrice
       });
       
+      // Save publishing days settings to localStorage
+      localStorage.setItem('publishingDays', JSON.stringify(settings.publishingDays));
+      localStorage.setItem('usePublishingDays', JSON.stringify(settings.usePublishingDays));
+      
       if (onLoadChapters) {
         await onLoadChapters();
       }
@@ -250,25 +283,6 @@ export default function ChapterList({
       toast.error('Failed to update settings');
     } finally {
       setIsSavingSettings(false);
-    }
-  };
-
-  const fetchGlobalSettings = async () => {
-    setIsLoadingSettings(true);
-    try {
-      const settings = await authorChapterService.getGlobalSettings(novelId, userId);
-      setGlobalSettings({
-        releaseInterval: settings.autoReleaseInterval,
-        fixedPrice: settings.fixedPriceAmount,
-        autoReleaseEnabled: settings.autoReleaseEnabled,
-        fixedPriceEnabled: settings.fixedPriceEnabled
-      });
-    } catch (error) {
-      console.error('Error fetching global settings:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      toast.error(`Failed to load settings: ${errorMessage}`);
-    } finally {
-      setIsLoadingSettings(false);
     }
   };
 
@@ -566,9 +580,12 @@ export default function ChapterList({
               fixedPrice: 10,
               autoReleaseEnabled: false,
               fixedPriceEnabled: false,
+              publishingDays: [],
+              usePublishingDays: false
             }}
             isLoading={isLoadingSettings}
             isSaving={isSavingSettings}
+            novelId={novelId}
           />
 
           <AssignChaptersModal
