@@ -30,6 +30,16 @@ export default function ShopPage() {
     intent: "capture",
   };
 
+  if (!isAuthenticated || !userId) {
+    return (
+      <div className="max-w-5xl mx-auto px-4 py-20">
+        <div className="text-center">
+          <p className="text-muted-foreground mb-6">Please create an account or sign in to access this page.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
       <div className="text-center mb-6">
@@ -52,68 +62,59 @@ export default function ShopPage() {
                 ${pkg.price.toFixed(2)}
               </p>
 
-              {isAuthenticated && userId ? (
-                <div className="flex justify-center">
-                  <PayPalButtons
-                    style={{ layout: "horizontal", height: 35, tagline: false }}
-                    createOrder={async () => {
-                      try {
-                        if (!isAuthenticated || !userId) {
-                          throw new Error("Please sign in to make a purchase");
-                        }
-
-                        console.log("Making request with userId:", userId); // Debug log
-                        const response = await fetch("/api/payments/create-order", {
-                          method: "POST",
-                          headers: {
-                            "Content-Type": "application/json",
-                          },
-                          body: JSON.stringify({
-                            userId,
-                            coins: pkg.coins,
-                            amount: pkg.price,
-                          }),
-                          credentials: "include",
-                        });
-
-                        const data = await response.json();
-                        if (data.error) {
-                          throw new Error(data.error);
-                        }
-                        if (!data.id) {
-                          throw new Error("Failed to create order");
-                        }
-                        return data.id;
-                      } catch (error) {
-                        console.error("Create order error:", error);
-                        toast.error(error instanceof Error ? error.message : "Failed to create order");
-                        throw error;
+              <div className="flex justify-center">
+                <PayPalButtons
+                  style={{ layout: "horizontal", height: 35, tagline: false }}
+                  createOrder={async () => {
+                    try {
+                      if (!isAuthenticated || !userId) {
+                        throw new Error("Please sign in to make a purchase");
                       }
-                    }}
-                    onApprove={async (data) => {
-                      try {
-                        await onApprove(userId, data.orderID);
-                        toast.success(`Successfully purchased ${pkg.coins} coins!`);
-                        router.refresh();
-                      } catch (error) {
-                        console.error("Approve error:", error);
-                        toast.error("Failed to complete purchase");
+
+                      console.log("Making request with userId:", userId); // Debug log
+                      const response = await fetch("/api/payments/create-order", {
+                        method: "POST",
+                        headers: {
+                          "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                          userId,
+                          coins: pkg.coins,
+                          amount: pkg.price,
+                        }),
+                        credentials: "include",
+                      });
+
+                      const data = await response.json();
+                      if (data.error) {
+                        throw new Error(data.error);
                       }
-                    }}
-                    onError={(err) => {
-                      console.error("PayPal error:", err);
-                      toast.error("Payment failed");
-                    }}
-                  />
-                </div>
-              ) : (
-                <button
-                  className="bg-muted text-muted-foreground cursor-not-allowed w-full py-1.5 px-3 rounded-md text-sm font-medium"
-                  disabled
-                >
-                  Sign in to purchase
-                </button>
-              )}
+                      if (!data.id) {
+                        throw new Error("Failed to create order");
+                      }
+                      return data.id;
+                    } catch (error) {
+                      console.error("Create order error:", error);
+                      toast.error(error instanceof Error ? error.message : "Failed to create order");
+                      throw error;
+                    }
+                  }}
+                  onApprove={async (data) => {
+                    try {
+                      await onApprove(userId, data.orderID);
+                      toast.success(`Successfully purchased ${pkg.coins} coins!`);
+                      router.refresh();
+                    } catch (error) {
+                      console.error("Approve error:", error);
+                      toast.error("Failed to complete purchase");
+                    }
+                  }}
+                  onError={(err) => {
+                    console.error("PayPal error:", err);
+                    toast.error("Payment failed");
+                  }}
+                />
+              </div>
             </div>
           ))}
         </div>
@@ -121,11 +122,15 @@ export default function ShopPage() {
 
       <div className="mt-8 text-center text-muted-foreground">
         <p className="text-sm">
-          Questions or issues with your funds? Contact us directly on{' '}
+          Questions or issues with your funds? Contact us on{' '}
           <a href="https://discord.gg/DXHRpV3sxF" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">
             Discord
           </a>
-          {' '}for immediate support.
+          {' '}or email us at{' '}
+          <a href="mailto:c.niasser@gmail.com" className="text-primary hover:underline">
+            c.niasser@gmail.com
+          </a>
+          {' '}for support.
         </p>
       </div>
     </div>

@@ -38,6 +38,14 @@ const Footer = () => {
                 <Link 
                   href="/" 
                   className="text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Home
+                </Link>
+              </li>
+              <li>
+                <Link 
+                  href="/" 
+                  className="text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors"
                   onClick={(e) => {
                     if (window.location.pathname === '/') {
                       e.preventDefault();
