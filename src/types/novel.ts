@@ -14,15 +14,6 @@ export interface Volume {
   description?: string;
 }
 
-export interface Arc {
-  id: string;
-  novel_id: string;
-  title: string;
-  arc_number: number;
-  description?: string;
-  volume_id?: string;
-}
-
 export interface Chapter {
   id: string;
   chapter_number: number;

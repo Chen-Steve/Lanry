@@ -36,7 +36,6 @@ model Novel {
   fixedPriceAmount Int @default(10) @map("fixed_price_amount")
   chapters       Chapter[]
   volumes        Volume[]
-  arcs           Arc[]
   bookmarks      Bookmark[]
   readingHistory ReadingHistory[]
   chapterUnlocks ChapterUnlock[]
@@ -73,30 +72,10 @@ model Volume {
   novel         Novel     @relation(fields: [novelId], references: [id], onDelete: Cascade)
   novelId       String    @map("novel_id")
   chapters      Chapter[]
-  arcs          Arc[]
 
   @@unique([novelId, volumeNumber])
   @@index([novelId])
   @@map("volumes")
-}
-
-model Arc {
-  id            String    @id @default(uuid())
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
-  arcNumber     Int       @map("arc_number")
-  title         String
-  description   String?
-  novel         Novel     @relation(fields: [novelId], references: [id], onDelete: Cascade)
-  novelId       String    @map("novel_id")
-  volume        Volume?   @relation(fields: [volumeId], references: [id])
-  volumeId      String?   @map("volume_id")
-  chapters      Chapter[]
-
-  @@unique([novelId, arcNumber])
-  @@index([novelId])
-  @@index([volumeId])
-  @@map("arcs")
 }
 
 model Chapter {
@@ -116,8 +95,6 @@ model Chapter {
   novelId       String    @map("novel_id")
   volume        Volume?   @relation(fields: [volumeId], references: [id])
   volumeId      String?   @map("volume_id")
-  arc           Arc?      @relation(fields: [arcId], references: [id])
-  arcId         String?   @map("arc_id")
   likes         ChapterLike[]
   likeCount     Int       @default(0) @map("like_count")
   comments      ChapterThreadComment[]
@@ -127,7 +104,6 @@ model Chapter {
   @@index([chapterNumber])
   @@index([partNumber])
   @@index([volumeId])
-  @@index([arcId])
   @@index([slug])
   @@index([publishAt])
   @@map("chapters")
