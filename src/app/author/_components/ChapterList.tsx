@@ -7,7 +7,8 @@ import { toast } from 'react-hot-toast';
 import ChapterEditForm from './ChapterEditForm';
 import ChapterBulkUpload from './ChapterBulkUpload';
 import * as authorChapterService from '../_services/authorChapterService';
-import { VolumeModal, DeleteConfirmationModal, AssignChaptersModal, DefaultCoinsModal, GlobalSettingsModal } from './ChapterListModals';
+import { VolumeModal, DeleteConfirmationModal, AssignChaptersModal } from './ChapterListModals';
+import { DefaultCoinsModal, GlobalSettingsModal } from './GlobalPublishing';
 import { formatLocalDateTime, isFutureDate } from '@/utils/dateUtils';
 
 const isAdvancedChapter = (chapter: ChapterListChapter): boolean => {
