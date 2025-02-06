@@ -131,20 +131,26 @@ export default function ShopPage() {
                 <button
                   className="flex items-center justify-center gap-2 bg-[#0052FF] text-white px-4 py-2 rounded-md hover:bg-[#0039B3] transition-colors"
                   onClick={() => {
-                    if (typeof window.CoinbaseCommerceButton !== 'undefined') {
-                      window.CoinbaseCommerceButton.setup({
-                        checkoutId: '41f6b630-5a03-4753-86a0-c867f5ae6c78',
-                        custom: userId,
-                        onSuccess: () => {
-                          toast.success(`Purchase initiated! Coins will be added after confirmation.`);
-                        },
-                        onFailure: () => {
-                          toast.error('Purchase failed');
-                        },
-                      });
-                      window.CoinbaseCommerceButton.show();
+                    let checkoutUrl;
+                    switch (pkg.price) {
+                      case 5:
+                        checkoutUrl = `https://commerce.coinbase.com/checkout/1d4a966f-acd1-45d1-808d-4ca279bac74a?custom=${userId}`;
+                        break;
+                      case 10:
+                        checkoutUrl = `https://commerce.coinbase.com/checkout/e2bf66ec-d7f2-4234-bf29-8bbabc468db3?custom=${userId}`;
+                        break;
+                      case 20:
+                        checkoutUrl = `https://commerce.coinbase.com/checkout/0b16e919-5e22-4f90-9ec6-a3f83f6d2156?custom=${userId}`;
+                        break;
+                      default:
+                        return; // Don't show crypto option for $1
+                    }
+                    if (checkoutUrl) {
+                      window.open(checkoutUrl, '_blank');
+                      toast.success('Crypto payment window opened. Coins will be added after confirmation.');
                     }
                   }}
+                  style={{ display: pkg.price === 1 ? 'none' : undefined }}
                 >
                   <Icon icon="simple-icons:coinbase" className="text-xl" />
                   Pay with Crypto
