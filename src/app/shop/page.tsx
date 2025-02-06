@@ -57,6 +57,9 @@ export default function ShopPage() {
     <div className="max-w-5xl mx-auto px-4 py-6">
       <div className="text-center mb-6">
         <h1 className="text-2xl font-bold mb-2 text-foreground">Coin Shop</h1>
+        <p className="text-sm text-muted-foreground">
+          🎉 Limited time: Get 1 bonus coin when paying with crypto! (Beta feature - coins may take up to 6 hours to arrive)
+        </p>
       </div>
 
       <PayPalScriptProvider options={initialOptions}>
@@ -134,20 +137,20 @@ export default function ShopPage() {
                     let checkoutUrl;
                     switch (pkg.price) {
                       case 5:
-                        checkoutUrl = `https://commerce.coinbase.com/checkout/1d4a966f-acd1-45d1-808d-4ca279bac74a?custom=${userId}`;
+                        checkoutUrl = `https://commerce.coinbase.com/checkout/1d4a966f-acd1-45d1-808d-4ca279bac74a?custom=${userId}&coins=${pkg.coins + 1}`;
                         break;
                       case 10:
-                        checkoutUrl = `https://commerce.coinbase.com/checkout/e2bf66ec-d7f2-4234-bf29-8bbabc468db3?custom=${userId}`;
+                        checkoutUrl = `https://commerce.coinbase.com/checkout/e2bf66ec-d7f2-4234-bf29-8bbabc468db3?custom=${userId}&coins=${pkg.coins + 1}`;
                         break;
                       case 20:
-                        checkoutUrl = `https://commerce.coinbase.com/checkout/0b16e919-5e22-4f90-9ec6-a3f83f6d2156?custom=${userId}`;
+                        checkoutUrl = `https://commerce.coinbase.com/checkout/0b16e919-5e22-4f90-9ec6-a3f83f6d2156?custom=${userId}&coins=${pkg.coins + 1}`;
                         break;
                       default:
                         return; // Don't show crypto option for $1
                     }
                     if (checkoutUrl) {
                       window.open(checkoutUrl, '_blank');
-                      toast.success('Crypto payment window opened. Coins will be added after confirmation.');
+                      toast.success('Crypto payment window opened. You will receive your coins + 1 bonus coin within 6 hours after confirmation.');
                     }
                   }}
                   style={{ display: pkg.price === 1 ? 'none' : undefined }}
