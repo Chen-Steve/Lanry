@@ -20,7 +20,6 @@ interface NovelHeaderProps {
     profile_id: string;
   } | null;
   bookmarkCount: number;
-  viewCount: number;
   coverImageUrl?: string;
   novelAuthorId: string;
   isAuthorNameCustom?: boolean;
@@ -53,7 +52,6 @@ export const NovelHeader = ({
   author,
   translator,
   bookmarkCount,
-  viewCount,
   coverImageUrl,
   novelAuthorId,
   isAuthorNameCustom = true,
@@ -276,8 +274,7 @@ export const NovelHeader = ({
             <div className="sm:hidden flex flex-col flex-1">
               <div className="flex items-center gap-1.5 mt-2">
                 <div className="flex items-center gap-2 px-1.5 py-1 bg-gray-100 dark:bg-gray-800/50 rounded-lg text-xs">
-                  <StatsItem icon="pepicons-print:bookmark" value={`${bookmarkCount}`} withGap />
-                  <StatsItem icon="mdi:eye-outline" value={`${viewCount.toLocaleString()}`} color="purple" withGap />
+                  <StatsItem icon="pepicons-print:bookmark" value={`${bookmarkCount}`} />
                 </div>
                 <div className="relative flex items-center px-1.5 py-1 bg-gray-100 dark:bg-gray-800/50 rounded-lg">
                   <button
@@ -419,8 +416,7 @@ export const NovelHeader = ({
 
               <div className="flex items-center gap-3 ml-auto">
                 <div className="flex items-center gap-3 px-2 py-1.5 bg-gray-100 dark:bg-gray-800/50 rounded-lg text-sm">
-                  <StatsItem icon="pepicons-print:bookmark" value={`${bookmarkCount}`} withGap />
-                  <StatsItem icon="mdi:eye-outline" value={`${viewCount.toLocaleString()}`} color="purple" withGap />
+                  <StatsItem icon="pepicons-print:bookmark" value={`${bookmarkCount}`} />
                 </div>
                 <div className="relative flex items-center px-2 py-1.5 bg-gray-100 dark:bg-gray-800/50 rounded-lg">
                   <button

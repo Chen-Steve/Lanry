@@ -6,7 +6,7 @@ import { getNovels } from '@/services/novelService';
 import NovelCard from './NovelCard';
 import LoadingGrid from './LoadingGrid';
 import AdvancedChapters from './AdvancedChapters';
-import NewReleases from './NewReleases';
+import NewReleases from './RecentReleases';
 import { Icon } from '@iconify/react';
 import FeaturedNovel from './FeaturedNovel';
 

@@ -6,6 +6,7 @@ import { toast } from 'react-hot-toast';
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import { onApprove } from "@/services/paymentService";
 import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 interface CoinPackage {
   id: number;
@@ -23,6 +24,18 @@ const coinPackages: CoinPackage[] = [
 export default function ShopPage() {
   const { isAuthenticated, userId } = useAuth();
   const router = useRouter();
+
+  useEffect(() => {
+    // Load Coinbase Commerce script
+    const script = document.createElement('script');
+    script.src = 'https://commerce.coinbase.com/v1/checkout.js';
+    script.async = true;
+    document.body.appendChild(script);
+
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
 
   const initialOptions = {
     clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID!,
@@ -62,7 +75,7 @@ export default function ShopPage() {
                 ${pkg.price.toFixed(2)}
               </p>
 
-              <div className="flex justify-center">
+              <div className="flex flex-col gap-2">
                 <PayPalButtons
                   style={{ layout: "horizontal", height: 35, tagline: false }}
                   createOrder={async () => {
@@ -114,6 +127,28 @@ export default function ShopPage() {
                     toast.error("Payment failed");
                   }}
                 />
+
+                <button
+                  className="flex items-center justify-center gap-2 bg-[#0052FF] text-white px-4 py-2 rounded-md hover:bg-[#0039B3] transition-colors"
+                  onClick={() => {
+                    if (typeof window.CoinbaseCommerceButton !== 'undefined') {
+                      window.CoinbaseCommerceButton.setup({
+                        checkoutId: '41f6b630-5a03-4753-86a0-c867f5ae6c78',
+                        custom: userId,
+                        onSuccess: () => {
+                          toast.success(`Purchase initiated! Coins will be added after confirmation.`);
+                        },
+                        onFailure: () => {
+                          toast.error('Purchase failed');
+                        },
+                      });
+                      window.CoinbaseCommerceButton.show();
+                    }
+                  }}
+                >
+                  <Icon icon="simple-icons:coinbase" className="text-xl" />
+                  Pay with Crypto
+                </button>
               </div>
             </div>
           ))}
