@@ -26,33 +26,53 @@ export function ChapterListItem({
 }: ChapterListItemProps) {
   const [isUnlocking, setIsUnlocking] = useState(false);
   const [isUnlocked, setIsUnlocked] = useState(false);
+  const [hasTranslatorAccess, setHasTranslatorAccess] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    const checkUnlockStatus = async () => {
+    const checkAccess = async () => {
       if (!userProfile?.id || !chapter.novel_id) return;
       
       try {
-        const { data: existingUnlock, error } = await supabase
-          .from('chapter_unlocks')
-          .select('id')
-          .eq('profile_id', userProfile.id)
-          .eq('novel_id', chapter.novel_id)
-          .eq('chapter_number', chapter.chapter_number)
-          .maybeSingle();
+        // Check if user is translator or created the novel as translator
+        const { data: novel, error: novelError } = await supabase
+          .from('novels')
+          .select('translator_id, author_profile_id, is_author_name_custom')
+          .eq('id', chapter.novel_id)
+          .single();
 
-        if (error) {
-          console.error('Error checking unlock status:', error);
+        if (novelError) {
+          console.error('Error checking translator status:', novelError);
           return;
         }
 
-        setIsUnlocked(!!existingUnlock);
+        const isTranslator = novel.translator_id === userProfile.id;
+        const isTranslatorCreated = novel.author_profile_id === userProfile.id && novel.is_author_name_custom === true;
+        setHasTranslatorAccess(isTranslator || isTranslatorCreated);
+
+        // Check unlock status if not translator
+        if (!isTranslator && !isTranslatorCreated) {
+          const { data: existingUnlock, error } = await supabase
+            .from('chapter_unlocks')
+            .select('id')
+            .eq('profile_id', userProfile.id)
+            .eq('novel_id', chapter.novel_id)
+            .eq('chapter_number', chapter.chapter_number)
+            .maybeSingle();
+
+          if (error) {
+            console.error('Error checking unlock status:', error);
+            return;
+          }
+
+          setIsUnlocked(!!existingUnlock);
+        }
       } catch (error) {
-        console.error('Error in checkUnlockStatus:', error);
+        console.error('Error in checkAccess:', error);
       }
     };
 
-    checkUnlockStatus();
+    checkAccess();
   }, [userProfile?.id, chapter.novel_id, chapter.chapter_number]);
 
   const unlockChapter = async (
@@ -191,7 +211,7 @@ export function ChapterListItem({
     <div className="flex items-center justify-between w-full">
       <div className="flex items-center gap-2 min-w-0">
         <span className="font-medium whitespace-nowrap flex items-center gap-1">
-          {!isPublished && !isUnlocked && (
+          {!isPublished && !isUnlocked && !hasTranslatorAccess && (
             <Icon icon="material-symbols:lock" className="text-xs" />
           )}
           Ch. {chapter.chapter_number}{chapter.part_number ? `.${chapter.part_number}` : ''}
@@ -204,8 +224,10 @@ export function ChapterListItem({
       </div>
       <div className="flex items-center gap-1.5 text-xs whitespace-nowrap">
         {!isPublished && chapter.publish_at ? (
-          isUnlocked ? (
-            <span className="text-emerald-600 dark:text-emerald-400">Unlocked</span>
+          isUnlocked || hasTranslatorAccess ? (
+            <span className="text-emerald-600 dark:text-emerald-400">
+              {hasTranslatorAccess ? 'Translator Access' : 'Unlocked'}
+            </span>
           ) : (
             <>
               {isUnlocking ? (
@@ -236,7 +258,7 @@ export function ChapterListItem({
     </div>
   );
 
-  if (!isPublished && !isUnlocked) {
+  if (!isPublished && !isUnlocked && !hasTranslatorAccess) {
     return (
       <button
         onClick={handleLockedChapterClick}
