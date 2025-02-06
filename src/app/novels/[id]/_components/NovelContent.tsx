@@ -62,7 +62,6 @@ export const NovelContent = ({
   title,
   description, 
   bookmarkCount, 
-  viewCount,
   ageRating = 'EVERYONE',
   author,
   translator,
@@ -147,7 +146,6 @@ export const NovelContent = ({
           author={author}
           translator={translator}
           bookmarkCount={bookmarkCount}
-          viewCount={viewCount}
           coverImageUrl={coverImageUrl}
           novelAuthorId={novelAuthorId}
           isAuthorNameCustom={isAuthorNameCustom}
