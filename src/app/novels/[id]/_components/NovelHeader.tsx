@@ -267,22 +267,12 @@ export const NovelHeader = ({
                     )}
                   </>
                 )}
-                <div className="flex items-center gap-3 ml-auto">
-                  <StatsItem 
-                    icon="mdi:bookmark"
-                    value={bookmarkCount}
-                    label="Bookmarks"
-                  />
-                </div>
               </div>
             </div>
 
             {/* Mobile Stats */}
             <div className="sm:hidden flex flex-col flex-1">
               <div className="flex items-center gap-1.5 mt-2">
-                <div className="flex items-center gap-2 px-1.5 py-1 bg-gray-100 dark:bg-gray-800/50 rounded-lg text-xs">
-                  <StatsItem icon="pepicons-print:bookmark" value={`${bookmarkCount}`} />
-                </div>
                 <div className="relative flex items-center px-1.5 py-1 bg-gray-100 dark:bg-gray-800/50 rounded-lg">
                   <button
                     ref={ratingButtonRef}
