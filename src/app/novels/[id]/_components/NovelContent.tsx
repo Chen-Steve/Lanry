@@ -60,7 +60,7 @@ interface NovelContentProps {
 export const NovelContent = ({ 
   title,
   description, 
-  bookmarkCount, 
+  bookmarkCount,
   ageRating = 'EVERYONE',
   author,
   translator,

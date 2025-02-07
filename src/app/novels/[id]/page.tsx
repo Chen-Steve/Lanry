@@ -19,7 +19,6 @@ export default function NovelPage({ params }: { params: { id: string } }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isBookmarkLoading, setIsBookmarkLoading] = useState(false);
-  const [viewCount, setViewCount] = useState<number>(0);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [hasAcceptedWarning, setHasAcceptedWarning] = useState(false);
 
@@ -85,9 +84,6 @@ export default function NovelPage({ params }: { params: { id: string } }) {
 
           if (viewLogError) {
             console.error('Error logging view:', viewLogError);
-          } else {
-            // Update local state with the incremented view count
-            setViewCount((data.views || 0) + 1);
           }
         }
       } catch (error) {
@@ -182,7 +178,6 @@ export default function NovelPage({ params }: { params: { id: string } }) {
         description={novel.description}
         chaptersCount={novel.chapters.length}
         bookmarkCount={novel.bookmarkCount}
-        viewCount={viewCount}
         status={novel.status}
         ageRating={novel.ageRating}
         createdAt={novel.created_at}

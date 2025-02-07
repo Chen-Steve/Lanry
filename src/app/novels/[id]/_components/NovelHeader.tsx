@@ -267,6 +267,13 @@ export const NovelHeader = ({
                     )}
                   </>
                 )}
+                <div className="flex items-center gap-3 ml-auto">
+                  <StatsItem 
+                    icon="mdi:bookmark"
+                    value={bookmarkCount}
+                    label="Bookmarks"
+                  />
+                </div>
               </div>
             </div>
 
