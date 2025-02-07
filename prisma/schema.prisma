@@ -246,10 +246,15 @@ model NovelComment {
   novelId   String   @map("novel_id")
   likes     CommentLike[]
   likeCount Int      @default(0) @map("like_count")
+  
+  // Add parent-child relationship for replies
+  parent    NovelComment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  parentId  String?       @map("parent_comment_id")
+  replies   NovelComment[] @relation("CommentReplies")
 
   @@index([profileId])
   @@index([novelId])
-  @@index([createdAt])
+  @@index([parentId])
   @@map("novel_comments")
 }
 

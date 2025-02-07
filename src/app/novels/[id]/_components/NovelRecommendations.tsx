@@ -99,7 +99,6 @@ export const NovelRecommendations = ({ novelId }: NovelRecommendationsProps) => 
                 {novel.title}
               </h3>
               <div className="text-muted-foreground flex items-center gap-1.5 text-[10px] mt-0.5">
-                <span>{novel.views || 0} views</span>
                 <span>{novel.bookmarkCount || 0} bookmarks</span>
               </div>
             </div>

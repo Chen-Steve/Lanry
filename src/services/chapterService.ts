@@ -246,7 +246,6 @@ export interface ChapterListParams {
   novelId: string;
   page?: number;
   limit?: number;
-  userId?: string | null;
 }
 
 export type ChapterListItem = Pick<Chapter, 
@@ -264,64 +263,48 @@ export type ChapterListItem = Pick<Chapter,
 export async function getChaptersForList({
   novelId,
   page = 1,
-  limit = 50,
-  userId
-}: ChapterListParams) {
+  limit = 50
+}: ChapterListParams): Promise<{ chapters: ChapterListItem[]; total: number }> {
   try {
-    const { data: novel, error: novelError } = await supabase
-      .from('novels')
-      .select('id, author_profile_id, translator_id, is_author_name_custom')
-      .or(`id.eq.${novelId},slug.eq.${novelId}`)
-      .single();
-
-    if (novelError || !novel) return { chapters: [], total: 0 };
-
-    // Check if user is author, translator, or created the novel as a translator
-    const isAuthor = userId && novel.author_profile_id === userId;
-    const isTranslator = userId && novel.translator_id === userId;
-    const isTranslatorCreated = userId && novel.author_profile_id === userId && novel.is_author_name_custom === true;
-    const hasFullAccess = isAuthor || isTranslator || isTranslatorCreated;
-
-    // Get all chapters
-    const { data: chapters, error: chaptersError, count } = await supabase
+    // First get the total count
+    const { count } = await supabase
       .from('chapters')
-      .select('*', { count: 'exact' })
-      .eq('novel_id', novel.id)
+      .select('*', { count: 'exact', head: true })
+      .eq('novel_id', novelId);
+
+    const total = count || 0;
+
+    // If requesting a page beyond available data, return last page
+    const totalPages = Math.ceil(total / limit);
+    const safePage = Math.min(page, totalPages || 1);
+    const offset = (safePage - 1) * limit;
+
+    // Get chapters with pagination
+    const { data: chapters, error } = await supabase
+      .from('chapters')
+      .select(`
+        id,
+        chapter_number,
+        part_number,
+        title,
+        publish_at,
+        coins,
+        age_rating,
+        volume_id
+      `)
+      .eq('novel_id', novelId)
       .order('chapter_number', { ascending: true })
-      .order('part_number', { nullsFirst: true })
-      .range((page - 1) * limit, page * limit - 1);
+      .order('part_number', { ascending: true, nullsFirst: true })
+      .range(offset, offset + limit - 1);
 
-    if (chaptersError) throw chaptersError;
-
-    // If user has full access, return all chapters
-    if (hasFullAccess) {
-      return {
-        chapters: chapters || [],
-        total: count || 0
-      };
+    if (error) {
+      console.error('Error fetching chapters for list:', error);
+      return { chapters: [], total };
     }
-
-    // Otherwise, filter chapters based on publish date and unlocks
-    let userUnlocks: number[] = [];
-    if (userId) {
-      const { data: unlocks } = await supabase
-        .from('chapter_unlocks')
-        .select('chapter_number')
-        .eq('novel_id', novel.id)
-        .eq('profile_id', userId);
-      
-      userUnlocks = unlocks?.map(u => u.chapter_number) || [];
-    }
-
-    const accessibleChapters = chapters?.filter(chapter => {
-      const isPublished = !chapter.publish_at || new Date(chapter.publish_at) <= new Date();
-      const isUnlocked = userUnlocks.includes(chapter.chapter_number);
-      return isPublished || isUnlocked;
-    }) || [];
 
     return {
-      chapters: accessibleChapters,
-      total: accessibleChapters.length
+      chapters: chapters || [],
+      total
     };
   } catch (error) {
     console.error('Error fetching chapters for list:', error);
