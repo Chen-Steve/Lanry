@@ -13,6 +13,7 @@ export interface Chapter {
   coins: number;
   novel?: Novel;
   isUnlocked?: boolean;
+  isLocked?: boolean;
   author_profile_id: string;
   author_thoughts?: string;
   volume_id?: string;

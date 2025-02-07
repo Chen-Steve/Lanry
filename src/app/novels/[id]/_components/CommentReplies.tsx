@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Icon } from '@iconify/react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -57,7 +57,7 @@ export const CommentReplies = ({
   const [editingReplyId, setEditingReplyId] = useState<string | null>(null);
   const [editedContent, setEditedContent] = useState('');
 
-  const fetchReplies = async () => {
+  const fetchReplies = useCallback(async () => {
     if (!isExpanded) return;
     
     try {
@@ -101,7 +101,7 @@ export const CommentReplies = ({
       toast.error('Failed to load replies');
       setIsLoading(false);
     }
-  };
+  }, [isExpanded, parentCommentId]);
 
   const handleSubmitReply = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -233,7 +233,7 @@ export const CommentReplies = ({
       setIsLoading(true);
       fetchReplies();
     }
-  }, [isExpanded, parentCommentId]);
+  }, [isExpanded, fetchReplies]);
 
   if (!isExpanded) return null;
 

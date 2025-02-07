@@ -246,6 +246,7 @@ export interface ChapterListParams {
   novelId: string;
   page?: number;
   limit?: number;
+  userId?: string | null;
 }
 
 export type ChapterListItem = Pick<Chapter, 
@@ -263,7 +264,8 @@ export type ChapterListItem = Pick<Chapter,
 export async function getChaptersForList({
   novelId,
   page = 1,
-  limit = 50
+  limit = 50,
+  userId
 }: ChapterListParams): Promise<{ chapters: ChapterListItem[]; total: number }> {
   try {
     // First get the total count
@@ -302,8 +304,31 @@ export async function getChaptersForList({
       return { chapters: [], total };
     }
 
+    // If user is authenticated, get their unlocks
+    let userUnlocks: number[] = [];
+    if (userId) {
+      const { data: unlocks } = await supabase
+        .from('chapter_unlocks')
+        .select('chapter_number')
+        .eq('novel_id', novelId)
+        .eq('profile_id', userId);
+      
+      userUnlocks = unlocks?.map(u => u.chapter_number) || [];
+    }
+
+    // Filter chapters based on publish date and user unlocks
+    const now = new Date();
+    const filteredChapters = chapters?.map(chapter => {
+      const isPublished = !chapter.publish_at || new Date(chapter.publish_at) <= now;
+      const isUnlocked = userUnlocks.includes(chapter.chapter_number);
+      return {
+        ...chapter,
+        isLocked: !isPublished && !isUnlocked && chapter.coins > 0
+      };
+    }) || [];
+
     return {
-      chapters: chapters || [],
+      chapters: filteredChapters,
       total
     };
   } catch (error) {

@@ -1,7 +1,7 @@
 import { UserProfile } from '@/types/database';
 import { Volume } from '@/types/novel';
 import { ChapterListItem as ChapterListItemComponent } from './ChapterListItem';
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import { Icon } from '@iconify/react';
 import { getChaptersForList, ChapterListItem, getChapterCounts, ChapterCounts } from '@/services/chapterService';
 import { useInView } from 'react-intersection-observer';
@@ -48,7 +48,8 @@ export const ChapterList = ({
   // Initial load of chapters
   useEffect(() => {
     const loadInitialChapters = async () => {
-      if (chapters.length === 0) {
+      // Only load if we have no chapters and we're not already loading
+      if (!isLoading && (!initialChapters || initialChapters.length === 0) && chapters.length === 0) {
         setIsLoading(true);
         try {
           const result = await getChaptersForList({
@@ -67,9 +68,9 @@ export const ChapterList = ({
     };
 
     loadInitialChapters();
-  }, [novelId, userProfile?.id]);
+  }, [novelId, userProfile?.id, initialChapters, chapters.length, isLoading]);
 
-  const loadMoreChapters = async () => {
+  const loadMoreChapters = useCallback(async () => {
     if (isLoading || !hasMore) return;
 
     setIsLoading(true);
@@ -98,13 +99,13 @@ export const ChapterList = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [isLoading, hasMore, page, novelId, userProfile?.id]);
 
   useEffect(() => {
     if (inView && !isLoading) {
       loadMoreChapters();
     }
-  }, [inView]);
+  }, [inView, isLoading, loadMoreChapters]);
 
   const { advancedChapters, regularChapters } = useMemo(() => {
     if (!chapters || chapters.length === 0) {
