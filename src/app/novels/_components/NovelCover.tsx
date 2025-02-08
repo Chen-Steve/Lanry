@@ -16,6 +16,7 @@ interface NovelCoverProps {
   contentType?: 'BL' | 'GL';
   category?: 'yaoi' | 'yuri';
   size?: 'thumbnail' | 'small' | 'medium' | 'large';
+  chapterCount?: number;
 }
 
 const NovelCover = ({ 
@@ -29,7 +30,8 @@ const NovelCover = ({
   hasChapters = true,
   contentType,
   category,
-  size = 'small'
+  size = 'small',
+  chapterCount
 }: NovelCoverProps) => (
   <div className="relative aspect-[2/3] w-full rounded overflow-hidden bg-muted group">
     {coverUrl ? (
@@ -58,7 +60,7 @@ const NovelCover = ({
       </div>
     )}
 
-    <div className="absolute top-1.5 left-1.5 sm:top-2 sm:left-2 flex flex-col gap-1">
+    <div className="absolute left-0 top-0 flex flex-col items-start gap-1 p-1.5 sm:p-2">
       {contentType && (
         <div className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded-md backdrop-blur-[2px] ${
           contentType === 'BL' ? 'bg-blue-500/80' : 'bg-pink-500/80'
@@ -99,12 +101,22 @@ const NovelCover = ({
       </div>
     )}
     
-    {showStatus && status && (
+    {(showStatus || (typeof chapterCount === 'number' && chapterCount > 0)) && hasChapters && (
       <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent pt-6 pb-1.5 px-1.5 sm:pt-8 sm:pb-2 sm:px-2">
-        <div className="flex items-center justify-end">
-          <span className="text-[10px] sm:text-xs font-medium text-white/90 capitalize px-1.5 py-0.5 sm:px-2 rounded-md bg-white/10 backdrop-blur-[2px]">
-            {status.toLowerCase()}
-          </span>
+        <div className="flex items-center justify-between">
+          {typeof chapterCount === 'number' && chapterCount > 0 && (
+            <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-white/10 backdrop-blur-[2px]">
+              <Icon icon="pepicons-print:book" className="text-white text-[10px] sm:text-sm" />
+              <span className="text-white text-[10px] sm:text-xs font-medium">
+                {chapterCount}
+              </span>
+            </div>
+          )}
+          {showStatus && (
+            <span className="text-[10px] sm:text-xs font-medium text-white/90 capitalize px-1.5 py-0.5 sm:px-2 rounded-md bg-white/10 backdrop-blur-[2px]">
+              {status.toLowerCase()}
+            </span>
+          )}
         </div>
       </div>
     )}

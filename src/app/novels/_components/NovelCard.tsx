@@ -4,19 +4,7 @@ import { Novel } from '@/types/database';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { getTotalAllChapters } from '@/services/chapterService';
-import { Icon } from '@iconify/react';
 import NovelCover from './NovelCover';
-
-interface NovelStatsProps {
-  totalChapters: number;
-}
-
-const NovelStats = ({ totalChapters }: NovelStatsProps) => (
-  <div className="flex items-center gap-1 text-[10px] leading-none text-muted-foreground">
-    <Icon icon="pepicons-print:book" className="text-xs" />
-    <span>{totalChapters} Chapters</span>
-  </div>
-);
 
 interface NovelCardProps {
   novel: Novel;
@@ -74,12 +62,12 @@ const NovelCard = ({ novel, isPriority = false, size = 'small', className = '' }
           hasChapters={totalChapters > 0}
           category={category?.name.toLowerCase() as 'yaoi' | 'yuri'}
           size={size}
+          chapterCount={totalChapters}
         />
-        <div className="mt-0.5 flex flex-col">
+        <div className="mt-0.5">
           <h3 className="text-xs sm:text-sm text-foreground font-medium leading-none line-clamp-2">
             {novel.title}
           </h3>
-          <NovelStats totalChapters={totalChapters} />
         </div>
       </div>
     </Link>

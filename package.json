@@ -24,6 +24,7 @@
     "@types/react-query": "^1.2.8",
     "@types/uuid": "^10.0.0",
     "@vercel/analytics": "^1.4.0",
+    "@vercel/speed-insights": "^1.1.0",
     "autoprefixer": "^10.4.20",
     "coinbase-commerce-node": "^1.0.4",
     "date-fns": "^4.1.0",

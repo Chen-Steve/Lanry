@@ -7,6 +7,8 @@ import Providers from './providers';
 import { Toaster } from 'react-hot-toast';
 import { ThemeProvider } from '@/lib/ThemeContext';
 import CookieConsent from './_components/CookieConsent';
+import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 export const metadata: Metadata = {
   title: "Lanry",
@@ -84,6 +86,8 @@ export default function RootLayout({
             <CookieConsent />
           </ThemeProvider>
         </Providers>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

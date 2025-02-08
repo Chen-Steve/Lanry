@@ -71,7 +71,7 @@ const NewReleases = ({ recentNovels }: NewReleasesProps) => {
         <div 
           ref={scrollContainerRef}
           onScroll={handleScroll}
-          className="flex gap-2 sm:gap-4 overflow-x-auto scrollbar-hide scroll-smooth"
+          className="flex gap-1.5 sm:gap-2 overflow-x-auto scrollbar-hide scroll-smooth"
         >
           {recentNovels.map(novel => {
             const latestChapter = novel.chapters?.[0];
@@ -80,9 +80,9 @@ const NewReleases = ({ recentNovels }: NewReleasesProps) => {
               <Link
                 key={novel.id}
                 href={`/novels/${novel.slug}`}
-                className="group/card flex-none w-[120px] sm:w-[160px] flex flex-col p-2 sm:p-3 bg-card hover:bg-accent/50 transition-colors"
+                className="group/card flex-none w-[100px] sm:w-[130px] flex flex-col p-1.5 sm:p-2 bg-card hover:bg-accent/50 transition-colors"
               >
-                <div className="w-full aspect-[2/3] relative rounded-md overflow-hidden mb-2">
+                <div className="w-full aspect-[2/3] relative rounded-sm overflow-hidden mb-1.5">
                   <NovelCover
                     coverUrl={novel.coverImageUrl || undefined}
                     title={novel.title}
@@ -90,12 +90,12 @@ const NewReleases = ({ recentNovels }: NewReleasesProps) => {
                   />
                 </div>
                 
-                <h3 className="text-sm font-medium text-foreground line-clamp-2 group-hover/card:text-primary transition-colors text-center">
+                <h3 className="text-xs sm:text-sm font-medium text-foreground line-clamp-2 group-hover/card:text-primary transition-colors text-center">
                   {novel.title}
                 </h3>
                 
                 {latestChapter && (
-                  <div className="mt-1 text-xs text-center text-muted-foreground">
+                  <div className="mt-0.5 text-[10px] sm:text-xs text-center text-muted-foreground">
                     Ch.{latestChapter.chapter_number}
                     {latestChapter.part_number && `.${latestChapter.part_number}`}
                   </div>

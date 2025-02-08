@@ -3,12 +3,11 @@
 import { Novel } from '@/types/database';
 import { useEffect, useState } from 'react';
 import { getNovels, getNovelsWithAdvancedChapters } from '@/services/novelService';
-import NovelCard from './NovelCard';
 import LoadingGrid from './LoadingGrid';
 import AdvancedChapters from './AdvancedChapters';
 import NewReleases from './RecentReleases';
-import { Icon } from '@iconify/react';
 import FeaturedNovel from './FeaturedNovel';
+import RegularNovels from './RegularNovels';
 
 const NovelListing = () => {
   const [novels, setNovels] = useState<Novel[]>([]);
@@ -100,80 +99,17 @@ const NovelListing = () => {
           created_at: new Date(novel.created_at)
         }))}
       />
-      
-      {novels.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-gray-500">No novels found.</p>
-        </div>
-      ) : (
-        <>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-x-2 pb-8">
-            {novels.map((novel, index) => (
-              <NovelCard 
-                key={novel.id} 
-                novel={novel}
-                isPriority={index < 6}
-                size="small"
-                className="mt-6"
-              />
-            ))}
-          </div>
 
-          {/* Pagination Controls */}
-          {totalPages > 1 && (
-            <div className="flex justify-center items-center gap-2 mt-4 mb-8">
-              <button
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="p-2 rounded-lg hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
-                aria-label="Previous page"
-              >
-                <Icon icon="mdi:chevron-left" className="text-xl" />
-              </button>
-              
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                let pageNumber;
-                if (totalPages <= 5) {
-                  pageNumber = i + 1;
-                } else if (currentPage <= 3) {
-                  pageNumber = i + 1;
-                } else if (currentPage >= totalPages - 2) {
-                  pageNumber = totalPages - 4 + i;
-                } else {
-                  pageNumber = currentPage - 2 + i;
-                }
+      <RegularNovels
+        novels={novels}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={handlePageChange}
+      />
 
-                return (
-                  <button
-                    key={pageNumber}
-                    onClick={() => handlePageChange(pageNumber)}
-                    className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
-                      currentPage === pageNumber
-                        ? 'bg-primary text-primary-foreground'
-                        : 'hover:bg-accent'
-                    }`}
-                  >
-                    {pageNumber}
-                  </button>
-                );
-              })}
-
-              <button
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="p-2 rounded-lg hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
-                aria-label="Next page"
-              >
-                <Icon icon="mdi:chevron-right" className="text-xl" />
-              </button>
-            </div>
-          )}
-
-          <AdvancedChapters
-            novels={advancedNovels}
-          />
-        </>
-      )}
+      <AdvancedChapters
+        novels={advancedNovels}
+      />
     </div>
   );
 };
