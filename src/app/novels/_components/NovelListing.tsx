@@ -33,12 +33,8 @@ const NovelListing = () => {
         
         // Only set featured novels on first page load
         if (currentPage === 1) {
-          // Sort novels by view count and get top 5
-          const mostViewed = [...data]
-            .sort((a, b) => (b.views || 0) - (a.views || 0))
-            .slice(0, 5);
-          
-          setFeaturedNovels(mostViewed);
+          // Get top 5 novels (already sorted by views from the database)
+          setFeaturedNovels(data.slice(0, 5));
         }
       } catch (error) {
         console.error('Error fetching novels:', error);

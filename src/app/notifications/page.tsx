@@ -78,10 +78,6 @@ const NotificationsPage = () => {
         return 'ph:chat-bold';
       case 'like':
         return 'ph:heart-bold';
-      case 'follow':
-        return 'ph:user-plus-bold';
-      case 'system':
-        return 'ph:gear-bold';
       default:
         return 'ph:bell-bold';
     }
@@ -121,7 +117,7 @@ const NotificationsPage = () => {
 
       {/* Filters */}
       <div className="flex gap-2 overflow-x-auto pb-2">
-        {['all', 'comment_reply', 'like', 'follow', 'system'].map((type) => (
+        {['all', 'comment_reply', 'like'].map((type) => (
           <button
             key={type}
             onClick={() => setFilter(type as Notification['type'] | 'all')}

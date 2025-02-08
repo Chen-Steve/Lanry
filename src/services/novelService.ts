@@ -276,7 +276,8 @@ export async function getNovels(options: GetNovelsOptions = {}): Promise<{ novel
     }
 
     // Apply pagination
-    query = query.range(offset, offset + limit - 1);
+    query = query.range(offset, offset + limit - 1)
+      .order('views', { ascending: false });
 
     const { data, error, count } = await query;
 
