@@ -35,10 +35,11 @@ interface SupabaseComment {
 
 interface NovelCommentsProps {
   novelId: string;
+  novelSlug: string;
   isAuthenticated: boolean;
 }
 
-export const NovelComments = ({ novelId, isAuthenticated }: NovelCommentsProps) => {
+export const NovelComments = ({ novelId, novelSlug, isAuthenticated }: NovelCommentsProps) => {
   const [comments, setComments] = useState<NovelComment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -282,6 +283,7 @@ export const NovelComments = ({ novelId, isAuthenticated }: NovelCommentsProps) 
               onSave={handleSaveEdit}
               setEditedContent={setEditedContent}
               isAuthenticated={isAuthenticated}
+              novelSlug={novelSlug}
             />
           ))
         )}

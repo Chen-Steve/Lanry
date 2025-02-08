@@ -10,6 +10,7 @@ import { useStreak } from '@/hooks/useStreak';
 import { useAuth } from '@/hooks/useAuth';
 import { usePathname } from 'next/navigation';
 import { useScrollDirection } from '@/hooks/useScrollDirection';
+import NotificationButton from '@/app/_components/NotificationButton';
 
 const Header = () => {
   const pathname = usePathname();
@@ -127,6 +128,11 @@ const Header = () => {
                 >
                   <Icon icon="ic:baseline-discord" className="w-5 h-5" />
                 </Link>
+              </div>
+
+              {/* Notifications */}
+              <div className="flex-none">
+                <NotificationButton />
               </div>
 
               {/* Auth Button */}

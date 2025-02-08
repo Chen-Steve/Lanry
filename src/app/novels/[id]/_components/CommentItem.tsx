@@ -26,6 +26,7 @@ interface CommentItemProps {
   onDelete: (id: string) => void;
   onSave: (id: string) => void;
   setEditedContent: (content: string) => void;
+  novelSlug: string;
 }
 
 export const CommentItem = ({
@@ -37,7 +38,8 @@ export const CommentItem = ({
   onDelete,
   onSave,
   setEditedContent,
-  isAuthenticated
+  isAuthenticated,
+  novelSlug
 }: CommentItemProps & { isAuthenticated: boolean }) => {
   const isEditing = editingCommentId === comment.id;
   const isOwnComment = currentUserId === comment.profile_id;
@@ -131,7 +133,7 @@ export const CommentItem = ({
 
   return (
     <div className="space-y-2">
-      <div className="flex gap-3 p-3 sm:p-4 rounded-lg bg-card border border-border">
+      <div className="flex gap-3 p-3 sm:p-4 rounded-lg bg-card border border-border transition-all duration-300">
         <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-full overflow-hidden bg-primary">
           {comment.profile.avatar_url ? (
             <Image
@@ -277,6 +279,7 @@ export const CommentItem = ({
         isAuthenticated={isAuthenticated}
         isExpanded={isRepliesExpanded}
         novelId={comment.novel_id}
+        novelSlug={novelSlug}
         onReplyAdded={handleReplyAdded}
         currentUserId={currentUserId}
       />

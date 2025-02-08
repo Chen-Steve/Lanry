@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ChapterList } from './ChapterList';
 import { Chapter, UserProfile, NovelCategory, Tag } from '@/types/database';
 import { Volume } from '@/types/novel';
@@ -7,6 +7,7 @@ import { NovelComments } from './NovelComments';
 import { NovelHeader } from './NovelHeader';
 import { TabGroup } from '@/app/novels/[id]/_components/TabGroup';
 import { TranslatorLinks } from './TranslatorLinks';
+import { useSearchParams } from 'next/navigation';
 
 interface NovelContentProps {
   title: string;
@@ -86,6 +87,15 @@ export const NovelContent = ({
   characters = [],
 }: NovelContentProps) => {
   const [activeTab, setActiveTab] = useState('chapters');
+  const searchParams = useSearchParams();
+
+  // Set initial active tab based on URL query parameter
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab && ['chapters', 'comments', 'recommendations', 'support'].includes(tab)) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
 
   const tabs = [
     { label: 'Chapters', value: 'chapters' },
@@ -123,6 +133,7 @@ export const NovelContent = ({
         return (
           <NovelComments
             novelId={novelId}
+            novelSlug={novelSlug}
             isAuthenticated={isAuthenticated}
           />
         );

@@ -51,6 +51,7 @@ model Novel {
   chapterLikes  ChapterLike[]
   characters     NovelCharacter[]
   viewLogs      NovelViewLog[]
+  notifications Notification[]
 
   @@index([title])
   @@index([author])
@@ -138,6 +139,8 @@ model Profile {
   chapterLikes       ChapterLike[]
   commentLikes       CommentLike[]
   chapterThreadCommentLikes ChapterThreadCommentLike[]
+  receivedNotifications Notification[] @relation("ReceivedNotifications")
+  sentNotifications     Notification[] @relation("SentNotifications")
 
   @@map("profiles")
 }
@@ -246,6 +249,7 @@ model NovelComment {
   novelId   String   @map("novel_id")
   likes     CommentLike[]
   likeCount Int      @default(0) @map("like_count")
+  notifications Notification[]
   
   // Add parent-child relationship for replies
   parent    NovelComment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
@@ -425,4 +429,33 @@ model ChapterThreadCommentLike {
   @@index([commentId])
   @@index([profileId])
   @@map("chapter_thread_comment_likes")
+}
+
+model Notification {
+  id            String   @id @default(uuid())
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  type          String   // 'comment_reply', 'like', 'follow', 'system'
+  content       String   @db.Text
+  link          String
+  read          Boolean  @default(false)
+  
+  // Relations
+  recipient     Profile  @relation("ReceivedNotifications", fields: [recipientId], references: [id], onDelete: Cascade)
+  recipientId   String   @map("recipient_id")
+  sender        Profile  @relation("SentNotifications", fields: [senderId], references: [id], onDelete: Cascade)
+  senderId      String   @map("sender_id")
+  
+  // Optional relations
+  novel         Novel?   @relation(fields: [novelId], references: [id], onDelete: Cascade)
+  novelId       String?  @map("novel_id")
+  comment       NovelComment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  commentId     String?  @map("comment_id")
+
+  @@index([recipientId])
+  @@index([senderId])
+  @@index([novelId])
+  @@index([commentId])
+  @@index([createdAt])
+  @@map("notifications")
 }

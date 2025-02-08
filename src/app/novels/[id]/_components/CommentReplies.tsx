@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import supabase from '@/lib/supabaseClient';
 import { formatRelativeDate, generateUUID } from '@/lib/utils';
 import type { NovelComment } from '@/types/database';
+import { notificationService } from '@/services/notificationService';
 
 interface ReplyData {
   id: string;
@@ -38,6 +39,7 @@ interface CommentRepliesProps {
   isAuthenticated: boolean;
   isExpanded: boolean;
   novelId: string;
+  novelSlug: string;
   onReplyAdded?: () => void;
   currentUserId: string | null;
 }
@@ -47,6 +49,7 @@ export const CommentReplies = ({
   isAuthenticated,
   isExpanded,
   novelId,
+  novelSlug,
   onReplyAdded,
   currentUserId
 }: CommentRepliesProps) => {
@@ -130,6 +133,15 @@ export const CommentReplies = ({
 
       if (!profile) throw new Error('Profile not found');
 
+      // Get the parent comment's author
+      const { data: parentComment } = await supabase
+        .from('novel_comments')
+        .select('profile_id')
+        .eq('id', parentCommentId)
+        .single();
+
+      if (!parentComment) throw new Error('Parent comment not found');
+
       // Create the reply
       const { data: reply, error } = await supabase
         .from('novel_comments')
@@ -156,6 +168,19 @@ export const CommentReplies = ({
           role: profile.role
         }
       };
+      
+      // Create notification for the parent comment author
+      if (parentComment.profile_id !== user.id) {
+        await notificationService.createNotification({
+          recipientId: parentComment.profile_id,
+          senderId: user.id,
+          type: 'comment_reply',
+          content: `${profile.username} replied to your comment: "${newReply.trim().substring(0, 50)}${newReply.length > 50 ? '...' : ''}"`,
+          link: `/novels/${novelSlug}?tab=comments`,
+          novelId,
+          commentId: parentCommentId
+        });
+      }
       
       setReplies([...replies, newReplyWithProfile]);
       setNewReply('');
