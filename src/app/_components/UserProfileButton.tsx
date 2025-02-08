@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Icon } from '@iconify/react';
 import { useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface UserProfile {
   username: string;
@@ -104,64 +105,85 @@ const UserProfileButton = ({
   };
 
   const dropdownContent = (
-    <>
-      <Link
-        href="/user-dashboard"
-        className="block px-4 py-2 text-sm text-foreground border-b border-border hover:bg-accent transition-colors"
-        onClick={(e) => {
-          e.stopPropagation();
-          setIsProfileDropdownOpen(false);
-          onMenuClose?.();
-        }}
-      >
-        <div className="flex items-center justify-between">
-          <div>Profile: {userProfile?.username || 'Error loading profile'}</div>
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <Icon icon="ph:coins-fill" className="w-4 h-4 text-amber-500" />
-            {userProfile?.coins || 0}
+    <motion.div
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      transition={{ duration: 0.2 }}
+      className="p-2 space-y-2"
+    >
+      {/* Profile Header Section */}
+      <div className="p-3 bg-accent/50 rounded-lg">
+        <div className="flex items-center gap-3">
+          {renderAvatar()}
+          <div>
+            <div className="font-medium">{userProfile?.username || 'Error loading profile'}</div>
+            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+              <Icon icon="ph:coins-fill" className="w-4 h-4 text-amber-500" />
+              {userProfile?.coins || 0} coins
+            </div>
           </div>
         </div>
-      </Link>
-      {userProfile?.role && (userProfile.role === 'AUTHOR' || userProfile.role === 'TRANSLATOR') && (
+      </div>
+
+      {/* Main Actions */}
+      <div className="space-y-1">
         <Link
-          href="/author/dashboard"
-          className="block px-4 py-2 text-sm text-foreground border-b border-border hover:bg-accent transition-colors"
+          href="/user-dashboard"
+          className="flex items-center gap-2 px-3 py-2 text-sm text-foreground rounded-md hover:bg-accent transition-colors"
           onClick={(e) => {
             e.stopPropagation();
             setIsProfileDropdownOpen(false);
             onMenuClose?.();
           }}
         >
-          <div className="flex items-center gap-2">
-            <Icon icon="mdi:pencil" className="text-lg" />
-            <span>Author Dashboard</span>
-          </div>
+          <Icon icon="ph:user" className="text-lg" />
+          <span>View Profile</span>
         </Link>
-      )}
-      <button
-        onClick={handleRandomNovel}
-        disabled={isRandomizing}
-        className="block w-full text-left px-4 py-2 text-sm text-foreground border-b border-border hover:bg-accent transition-colors"
-      >
-        <div className="flex items-center gap-2">
+
+        {userProfile?.role && (userProfile.role === 'AUTHOR' || userProfile.role === 'TRANSLATOR') && (
+          <Link
+            href="/author/dashboard"
+            className="flex items-center gap-2 px-3 py-2 text-sm text-foreground rounded-md hover:bg-accent transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsProfileDropdownOpen(false);
+              onMenuClose?.();
+            }}
+          >
+            <Icon icon="ph:pencil-line" className="text-lg" />
+            <span>Author Dashboard</span>
+          </Link>
+        )}
+      </div>
+
+      {/* Quick Actions */}
+      <div className="pt-2 border-t border-border space-y-1">
+        <button
+          onClick={handleRandomNovel}
+          disabled={isRandomizing}
+          className="flex w-full items-center gap-2 px-3 py-2 text-sm text-foreground rounded-md hover:bg-accent transition-colors disabled:opacity-50"
+        >
           <Icon 
-            icon={isRandomizing ? "eos-icons:loading" : "mdi:dice-6"} 
+            icon={isRandomizing ? "eos-icons:loading" : "ph:shuffle"} 
             className={`text-lg ${isRandomizing ? 'animate-spin' : ''}`}
           />
           <span>Random Novel</span>
-        </div>
-      </button>
-      <button
-        type="button"
-        onClick={() => {
-          onSignOut();
-          onMenuClose?.();
-        }}
-        className="block w-full text-left px-4 py-2 text-sm text-foreground hover:bg-accent transition-colors"
-      >
-        Sign Out
-      </button>
-    </>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            onSignOut();
+            onMenuClose?.();
+          }}
+          className="flex w-full items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-destructive/10 rounded-md transition-colors"
+        >
+          <Icon icon="ph:sign-out" className="text-lg" />
+          <span>Sign Out</span>
+        </button>
+      </div>
+    </motion.div>
   );
 
   if (isMobile) {
@@ -175,7 +197,9 @@ const UserProfileButton = ({
         </button>
         {isProfileDropdownOpen && (
           <div className="absolute right-0 top-full mt-1 w-64 bg-background rounded-lg shadow-lg py-1 z-50 border border-border">
-            {dropdownContent}
+            <AnimatePresence>
+              {dropdownContent}
+            </AnimatePresence>
           </div>
         )}
       </div>
@@ -191,8 +215,10 @@ const UserProfileButton = ({
         {renderAvatar()}
       </button>
       {isProfileDropdownOpen && (
-        <div className="absolute right-0 mt-1 w-64 bg-background rounded-lg shadow-lg py-1 z-50 border border-border">
-          {dropdownContent}
+        <div className="absolute right-0 mt-1 w-72 bg-background rounded-lg shadow-lg border border-border overflow-hidden">
+          <AnimatePresence>
+            {dropdownContent}
+          </AnimatePresence>
         </div>
       )}
     </div>
