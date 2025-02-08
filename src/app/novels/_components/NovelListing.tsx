@@ -1,8 +1,8 @@
 'use client';
 
 import { Novel } from '@/types/database';
-import { useEffect, useState, useMemo } from 'react';
-import { getNovels } from '@/services/novelService';
+import { useEffect, useState } from 'react';
+import { getNovels, getNovelsWithAdvancedChapters } from '@/services/novelService';
 import NovelCard from './NovelCard';
 import LoadingGrid from './LoadingGrid';
 import AdvancedChapters from './AdvancedChapters';
@@ -16,6 +16,7 @@ const NovelListing = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [featuredNovels, setFeaturedNovels] = useState<Novel[]>([]);
+  const [advancedNovels, setAdvancedNovels] = useState<Novel[]>([]);
   const [recentAdvancedNovels, setRecentAdvancedNovels] = useState<Novel[]>([]);
 
   const ITEMS_PER_PAGE = 12;
@@ -46,40 +47,21 @@ const NovelListing = () => {
     fetchNovels();
   }, [currentPage]);
 
-  // Separate effect for fetching recent novels with advanced chapters
   useEffect(() => {
-    const fetchRecentAdvanced = async () => {
+    const fetchAdvancedNovels = async () => {
       try {
-        const { novels: allNovels } = await getNovels({ limit: 100, offset: 0 });
+        const novels = await getNovelsWithAdvancedChapters();
+        setAdvancedNovels(novels);
         
-        // Filter novels with advanced chapters and sort by most recent
-        const novelsWithAdvanced = allNovels
-          .filter(novel => 
-            novel.chapters?.some(chapter => {
-              const publishDate = chapter.publish_at ? new Date(chapter.publish_at) : null;
-              return publishDate && publishDate > new Date() && chapter.coins > 0;
-            })
-          )
-          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-          .slice(0, 10);
-
-        setRecentAdvancedNovels(novelsWithAdvanced);
+        // Set recent advanced novels (top 10 most recent)
+        setRecentAdvancedNovels(novels.slice(0, 10));
       } catch (error) {
-        console.error('Error fetching recent advanced novels:', error);
+        console.error('Error fetching advanced novels:', error);
       }
     };
 
-    fetchRecentAdvanced();
+    fetchAdvancedNovels();
   }, []);
-
-  const advancedNovels = useMemo(() => {
-    return novels.filter(novel => 
-      novel.chapters?.some(chapter => {
-        const publishDate = chapter.publish_at ? new Date(chapter.publish_at) : null;
-        return publishDate && publishDate > new Date() && chapter.coins > 0;
-      })
-    );
-  }, [novels]);
 
   const totalPages = Math.ceil(totalNovels / ITEMS_PER_PAGE);
 
