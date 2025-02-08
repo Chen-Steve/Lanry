@@ -345,46 +345,34 @@ export async function getNovelsWithRecentUnlocks(limit: number = 10): Promise<No
 }
 
 export async function getNovelsWithAdvancedChapters(): Promise<Novel[]> {
-  try {
-    const now = new Date().toISOString();
-    
-    // Get all novels that have at least one advanced chapter
+  try {    
+    interface DBNovel {
+      id: string;
+      title: string;
+      slug: string;
+      cover_image_url: string | null;
+      chapters: {
+        chapter_number: number;
+        part_number?: number;
+        publish_at: string;
+      }[];
+    }
+
     const { data: novels, error } = await supabase
-      .from('novels')
-      .select(`
-        *,
-        chapters!inner (
-          id,
-          title,
-          chapter_number,
-          part_number,
-          publish_at,
-          coins,
-          volume_id,
-          age_rating,
-          created_at
-        ),
-        categories:categories_on_novels (
-          category:category_id (
-            id,
-            name,
-            created_at,
-            updated_at
-          )
-        )
-      `)
-      .gt('chapters.publish_at', now) // Future chapters
-      .gt('chapters.coins', 0) // Paid chapters
-      .order('created_at', { ascending: false });
+      .rpc('get_novels_with_advanced_chapters');
 
     if (error) throw error;
 
-    // Process and return novels
-    return (novels || []).map(novel => ({
-      ...novel,
-      coverImageUrl: novel.cover_image_url,
-      categories: novel.categories?.map((item: { category: NovelCategory }) => item.category) || []
-    }));
+    console.log('Advanced chapters response:', novels);
+
+    return (novels || []).map((novel: DBNovel) => {
+      console.log('Processing novel:', novel.title, 'chapters:', novel.chapters);
+      return {
+        ...novel,
+        coverImageUrl: novel.cover_image_url,
+        chapters: novel.chapters || []
+      };
+    }) as Novel[];
   } catch (error) {
     console.error('Error fetching novels with advanced chapters:', error);
     return [];
