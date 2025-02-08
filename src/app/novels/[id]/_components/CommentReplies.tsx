@@ -18,6 +18,7 @@ interface ReplyData {
   parent_comment_id: string;
   novel_id: string;
   like_count: number;
+  isLiked?: boolean;
   profile: {
     username: string | null;
     avatar_url?: string;
@@ -27,6 +28,8 @@ interface ReplyData {
 
 interface CommentReply extends NovelComment {
   parent_comment_id: string;
+  isLiked?: boolean;
+  like_count: number;
   profile: {
     username: string | null;
     avatar_url?: string;
@@ -59,11 +62,13 @@ export const CommentReplies = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingReplyId, setEditingReplyId] = useState<string | null>(null);
   const [editedContent, setEditedContent] = useState('');
+  const [likingReplyId, setLikingReplyId] = useState<string | null>(null);
 
   const fetchReplies = useCallback(async () => {
     if (!isExpanded) return;
     
     try {
+      // First fetch the replies
       const { data, error } = await supabase
         .from('novel_comments')
         .select(`
@@ -87,9 +92,22 @@ export const CommentReplies = ({
 
       if (error) throw error;
 
-      // Transform the data to match our types
+      // If user is authenticated, fetch their likes
+      let userLikes: { comment_id: string }[] = [];
+      if (currentUserId) {
+        const { data: likesData } = await supabase
+          .from('comment_likes')
+          .select('comment_id')
+          .eq('profile_id', currentUserId)
+          .in('comment_id', data.map(reply => reply.id));
+        
+        userLikes = likesData || [];
+      }
+
+      // Transform the data and add isLiked property
       const transformedReplies = data.map(reply => ({
         ...reply,
+        isLiked: userLikes.some(like => like.comment_id === reply.id),
         profile: {
           username: reply.profile.username,
           avatar_url: reply.profile.avatar_url,
@@ -104,7 +122,7 @@ export const CommentReplies = ({
       toast.error('Failed to load replies');
       setIsLoading(false);
     }
-  }, [isExpanded, parentCommentId]);
+  }, [isExpanded, parentCommentId, currentUserId]);
 
   const handleSubmitReply = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -252,6 +270,97 @@ export const CommentReplies = ({
     }
   };
 
+  const handleLikeReply = async (replyId: string) => {
+    if (!currentUserId) {
+      toast.error('Please sign in to like replies');
+      return;
+    }
+
+    if (likingReplyId === replyId) return;
+
+    setLikingReplyId(replyId);
+    const reply = replies.find(r => r.id === replyId);
+    if (!reply) return;
+
+    try {
+      if (!reply.isLiked) {
+        const { error: insertError } = await supabase
+          .from('comment_likes')
+          .insert({
+            id: generateUUID(),
+            comment_id: replyId,
+            profile_id: currentUserId,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
+
+        if (insertError) throw insertError;
+
+        const { error: updateError } = await supabase
+          .from('novel_comments')
+          .update({ like_count: (reply.like_count || 0) + 1 })
+          .eq('id', replyId);
+
+        if (updateError) throw updateError;
+
+        // Create notification for the reply author if it's not their own reply
+        if (reply.profile_id !== currentUserId) {
+          const { data: currentUser } = await supabase
+            .from('profiles')
+            .select('username')
+            .eq('id', currentUserId)
+            .single();
+
+          await notificationService.createNotification({
+            recipientId: reply.profile_id,
+            senderId: currentUserId,
+            type: 'like',
+            content: `${currentUser?.username || 'Someone'} liked your reply: "${reply.content.substring(0, 50)}${reply.content.length > 50 ? '...' : ''}"`,
+            link: `/novels/${novelSlug}?tab=comments`,
+            novelId,
+            commentId: reply.id
+          });
+        }
+
+        setReplies(prevReplies => 
+          prevReplies.map(r => 
+            r.id === replyId 
+              ? { ...r, isLiked: true, like_count: (r.like_count || 0) + 1 }
+              : r
+          )
+        );
+      } else {
+        const { error: deleteError } = await supabase
+          .from('comment_likes')
+          .delete()
+          .eq('comment_id', replyId)
+          .eq('profile_id', currentUserId);
+
+        if (deleteError) throw deleteError;
+
+        const { error: updateError } = await supabase
+          .from('novel_comments')
+          .update({ like_count: Math.max((reply.like_count || 0) - 1, 0) })
+          .eq('id', replyId);
+
+        if (updateError) throw updateError;
+
+        setReplies(prevReplies => 
+          prevReplies.map(r => 
+            r.id === replyId 
+              ? { ...r, isLiked: false, like_count: Math.max((r.like_count || 0) - 1, 0) }
+              : r
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Error toggling like:', error);
+      toast.error('Failed to update like');
+    } finally {
+      setLikingReplyId(null);
+    }
+  };
+
   // Fetch replies when expanded
   useEffect(() => {
     if (isExpanded) {
@@ -373,7 +482,27 @@ export const CommentReplies = ({
                   </div>
                 ) : (
                   <>
-                    <p className="text-sm text-foreground mt-1">{reply.content}</p>
+                    <div className="flex justify-between items-start gap-2">
+                      <p className="text-sm text-foreground whitespace-pre-wrap break-words">
+                        {reply.content}
+                      </p>
+                      <button
+                        onClick={() => handleLikeReply(reply.id)}
+                        disabled={likingReplyId === reply.id}
+                        className={`flex items-center gap-1 text-sm transition-colors flex-shrink-0 p-1 -m-1 rounded-full hover:bg-accent ${
+                          reply.isLiked 
+                            ? 'text-primary hover:text-primary/80' 
+                            : 'text-muted-foreground hover:text-foreground'
+                        }`}
+                        aria-label={reply.isLiked ? 'Unlike reply' : 'Like reply'}
+                      >
+                        <Icon 
+                          icon={reply.isLiked ? 'mdi:heart' : 'mdi:heart-outline'} 
+                          className={`text-lg ${likingReplyId === reply.id ? 'animate-pulse' : ''}`}
+                        />
+                        <span>{reply.like_count || 0}</span>
+                      </button>
+                    </div>
                     {isOwnReply && (
                       <div className="flex items-center gap-2 mt-1">
                         <button
