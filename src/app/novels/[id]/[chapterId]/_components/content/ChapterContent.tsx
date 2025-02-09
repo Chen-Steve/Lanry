@@ -173,43 +173,113 @@ export default function ChapterContent({
     }
   };
 
+  // Add font optimization
+  useEffect(() => {
+    // Preload the font to prevent layout shift
+    const style = document.createElement('style');
+    style.textContent = `
+      @font-face {
+        font-family: ${fontFamily};
+        font-display: swap;
+        size-adjust: 100%;
+      }
+    `;
+    document.head.appendChild(style);
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, [fontFamily]);
+
   return (
-    <div>
-      <div className="mb-4 max-w-2xl mx-auto">
-        <div className="flex justify-between items-start">
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-lg md:text-xl font-semibold text-black dark:text-white">
-                Chapter {chapterNumber}
-                {partNumber && <span> Part {partNumber}</span>}
-                {title && <span>: {title}</span>}
-              </h2>
-              {ageRating === 'MATURE' && (
-                <span className="px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 rounded-md flex items-center gap-1">
-                  <Icon icon="mdi:alert" className="w-3.5 h-3.5" />
-                  Mature
-                </span>
-              )}
-              {ageRating === 'TEEN' && (
-                <span className="px-2 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300 rounded-md flex items-center gap-1">
-                  <Icon icon="mdi:alert" className="w-3.5 h-3.5" />
-                  Teen
-                </span>
-              )}
+    <div className="max-w-2xl mx-auto">
+      <div 
+        className="prose dark:prose-invert max-w-none"
+        style={{ 
+          fontFamily,
+          fontSize: `${fontSize}px`,
+          // Add min-height based on content length to prevent layout shift
+          minHeight: `${Math.min(content.length * 0.5, 200)}px`
+        }}
+      >
+        <div className="mb-4 max-w-2xl mx-auto">
+          <div className="flex justify-between items-start">
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg md:text-xl font-semibold text-black dark:text-white">
+                  Chapter {chapterNumber}
+                  {partNumber && <span> Part {partNumber}</span>}
+                  {title && <span>: {title}</span>}
+                </h2>
+                {ageRating === 'MATURE' && (
+                  <span className="px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 rounded-md flex items-center gap-1">
+                    <Icon icon="mdi:alert" className="w-3.5 h-3.5" />
+                    Mature
+                  </span>
+                )}
+                {ageRating === 'TEEN' && (
+                  <span className="px-2 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300 rounded-md flex items-center gap-1">
+                    <Icon icon="mdi:alert" className="w-3.5 h-3.5" />
+                    Teen
+                  </span>
+                )}
+              </div>
+              <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400">
+                Published {formatDate(createdAt)}
+              </p>
             </div>
-            <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400">
-              Published {formatDate(createdAt)}
-            </p>
-          </div>
-          <div className="md:hidden text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
-            <Icon icon="mdi:gesture-tap-hold" className="w-4 h-4" />
-            <span>Hold text to comment</span>
+            <div className="md:hidden text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+              <Icon icon="mdi:gesture-tap-hold" className="w-4 h-4" />
+              <span>Hold text to comment</span>
+            </div>
           </div>
         </div>
-      </div>
-      
-      {!isMobile ? (
-        <ScreenshotProtection>
+        
+        {!isMobile ? (
+          <ScreenshotProtection>
+            <div 
+              className="prose prose-sm md:prose-base max-w-2xl mx-auto text-black dark:text-white chapter-content select-none dark:prose-invert"
+              style={getTextStyles(fontFamily, fontSize)}
+            >
+              {paragraphs.map((paragraph, index) => {
+                const paragraphId = `p-${index}`;
+                const paragraphComments = comments[paragraphId] || [];
+                
+                return (
+                  <ChapterParagraph
+                    key={`${chapterNumber}-${paragraphId}`}
+                    paragraph={paragraph}
+                    paragraphId={paragraphId}
+                    index={index}
+                    totalParagraphs={paragraphs.length}
+                    selectedParagraphId={selectedParagraphId}
+                    commentCount={paragraphComments.length}
+                    isMobile={isMobile}
+                    onParagraphClick={handleParagraphClick}
+                    onParagraphLongPress={handleParagraphLongPress}
+                    onCommentClick={handleCommentClick}
+                  />
+                );
+              })}
+
+              {/* Like Button Section - Moved inside the prose div */}
+              <div className="flex justify-center items-center gap-3 mt-4 mb-8">
+                <button
+                  onClick={handleLikeClick}
+                  className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
+                  aria-label={isLiked ? 'Unlike chapter' : 'Like chapter'}
+                >
+                  <Icon 
+                    icon={isLiked ? "mdi:heart" : "mdi:heart-outline"} 
+                    className={`w-6 h-6 ${isLiked ? 'text-red-500' : 'text-gray-600 dark:text-gray-400'}`}
+                  />
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {likeCount} {likeCount === 1 ? 'Like' : 'Likes'}
+                  </span>
+                </button>
+              </div>
+            </div>
+          </ScreenshotProtection>
+        ) : (
           <div 
             className="prose prose-sm md:prose-base max-w-2xl mx-auto text-black dark:text-white chapter-content select-none dark:prose-invert"
             style={getTextStyles(fontFamily, fontSize)}
@@ -252,93 +322,50 @@ export default function ChapterContent({
               </button>
             </div>
           </div>
-        </ScreenshotProtection>
-      ) : (
-        <div 
-          className="prose prose-sm md:prose-base max-w-2xl mx-auto text-black dark:text-white chapter-content select-none dark:prose-invert"
-          style={getTextStyles(fontFamily, fontSize)}
-        >
-          {paragraphs.map((paragraph, index) => {
-            const paragraphId = `p-${index}`;
-            const paragraphComments = comments[paragraphId] || [];
-            
-            return (
-              <ChapterParagraph
-                key={`${chapterNumber}-${paragraphId}`}
-                paragraph={paragraph}
-                paragraphId={paragraphId}
-                index={index}
-                totalParagraphs={paragraphs.length}
-                selectedParagraphId={selectedParagraphId}
-                commentCount={paragraphComments.length}
-                isMobile={isMobile}
-                onParagraphClick={handleParagraphClick}
-                onParagraphLongPress={handleParagraphLongPress}
-                onCommentClick={handleCommentClick}
-              />
-            );
-          })}
+        )}
 
-          {/* Like Button Section - Moved inside the prose div */}
-          <div className="flex justify-center items-center gap-3 mt-4 mb-8">
-            <button
-              onClick={handleLikeClick}
-              className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
-              aria-label={isLiked ? 'Unlike chapter' : 'Like chapter'}
-            >
-              <Icon 
-                icon={isLiked ? "mdi:heart" : "mdi:heart-outline"} 
-                className={`w-6 h-6 ${isLiked ? 'text-red-500' : 'text-gray-600 dark:text-gray-400'}`}
+        {/* Author's Thoughts Section */}
+        {authorThoughts && authorThoughts.trim() !== '' && (
+          <div className="mt-8 max-w-2xl mx-auto border-t border-gray-200 dark:border-gray-700 pt-8">
+            <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Icon icon="mdi:thought-bubble" className="w-6 h-6 text-gray-600 dark:text-gray-400" />
+                <h3 className="text-lg font-medium text-gray-700 dark:text-gray-200">Author&apos;s Thoughts</h3>
+              </div>
+              <div 
+                className="prose prose-sm md:prose-base text-gray-700 dark:text-gray-300 dark:prose-invert"
+                style={getTextStyles(fontFamily, fontSize - 1)}
+                dangerouslySetInnerHTML={{ __html: formatText(filterExplicitContent(authorThoughts)) }}
               />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                {likeCount} {likeCount === 1 ? 'Like' : 'Likes'}
-              </span>
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Author's Thoughts Section */}
-      {authorThoughts && authorThoughts.trim() !== '' && (
-        <div className="mt-8 max-w-2xl mx-auto border-t border-gray-200 dark:border-gray-700 pt-8">
-          <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Icon icon="mdi:thought-bubble" className="w-6 h-6 text-gray-600 dark:text-gray-400" />
-              <h3 className="text-lg font-medium text-gray-700 dark:text-gray-200">Author&apos;s Thoughts</h3>
             </div>
-            <div 
-              className="prose prose-sm md:prose-base text-gray-700 dark:text-gray-300 dark:prose-invert"
-              style={getTextStyles(fontFamily, fontSize - 1)}
-              dangerouslySetInnerHTML={{ __html: formatText(filterExplicitContent(authorThoughts)) }}
-            />
           </div>
-        </div>
-      )}
+        )}
 
-      {selectedParagraphId && (
-        <CommentPopover
-          paragraphId={selectedParagraphId}
-          comments={(comments[selectedParagraphId] || []).map(comment => ({
-            ...comment,
-            profile: comment.profile || { 
-              username: null,
-              avatar_url: undefined,
-              id: comment.profile_id,
-              role: 'USER' as const
-            }
-          } as ChapterComment))}
-          onClose={handleCloseComment}
-          onAddComment={(content) => handleAddComment(selectedParagraphId, content)}
-          onDeleteComment={deleteComment}
-          onUpdateComment={updateComment}
-          isAuthenticated={isAuthenticated}
-          isLoading={isLoading}
-          userId={userId}
-          novelId={novelId}
-          authorId={authorId}
-        />
-      )}
-      <FootnoteTooltip />
+        {selectedParagraphId && (
+          <CommentPopover
+            paragraphId={selectedParagraphId}
+            comments={(comments[selectedParagraphId] || []).map(comment => ({
+              ...comment,
+              profile: comment.profile || { 
+                username: null,
+                avatar_url: undefined,
+                id: comment.profile_id,
+                role: 'USER' as const
+              }
+            } as ChapterComment))}
+            onClose={handleCloseComment}
+            onAddComment={(content) => handleAddComment(selectedParagraphId, content)}
+            onDeleteComment={deleteComment}
+            onUpdateComment={updateComment}
+            isAuthenticated={isAuthenticated}
+            isLoading={isLoading}
+            userId={userId}
+            novelId={novelId}
+            authorId={authorId}
+          />
+        )}
+        <FootnoteTooltip />
+      </div>
     </div>
   );
 } 

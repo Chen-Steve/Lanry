@@ -169,32 +169,34 @@ export default function ChapterProgressBar({
         {/* Progress Section */}
         <div className="bg-gray-50 dark:bg-gray-800 rounded-md p-4">
           {/* Chapter info - centered */}
-          <div className="mb-4 text-center">
+          <div className="mb-4 text-center h-5">
             <div className="text-sm text-gray-600 dark:text-gray-400">
               Chapter {currentChapter}/{firstChapter + totalChapters - 1} - {Math.round(scrollProgress)}%
             </div>
           </div>
 
           {/* Navigation with progress bar */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 h-8">
             {/* Previous button */}
-            {navigation.prevChapter ? (
-              <Link
-                href={`/novels/${novelId}/c${navigation.prevChapter.chapter_number}`}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors text-black dark:text-white"
-                aria-label="Previous chapter"
-              >
-                <Icon icon="mdi:chevron-left" className="text-xl" />
-              </Link>
-            ) : (
-              <button
-                disabled
-                className="p-2 text-gray-300 dark:text-gray-600 cursor-not-allowed"
-                aria-label="No previous chapter"
-              >
-                <Icon icon="mdi:chevron-left" className="text-xl" />
-              </button>
-            )}
+            <div className="w-8 h-8 flex-shrink-0">
+              {navigation.prevChapter ? (
+                <Link
+                  href={`/novels/${novelId}/c${navigation.prevChapter.chapter_number}`}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors text-black dark:text-white h-full w-full flex items-center justify-center"
+                  aria-label="Previous chapter"
+                >
+                  <Icon icon="mdi:chevron-left" className="text-xl" />
+                </Link>
+              ) : (
+                <button
+                  disabled
+                  className="p-2 text-gray-300 dark:text-gray-600 cursor-not-allowed h-full w-full flex items-center justify-center"
+                  aria-label="No previous chapter"
+                >
+                  <Icon icon="mdi:chevron-left" className="text-xl" />
+                </button>
+              )}
+            </div>
 
             {/* Progress bar */}
             <div className="flex-1 h-1 bg-gray-200 dark:bg-gray-700 rounded-full">
@@ -205,23 +207,25 @@ export default function ChapterProgressBar({
             </div>
 
             {/* Next button */}
-            {navigation.nextChapter ? (
-              <Link
-                href={`/novels/${novelId}/c${navigation.nextChapter.chapter_number}`}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors text-black dark:text-white"
-                aria-label="Next chapter"
-              >
-                <Icon icon="mdi:chevron-right" className="text-xl" />
-              </Link>
-            ) : (
-              <button
-                disabled
-                className="p-2 text-gray-300 dark:text-gray-600 cursor-not-allowed"
-                aria-label="No next chapter"
-              >
-                <Icon icon="mdi:chevron-right" className="text-xl" />
-              </button>
-            )}
+            <div className="w-8 h-8 flex-shrink-0">
+              {navigation.nextChapter ? (
+                <Link
+                  href={`/novels/${novelId}/c${navigation.nextChapter.chapter_number}`}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors text-black dark:text-white h-full w-full flex items-center justify-center"
+                  aria-label="Next chapter"
+                >
+                  <Icon icon="mdi:chevron-right" className="text-xl" />
+                </Link>
+              ) : (
+                <button
+                  disabled
+                  className="p-2 text-gray-300 dark:text-gray-600 cursor-not-allowed h-full w-full flex items-center justify-center"
+                  aria-label="No next chapter"
+                >
+                  <Icon icon="mdi:chevron-right" className="text-xl" />
+                </button>
+              )}
+            </div>
           </div>
         </div>
 

@@ -178,7 +178,33 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
   };
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-4 md:py-8 animate-pulse">
+        {/* Header skeleton */}
+        <div className="mb-2 md:mb-4">
+          <div className="max-w-2xl mx-auto text-center">
+            <div className="h-8 w-3/4 bg-gray-200 dark:bg-gray-700 rounded mx-auto" />
+          </div>
+        </div>
+
+        {/* Navigation skeleton */}
+        <div className="mb-6">
+          <div className="flex items-center justify-center gap-2">
+            <div className="w-[80px] sm:w-[90px] h-10 bg-gray-200 dark:bg-gray-700 rounded" />
+            <div className="w-[140px] sm:w-[180px] h-10 bg-gray-200 dark:bg-gray-700 rounded" />
+            <div className="w-[80px] sm:w-[90px] h-10 bg-gray-200 dark:bg-gray-700 rounded" />
+          </div>
+        </div>
+
+        {/* Content skeleton */}
+        <div className="max-w-2xl mx-auto space-y-4">
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4" />
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full" />
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-5/6" />
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full" />
+        </div>
+      </div>
+    );
   }
 
   if (error) {

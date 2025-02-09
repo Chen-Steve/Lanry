@@ -81,15 +81,15 @@ export default function ChapterNavigation({
 
   return (
     <div className="flex items-center justify-center w-full max-w-screen-lg mx-auto px-2">
-      <div className="inline-flex items-center gap-2">
+      <div className="inline-flex items-center gap-2 h-10">
         {/* Previous Chapter */}
-        <div className="w-[80px] sm:w-[90px]">
+        <div className="w-[80px] sm:w-[90px] h-full">
           {navigation.prevChapter ? (
             <Link
               href={`/novels/${novelId}/c${navigation.prevChapter.chapter_number}${
                 navigation.prevChapter.part_number ? `-p${navigation.prevChapter.part_number}` : ''
               }`}
-              className="inline-flex items-center justify-center w-full px-1.5 sm:px-2 py-2 bg-background hover:bg-accent rounded-lg text-foreground transition-colors text-xs sm:text-sm whitespace-nowrap border border-border"
+              className="inline-flex items-center justify-center w-full h-full px-1.5 sm:px-2 bg-background hover:bg-accent rounded-lg text-foreground transition-colors text-xs sm:text-sm whitespace-nowrap border border-border"
             >
               <div className="flex items-center gap-0.5 sm:gap-1">
                 <Icon icon="mdi:chevron-left" className="text-base sm:text-lg" />
@@ -97,17 +97,17 @@ export default function ChapterNavigation({
               </div>
             </Link>
           ) : (
-            <div className="flex items-center justify-center w-full px-1.5 sm:px-2 py-2 text-muted-foreground text-xs sm:text-sm border border-border rounded-lg opacity-50">
+            <div className="flex items-center justify-center w-full h-full px-1.5 sm:px-2 py-2 text-muted-foreground text-xs sm:text-sm border border-border rounded-lg opacity-50">
               <span>First Ch.</span>
             </div>
           )}
         </div>
 
         {/* Chapter Selector */}
-        <div className="relative w-[140px] sm:w-[180px]">
+        <div className="relative w-[140px] sm:w-[180px] h-full">
           <button
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            className="w-full px-1.5 sm:px-2 py-2 border border-border rounded-lg flex items-center justify-center gap-1 bg-background hover:bg-accent transition-colors text-foreground text-xs sm:text-sm"
+            className="w-full h-full px-1.5 sm:px-2 border border-border rounded-lg flex items-center justify-center gap-1 bg-background hover:bg-accent transition-colors text-foreground text-xs sm:text-sm"
           >
             <span className="truncate">{formatDropdownTitle(currentChapter, currentPartNumber)}</span>
             <Icon icon="mdi:chevron-down" className="text-base sm:text-lg flex-shrink-0" />
@@ -181,13 +181,13 @@ export default function ChapterNavigation({
         </div>
 
         {/* Next Chapter */}
-        <div className="w-[80px] sm:w-[90px]">
+        <div className="w-[80px] sm:w-[90px] h-full">
           {navigation.nextChapter ? (
             <Link
               href={`/novels/${novelId}/c${navigation.nextChapter.chapter_number}${
                 navigation.nextChapter.part_number ? `-p${navigation.nextChapter.part_number}` : ''
               }`}
-              className="inline-flex items-center justify-center w-full px-1.5 sm:px-2 py-2 bg-background hover:bg-accent rounded-lg text-foreground transition-colors text-xs sm:text-sm whitespace-nowrap border border-border"
+              className="inline-flex items-center justify-center w-full h-full px-1.5 sm:px-2 bg-background hover:bg-accent rounded-lg text-foreground transition-colors text-xs sm:text-sm whitespace-nowrap border border-border"
             >
               <div className="flex items-center gap-0.5 sm:gap-1">
                 <span>{formatChapterTitle(navigation.nextChapter.chapter_number, navigation.nextChapter.part_number)}</span>
@@ -195,7 +195,7 @@ export default function ChapterNavigation({
               </div>
             </Link>
           ) : (
-            <div className="flex items-center justify-center w-full px-1.5 sm:px-2 py-2 text-muted-foreground text-xs sm:text-sm border border-border rounded-lg opacity-50">
+            <div className="flex items-center justify-center w-full h-full px-1.5 sm:px-2 py-2 text-muted-foreground text-xs sm:text-sm border border-border rounded-lg opacity-50">
               <span>Last Ch.</span>
             </div>
           )}
