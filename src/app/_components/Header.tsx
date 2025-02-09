@@ -63,7 +63,7 @@ const Header = () => {
         </div>
       );
     }
-
+    
     return (
       <Link 
         href="/auth" 
@@ -146,5 +146,5 @@ const Header = () => {
     </header>
   );
 };
-
+//revert back to e4e881e
 export default Header; 
