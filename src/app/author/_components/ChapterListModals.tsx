@@ -65,7 +65,7 @@ export function VolumeModal({
             </div>
             <div>
               <label htmlFor="volumeName" className="block text-sm font-medium text-foreground mb-1">
-                Volume Title
+                Volume Title (Optional)
               </label>
               <input
                 type="text"
@@ -74,7 +74,6 @@ export function VolumeModal({
                 onChange={(e) => onVolumeNameChange(e.target.value)}
                 className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 bg-background text-foreground placeholder:text-muted-foreground"
                 placeholder="Enter volume title"
-                required
               />
             </div>
           </div>

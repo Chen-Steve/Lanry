@@ -13,13 +13,13 @@ export interface ChapterListChapter {
   title?: string;
   publish_at?: string | null;
   coins?: number;
-  volumeId?: string | null;
+  volume_id?: string | null;
 }
 
 export interface Volume {
   id: string;
   volumeNumber: number;
-  title: string;
+  title?: string;
 }
 
 export interface ChapterListProps {
@@ -95,8 +95,8 @@ export interface ChapterFormData {
   publishAt: string;
   coins: string;
   authorThoughts: string;
-  volumeId?: string;
-  arcId?: string;
+  volume_id?: string;
+  arc_id?: string;
 }
 
 export interface NovelFormData {

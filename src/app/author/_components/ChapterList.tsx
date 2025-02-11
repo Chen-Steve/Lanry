@@ -78,11 +78,11 @@ export default function ChapterList({
       );
     });
 
-    const noVolumeChapters = filteredChapters.filter(chapter => !chapter.volumeId);
+    const noVolumeChapters = filteredChapters.filter(chapter => !chapter.volume_id);
     const volumeChapters = new Map<string, ChapterListChapter[]>();
     
     volumes.forEach(volume => {
-      volumeChapters.set(volume.id, filteredChapters.filter(chapter => chapter.volumeId === volume.id));
+      volumeChapters.set(volume.id, filteredChapters.filter(chapter => chapter.volume_id === volume.id));
     });
 
     return {
@@ -121,7 +121,7 @@ export default function ChapterList({
   };
 
   const handleEditChapter = (chapter: ChapterListChapter) => {
-    setSelectedVolumeId(chapter.volumeId || undefined);
+    setSelectedVolumeId(chapter.volume_id || undefined);
     setEditingChapter(chapter);
     setShowChapterForm(true);
   };
@@ -347,7 +347,7 @@ export default function ChapterList({
       </div>
 
       <div className="absolute top-2 right-1 sm:top-2 sm:right-2 flex items-center gap-1">
-        {chapter.volumeId && (
+        {chapter.volume_id && (
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -391,7 +391,7 @@ export default function ChapterList({
               />
             </button>
             <h3 className="text-sm font-medium text-foreground">
-              Volume {volume.volumeNumber}: {volume.title}
+              Volume {volume.volumeNumber}{volume.title ? `: ${volume.title}` : ''}
             </h3>
             <button
               onClick={() => setDeleteVolumeConfirmation({ isOpen: true, volumeId: volume.id })}
@@ -593,7 +593,7 @@ export default function ChapterList({
             onClose={() => setIsAssignChaptersModalOpen(false)}
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
-            chapters={chaptersGroupedByVolume.noVolumeChapters}
+            chapters={chapters.filter(chapter => chapter.volume_id !== assigningVolumeId)}
             selectedChapterIds={selectedChapterIds}
             toggleChapterSelection={toggleChapterSelection}
             onAssign={handleAssignChapters}

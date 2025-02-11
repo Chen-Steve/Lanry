@@ -101,7 +101,7 @@ export default function ChapterEditForm({
           coins: parseInt(formData.coins),
           author_thoughts: formData.authorThoughts,
           age_rating: formData.ageRating,
-          volumeId: volumeId
+          volume_id: volumeId
         });
       }
       toast.success(chapterId ? 'Chapter updated successfully' : 'Chapter created successfully');

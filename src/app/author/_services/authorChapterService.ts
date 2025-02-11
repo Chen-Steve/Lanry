@@ -106,7 +106,7 @@ export async function createChapter(
     coins: number;
     author_thoughts?: string;
     age_rating?: 'EVERYONE' | 'TEEN' | 'MATURE';
-    volumeId?: string;
+    volume_id?: string;
   }
 ) {
   await verifyNovelAuthor(novelId, userId);
@@ -150,7 +150,7 @@ export async function createChapter(
       ...chapterData,
       // Apply fixed price if enabled, otherwise use provided coins value
       coins: novel.fixed_price_enabled ? novel.fixed_price_amount : chapterData.coins,
-      volume_id: chapterData.volumeId,
+      volume_id: chapterData.volume_id,
       slug: generateChapterSlug(chapterData.chapter_number, chapterData.part_number),
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
