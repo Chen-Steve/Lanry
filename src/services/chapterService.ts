@@ -247,6 +247,8 @@ export interface ChapterListParams {
   page?: number;
   limit?: number;
   userId?: string | null;
+  showAdvanced?: boolean;
+  volumeId?: string | null;
 }
 
 export type ChapterListItem = Pick<Chapter, 
@@ -265,24 +267,63 @@ export async function getChaptersForList({
   novelId,
   page = 1,
   limit = 50,
-  userId
-}: ChapterListParams): Promise<{ chapters: ChapterListItem[]; total: number }> {
+  userId,
+  showAdvanced = false,
+  volumeId
+}: ChapterListParams): Promise<{ 
+  chapters: ChapterListItem[]; 
+  counts: ChapterCounts;
+  total: number;
+  currentPage: number;
+  totalPages: number;
+}> {
   try {
-    // First get the total count
-    const { count } = await supabase
+    const now = new Date().toISOString();
+    
+    // Get total counts first with a separate count query
+    let countQuery = supabase
       .from('chapters')
       .select('*', { count: 'exact', head: true })
       .eq('novel_id', novelId);
 
-    const total = count || 0;
+    // Add conditional filters
+    if (volumeId !== null && volumeId !== undefined) {
+      countQuery = countQuery.eq('volume_id', volumeId);
+    }
+    
+    if (showAdvanced) {
+      countQuery = countQuery.gt('publish_at', now);
+    } else {
+      countQuery = countQuery.or(`publish_at.lte.${now},publish_at.is.null`);
+    }
 
-    // If requesting a page beyond available data, return last page
+    const { count: totalCount } = await countQuery;
+
+    // Calculate counts for both types in a single query
+    const { data: countData } = await supabase
+      .from('chapters')
+      .select('publish_at')
+      .eq('novel_id', novelId);
+
+    const counts = countData?.reduce((acc: ChapterCounts, chapter: { publish_at: string | null }) => {
+      const isAdvanced = chapter.publish_at && new Date(chapter.publish_at) > new Date();
+      if (isAdvanced) {
+        acc.advancedCount++;
+      } else {
+        acc.regularCount++;
+      }
+      return acc;
+    }, { regularCount: 0, advancedCount: 0, total: countData?.length || 0 }) || 
+    { regularCount: 0, advancedCount: 0, total: 0 };
+
+    // Calculate pagination
+    const total = totalCount || 0;
     const totalPages = Math.ceil(total / limit);
     const safePage = Math.min(page, totalPages || 1);
     const offset = (safePage - 1) * limit;
 
     // Get chapters with pagination
-    const { data: chapters, error } = await supabase
+    let chaptersQuery = supabase
       .from('chapters')
       .select(`
         id,
@@ -294,17 +335,30 @@ export async function getChaptersForList({
         age_rating,
         volume_id
       `)
-      .eq('novel_id', novelId)
+      .eq('novel_id', novelId);
+
+    // Add conditional filters
+    if (volumeId !== null && volumeId !== undefined) {
+      chaptersQuery = chaptersQuery.eq('volume_id', volumeId);
+    }
+    
+    if (showAdvanced) {
+      chaptersQuery = chaptersQuery.gt('publish_at', now);
+    } else {
+      chaptersQuery = chaptersQuery.or(`publish_at.lte.${now},publish_at.is.null`);
+    }
+
+    const { data: chapters, error } = await chaptersQuery
       .order('chapter_number', { ascending: true })
       .order('part_number', { ascending: true, nullsFirst: true })
       .range(offset, offset + limit - 1);
 
     if (error) {
       console.error('Error fetching chapters for list:', error);
-      return { chapters: [], total };
+      return { chapters: [], counts, total, currentPage: 1, totalPages: 1 };
     }
 
-    // If user is authenticated, get their unlocks
+    // If user is authenticated, get their unlocks in a single query
     let userUnlocks: number[] = [];
     if (userId) {
       const { data: unlocks } = await supabase
@@ -316,24 +370,28 @@ export async function getChaptersForList({
       userUnlocks = unlocks?.map(u => u.chapter_number) || [];
     }
 
-    // Filter chapters based on publish date and user unlocks
-    const now = new Date();
-    const filteredChapters = chapters?.map(chapter => {
-      const isPublished = !chapter.publish_at || new Date(chapter.publish_at) <= now;
-      const isUnlocked = userUnlocks.includes(chapter.chapter_number);
-      return {
-        ...chapter,
-        isLocked: !isPublished && !isUnlocked && chapter.coins > 0
-      };
-    }) || [];
+    // Process chapters with unlock status
+    const processedChapters = chapters?.map(chapter => ({
+      ...chapter,
+      isLocked: !userUnlocks.includes(chapter.chapter_number) && chapter.coins > 0
+    })) || [];
 
     return {
-      chapters: filteredChapters,
-      total
+      chapters: processedChapters,
+      counts,
+      total,
+      currentPage: safePage,
+      totalPages
     };
   } catch (error) {
     console.error('Error fetching chapters for list:', error);
-    return { chapters: [], total: 0 };
+    return { 
+      chapters: [], 
+      counts: { regularCount: 0, advancedCount: 0, total: 0 },
+      total: 0,
+      currentPage: 1,
+      totalPages: 1
+    };
   }
 }
 
@@ -341,40 +399,4 @@ export interface ChapterCounts {
   regularCount: number;
   advancedCount: number;
   total: number;
-}
-
-export async function getChapterCounts(novelId: string): Promise<ChapterCounts> {
-  try {
-    const { data: novel } = await supabase
-      .from('novels')
-      .select('id')
-      .or(`id.eq.${novelId},slug.eq.${novelId}`)
-      .single();
-
-    if (!novel) return { regularCount: 0, advancedCount: 0, total: 0 };
-
-    const { count } = await supabase
-      .from('chapters')
-      .select('*', { count: 'exact', head: true })
-      .eq('novel_id', novel.id);
-
-    const now = new Date().toISOString();
-
-    const { count: advancedCount } = await supabase
-      .from('chapters')
-      .select('*', { count: 'exact', head: true })
-      .eq('novel_id', novel.id)
-      .gt('publish_at', now);
-
-    const regularCount = (count || 0) - (advancedCount || 0);
-
-    return {
-      regularCount,
-      advancedCount: advancedCount || 0,
-      total: count || 0
-    };
-  } catch (error) {
-    console.error('Error getting chapter counts:', error);
-    return { regularCount: 0, advancedCount: 0, total: 0 };
-  }
 } 

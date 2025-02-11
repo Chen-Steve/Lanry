@@ -1,10 +1,9 @@
 import { UserProfile } from '@/types/database';
 import { Volume } from '@/types/novel';
 import { ChapterListItem as ChapterListItemComponent } from './ChapterListItem';
-import { useMemo, useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Icon } from '@iconify/react';
-import { getChaptersForList, ChapterListItem, getChapterCounts, ChapterCounts } from '@/services/chapterService';
-import { useInView } from 'react-intersection-observer';
+import { getChaptersForList, ChapterListItem, ChapterCounts } from '@/services/chapterService';
 
 interface ChapterListProps {
   initialChapters: ChapterListItem[];
@@ -30,157 +29,159 @@ export const ChapterList = ({
   const [showAdvancedChapters, setShowAdvancedChapters] = useState(false);
   const [chapters, setChapters] = useState<ChapterListItem[]>(initialChapters || []);
   const [chapterCounts, setChapterCounts] = useState<ChapterCounts>({ regularCount: 0, advancedCount: 0, total: 0 });
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
 
-  const { ref: loadMoreRef, inView } = useInView();
-
-  // Load total counts
-  useEffect(() => {
-    const loadCounts = async () => {
-      const counts = await getChapterCounts(novelId);
-      setChapterCounts(counts);
-    };
-    loadCounts();
-  }, [novelId]);
-
-  // Initial load of chapters
-  useEffect(() => {
-    const loadInitialChapters = async () => {
-      // Only load if we have no chapters and we're not already loading
-      if (!isLoading && (!initialChapters || initialChapters.length === 0) && chapters.length === 0) {
-        setIsLoading(true);
-        try {
-          const result = await getChaptersForList({
-            novelId,
-            page: 1,
-            userId: userProfile?.id
-          });
-          setChapters(result.chapters);
-          setHasMore(result.chapters.length === 50);
-        } catch (error) {
-          console.error('Error loading initial chapters:', error);
-        } finally {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    loadInitialChapters();
-  }, [novelId, userProfile?.id, initialChapters, chapters.length, isLoading]);
-
-  const loadMoreChapters = useCallback(async () => {
-    if (isLoading || !hasMore) return;
-
+  const loadChapters = useCallback(async (pageNum: number = 1) => {
+    if (isLoading) return;
     setIsLoading(true);
+
     try {
-      const nextPage = page + 1;
       const result = await getChaptersForList({
         novelId,
-        page: nextPage,
-        userId: userProfile?.id
+        page: pageNum,
+        userId: userProfile?.id,
+        showAdvanced: showAdvancedChapters,
+        volumeId: showAllChapters ? null : selectedVolumeId
       });
 
-      if (result.chapters.length === 0) {
-        setHasMore(false);
-      } else {
-        // Use a Set to track unique chapter IDs and prevent duplicates
-        setChapters(prev => {
-          const existingIds = new Set(prev.map(ch => ch.id));
-          const newChapters = result.chapters.filter(ch => !existingIds.has(ch.id));
-          return [...prev, ...newChapters];
-        });
-        setPage(nextPage);
-        setHasMore(result.chapters.length === 50);
-      }
+      setChapters(result.chapters);
+      setChapterCounts(result.counts);
+      setCurrentPage(result.currentPage);
+      setTotalPages(result.totalPages);
     } catch (error) {
-      console.error('Error loading more chapters:', error);
+      console.error('Error loading chapters:', error);
     } finally {
       setIsLoading(false);
     }
-  }, [isLoading, hasMore, page, novelId, userProfile?.id]);
+  }, [novelId, userProfile?.id, showAdvancedChapters, selectedVolumeId, showAllChapters]);
 
+  // Initial load
   useEffect(() => {
-    if (inView && !isLoading) {
-      loadMoreChapters();
+    if (!initialChapters || initialChapters.length === 0) {
+      loadChapters(1);
+    } else {
+      // Set initial counts from props
+      setChapterCounts({
+        regularCount: initialChapters.filter(ch => !ch.publish_at || new Date(ch.publish_at) <= new Date()).length,
+        advancedCount: initialChapters.filter(ch => ch.publish_at && new Date(ch.publish_at) > new Date()).length,
+        total: initialChapters.length
+      });
     }
-  }, [inView, isLoading, loadMoreChapters]);
+  }, [loadChapters, initialChapters]);
 
-  const { advancedChapters, regularChapters } = useMemo(() => {
-    if (!chapters || chapters.length === 0) {
-      return {
-        advancedChapters: [],
-        regularChapters: []
-      };
-    }
+  // Handle volume or advanced chapter toggle
+  useEffect(() => {
+    setCurrentPage(1);
+    loadChapters(1);
+  }, [showAdvancedChapters, selectedVolumeId, showAllChapters, loadChapters]);
 
-    const now = new Date();
-    return chapters.reduce((acc, chapter) => {
-      if (!chapter) return acc;
-      
-      // Advanced chapters are those with a future publish date
-      const publishDate = chapter.publish_at ? new Date(chapter.publish_at) : null;
-      if (publishDate && publishDate > now) {
-        acc.advancedChapters.push(chapter);
-      } else {
-        acc.regularChapters.push(chapter);
+  const handlePageChange = useCallback((newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages && newPage !== currentPage) {
+      loadChapters(newPage);
+      // Scroll to top of the list
+      const listElement = document.querySelector('.chapter-list-grid');
+      if (listElement) {
+        listElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
-      return acc;
-    }, { advancedChapters: [] as ChapterListItem[], regularChapters: [] as ChapterListItem[] });
-  }, [chapters]);
-
-  // Debug log to check chapters distribution
-  useEffect(() => {
-    console.log('Advanced Chapters:', advancedChapters.length);
-    console.log('Regular Chapters:', regularChapters.length);
-    console.log('Show Advanced:', showAdvancedChapters);
-  }, [advancedChapters.length, regularChapters.length, showAdvancedChapters]);
-
-  const currentChapters = useMemo(() => {
-    const chaptersToShow = showAdvancedChapters ? advancedChapters : regularChapters;
-    console.log('Chapters to show:', chaptersToShow.length);
-    
-    if (showAllChapters || !selectedVolumeId) {
-      return chaptersToShow.sort((a, b) => {
-        if (a.chapter_number !== b.chapter_number) {
-          return a.chapter_number - b.chapter_number;
-        }
-        const partA = a.part_number || 0;
-        const partB = b.part_number || 0;
-        return partA - partB;
-      });
     }
-    return chaptersToShow
-      .filter(chapter => chapter.volume_id === selectedVolumeId)
-      .sort((a, b) => {
-        if (a.chapter_number !== b.chapter_number) {
-          return a.chapter_number - b.chapter_number;
-        }
-        const partA = a.part_number || 0;
-        const partB = b.part_number || 0;
-        return partA - partB;
-      });
-  }, [selectedVolumeId, showAdvancedChapters, advancedChapters, regularChapters, showAllChapters]);
+  }, [currentPage, totalPages, loadChapters]);
 
-  const renderChapter = (chapter: ChapterListItem) => (
-    <div key={chapter.id} className="w-full h-10 flex items-center px-4">
-      <ChapterListItemComponent
-        chapter={{
-          ...chapter,
-          novel_id: novelId,
-          content: '',
-          created_at: '',
-          slug: '',
-          author_profile_id: novelAuthorId
-        }}
-        novelSlug={novelSlug}
-        userProfile={userProfile}
-        isAuthenticated={isAuthenticated}
-        novelAuthorId={novelAuthorId}
-      />
+  const renderChapter = useCallback((chapter: ChapterListItem) => (
+    <div key={chapter.id} className="w-full min-h-[2.5rem] flex items-center px-4 border-b border-border last:border-b-0 md:border-none">
+      <div className="w-full">
+        <ChapterListItemComponent
+          chapter={{
+            ...chapter,
+            novel_id: novelId,
+            content: '',
+            created_at: '',
+            slug: '',
+            author_profile_id: novelAuthorId
+          }}
+          novelSlug={novelSlug}
+          userProfile={userProfile}
+          isAuthenticated={isAuthenticated}
+          novelAuthorId={novelAuthorId}
+        />
+      </div>
     </div>
-  );
+  ), [novelId, novelSlug, userProfile, isAuthenticated, novelAuthorId]);
+
+  const renderPagination = useCallback(() => {
+    const pages = [];
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(
+        <button
+          key={i}
+          onClick={() => handlePageChange(i)}
+          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors
+            ${currentPage === i
+              ? 'bg-primary text-primary-foreground'
+              : 'hover:bg-accent text-muted-foreground hover:text-foreground'
+            }`}
+          disabled={isLoading}
+        >
+          {i}
+        </button>
+      );
+    }
+
+    return (
+      <div className="flex items-center justify-center gap-2 py-4 col-span-2">
+        <button
+          onClick={() => handlePageChange(currentPage - 1)}
+          disabled={currentPage === 1 || isLoading}
+          className="p-1.5 rounded-lg hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
+          aria-label="Previous page"
+        >
+          <Icon icon="solar:arrow-left-linear" className="w-4 h-4" />
+        </button>
+        {startPage > 1 && (
+          <>
+            <button
+              onClick={() => handlePageChange(1)}
+              className="px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-accent text-muted-foreground hover:text-foreground"
+              disabled={isLoading}
+            >
+              1
+            </button>
+            {startPage > 2 && <span className="text-muted-foreground">...</span>}
+          </>
+        )}
+        {pages}
+        {endPage < totalPages && (
+          <>
+            {endPage < totalPages - 1 && <span className="text-muted-foreground">...</span>}
+            <button
+              onClick={() => handlePageChange(totalPages)}
+              className="px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-accent text-muted-foreground hover:text-foreground"
+              disabled={isLoading}
+            >
+              {totalPages}
+            </button>
+          </>
+        )}
+        <button
+          onClick={() => handlePageChange(currentPage + 1)}
+          disabled={currentPage === totalPages || isLoading}
+          className="p-1.5 rounded-lg hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
+          aria-label="Next page"
+        >
+          <Icon icon="solar:arrow-right-linear" className="w-4 h-4" />
+        </button>
+      </div>
+    );
+  }, [currentPage, totalPages, handlePageChange, isLoading]);
 
   const selectedVolume = volumes.find(v => v.id === selectedVolumeId);
 
@@ -192,11 +193,12 @@ export const ChapterList = ({
           <div className="flex items-center gap-2 min-w-full">
             <button
               onClick={() => setShowAdvancedChapters(false)}
+              disabled={isLoading}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-2
                 ${!showAdvancedChapters 
                   ? 'bg-primary text-primary-foreground' 
                   : 'hover:bg-accent text-muted-foreground hover:text-foreground'
-                }`}
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
             >
               <Icon icon="solar:book-linear" className="w-4 h-4" />
               Regular Chapters
@@ -207,11 +209,12 @@ export const ChapterList = ({
             {chapterCounts.advancedCount > 0 && (
               <button
                 onClick={() => setShowAdvancedChapters(true)}
+                disabled={isLoading}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-2
                   ${showAdvancedChapters 
                     ? 'bg-primary text-primary-foreground' 
                     : 'hover:bg-accent text-muted-foreground hover:text-foreground'
-                  }`}
+                  } disabled:opacity-50 disabled:cursor-not-allowed`}
               >
                 <Icon icon="solar:crown-linear" className="w-4 h-4" />
                 Advanced Chapters
@@ -232,36 +235,41 @@ export const ChapterList = ({
                   setShowAllChapters(true);
                   setSelectedVolumeId(null);
                 }}
+                disabled={isLoading}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors
                   ${showAllChapters 
                     ? 'bg-primary text-primary-foreground' 
                     : 'hover:bg-accent text-muted-foreground hover:text-foreground'
-                  }`}
+                  } disabled:opacity-50 disabled:cursor-not-allowed`}
               >
                 All Chapters
                 <span className="ml-2 text-xs">
-                  ({currentChapters.length})
+                  ({chapterCounts.total})
                 </span>
               </button>
-              {volumes.map(volume => (
-                <button
-                  key={volume.id}
-                  onClick={() => {
-                    setSelectedVolumeId(volume.id);
-                    setShowAllChapters(false);
-                  }}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors
-                    ${selectedVolumeId === volume.id && !showAllChapters
-                      ? 'bg-primary text-primary-foreground' 
-                      : 'hover:bg-accent text-muted-foreground hover:text-foreground'
-                    }`}
-                >
-                  Volume {volume.volume_number}{volume.title ? `: ${volume.title}` : ''}
-                  <span className="ml-2 text-xs">
-                    ({currentChapters.filter(c => c.volume_id === volume.id).length})
-                  </span>
-                </button>
-              ))}
+              {volumes.map(volume => {
+                const volumeChapters = chapters.filter(c => c.volume_id === volume.id);
+                return (
+                  <button
+                    key={volume.id}
+                    onClick={() => {
+                      setSelectedVolumeId(volume.id);
+                      setShowAllChapters(false);
+                    }}
+                    disabled={isLoading}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors
+                      ${selectedVolumeId === volume.id && !showAllChapters
+                        ? 'bg-primary text-primary-foreground' 
+                        : 'hover:bg-accent text-muted-foreground hover:text-foreground'
+                      } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    Volume {volume.volume_number}{volume.title ? `: ${volume.title}` : ''}
+                    <span className="ml-2 text-xs">
+                      ({volumeChapters.length})
+                    </span>
+                  </button>
+                );
+              })}
             </div>
 
             {/* Volume Description */}
@@ -276,29 +284,18 @@ export const ChapterList = ({
         )}
 
         {/* Chapter List */}
-        <div className="grid grid-cols-1 md:grid-cols-2">
-          {currentChapters.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 chapter-list-grid divide-y divide-border md:divide-y-0">
+          {isLoading ? (
+            <div className="col-span-2 py-8 text-center">
+              <Icon icon="solar:spinner-line-duotone" className="w-8 h-8 mx-auto animate-spin" />
+              <p className="mt-2 text-sm text-muted-foreground">Loading chapters...</p>
+            </div>
+          ) : chapters.length > 0 ? (
             <>
-              {currentChapters.map(chapter => (
-                <div 
-                  key={chapter.id} 
-                  className="h-10"
-                >
-                  {renderChapter(chapter)}
-                </div>
-              ))}
-              {hasMore && (
-                <div 
-                  ref={loadMoreRef} 
-                  className="col-span-2 py-4 text-center"
-                >
-                  {isLoading ? (
-                    <Icon icon="solar:spinner-line-duotone" className="w-6 h-6 animate-spin" />
-                  ) : (
-                    <span className="text-sm text-muted-foreground">Loading more chapters...</span>
-                  )}
-                </div>
-              )}
+              <div className="col-span-2 grid grid-cols-1 md:grid-cols-2 md:divide-x divide-border">
+                {chapters.map(renderChapter)}
+              </div>
+              {renderPagination()}
             </>
           ) : (
             <div className="col-span-2 py-8 text-center text-muted-foreground">
