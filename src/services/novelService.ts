@@ -306,12 +306,15 @@ export async function getNovels(options: GetNovelsOptions = {}): Promise<{ novel
   }
 }
 
-export async function getNovelsWithRecentUnlocks(limit: number = 10): Promise<Novel[]> {
+export async function getNovelsWithRecentUnlocks(
+  limit: number = 12,
+  offset: number = 0
+): Promise<{ novels: Novel[]; total: number }> {
   try {
     const now = new Date().toISOString();
     
     // Get novels with chapters that were recently unlocked (publish date just passed)
-    const { data: novels, error } = await supabase
+    const { data: novels, error, count } = await supabase
       .from('novels')
       .select(`
         *,
@@ -323,24 +326,27 @@ export async function getNovelsWithRecentUnlocks(limit: number = 10): Promise<No
           publish_at,
           coins
         )
-      `)
+      `, { count: 'exact' })
       .lt('chapters.publish_at', now) // Only get chapters that are now published
       .gt('chapters.publish_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()) // Within last 7 days
       .gt('chapters.coins', 0) // Only chapters that required coins
-      .order('chapters.publish_at', { ascending: false })
-      .limit(limit);
+      .order('publish_at', { ascending: false, foreignTable: 'chapters' })
+      .range(offset, offset + limit - 1);
 
     if (error) throw error;
 
     // Process and return novels
-    return (novels || []).map(novel => ({
-      ...novel,
-      coverImageUrl: novel.cover_image_url,
-      slug: novel.slug
-    }));
+    return {
+      novels: (novels || []).map(novel => ({
+        ...novel,
+        coverImageUrl: novel.cover_image_url,
+        slug: novel.slug
+      })),
+      total: count || 0
+    };
   } catch (error) {
     console.error('Error fetching novels with recent unlocks:', error);
-    return [];
+    return { novels: [], total: 0 };
   }
 }
 
