@@ -206,6 +206,29 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
     }
   };
 
+  const handleCoverDelete = async () => {
+    try {
+      const { error } = await supabase
+        .from('novels')
+        .update({
+          cover_image_url: null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', novel.id);
+
+      if (error) throw error;
+      
+      // Update both the novel and local state
+      novel.coverImageUrl = undefined;
+      setCoverImageUrl('');
+      
+      toast.success('Cover image deleted successfully');
+    } catch (error) {
+      console.error('Error deleting cover:', error);
+      toast.error('Failed to delete cover image');
+    }
+  };
+
   const handleDeleteChapter = async (chapterId: string) => {
     try {
       await authorChapterService.deleteChapter(chapterId, novel.id, userId || '');
@@ -262,6 +285,7 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
               <NovelCoverImage 
                 coverImageUrl={coverImageUrl}
                 onUpdate={handleCoverUpdate}
+                onDelete={handleCoverDelete}
               />
               <div className="flex flex-col flex-grow h-[270px]">
                 <div>
