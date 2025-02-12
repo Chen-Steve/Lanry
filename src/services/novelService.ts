@@ -384,3 +384,39 @@ export async function getNovelsWithAdvancedChapters(): Promise<Novel[]> {
     return [];
   }
 }
+
+export async function getTopNovels(): Promise<Novel[]> {
+  try {
+    const { data, error } = await supabase
+      .from('novels')
+      .select(`
+        *,
+        translator:author_profile_id (
+          id,
+          username,
+          kofi_url,
+          patreon_url,
+          custom_url,
+          custom_url_label,
+          author_bio
+        ),
+        categories:categories_on_novels (
+          category:category_id (
+            id,
+            name,
+            created_at,
+            updated_at
+          )
+        )
+      `)
+      .order('views', { ascending: false })
+      .limit(5);
+
+    if (error) throw error;
+
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching top novels:', error);
+    return [];
+  }
+}
