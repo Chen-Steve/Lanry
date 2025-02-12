@@ -56,14 +56,21 @@ export function ChapterListItem({
 
           // Check unlock status if not translator
           if (!isTranslator && !isTranslatorCreated) {
-            const { data: existingUnlock, error } = await supabase
+            let query = supabase
               .from('chapter_unlocks')
               .select('id')
               .eq('profile_id', userProfile.id)
               .eq('novel_id', chapter.novel_id)
-              .eq('chapter_number', chapter.chapter_number)
-              .eq('part_number', chapter.part_number)
-              .maybeSingle();
+              .eq('chapter_number', chapter.chapter_number);
+
+            // Handle part_number separately based on whether it's null
+            if (chapter.part_number === null) {
+              query = query.is('part_number', null);
+            } else {
+              query = query.eq('part_number', chapter.part_number);
+            }
+
+            const { data: existingUnlock, error } = await query.maybeSingle();
 
             if (error) {
               console.error('Error checking unlock status:', error);
@@ -168,14 +175,21 @@ export function ChapterListItem({
     try {
       setIsUnlocking(true);
 
-      const { data: existingUnlock, error } = await supabase
+      let query = supabase
         .from('chapter_unlocks')
         .select('id')
         .eq('profile_id', userProfile.id)
         .eq('novel_id', chapter.novel_id)
-        .eq('chapter_number', chapter.chapter_number)
-        .eq('part_number', chapter.part_number)
-        .maybeSingle();
+        .eq('chapter_number', chapter.chapter_number);
+
+      // Handle part_number separately based on whether it's null
+      if (chapter.part_number === null) {
+        query = query.is('part_number', null);
+      } else {
+        query = query.eq('part_number', chapter.part_number);
+      }
+
+      const { data: existingUnlock, error } = await query.maybeSingle();
 
       if (error) {
         console.error('Error checking unlock status:', error);
