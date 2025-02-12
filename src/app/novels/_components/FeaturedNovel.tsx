@@ -7,9 +7,11 @@ import NovelCover from './NovelCover';
 import { useEffect, useState } from 'react';
 import { formatText } from '@/lib/textFormatting';
 
-const FeaturedNovel = () => {
-  const [novels, setNovels] = useState<Novel[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+interface FeaturedNovelProps {
+  novels: Novel[];
+}
+
+const FeaturedNovel = ({ novels }: FeaturedNovelProps) => {
   const [featuredIndex, setFeaturedIndex] = useState(0);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
@@ -17,23 +19,6 @@ const FeaturedNovel = () => {
 
   // Minimum swipe distance in pixels
   const minSwipeDistance = 50;
-
-  useEffect(() => {
-    const fetchTopNovels = async () => {
-      try {
-        const response = await fetch('/api/novels/top');
-        if (!response.ok) throw new Error('Failed to fetch top novels');
-        const data = await response.json();
-        setNovels(data);
-      } catch (err) {
-        console.error('Error fetching top novels:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchTopNovels();
-  }, []);
 
   useEffect(() => {
     // Auto-rotate featured novels every 5 seconds if not paused
@@ -85,14 +70,6 @@ const FeaturedNovel = () => {
       );
     }
   };
-
-  if (isLoading) {
-    return (
-      <div className="col-span-2 sm:col-span-2 md:col-span-3 lg:col-span-3 flex items-center justify-center min-h-[200px] sm:min-h-[280px] bg-card rounded-lg">
-        <Icon icon="eos-icons:loading" className="w-8 h-8 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
 
   if (novels.length === 0) return null;
 
