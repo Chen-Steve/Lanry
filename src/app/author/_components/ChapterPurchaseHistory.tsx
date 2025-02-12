@@ -8,6 +8,7 @@ interface RawPurchaseRecord {
   created_at: string;
   cost: number;
   chapter_number: number;
+  part_number?: number | null;
   profiles: {
     username: string;
   };
@@ -21,6 +22,7 @@ interface PurchaseRecord {
   created_at: string;
   cost: number;
   chapter_number: number;
+  part_number?: number | null;
   profile: {
     username: string;
   };
@@ -77,6 +79,7 @@ export default function ChapterPurchaseHistory() {
             created_at,
             cost,
             chapter_number,
+            part_number,
             profile_id,
             novel_id,
             profiles:profile_id(username),
@@ -92,6 +95,7 @@ export default function ChapterPurchaseHistory() {
           created_at: item.created_at,
           cost: item.cost,
           chapter_number: item.chapter_number,
+          part_number: item.part_number,
           profile: {
             username: item.profiles?.username || 'Unknown User'
           },
@@ -179,6 +183,7 @@ export default function ChapterPurchaseHistory() {
                     </span>
                     <span className="text-xs px-1.5 py-0.5 bg-secondary/50 rounded shrink-0">
                       Ch.{purchase.chapter_number}
+                      {purchase.part_number && `.${purchase.part_number}`}
                     </span>
                   </div>
                 </div>

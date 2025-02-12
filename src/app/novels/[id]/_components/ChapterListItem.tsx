@@ -62,6 +62,7 @@ export function ChapterListItem({
               .eq('profile_id', userProfile.id)
               .eq('novel_id', chapter.novel_id)
               .eq('chapter_number', chapter.chapter_number)
+              .eq('part_number', chapter.part_number)
               .maybeSingle();
 
             if (error) {
@@ -94,12 +95,13 @@ export function ChapterListItem({
     };
 
     checkAccess();
-  }, [userProfile?.id, chapter.novel_id, chapter.chapter_number]);
+  }, [userProfile?.id, chapter.novel_id, chapter.chapter_number, chapter.part_number]);
 
   const unlockChapter = async (
     novelId: string,
     authorId: string,
     chapterNumber: number,
+    partNumber: number | null | undefined,
     userProfileId: string
   ) => {
     try {
@@ -109,6 +111,7 @@ export function ChapterListItem({
           p_novel_id: novelId,
           p_author_id: authorId,
           p_chapter_number: chapterNumber,
+          p_part_number: partNumber,
           p_user_id: userProfileId,
           p_cost: chapter.coins
         }
@@ -171,6 +174,7 @@ export function ChapterListItem({
         .eq('profile_id', userProfile.id)
         .eq('novel_id', chapter.novel_id)
         .eq('chapter_number', chapter.chapter_number)
+        .eq('part_number', chapter.part_number)
         .maybeSingle();
 
       if (error) {
@@ -193,7 +197,13 @@ export function ChapterListItem({
               <button
                 onClick={async () => {
                   toast.dismiss(t.id);
-                  await unlockChapter(chapter.novel_id, novelAuthorId, chapter.chapter_number, userProfile.id);
+                  await unlockChapter(
+                    chapter.novel_id, 
+                    novelAuthorId, 
+                    chapter.chapter_number,
+                    chapter.part_number,
+                    userProfile.id
+                  );
                 }}
                 className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
               >
