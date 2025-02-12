@@ -414,7 +414,20 @@ export async function getTopNovels(): Promise<Novel[]> {
 
     if (error) throw error;
 
-    return data || [];
+    return (data || []).map(novel => ({
+      ...novel,
+      coverImageUrl: novel.cover_image_url,
+      translator: novel.translator ? {
+        username: novel.translator.username,
+        profile_id: novel.translator.id,
+        kofiUrl: novel.translator.kofi_url,
+        patreonUrl: novel.translator.patreon_url,
+        customUrl: novel.translator.custom_url,
+        customUrlLabel: novel.translator.custom_url_label,
+        author_bio: novel.translator.author_bio
+      } : null,
+      categories: novel.categories?.map((item: { category: NovelCategory }) => item.category) || []
+    }));
   } catch (error) {
     console.error('Error fetching top novels:', error);
     return [];
