@@ -33,42 +33,63 @@ export function ChapterListItem({
     const checkAccess = async () => {
       if (!userProfile?.id || !chapter.novel_id) return;
       
-      try {
-        // Check if user is translator or created the novel as translator
-        const { data: novel, error: novelError } = await supabase
-          .from('novels')
-          .select('translator_id, author_profile_id, is_author_name_custom')
-          .eq('id', chapter.novel_id)
-          .single();
+      let retryCount = 0;
+      const maxRetries = 3;
+      const retryDelay = 1000; // 1 second
 
-        if (novelError) {
-          console.error('Error checking translator status:', novelError);
-          return;
-        }
+      while (retryCount < maxRetries) {
+        try {
+          const { data: novel, error: novelError } = await supabase
+            .from('novels')
+            .select('translator_id, author_profile_id, is_author_name_custom')
+            .eq('id', chapter.novel_id)
+            .single();
 
-        const isTranslator = novel.translator_id === userProfile.id;
-        const isTranslatorCreated = novel.author_profile_id === userProfile.id && novel.is_author_name_custom === true;
-        setHasTranslatorAccess(isTranslator || isTranslatorCreated);
-
-        // Check unlock status if not translator
-        if (!isTranslator && !isTranslatorCreated) {
-          const { data: existingUnlock, error } = await supabase
-            .from('chapter_unlocks')
-            .select('id')
-            .eq('profile_id', userProfile.id)
-            .eq('novel_id', chapter.novel_id)
-            .eq('chapter_number', chapter.chapter_number)
-            .maybeSingle();
-
-          if (error) {
-            console.error('Error checking unlock status:', error);
-            return;
+          if (novelError) {
+            console.error('Error checking translator status:', novelError);
+            throw novelError;
           }
 
-          setIsUnlocked(!!existingUnlock);
+          const isTranslator = novel.translator_id === userProfile.id;
+          const isTranslatorCreated = novel.author_profile_id === userProfile.id && novel.is_author_name_custom === true;
+          setHasTranslatorAccess(isTranslator || isTranslatorCreated);
+
+          // Check unlock status if not translator
+          if (!isTranslator && !isTranslatorCreated) {
+            const { data: existingUnlock, error } = await supabase
+              .from('chapter_unlocks')
+              .select('id')
+              .eq('profile_id', userProfile.id)
+              .eq('novel_id', chapter.novel_id)
+              .eq('chapter_number', chapter.chapter_number)
+              .maybeSingle();
+
+            if (error) {
+              console.error('Error checking unlock status:', error);
+              throw error;
+            }
+
+            setIsUnlocked(!!existingUnlock);
+          }
+          
+          // If we get here, everything worked
+          break;
+          
+        } catch (error) {
+          retryCount++;
+          console.error(`Attempt ${retryCount} failed:`, error);
+          
+          if (retryCount === maxRetries) {
+            console.error('Max retries reached for checkAccess');
+            // Set default state - assume no access
+            setHasTranslatorAccess(false);
+            setIsUnlocked(false);
+            return;
+          }
+          
+          // Wait before retrying
+          await new Promise(resolve => setTimeout(resolve, retryDelay * retryCount));
         }
-      } catch (error) {
-        console.error('Error in checkAccess:', error);
       }
     };
 

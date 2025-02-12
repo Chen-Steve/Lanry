@@ -424,6 +424,18 @@ export async function applyAutoReleaseSchedule(
 
   let publishAt: Date;
   const now = new Date();
+  
+  // Function to adjust time to target hour (in local time)
+  const adjustToTargetHour = (date: Date, targetHour: number = 5) => {
+    const adjustedDate = new Date(date);
+    adjustedDate.setHours(targetHour, 0, 0, 0);
+    return adjustedDate;
+  };
+
+  // Function to convert local time to UTC for storage
+  const convertToUTCString = (localDate: Date) => {
+    return new Date(localDate.getTime() - localDate.getTimezoneOffset() * 60000).toISOString();
+  };
 
   // Check if using publishing days from localStorage
   const savedUsePublishingDays = localStorage.getItem(`usePublishingDays_${novelId}`);
@@ -459,7 +471,9 @@ export async function applyAutoReleaseSchedule(
   } else {
     // Use the original interval-based logic
     if (baseDate) {
-      publishAt = new Date(baseDate);
+      const localBaseDate = new Date(baseDate);
+      // Ensure the time is set to 5 AM local time
+      publishAt = adjustToTargetHour(localBaseDate);
       publishAt.setDate(publishAt.getDate() + novel.auto_release_interval);
     } else {
       // First, try to find the latest advanced chapter
@@ -474,18 +488,23 @@ export async function applyAutoReleaseSchedule(
 
       if (advancedError) throw advancedError;
 
-      let baseDate: Date;
-      
       if (advancedChapters && advancedChapters.length > 0) {
-        baseDate = new Date(advancedChapters[0].publish_at);
+        // Convert UTC database time to local time
+        const lastPublishDate = new Date(advancedChapters[0].publish_at);
+        
+        // Calculate next date while preserving 5 AM local time
+        publishAt = new Date(lastPublishDate);
+        publishAt.setDate(publishAt.getDate() + novel.auto_release_interval);
+        publishAt = adjustToTargetHour(publishAt);
       } else {
-        baseDate = now;
+        // If no advanced chapters exist, start from tomorrow at 5 AM local time
+        publishAt = adjustToTargetHour(new Date(now.getTime() + 24 * 60 * 60 * 1000));
       }
-      
-      publishAt = new Date(baseDate);
-      publishAt.setDate(publishAt.getDate() + novel.auto_release_interval);
     }
   }
+
+  // Convert local 5 AM time to UTC for storage
+  const publishAtISO = convertToUTCString(publishAt);
 
   // Update the chapter with the calculated publish date and price
   interface ChapterUpdateData {
@@ -494,7 +513,7 @@ export async function applyAutoReleaseSchedule(
   }
 
   const updateData: ChapterUpdateData = {
-    publish_at: publishAt.toISOString()
+    publish_at: publishAtISO
   };
 
   if (novel.fixed_price_enabled) {
@@ -508,7 +527,7 @@ export async function applyAutoReleaseSchedule(
 
   if (updateError) throw updateError;
 
-  return publishAt; // Return the publish date for sequential scheduling
+  return publishAt;
 }
 
 async function verifyNovelAuthor(novelId: string, userId: string) {

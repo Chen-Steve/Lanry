@@ -1,7 +1,7 @@
 import { UserProfile } from '@/types/database';
 import { Volume } from '@/types/novel';
 import { ChapterListItem as ChapterListItemComponent } from './ChapterListItem';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Icon } from '@iconify/react';
 import { getChaptersForList, ChapterListItem, ChapterCounts } from '@/services/chapterService';
 
@@ -32,6 +32,23 @@ export const ChapterList = ({
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Calculate volume-specific counts for all chapters (both regular and advanced)
+  const volumeCounts = useMemo(() => {
+    const counts = new Map<string, { total: number, regular: number, advanced: number }>();
+    
+    volumes.forEach(volume => {
+      const volumeChapters = initialChapters.filter(ch => ch.volume_id === volume.id);
+      const now = new Date();
+      
+      counts.set(volume.id, {
+        total: volumeChapters.length,
+        regular: volumeChapters.filter(ch => !ch.publish_at || new Date(ch.publish_at) <= now).length,
+        advanced: volumeChapters.filter(ch => ch.publish_at && new Date(ch.publish_at) > now).length
+      });
+    });
+    return counts;
+  }, [volumes, initialChapters]);
 
   const loadChapters = useCallback(async (pageNum: number = 1) => {
     if (isLoading) return;
@@ -248,7 +265,7 @@ export const ChapterList = ({
                 </span>
               </button>
               {volumes.map(volume => {
-                const volumeChapters = chapters.filter(c => c.volume_id === volume.id);
+                const volumeCount = volumeCounts.get(volume.id) || { total: 0, regular: 0, advanced: 0 };
                 return (
                   <button
                     key={volume.id}
@@ -265,7 +282,7 @@ export const ChapterList = ({
                   >
                     Volume {volume.volume_number}{volume.title ? `: ${volume.title}` : ''}
                     <span className="ml-2 text-xs">
-                      ({volumeChapters.length})
+                      ({volumeCount.total})
                     </span>
                   </button>
                 );
