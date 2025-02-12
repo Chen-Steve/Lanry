@@ -2,7 +2,7 @@
 
 import { Novel } from '@/types/database';
 import { useEffect, useState } from 'react';
-import { getNovelsWithAdvancedChapters, getNovelsWithRecentUnlocks } from '@/services/novelService';
+import { getNovelsWithAdvancedChapters, getNovelsWithRecentUnlocks, getTopNovels } from '@/services/novelService';
 import LoadingGrid from './LoadingGrid';
 import AdvancedChapters from './AdvancedChapters';
 import NewReleases from './RecentReleases';
@@ -32,10 +32,10 @@ const NovelListing = () => {
         setNovels(novelsWithUnlocks);
         setTotalNovels(total);
         
-        // Only set featured novels on first page load
+        // Only fetch featured novels on first page load
         if (currentPage === 1) {
-          // Get top 5 novels with recent unlocks
-          setFeaturedNovels(novelsWithUnlocks.slice(0, 5));
+          const topNovels = await getTopNovels();
+          setFeaturedNovels(topNovels);
         }
       } catch (error) {
         console.error('Error fetching novels:', error);
