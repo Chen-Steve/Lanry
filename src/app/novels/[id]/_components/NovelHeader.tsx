@@ -270,71 +270,6 @@ export const NovelHeader = ({
               </div>
             </div>
 
-            {/* Mobile Stats */}
-            <div className="sm:hidden flex flex-col flex-1">
-              <div className="flex items-center gap-1.5 mt-2">
-                <div className="relative flex items-center px-1.5 py-1 bg-gray-100 dark:bg-gray-800/50 rounded-lg">
-                  <button
-                    ref={ratingButtonRef}
-                    className="flex items-center gap-1 transition-colors hover:text-amber-400"
-                    onClick={() => setShowRatingPopup(!showRatingPopup)}
-                    aria-label="Rate novel"
-                  >
-                    <Icon 
-                      icon="pepicons-print:star-filled"
-                      className="text-base text-amber-400"
-                    />
-                    <span className="text-gray-700 dark:text-gray-200 font-medium text-xs">{localRating.toFixed(1)}</span>
-                    <span className="text-gray-500 dark:text-gray-400 text-xs">({localRatingCount})</span>
-                  </button>
-                  {showRatingPopup && (
-                    <RatingPopup
-                      onRate={handleRate}
-                      currentRating={localUserRating}
-                      isRating={isRating}
-                    />
-                  )}
-                </div>
-              </div>
-
-              {/* Mobile Action Buttons */}
-              <div className="flex items-center gap-2 mt-auto">
-                {firstChapterNumber !== undefined && (
-                  <Link 
-                    href={`/novels/${novelSlug}/c${firstChapterNumber}`}
-                    className="flex-1 inline-flex items-center justify-center gap-1 px-4 h-10 rounded-lg bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 transition-colors text-white font-medium"
-                  >
-                    <Icon icon="pepicons-print:book-open" className="text-xl" />
-                    <span className="text-sm">Read Now</span>
-                  </Link>
-                )}
-                <button 
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (!isBookmarkLoading) {
-                      onBookmarkClick();
-                    }
-                  }}
-                  type="button"
-                  disabled={isBookmarkLoading}
-                  aria-label={isBookmarked ? "Remove Bookmark" : "Add Bookmark"}
-                  className={`inline-flex items-center justify-center w-10 h-10 rounded-lg transition-colors touch-manipulation ${
-                    !isAuthenticated 
-                      ? 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-800/50 dark:hover:bg-gray-700/50'
-                      : isBookmarked 
-                        ? 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-800/50 dark:hover:bg-gray-700/50'
-                        : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-800/50 dark:hover:bg-gray-700/50'
-                  } ${isBookmarkLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                  <Icon 
-                    icon={isBookmarked ? "pepicons-print:checkmark" : "pepicons-print:bookmark"} 
-                    className={`text-[20px] text-gray-700 dark:text-gray-200 flex-shrink-0 ${isBookmarkLoading ? 'animate-pulse' : ''}`}
-                  />
-                </button>
-              </div>
-            </div>
-
             {/* Desktop Stats and Tags */}
             <div className="hidden sm:flex flex-col gap-2 flex-1">
               {/* Desktop Tags */}
@@ -373,13 +308,13 @@ export const NovelHeader = ({
               </div>
             </div>
 
-            {/* Desktop Action Buttons and Stats */}
-            <div className="hidden sm:flex items-center gap-3 mt-4">
-              <div className="flex items-center gap-2">
+            {/* Action Buttons and Stats - Unified for both mobile and desktop */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mt-4">
+              <div className="flex items-center gap-2 w-full sm:w-auto">
                 {firstChapterNumber !== undefined && (
                   <Link 
                     href={`/novels/${novelSlug}/c${firstChapterNumber}`}
-                    className="inline-flex items-center justify-center gap-1 px-4 h-10 rounded-lg bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 transition-colors text-white font-medium"
+                    className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1 px-4 h-10 rounded-lg bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 transition-colors text-white font-medium"
                   >
                     <Icon icon="pepicons-print:book-open" className="text-xl" />
                     <span className="text-sm">Read Now</span>
@@ -411,7 +346,7 @@ export const NovelHeader = ({
                 </button>
               </div>
 
-              <div className="flex items-center gap-3 ml-auto">
+              <div className="flex items-center gap-3 sm:ml-auto">
                 <div className="flex items-center gap-3 px-2 py-1.5 bg-gray-100 dark:bg-gray-800/50 rounded-lg text-sm">
                   <StatsItem icon="pepicons-print:bookmark" value={`${bookmarkCount}`} />
                 </div>
@@ -439,32 +374,32 @@ export const NovelHeader = ({
                 </div>
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Mobile Synopsis - Full Width */}
-        <div className="sm:hidden mt-3 mb-3">
-          <NovelSynopsis
-            description={description}
-            characters={characters}
-          />
-        </div>
-
-        {/* Mobile Tags - Scrollable */}
-        <div className="sm:hidden overflow-x-auto scrollbar-hide">
-          {tags && tags.length > 0 && (
-            <div className="flex items-center gap-1.5">
-              {tags.map((tag) => (
-                <Link
-                  key={tag.id}
-                  href={`/search?tags=${tag.id}`}
-                  className="flex-none inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full transition-colors bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 whitespace-nowrap"
-                >
-                  {tag.name}
-                </Link>
-              ))}
+            {/* Mobile Synopsis - Full Width */}
+            <div className="sm:hidden mt-3 mb-3">
+              <NovelSynopsis
+                description={description}
+                characters={characters}
+              />
             </div>
-          )}
+
+            {/* Mobile Tags - Scrollable */}
+            <div className="sm:hidden overflow-x-auto scrollbar-hide">
+              {tags && tags.length > 0 && (
+                <div className="flex items-center gap-1.5">
+                  {tags.map((tag) => (
+                    <Link
+                      key={tag.id}
+                      href={`/search?tags=${tag.id}`}
+                      className="flex-none inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full transition-colors bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 whitespace-nowrap"
+                    >
+                      {tag.name}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </>

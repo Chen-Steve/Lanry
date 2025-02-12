@@ -11,6 +11,7 @@ import { track } from '@vercel/analytics';
 import { NovelContent } from '@/app/novels/[id]/_components/NovelContent';
 import AdultContentWarning from './_components/AdultContentWarning';
 import { generateUUID } from '@/lib/utils';
+import { event as gaEvent } from '@/lib/gtag';
 
 export default function NovelPage({ params }: { params: { id: string } }) {
   const { id } = params;
@@ -67,9 +68,19 @@ export default function NovelPage({ params }: { params: { id: string } }) {
         if (data) {
           setNovel(data);
           setIsBookmarked(data.isBookmarked || false);
+          
+          // Track view in Vercel Analytics
           track('novel-view', {
             novelId: id,
             novelTitle: data.title
+          });
+          
+          // Track view in Google Analytics
+          gaEvent({
+            action: 'view_novel',
+            category: 'Content',
+            label: data.title,
+            value: 1
           });
           
           // Log the view in novel_view_logs and increment the views counter
