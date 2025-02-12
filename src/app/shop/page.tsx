@@ -6,7 +6,7 @@ import { toast } from 'react-hot-toast';
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import { onApprove } from "@/services/paymentService";
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 interface CoinPackage {
   id: number;
@@ -24,6 +24,11 @@ const coinPackages: CoinPackage[] = [
 export default function ShopPage() {
   const { isAuthenticated, userId } = useAuth();
   const router = useRouter();
+  const [isClientLoaded, setIsClientLoaded] = useState(false);
+
+  useEffect(() => {
+    setIsClientLoaded(true);
+  }, []);
 
   useEffect(() => {
     // Load Coinbase Commerce script
@@ -41,6 +46,7 @@ export default function ShopPage() {
     clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID!,
     currency: "USD",
     intent: "capture",
+    enabled: isAuthenticated && isClientLoaded,
   };
 
   if (!isAuthenticated || !userId) {
