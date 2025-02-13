@@ -58,7 +58,7 @@ export async function getChapter(novelId: string, chapterNumber: number, partNum
     }
 
     // Check if chapter is published or user has unlocked it
-    const isPublished = !chapter.publish_at || new Date(chapter.publish_at) <= new Date();
+    const isPublished = !chapter.publish_at || chapter.publish_at <= new Date().toISOString();
     
     if (!isPublished && chapter.coins > 0) {
       // Check if user has unlocked this chapter
@@ -134,7 +134,7 @@ export async function getChapterNavigation(novelId: string, currentChapterNumber
     // Filter chapters that are either published, unlocked, or if user is the author
     const accessibleChapters = chapters.filter(chapter => {
       if (hasFullAccess) return true; // Author or translator can access all chapters
-      const isPublished = !chapter.publish_at || new Date(chapter.publish_at) <= new Date();
+      const isPublished = !chapter.publish_at || chapter.publish_at <= new Date().toISOString();
       const isUnlocked = userUnlocks.includes(chapter.chapter_number);
       return isPublished || isUnlocked;
     });
@@ -207,7 +207,7 @@ export async function getTotalChapters(novelId: string): Promise<number> {
 
     // Count chapters that are either published or unlocked
     const accessibleChapters = chapters.filter(chapter => {
-      const isPublished = !chapter.publish_at || new Date(chapter.publish_at) <= new Date();
+      const isPublished = !chapter.publish_at || chapter.publish_at <= new Date().toISOString();
       const isUnlocked = userUnlocks.includes(chapter.chapter_number);
       return isPublished || isUnlocked;
     });
@@ -278,120 +278,129 @@ export async function getChaptersForList({
   totalPages: number;
 }> {
   try {
+    const { data: novel, error: novelError } = await supabase
+      .from('novels')
+      .select('id, author_profile_id, translator_id, is_author_name_custom')
+      .or(`id.eq.${novelId},slug.eq.${novelId}`)
+      .single();
+
+    if (novelError || !novel) {
+      throw new Error('Novel not found');
+    }
+
+    // Check if user is author, translator, or created the novel as a translator
+    const { data: { user } } = await supabase.auth.getUser();
+    const isAuthor = user && novel.author_profile_id === user.id;
+    const isTranslator = user && novel.translator_id === user.id;
+    const isTranslatorCreated = user && novel.author_profile_id === user.id && novel.is_author_name_custom === true;
+    const hasFullAccess = isAuthor || isTranslator || isTranslatorCreated;
+
+    // Get all chapters
+    let query = supabase
+      .from('chapters')
+      .select('id, chapter_number, part_number, title, publish_at, coins, age_rating, volume_id', { count: 'exact' })
+      .eq('novel_id', novel.id);
+
+    // Get current date for filtering
     const now = new Date().toISOString();
-    
-    // Get total counts first with a separate count query
-    let countQuery = supabase
-      .from('chapters')
-      .select('*', { count: 'exact', head: true })
-      .eq('novel_id', novelId);
 
-    // Add conditional filters
-    if (volumeId !== null && volumeId !== undefined) {
-      countQuery = countQuery.eq('volume_id', volumeId);
-    }
-    
-    if (showAdvanced) {
-      countQuery = countQuery.gt('publish_at', now);
-    } else {
-      countQuery = countQuery.or(`publish_at.lte.${now},publish_at.is.null`);
-    }
+    // If user is not author/translator, filter based on advanced/regular and unlocks
+    if (!hasFullAccess) {
+      // First, get user's unlocks if authenticated
+      let unlockedChapterNumbers: number[] = [];
+      if (userId) {
+        const { data: unlocks } = await supabase
+          .from('chapter_unlocks')
+          .select('chapter_number')
+          .eq('novel_id', novel.id)
+          .eq('profile_id', userId);
 
-    const { count: totalCount } = await countQuery;
-
-    // Calculate counts for both types in a single query
-    const { data: countData } = await supabase
-      .from('chapters')
-      .select('publish_at')
-      .eq('novel_id', novelId);
-
-    const counts = countData?.reduce((acc: ChapterCounts, chapter: { publish_at: string | null }) => {
-      const isAdvanced = chapter.publish_at && new Date(chapter.publish_at) > new Date();
-      if (isAdvanced) {
-        acc.advancedCount++;
-      } else {
-        acc.regularCount++;
+        unlockedChapterNumbers = unlocks?.map(u => u.chapter_number) || [];
       }
-      return acc;
-    }, { regularCount: 0, advancedCount: 0, total: countData?.length || 0 }) || 
-    { regularCount: 0, advancedCount: 0, total: 0 };
 
-    // Calculate pagination
-    const total = totalCount || 0;
-    const totalPages = Math.ceil(total / limit);
-    const safePage = Math.min(page, totalPages || 1);
-    const offset = (safePage - 1) * limit;
+      if (showAdvanced) {
+        // Advanced chapters: future publish date AND has coins AND not unlocked
+        query = query
+          .gt('publish_at', now)
+          .gt('coins', 0);
+        
+        if (unlockedChapterNumbers.length > 0) {
+          query = query.not('chapter_number', 'in', `(${unlockedChapterNumbers.join(',')})`);
+        }
+      } else {
+        // Regular chapters: either
+        // 1. Free (no coins)
+        // 2. Published based on UTC time
+        // 3. Unlocked by the user
+        let regularCondition = `coins.is.null,coins.eq.0,publish_at.lte.${now}`;
+        
+        if (unlockedChapterNumbers.length > 0) {
+          regularCondition += `,chapter_number.in.(${unlockedChapterNumbers.join(',')})`;
+        }
+        
+        query = query.or(regularCondition);
+      }
 
-    // Get chapters with pagination
-    let chaptersQuery = supabase
-      .from('chapters')
-      .select(`
-        id,
-        chapter_number,
-        part_number,
-        title,
-        publish_at,
-        coins,
-        age_rating,
-        volume_id
-      `)
-      .eq('novel_id', novelId);
-
-    // Add conditional filters
-    if (volumeId !== null && volumeId !== undefined) {
-      chaptersQuery = chaptersQuery.eq('volume_id', volumeId);
-    }
-    
-    if (showAdvanced) {
-      chaptersQuery = chaptersQuery.gt('publish_at', now);
-    } else {
-      chaptersQuery = chaptersQuery.or(`publish_at.lte.${now},publish_at.is.null`);
+      if (volumeId) {
+        query = query.eq('volume_id', volumeId);
+      }
     }
 
-    const { data: chapters, error } = await chaptersQuery
-      .order('chapter_number', { ascending: true })
-      .order('part_number', { ascending: true, nullsFirst: true })
-      .range(offset, offset + limit - 1);
+    // Calculate total pages and offset
+    const offset = (page - 1) * limit;
+    query = query.order('chapter_number').order('part_number', { nullsFirst: true }).range(offset, offset + limit - 1);
+
+    const { data: chapters, count, error } = await query;
 
     if (error) {
-      console.error('Error fetching chapters for list:', error);
-      return { chapters: [], counts, total, currentPage: 1, totalPages: 1 };
+      throw error;
     }
 
-    // If user is authenticated, get their unlocks in a single query
-    let userUnlocks: number[] = [];
+    // Get counts for regular and advanced chapters
+    const { data: allChapters } = await supabase
+      .from('chapters')
+      .select('chapter_number, publish_at, coins')
+      .eq('novel_id', novel.id);
+
+    // Get user's unlocks if authenticated
+    let unlockedChapterNumbers: number[] = [];
     if (userId) {
       const { data: unlocks } = await supabase
         .from('chapter_unlocks')
         .select('chapter_number')
-        .eq('novel_id', novelId)
+        .eq('novel_id', novel.id)
         .eq('profile_id', userId);
-      
-      userUnlocks = unlocks?.map(u => u.chapter_number) || [];
+
+      unlockedChapterNumbers = unlocks?.map(u => u.chapter_number) || [];
     }
 
-    // Process chapters with unlock status
-    const processedChapters = chapters?.map(chapter => ({
-      ...chapter,
-      isLocked: !userUnlocks.includes(chapter.chapter_number) && chapter.coins > 0
-    })) || [];
+    const counts = {
+      regularCount: allChapters?.filter(ch => {
+        const isUnlocked = unlockedChapterNumbers.includes(ch.chapter_number);
+        return !ch.coins || ch.coins === 0 || // Free chapters
+               (!ch.publish_at || ch.publish_at <= now) || // Published chapters (UTC comparison)
+               isUnlocked; // Unlocked chapters
+      }).length || 0,
+      advancedCount: allChapters?.filter(ch => {
+        const isUnlocked = unlockedChapterNumbers.includes(ch.chapter_number);
+        return ch.publish_at && 
+               ch.publish_at > now && // Future publish date (UTC comparison)
+               ch.coins > 0 &&
+               !isUnlocked; // Not unlocked
+      }).length || 0,
+      total: allChapters?.length || 0
+    };
 
     return {
-      chapters: processedChapters,
+      chapters: chapters || [],
       counts,
-      total,
-      currentPage: safePage,
-      totalPages
+      total: count || 0,
+      currentPage: page,
+      totalPages: Math.ceil((count || 0) / limit)
     };
   } catch (error) {
-    console.error('Error fetching chapters for list:', error);
-    return { 
-      chapters: [], 
-      counts: { regularCount: 0, advancedCount: 0, total: 0 },
-      total: 0,
-      currentPage: 1,
-      totalPages: 1
-    };
+    console.error('Error getting chapters:', error);
+    throw error;
   }
 }
 

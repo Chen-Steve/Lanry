@@ -76,10 +76,40 @@ export function fromLocalDatetimeValue(localValue: string): string {
   return adjustedDate.toISOString();
 }
 
-// Check if a date string represents a future date
+// Convert a UTC date string to the user's local time for comparison
+export function toUserLocalTime(date: string | null): Date | null {
+  if (!date) return null;
+  
+  try {
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return null;
+    
+    // Get the user's timezone
+    const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    
+    // Convert the UTC date to a string in the user's timezone
+    const localDateStr = d.toLocaleString('en-US', {
+      timeZone: userTimezone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    });
+    
+    // Parse the local date string back to a Date object
+    return new Date(localDateStr);
+  } catch {
+    return null;
+  }
+}
+
+// Check if a date string represents a future date in user's timezone
 export function isFutureDate(date: string | null): boolean {
   if (!date) return false;
   const now = new Date();
-  const d = new Date(date);
-  return d > now;
+  const localDate = toUserLocalTime(date);
+  return localDate ? localDate > now : false;
 } 

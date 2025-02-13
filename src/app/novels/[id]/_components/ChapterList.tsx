@@ -36,15 +36,22 @@ export const ChapterList = ({
   // Calculate volume-specific counts for all chapters (both regular and advanced)
   const volumeCounts = useMemo(() => {
     const counts = new Map<string, { total: number, regular: number, advanced: number }>();
+    const now = new Date().toISOString();
     
     volumes.forEach(volume => {
       const volumeChapters = initialChapters.filter(ch => ch.volume_id === volume.id);
-      const now = new Date();
       
       counts.set(volume.id, {
         total: volumeChapters.length,
-        regular: volumeChapters.filter(ch => !ch.publish_at || new Date(ch.publish_at) <= now).length,
-        advanced: volumeChapters.filter(ch => ch.publish_at && new Date(ch.publish_at) > now).length
+        regular: volumeChapters.filter(ch => {
+          return !ch.coins || ch.coins === 0 || // Free chapters
+                 !ch.publish_at || ch.publish_at <= now; // Published chapters
+        }).length,
+        advanced: volumeChapters.filter(ch => {
+          return ch.publish_at && 
+                 ch.publish_at > now && // Future publish date
+                 ch.coins > 0;
+        }).length
       });
     });
     return counts;
@@ -72,7 +79,7 @@ export const ChapterList = ({
     } finally {
       setIsLoading(false);
     }
-  }, [novelId, userProfile?.id, showAdvancedChapters, selectedVolumeId, showAllChapters]);
+  }, [novelId, userProfile?.id, showAdvancedChapters, selectedVolumeId, showAllChapters, isLoading]);
 
   // Initial load
   useEffect(() => {
@@ -80,9 +87,17 @@ export const ChapterList = ({
       loadChapters(1);
     } else {
       // Set initial counts from props
+      const now = new Date().toISOString();
       setChapterCounts({
-        regularCount: initialChapters.filter(ch => !ch.publish_at || new Date(ch.publish_at) <= new Date()).length,
-        advancedCount: initialChapters.filter(ch => ch.publish_at && new Date(ch.publish_at) > new Date()).length,
+        regularCount: initialChapters.filter(ch => {
+          return !ch.coins || ch.coins === 0 || // Free chapters
+                 !ch.publish_at || ch.publish_at <= now; // Published chapters
+        }).length,
+        advancedCount: initialChapters.filter(ch => {
+          return ch.publish_at && 
+                 ch.publish_at > now && // Future publish date
+                 ch.coins > 0;
+        }).length,
         total: initialChapters.length
       });
     }
