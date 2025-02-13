@@ -239,12 +239,22 @@ export const ChapterListItem = memo(function ChapterListItem({
     );
   }
 
+  // Only allow navigation if the chapter is published, unlocked, or user has translator access
+  if (isPublished || isUnlocked || hasTranslatorAccess) {
+    return (
+      <Link
+        href={`/novels/${novelSlug}/c${chapter.chapter_number}${chapter.part_number ? `-p${chapter.part_number}` : ''}`}
+        className="w-full hover:bg-accent/50 transition-colors"
+      >
+        {chapterContent}
+      </Link>
+    );
+  }
+
+  // For any other case, render as a non-interactive element
   return (
-    <Link
-      href={`/novels/${novelSlug}/c${chapter.chapter_number}${chapter.part_number ? `-p${chapter.part_number}` : ''}`}
-      className="w-full hover:bg-accent/50 transition-colors"
-    >
+    <div className="w-full opacity-50">
       {chapterContent}
-    </Link>
+    </div>
   );
 }); 

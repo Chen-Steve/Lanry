@@ -131,27 +131,48 @@ export async function getChapterNavigation(novelId: string, currentChapterNumber
       userUnlocks = unlocks?.map(u => u.chapter_number) || [];
     }
 
-    // Filter chapters that are either published, unlocked, or if user is the author
-    const accessibleChapters = chapters.filter(chapter => {
-      if (hasFullAccess) return true; // Author or translator can access all chapters
-      const isPublished = !chapter.publish_at || chapter.publish_at <= new Date().toISOString();
+    // Get current date in UTC for filtering
+    const now = new Date();
+    now.setMinutes(now.getMinutes() + 1); // Add 1 minute buffer
+    const nowUTC = now.toISOString();
+
+    // Mark chapters as accessible based on publish status, unlocks, and user role
+    const accessibleChapters = chapters.map(chapter => {
+      if (hasFullAccess) return { ...chapter, isAccessible: true };
+
+      const isPublished = !chapter.publish_at || new Date(chapter.publish_at) <= now;
       const isUnlocked = userUnlocks.includes(chapter.chapter_number);
-      return isPublished || isUnlocked;
+      const isFree = !chapter.coins || chapter.coins === 0;
+      
+      // A chapter is accessible if:
+      // 1. It's free OR
+      // 2. It's published (past publish date) OR
+      // 3. User has unlocked it
+      const isAccessible = isFree || isPublished || isUnlocked;
+
+      return {
+        ...chapter,
+        isAccessible
+      };
     });
 
+    // Filter chapters for navigation based on accessibility
+    const navigableChapters = accessibleChapters.filter(ch => ch.isAccessible);
+
     // Find the current chapter index considering both chapter number and part number
-    const currentIndex = accessibleChapters.findIndex(ch => 
+    const currentIndex = navigableChapters.findIndex(ch => 
       ch.chapter_number === currentChapterNumber && 
       ch.part_number === currentPartNumber
     );
     
     return {
-      prevChapter: currentIndex > 0 ? accessibleChapters[currentIndex - 1] : null,
-      nextChapter: currentIndex < accessibleChapters.length - 1 ? accessibleChapters[currentIndex + 1] : null,
+      prevChapter: currentIndex > 0 ? navigableChapters[currentIndex - 1] : null,
+      nextChapter: currentIndex < navigableChapters.length - 1 ? navigableChapters[currentIndex + 1] : null,
       availableChapters: accessibleChapters.map(ch => ({
         chapter_number: ch.chapter_number,
         part_number: ch.part_number,
-        volume_id: ch.volume_id
+        volume_id: ch.volume_id,
+        isAccessible: ch.isAccessible
       })),
       volumes: volumes || []
     };
@@ -305,8 +326,11 @@ export async function getChaptersForList({
       .select('id, chapter_number, part_number, title, publish_at, coins, age_rating, volume_id', { count: 'exact' })
       .eq('novel_id', novel.id);
 
-    // Get current date for filtering
-    const now = new Date().toISOString();
+    // Get current date in UTC for filtering
+    // Add a small buffer (1 minute) to prevent edge cases
+    const now = new Date();
+    now.setMinutes(now.getMinutes() + 1);
+    const nowUTC = now.toISOString();
 
     // If user is not author/translator, filter based on advanced/regular and unlocks
     if (!hasTranslatorAccess) {
@@ -325,7 +349,7 @@ export async function getChaptersForList({
       if (showAdvanced) {
         // Advanced chapters: future publish date AND has coins AND not unlocked
         query = query
-          .gt('publish_at', now)
+          .gt('publish_at', nowUTC)
           .gt('coins', 0);
         
         if (unlockedChapterNumbers.length > 0) {
@@ -333,16 +357,25 @@ export async function getChaptersForList({
         }
       } else {
         // Regular chapters: either
-        // 1. Free (no coins)
-        // 2. Published based on UTC time
+        // 1. Free (no coins) OR
+        // 2. Published based on UTC time OR
         // 3. Unlocked by the user
-        let regularCondition = `coins.is.null,coins.eq.0,publish_at.lte.${now}`;
+        const conditions = [];
         
+        // Free chapters
+        conditions.push('coins.is.null');
+        conditions.push('coins.eq.0');
+        
+        // Published chapters
+        conditions.push(`publish_at.lte.${nowUTC}`);
+        
+        // Unlocked chapters
         if (unlockedChapterNumbers.length > 0) {
-          regularCondition += `,chapter_number.in.(${unlockedChapterNumbers.join(',')})`;
+          conditions.push(`chapter_number.in.(${unlockedChapterNumbers.join(',')})`);
         }
         
-        query = query.or(regularCondition);
+        // Combine all conditions with OR
+        query = query.or(conditions.join(','));
       }
 
       if (volumeId) {
@@ -381,14 +414,16 @@ export async function getChaptersForList({
     const counts = {
       regularCount: allChapters?.filter(ch => {
         const isUnlocked = unlockedChapterNumbers.includes(ch.chapter_number);
+        const publishDate = ch.publish_at ? new Date(ch.publish_at) : null;
         return !ch.coins || ch.coins === 0 || // Free chapters
-               (!ch.publish_at || ch.publish_at <= now) || // Published chapters (UTC comparison)
+               (publishDate && publishDate <= now) || // Published chapters (using the same UTC time as above)
                isUnlocked; // Unlocked chapters
       }).length || 0,
       advancedCount: allChapters?.filter(ch => {
         const isUnlocked = unlockedChapterNumbers.includes(ch.chapter_number);
-        return ch.publish_at && 
-               ch.publish_at > now && // Future publish date (UTC comparison)
+        const publishDate = ch.publish_at ? new Date(ch.publish_at) : null;
+        return publishDate && 
+               publishDate > now && // Future publish date (using the same UTC time as above)
                ch.coins > 0 &&
                !isUnlocked; // Not unlocked
       }).length || 0,

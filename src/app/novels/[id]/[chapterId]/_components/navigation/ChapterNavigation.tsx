@@ -15,6 +15,7 @@ interface ChapterNavigationProps {
     chapter_number: number; 
     part_number?: number | null;
     volume_id?: string;
+    isAccessible?: boolean;
   }>;
   volumes?: Array<{
     id: string;
@@ -65,12 +66,17 @@ export default function ChapterNavigation({
 
   // Group chapters by volume
   const chaptersGroupedByVolume = useMemo(() => {
-    const noVolumeChapters = availableChapters.filter(chapter => !chapter.volume_id);
-    const volumeChapters = new Map<string, typeof availableChapters>();
+    // Only include accessible chapters
+    const accessibleChapters = availableChapters.filter(chapter => chapter.isAccessible !== false);
+    
+    const noVolumeChapters = accessibleChapters.filter(chapter => !chapter.volume_id);
+    const volumeChapters = new Map<string, typeof accessibleChapters>();
     
     volumes.forEach(volume => {
-      const chaptersForVolume = availableChapters.filter(chapter => chapter.volume_id === volume.id);
-      volumeChapters.set(volume.id, chaptersForVolume);
+      const chaptersForVolume = accessibleChapters.filter(chapter => chapter.volume_id === volume.id);
+      if (chaptersForVolume.length > 0) {
+        volumeChapters.set(volume.id, chaptersForVolume);
+      }
     });
 
     return {
