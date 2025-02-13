@@ -132,18 +132,19 @@ export async function getChapterNavigation(novelId: string, currentChapterNumber
     }
 
     // Get current date in UTC for filtering
-    const now = new Date();
+    const nowUTC = new Date().toISOString();
+
     // Mark chapters as accessible based on publish status, unlocks, and user role
     const accessibleChapters = chapters.map(chapter => {
       if (hasFullAccess) return { ...chapter, isAccessible: true };
 
-      const isPublished = !chapter.publish_at || new Date(chapter.publish_at) <= now;
+      const isPublished = !chapter.publish_at || chapter.publish_at <= nowUTC;
       const isUnlocked = userUnlocks.includes(chapter.chapter_number);
       const isFree = !chapter.coins || chapter.coins === 0;
       
       // A chapter is accessible if:
       // 1. It's free OR
-      // 2. It's published (past publish date) OR
+      // 2. It's published (past publish date in UTC) OR
       // 3. User has unlocked it
       const isAccessible = isFree || isPublished || isUnlocked;
 
@@ -323,17 +324,9 @@ export async function getChaptersForList({
       .select('id, chapter_number, part_number, title, publish_at, coins, age_rating, volume_id', { count: 'exact' })
       .eq('novel_id', novel.id);
 
-    // Get current date in UTC for filtering
-    // Add a small buffer (1 minute) to prevent edge cases
-    const now = new Date();
-    const utcNow = Date.UTC(
-      now.getUTCFullYear(),
-      now.getUTCMonth(),
-      now.getUTCDate(),
-      now.getUTCHours(),
-      now.getUTCMinutes() + 1
-    );
-    const nowUTC = new Date(utcNow).toISOString();
+    // Get current date in UTC for filtering - using strict UTC time
+    const nowUTC = new Date().toISOString();
+    const nowUTCTime = new Date(nowUTC).getTime();
 
     // If user is not author/translator, filter based on advanced/regular and unlocks
     if (!hasTranslatorAccess) {
@@ -350,25 +343,55 @@ export async function getChaptersForList({
       }
 
       if (showAdvanced) {
-        // Advanced chapters: future publish date AND has coins AND not unlocked
-        query = query
-          .gt('publish_at', nowUTC)
+        // Get all chapters first since we need to do time comparison in JS
+        const { data: advancedChapters } = await supabase
+          .from('chapters')
+          .select('id, publish_at, chapter_number')
+          .eq('novel_id', novel.id)
           .gt('coins', 0);
+
+        if (advancedChapters) {
+          const advancedIds = advancedChapters
+            .filter(ch => new Date(ch.publish_at).getTime() > nowUTCTime)
+            .map(ch => ch.id);
+
+          if (advancedIds.length > 0) {
+            query = query.in('id', advancedIds);
+          } else {
+            // No advanced chapters found, return empty result
+            query = query.eq('id', '-1');
+          }
+        }
         
         if (unlockedChapterNumbers.length > 0) {
           query = query.not('chapter_number', 'in', `(${unlockedChapterNumbers.join(',')})`);
         }
       } else {
-        // Regular chapters: All chapters EXCEPT advanced chapters
-        query = query.or(
-          `publish_at.lte.${nowUTC},` + // Published chapters
-          `coins.is.null,` + // Free chapters
-          `coins.eq.0${  // Also free chapters
-            unlockedChapterNumbers.length > 0 
-              ? `,chapter_number.in.(${unlockedChapterNumbers.join(',')})` 
-              : ''
-          }`
-        );
+        // Get all chapters first for time comparison
+        const { data: regularChapters } = await supabase
+          .from('chapters')
+          .select('id, publish_at, coins, chapter_number')
+          .eq('novel_id', novel.id);
+
+        if (regularChapters) {
+          const regularIds = regularChapters
+            .filter(ch => {
+              const isUnlocked = unlockedChapterNumbers.includes(ch.chapter_number);
+              const isFree = !ch.coins || ch.coins === 0;
+              return !ch.publish_at || 
+                     isFree || 
+                     isUnlocked || 
+                     new Date(ch.publish_at).getTime() <= nowUTCTime;
+            })
+            .map(ch => ch.id);
+
+          if (regularIds.length > 0) {
+            query = query.in('id', regularIds);
+          } else {
+            // No regular chapters found, return empty result
+            query = query.eq('id', '-1');
+          }
+        }
       }
 
       if (volumeId) {
@@ -392,6 +415,16 @@ export async function getChaptersForList({
       .select('chapter_number, publish_at, coins')
       .eq('novel_id', novel.id);
 
+    // Log some sample chapter data to understand the time comparisons
+    if (allChapters && allChapters.length > 0) {
+      const sampleChapter = allChapters[allChapters.length - 1]; // Get the latest chapter
+      if (sampleChapter.publish_at) {
+        console.log('Sample chapter publish time (UTC):', sampleChapter.publish_at);
+        console.log('Current time (UTC):', nowUTC);
+        console.log('Is this chapter advanced?', sampleChapter.publish_at > nowUTC);
+      }
+    }
+
     // Get user's unlocks if authenticated
     let unlockedChapterNumbers: number[] = [];
     if (userId) {
@@ -407,27 +440,56 @@ export async function getChaptersForList({
     const counts = {
       regularCount: allChapters?.filter(ch => {
         const isUnlocked = unlockedChapterNumbers.includes(ch.chapter_number);
-        const publishDate = ch.publish_at ? new Date(ch.publish_at) : null;
+        const publishDate = ch.publish_at;
+        const isFree = !ch.coins || ch.coins === 0;
         
-        // A chapter is advanced if it:
-        // 1. Has a future publish date AND
-        // 2. Has coins AND
-        // 3. Is not unlocked
-        const isAdvanced = publishDate && 
-                          publishDate > now && 
-                          ch.coins > 0 && 
-                          !isUnlocked;
+        // A chapter is regular if:
+        // 1. It has no publish date (published immediately) OR
+        // 2. It's free OR
+        // 3. User has unlocked it OR
+        // 4. The publish time has passed in the user's timezone
+        const isRegular = !publishDate || 
+               isFree || 
+               isUnlocked || 
+               (publishDate && new Date(publishDate).getTime() <= new Date(nowUTC).getTime());
+               
+        if (publishDate && Math.abs(new Date(publishDate).getTime() - new Date(nowUTC).getTime()) < 24 * 60 * 60 * 1000) {
+          const publishTime = new Date(publishDate);
+          const currentTime = new Date(nowUTC);
+          console.log('Chapter within 24h window:', {
+            chapterNumber: ch.chapter_number,
+            publishTime: `${publishTime.getUTCHours()}:${String(publishTime.getUTCMinutes()).padStart(2, '0')} UTC`,
+            currentTime: `${currentTime.getUTCHours()}:${String(currentTime.getUTCMinutes()).padStart(2, '0')} UTC`,
+            isPublished: publishDate <= nowUTC,
+            isFree,
+            isUnlocked,
+            isRegular,
+            explanation: isRegular ? 
+              (isFree ? 'Regular because it is free' : 
+               isUnlocked ? 'Regular because it is unlocked' :
+               publishDate <= nowUTC ? 'Regular because publish time has passed' :
+               'Regular for unknown reason') : 
+              'Not regular'
+          });
+        }
         
-        // Regular chapters are everything that's not advanced
-        return !isAdvanced;
+        return isRegular;
       }).length || 0,
       advancedCount: allChapters?.filter(ch => {
         const isUnlocked = unlockedChapterNumbers.includes(ch.chapter_number);
-        const publishDate = ch.publish_at ? new Date(ch.publish_at) : null;
+        const publishDate = ch.publish_at;
+        const isFree = !ch.coins || ch.coins === 0;
+        
+        // A chapter is advanced if:
+        // 1. Has a future publish date AND
+        // 2. Has coins AND
+        // 3. Is not free AND
+        // 4. Is not unlocked
         return publishDate && 
-               publishDate > now && // Future publish date
-               ch.coins > 0 &&
-               !isUnlocked; // Not unlocked
+               new Date(publishDate).getTime() > new Date(nowUTC).getTime() && 
+               ch.coins > 0 && 
+               !isFree && 
+               !isUnlocked;
       }).length || 0,
       total: allChapters?.length || 0
     };

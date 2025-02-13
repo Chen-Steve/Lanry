@@ -45,9 +45,9 @@ export function fromLocalDatetimeValue(localValue: string): string {
   // Create a date object in local time
   const localDate = new Date(year, month - 1, day, hours, minutes);
   
-  // Convert to UTC by subtracting the timezone offset
+  // Convert to UTC by adding the timezone offset (since we want to move forward to UTC)
   const tzOffset = localDate.getTimezoneOffset() * 60000; // offset in milliseconds
-  const utcDate = new Date(localDate.getTime() - tzOffset);
+  const utcDate = new Date(localDate.getTime() + tzOffset);
   
   return utcDate.toISOString();
 }
