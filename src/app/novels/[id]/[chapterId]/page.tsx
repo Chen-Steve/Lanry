@@ -60,7 +60,8 @@ function ScrollToTopButton() {
 // Add this function near the top of the file
 const updateReadingHistory = async (
   novelId: string, 
-  chapterNumber: number
+  chapterNumber: number,
+  partNumber?: number | null
 ) => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
@@ -87,6 +88,7 @@ const updateReadingHistory = async (
         profile_id: user.id,
         novel_id: novel.id,
         last_chapter: chapterNumber,
+        last_part_number: partNumber,
         last_read: now,
         created_at: now,
         updated_at: now
@@ -168,7 +170,7 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
 
   useEffect(() => {
     if (chapter) {
-      updateReadingHistory(novelId, chapter.chapter_number);
+      updateReadingHistory(novelId, chapter.chapter_number, chapter.part_number);
     }
   }, [novelId, chapter]);
 

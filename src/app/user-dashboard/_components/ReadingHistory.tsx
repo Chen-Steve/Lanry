@@ -43,6 +43,9 @@ const fetchReadingHistory = async (userId: string | undefined, page: number = 1)
   return {
     items: (data || []).map(item => ({
       ...item,
+      lastChapter: item.last_chapter,
+      lastPartNumber: item.last_part_number,
+      lastRead: item.last_read,
       novel: {
         ...item.novel,
         coverImageUrl: item.novel.cover_image_url
@@ -73,10 +76,14 @@ const HistoryItem = memo(({ item, index }: { item: ReadingHistory; index: number
   // Always prioritize first visible items since this is the default tab
   const isPriority = index < 12; // First 12 items (first row across all breakpoints)
 
+  const chapterPath = item.lastPartNumber 
+    ? `c${item.lastChapter}-p${item.lastPartNumber}`
+    : `c${item.lastChapter}`;
+
   return (
     <div className="relative group space-y-0.5">
       <Link 
-        href={`/novels/${item.novel.slug}/c${item.last_chapter}`}
+        href={`/novels/${item.novel.slug}/${chapterPath}`}
         className="block space-y-0.5"
       >
         <div className="aspect-[2/3] relative overflow-hidden rounded-sm shadow-sm hover:shadow transition-shadow">
@@ -94,7 +101,7 @@ const HistoryItem = memo(({ item, index }: { item: ReadingHistory; index: number
             className="object-cover transition-transform duration-300 group-hover:scale-105"
           />
           <div className="absolute top-0.5 right-0.5 text-[10px] px-1.5 py-0.5 bg-black/60 text-white rounded-sm">
-            Ch.{item.last_chapter}
+            Ch.{item.lastChapter}{item.lastPartNumber ? `.${item.lastPartNumber}` : ''}
           </div>
         </div>
         <div className="px-0.5">
@@ -102,7 +109,7 @@ const HistoryItem = memo(({ item, index }: { item: ReadingHistory; index: number
             {item.novel.title}
           </h3>
           <span className="text-[10px] text-muted-foreground">
-            {formatRelativeDate(item.last_read)}
+            {formatRelativeDate(item.lastRead)}
           </span>
         </div>
       </Link>

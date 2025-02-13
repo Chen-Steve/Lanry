@@ -82,14 +82,15 @@ export interface Bookmark {
   novel: Novel;
 }
 
-export interface ReadingHistory {
+export type ReadingHistory = {
   id: string;
-  profile_id: string;
-  novel_id: string;
-  last_chapter: number;
-  last_read: string;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
+  profileId: string;
+  novelId: string;
+  lastChapter: number;
+  lastPartNumber?: number | null;
+  lastRead: string;
   novel: Novel;
 }
 

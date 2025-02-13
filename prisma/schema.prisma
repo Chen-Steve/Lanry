@@ -167,6 +167,7 @@ model ReadingHistory {
   novel        Novel    @relation(fields: [novelId], references: [id], onDelete: Cascade)
   novelId      String   @map("novel_id")
   lastChapter  Int      @map("last_chapter")
+  lastPartNumber Int?   @map("last_part_number")
   lastRead     DateTime @default(now()) @map("last_read")
 
   @@unique([profileId, novelId])
