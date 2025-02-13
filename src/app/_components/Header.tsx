@@ -30,9 +30,8 @@ const Header = () => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Don't render header on more page or user dashboard on mobile
+  // Don't render header on more page or author dashboard
   if (pathname === '/more' || 
-      (isMobile && pathname === '/user-dashboard') || 
       (isMobile && pathname.match(/^\/novels\/[^/]+\/[^/]+$/)) ||
       pathname.startsWith('/author/dashboard')) {
     return null;

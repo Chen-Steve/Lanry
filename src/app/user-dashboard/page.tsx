@@ -7,7 +7,6 @@ import { Icon } from '@iconify/react';
 import { useQuery } from '@tanstack/react-query';
 import { ErrorBoundary } from 'react-error-boundary';
 import StatusSection from '@/app/user-dashboard/_components/StatusSection';
-import { calculateLevel } from '@/lib/utils';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -294,10 +293,6 @@ export default function UserDashboard() {
             <div className="flex items-center gap-1.5 bg-amber-100 dark:bg-amber-500/10 px-2.5 py-1 rounded-md">
               <Icon icon="ph:coin-fill" className="w-4 h-4 text-amber-500" />
               <span className="text-sm text-amber-700 dark:text-amber-300 font-medium">{profile?.coins || 0}</span>
-            </div>
-            <div className="flex items-center gap-1.5 bg-blue-100 dark:bg-blue-500/10 px-2.5 py-1 rounded-md">
-              <Icon icon="heroicons:star" className="w-4 h-4 text-blue-500" />
-              <span className="text-sm text-blue-700 dark:text-blue-300 font-medium">Level {calculateLevel(profile?.reading_time?.total_minutes || 0)}</span>
             </div>
           </div>
         </div>

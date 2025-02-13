@@ -4,34 +4,21 @@ interface StatusCardProps {
   icon: string;
   label: string;
   value: string | number;
-  bgColor: string;
+  gradientFrom: string;
+  gradientTo: string;
   iconColor: string;
+  textColor: string;
 }
 
-function StatusCard({ icon, label, value, bgColor, iconColor }: StatusCardProps) {
-  const getBgColor = (color: string) => {
-    switch (color) {
-      case 'bg-orange-50':
-        return 'bg-orange-50 dark:bg-orange-500/10';
-      case 'bg-yellow-50':
-        return 'bg-yellow-50 dark:bg-yellow-500/10';
-      case 'bg-blue-50':
-        return 'bg-blue-50 dark:bg-blue-500/10';
-      case 'bg-green-50':
-        return 'bg-green-50 dark:bg-green-500/10';
-      case 'bg-purple-50':
-        return 'bg-purple-50 dark:bg-purple-500/10';
-      default:
-        return bgColor;
-    }
-  };
-
+function StatusCard({ icon, label, value, gradientFrom, gradientTo, iconColor, textColor }: StatusCardProps) {
   return (
-    <div className={`flex items-center gap-2 sm:gap-3 p-2 sm:p-3 ${getBgColor(bgColor)} rounded-lg`}>
-      <Icon icon={icon} className={`w-4 h-4 sm:w-5 sm:h-5 ${iconColor}`} />
+    <div className={`flex items-center gap-2 xs:gap-3 p-2 xs:p-3 rounded-lg bg-gradient-to-br ${gradientFrom} ${gradientTo}`}>
+      <div className={`${iconColor} bg-white/10 w-6 xs:w-7 h-6 xs:h-7 rounded-md flex items-center justify-center backdrop-blur-[2px]`}>
+        <Icon icon={icon} className="w-3.5 xs:w-4 h-3.5 xs:h-4" />
+      </div>
       <div className="min-w-0">
-        <p className="text-[10px] sm:text-xs text-muted-foreground">{label}</p>
-        <p className="text-sm sm:text-base font-bold text-foreground truncate">{value}</p>
+        <p className={`text-[10px] xs:text-xs ${textColor}/60 truncate`}>{label}</p>
+        <p className={`text-xs xs:text-sm font-semibold ${textColor} truncate`}>{value}</p>
       </div>
     </div>
   );
@@ -62,34 +49,42 @@ export default function StatusSection({
       icon: 'heroicons:clock',
       label: 'Reading Time',
       value: formatReadingTime(totalReadingTime),
-      bgColor: 'bg-yellow-50',
-      iconColor: 'text-yellow-500'
+      gradientFrom: 'from-amber-500/10',
+      gradientTo: 'to-amber-500/5',
+      iconColor: 'text-amber-500',
+      textColor: 'text-amber-900 dark:text-amber-100'
     },
     {
       icon: 'heroicons:calendar',
-      label: 'Joined',
+      label: 'Member Since',
       value: joinedDate,
-      bgColor: 'bg-blue-50',
-      iconColor: 'text-blue-500'
+      gradientFrom: 'from-blue-500/10',
+      gradientTo: 'to-blue-500/5',
+      iconColor: 'text-blue-500',
+      textColor: 'text-blue-900 dark:text-blue-100'
     },
     {
       icon: 'heroicons:book-open',
       label: 'Stories Read',
       value: storiesRead,
-      bgColor: 'bg-green-50',
-      iconColor: 'text-green-500'
+      gradientFrom: 'from-emerald-500/10',
+      gradientTo: 'to-emerald-500/5',
+      iconColor: 'text-emerald-500',
+      textColor: 'text-emerald-900 dark:text-emerald-100'
     },
     {
       icon: 'heroicons:bookmark',
       label: 'Bookmarks',
       value: bookmarkCount,
-      bgColor: 'bg-purple-50',
-      iconColor: 'text-purple-500'
+      gradientFrom: 'from-purple-500/10',
+      gradientTo: 'to-purple-500/5',
+      iconColor: 'text-purple-500',
+      textColor: 'text-purple-900 dark:text-purple-100'
     }
   ];
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-3 mb-4 sm:mb-6">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-1.5 xs:gap-2">
       {statusCards.map((card, index) => (
         <StatusCard key={index} {...card} />
       ))}
