@@ -32,6 +32,7 @@ export const ChapterList = ({
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Calculate volume-specific counts for all chapters (both regular and advanced)
   const volumeCounts = useMemo(() => {
@@ -59,7 +60,9 @@ export const ChapterList = ({
 
   const loadChapters = useCallback(async (pageNum: number = 1) => {
     if (isLoading) return;
+    
     setIsLoading(true);
+    setError(null);
 
     try {
       const result = await getChaptersForList({
@@ -67,7 +70,8 @@ export const ChapterList = ({
         page: pageNum,
         userId: userProfile?.id,
         showAdvanced: showAdvancedChapters,
-        volumeId: showAllChapters ? null : selectedVolumeId
+        volumeId: showAllChapters ? null : selectedVolumeId,
+        includeAccess: true
       });
 
       setChapters(result.chapters);
@@ -76,10 +80,12 @@ export const ChapterList = ({
       setTotalPages(result.totalPages);
     } catch (error) {
       console.error('Error loading chapters:', error);
+      setError('Failed to load chapters. Please try again.');
+      // Keep the previous chapters data on error
     } finally {
       setIsLoading(false);
     }
-  }, [novelId, userProfile?.id, showAdvancedChapters, selectedVolumeId, showAllChapters, isLoading]);
+  }, [novelId, userProfile?.id, showAdvancedChapters, selectedVolumeId, showAllChapters]);
 
   // Initial load
   useEffect(() => {
@@ -101,12 +107,23 @@ export const ChapterList = ({
         total: initialChapters.length
       });
     }
-  }, [loadChapters, initialChapters]);
+  }, []);
 
   // Handle volume or advanced chapter toggle
   useEffect(() => {
-    setCurrentPage(1);
-    loadChapters(1);
+    let isMounted = true;
+    
+    const updateChapters = async () => {
+      if (!isMounted) return;
+      setCurrentPage(1);
+      await loadChapters(1);
+    };
+
+    updateChapters();
+
+    return () => {
+      isMounted = false;
+    };
   }, [showAdvancedChapters, selectedVolumeId, showAllChapters, loadChapters]);
 
   const handlePageChange = useCallback((newPage: number) => {
@@ -136,6 +153,8 @@ export const ChapterList = ({
           userProfile={userProfile}
           isAuthenticated={isAuthenticated}
           novelAuthorId={novelAuthorId}
+          hasTranslatorAccess={chapter.hasTranslatorAccess}
+          isUnlocked={chapter.isUnlocked}
         />
       </div>
     </div>
@@ -316,11 +335,25 @@ export const ChapterList = ({
         )}
 
         {/* Chapter List */}
-        <div className="grid grid-cols-1 md:grid-cols-2 chapter-list-grid divide-y divide-border md:divide-y-0">
+        <div className="chapter-list-grid">
           {isLoading ? (
-            <div className="col-span-2 py-8 text-center">
-              <Icon icon="solar:spinner-line-duotone" className="w-8 h-8 mx-auto animate-spin" />
-              <p className="mt-2 text-sm text-muted-foreground">Loading chapters...</p>
+            <div className="col-span-2 py-8">
+              <div className="max-w-[200px] mx-auto space-y-4">
+                <div className="h-6 bg-accent/50 rounded animate-pulse" />
+                <div className="h-6 bg-accent/50 rounded animate-pulse w-3/4" />
+                <div className="h-6 bg-accent/50 rounded animate-pulse w-5/6" />
+              </div>
+            </div>
+          ) : error ? (
+            <div className="col-span-2 py-8 text-center text-red-500">
+              <Icon icon="solar:danger-triangle-linear" className="w-12 h-12 mx-auto mb-2" />
+              <p>{error}</p>
+              <button
+                onClick={() => loadChapters(currentPage)}
+                className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+              >
+                Try Again
+              </button>
             </div>
           ) : chapters.length > 0 ? (
             <>

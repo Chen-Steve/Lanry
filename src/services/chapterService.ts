@@ -249,6 +249,7 @@ export interface ChapterListParams {
   userId?: string | null;
   showAdvanced?: boolean;
   volumeId?: string | null;
+  includeAccess?: boolean;
 }
 
 export type ChapterListItem = Pick<Chapter, 
@@ -261,6 +262,8 @@ export type ChapterListItem = Pick<Chapter,
   'age_rating'
 > & {
   volume_id?: string;
+  hasTranslatorAccess?: boolean;
+  isUnlocked?: boolean;
 };
 
 export async function getChaptersForList({
@@ -269,7 +272,8 @@ export async function getChaptersForList({
   limit = 50,
   userId,
   showAdvanced = false,
-  volumeId
+  volumeId,
+  includeAccess = false
 }: ChapterListParams): Promise<{ 
   chapters: ChapterListItem[]; 
   counts: ChapterCounts;
@@ -293,7 +297,7 @@ export async function getChaptersForList({
     const isAuthor = user && novel.author_profile_id === user.id;
     const isTranslator = user && novel.translator_id === user.id;
     const isTranslatorCreated = user && novel.author_profile_id === user.id && novel.is_author_name_custom === true;
-    const hasFullAccess = isAuthor || isTranslator || isTranslatorCreated;
+    const hasTranslatorAccess = isAuthor || isTranslator || isTranslatorCreated;
 
     // Get all chapters
     let query = supabase
@@ -305,7 +309,7 @@ export async function getChaptersForList({
     const now = new Date().toISOString();
 
     // If user is not author/translator, filter based on advanced/regular and unlocks
-    if (!hasFullAccess) {
+    if (!hasTranslatorAccess) {
       // First, get user's unlocks if authenticated
       let unlockedChapterNumbers: number[] = [];
       if (userId) {
@@ -391,8 +395,16 @@ export async function getChaptersForList({
       total: allChapters?.length || 0
     };
 
+    // Add access information to chapters if requested
+    const processedChapters = chapters?.map(chapter => ({
+      ...chapter,
+      hasTranslatorAccess: includeAccess ? hasTranslatorAccess : undefined,
+      isUnlocked: includeAccess ? unlockedChapterNumbers.includes(chapter.chapter_number) : undefined,
+      volume_id: chapter.volume_id
+    })) as ChapterListItem[] || [];
+
     return {
-      chapters: chapters || [],
+      chapters: processedChapters,
       counts,
       total: count || 0,
       currentPage: page,

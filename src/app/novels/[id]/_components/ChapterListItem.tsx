@@ -2,7 +2,7 @@ import { Chapter, UserProfile } from '@/types/database';
 import { Icon } from '@iconify/react';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
-import { useState, useEffect } from 'react';
+import { useState, useCallback, memo } from 'react';
 import { useRouter } from 'next/navigation';
 import supabase from '@/lib/supabaseClient';
 import { ChapterCountdown } from './ChapterCountdown';
@@ -15,96 +15,23 @@ interface ChapterListItemProps {
   userProfile: UserProfile | null;
   isAuthenticated: boolean;
   novelAuthorId: string;
+  hasTranslatorAccess?: boolean;
+  isUnlocked?: boolean;
 }
 
-export function ChapterListItem({ 
+export const ChapterListItem = memo(function ChapterListItem({ 
   chapter, 
   novelSlug, 
   userProfile, 
   isAuthenticated,
   novelAuthorId,
+  hasTranslatorAccess = false,
+  isUnlocked = false,
 }: ChapterListItemProps) {
   const [isUnlocking, setIsUnlocking] = useState(false);
-  const [isUnlocked, setIsUnlocked] = useState(false);
-  const [hasTranslatorAccess, setHasTranslatorAccess] = useState(false);
   const router = useRouter();
 
-  useEffect(() => {
-    const checkAccess = async () => {
-      if (!userProfile?.id || !chapter.novel_id) return;
-      
-      let retryCount = 0;
-      const maxRetries = 3;
-      const retryDelay = 1000; // 1 second
-
-      while (retryCount < maxRetries) {
-        try {
-          const { data: novel, error: novelError } = await supabase
-            .from('novels')
-            .select('translator_id, author_profile_id, is_author_name_custom')
-            .eq('id', chapter.novel_id)
-            .single();
-
-          if (novelError) {
-            console.error('Error checking translator status:', novelError);
-            throw novelError;
-          }
-
-          const isTranslator = novel.translator_id === userProfile.id;
-          const isTranslatorCreated = novel.author_profile_id === userProfile.id && novel.is_author_name_custom === true;
-          setHasTranslatorAccess(isTranslator || isTranslatorCreated);
-
-          // Check unlock status if not translator
-          if (!isTranslator && !isTranslatorCreated) {
-            let query = supabase
-              .from('chapter_unlocks')
-              .select('id')
-              .eq('profile_id', userProfile.id)
-              .eq('novel_id', chapter.novel_id)
-              .eq('chapter_number', chapter.chapter_number);
-
-            // Handle part_number separately based on whether it's null
-            if (chapter.part_number === null) {
-              query = query.is('part_number', null);
-            } else {
-              query = query.eq('part_number', chapter.part_number);
-            }
-
-            const { data: existingUnlock, error } = await query.maybeSingle();
-
-            if (error) {
-              console.error('Error checking unlock status:', error);
-              throw error;
-            }
-
-            setIsUnlocked(!!existingUnlock);
-          }
-          
-          // If we get here, everything worked
-          break;
-          
-        } catch (error) {
-          retryCount++;
-          console.error(`Attempt ${retryCount} failed:`, error);
-          
-          if (retryCount === maxRetries) {
-            console.error('Max retries reached for checkAccess');
-            // Set default state - assume no access
-            setHasTranslatorAccess(false);
-            setIsUnlocked(false);
-            return;
-          }
-          
-          // Wait before retrying
-          await new Promise(resolve => setTimeout(resolve, retryDelay * retryCount));
-        }
-      }
-    };
-
-    checkAccess();
-  }, [userProfile?.id, chapter.novel_id, chapter.chapter_number, chapter.part_number]);
-
-  const unlockChapter = async (
+  const unlockChapter = useCallback(async (
     novelId: string,
     authorId: string,
     chapterNumber: number,
@@ -132,7 +59,6 @@ export function ChapterListItem({
         throw new Error(data.message || 'Failed to process purchase');
       }
 
-      setIsUnlocked(true);
       toast.success('Chapter unlocked successfully!');
       router.push(`/novels/${novelSlug}/c${chapterNumber}${chapter.part_number ? `-p${chapter.part_number}` : ''}`);
       return true;
@@ -151,9 +77,9 @@ export function ChapterListItem({
       }
       throw error;
     }
-  };
+  }, [chapter.coins, chapter.part_number, novelSlug, router]);
 
-  const handleLockedChapterClick = async () => {
+  const handleLockedChapterClick = useCallback(async () => {
     if (!isAuthenticated) {
       toast.error('Please create an account to unlock advance chapters', {
         duration: 3000,
@@ -244,11 +170,9 @@ export function ChapterListItem({
       console.error('Error in handleLockedChapterClick:', error);
       toast.error('An error occurred. Please try again.');
     } finally {
-      if (!isUnlocked) {
-        setIsUnlocking(false);
-      }
+      setIsUnlocking(false);
     }
-  };
+  }, [chapter.chapter_number, chapter.coins, chapter.novel_id, chapter.part_number, isAuthenticated, novelSlug, router, unlockChapter, userProfile?.id, novelAuthorId]);
 
   const isPublished = !chapter.publish_at || new Date(chapter.publish_at) <= new Date();
 
@@ -323,4 +247,4 @@ export function ChapterListItem({
       {chapterContent}
     </Link>
   );
-} 
+}); 
