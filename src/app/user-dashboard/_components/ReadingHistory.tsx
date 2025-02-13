@@ -195,4 +195,4 @@ const ReadingHistorySection = ({ userId }: ReadingHistorySectionProps) => {
   );
 };
 
-export default ReadingHistorySection; 
+export default ReadingHistorySection;

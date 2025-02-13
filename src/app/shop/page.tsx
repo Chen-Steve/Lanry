@@ -6,7 +6,6 @@ import { toast } from 'react-hot-toast';
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import { onApprove } from "@/services/paymentService";
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
 
 interface CoinPackage {
   id: number;
@@ -25,22 +24,15 @@ export default function ShopPage() {
   const { isAuthenticated, userId } = useAuth();
   const router = useRouter();
 
-  useEffect(() => {
-    // Load Coinbase Commerce script
-    const script = document.createElement('script');
-    script.src = 'https://commerce.coinbase.com/v1/checkout.js';
-    script.async = true;
-    document.body.appendChild(script);
-
-    return () => {
-      document.body.removeChild(script);
-    };
-  }, []);
+  if (typeof window === 'undefined') {
+    return null; // Prevent hydration issues
+  }
 
   const initialOptions = {
     clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID!,
     currency: "USD",
     intent: "capture",
+    'data-uid-auto': 'uid_' + Math.random().toString(36).substring(2),
   };
 
   if (!isAuthenticated || !userId) {
@@ -57,9 +49,6 @@ export default function ShopPage() {
     <div className="max-w-5xl mx-auto px-4 py-6">
       <div className="text-center mb-6">
         <h1 className="text-2xl font-bold mb-2 text-foreground">Coin Shop</h1>
-        <p className="text-sm text-muted-foreground">
-          🎉 Limited time: Get 1 bonus coin when paying with crypto! (Beta feature - coins may take up to 6 hours to arrive)
-        </p>
       </div>
 
       <PayPalScriptProvider options={initialOptions}>
@@ -78,87 +67,57 @@ export default function ShopPage() {
                 ${pkg.price.toFixed(2)}
               </p>
 
-              <div className="flex flex-col gap-2">
-                <PayPalButtons
-                  style={{ layout: "horizontal", height: 35, tagline: false }}
-                  createOrder={async () => {
-                    try {
-                      if (!isAuthenticated || !userId) {
-                        throw new Error("Please sign in to make a purchase");
-                      }
+              <PayPalButtons
+                style={{ layout: "horizontal", height: 35, tagline: false }}
+                createOrder={async () => {
+                  try {
+                    if (!isAuthenticated || !userId) {
+                      throw new Error("Please sign in to make a purchase");
+                    }
 
-                      console.log("Making request with userId:", userId); // Debug log
-                      const response = await fetch("/api/payments/create-order", {
-                        method: "POST",
-                        headers: {
-                          "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify({
-                          userId,
-                          coins: pkg.coins,
-                          amount: pkg.price,
-                        }),
-                        credentials: "include",
-                      });
+                    console.log("Making request with userId:", userId); // Debug log
+                    const response = await fetch("/api/payments/create-order", {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify({
+                        userId,
+                        coins: pkg.coins,
+                        amount: pkg.price,
+                      }),
+                      credentials: "include",
+                    });
 
-                      const data = await response.json();
-                      if (data.error) {
-                        throw new Error(data.error);
-                      }
-                      if (!data.id) {
-                        throw new Error("Failed to create order");
-                      }
-                      return data.id;
-                    } catch (error) {
-                      console.error("Create order error:", error);
-                      toast.error(error instanceof Error ? error.message : "Failed to create order");
-                      throw error;
+                    const data = await response.json();
+                    if (data.error) {
+                      throw new Error(data.error);
                     }
-                  }}
-                  onApprove={async (data) => {
-                    try {
-                      await onApprove(userId, data.orderID);
-                      toast.success(`Successfully purchased ${pkg.coins} coins!`);
-                      router.refresh();
-                    } catch (error) {
-                      console.error("Approve error:", error);
-                      toast.error("Failed to complete purchase");
+                    if (!data.id) {
+                      throw new Error("Failed to create order");
                     }
-                  }}
-                  onError={(err) => {
-                    console.error("PayPal error:", err);
-                    toast.error("Payment failed");
-                  }}
-                />
-
-                <button
-                  className="flex items-center justify-center gap-2 bg-[#0052FF] text-white px-4 py-2 rounded-md hover:bg-[#0039B3] transition-colors"
-                  onClick={() => {
-                    let checkoutUrl;
-                    switch (pkg.price) {
-                      case 5:
-                        checkoutUrl = `https://commerce.coinbase.com/checkout/1d4a966f-acd1-45d1-808d-4ca279bac74a?custom=${userId}&coins=${pkg.coins + 1}`;
-                        break;
-                      case 10:
-                        checkoutUrl = `https://commerce.coinbase.com/checkout/e2bf66ec-d7f2-4234-bf29-8bbabc468db3?custom=${userId}&coins=${pkg.coins + 1}`;
-                        break;
-                      case 20:
-                        checkoutUrl = `https://commerce.coinbase.com/checkout/0b16e919-5e22-4f90-9ec6-a3f83f6d2156?custom=${userId}&coins=${pkg.coins + 1}`;
-                        break;
-                      default:
-                        return; // Don't show crypto option for $1
-                    }
-                    if (checkoutUrl) {
-                      window.open(checkoutUrl, '_blank');
-                      toast.success('Crypto payment window opened. You will receive your coins + 1 bonus coin within 6 hours after confirmation.');
-                    }
-                  }}
-                  style={{ display: pkg.price === 1 ? 'none' : undefined }}
-                >
-                  <Icon icon="simple-icons:coinbase" className="text-xl" />
-                  Pay with Crypto
-                </button>
-              </div>
+                    return data.id;
+                  } catch (error) {
+                    console.error("Create order error:", error);
+                    toast.error(error instanceof Error ? error.message : "Failed to create order");
+                    throw error;
+                  }
+                }}
+                onApprove={async (data) => {
+                  try {
+                    await onApprove(userId, data.orderID);
+                    toast.success(`Successfully purchased ${pkg.coins} coins!`);
+                    router.refresh();
+                  } catch (error) {
+                    console.error("Approve error:", error);
+                    toast.error("Failed to complete purchase");
+                  }
+                }}
+                onError={(err) => {
+                  console.error("PayPal error:", err);
+                  toast.error("Payment failed");
+                }}
+              />
             </div>
           ))}
         </div>

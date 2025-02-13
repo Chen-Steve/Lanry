@@ -10,7 +10,6 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
-    "@clerk/nextjs": "^6.10.2",
     "@hcaptcha/react-hcaptcha": "^1.11.1",
     "@iconify/react": "^5.1.0",
     "@paypal/checkout-server-sdk": "^1.0.3",
@@ -26,7 +25,6 @@
     "@vercel/analytics": "^1.4.0",
     "@vercel/speed-insights": "^1.1.0",
     "autoprefixer": "^10.4.20",
-    "coinbase-commerce-node": "^1.0.4",
     "date-fns": "^4.1.0",
     "framer-motion": "^11.18.2",
     "jszip": "^3.10.1",
