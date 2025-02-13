@@ -76,31 +76,30 @@ export default function ChapterEditForm({
     }
   };
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSave = async (e?: React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
+    }
     setIsSaving(true);
     try {
+      const chapterData = {
+        chapter_number: parseInt(formData.chapterNumber),
+        part_number: formData.partNumber ? parseInt(formData.partNumber) : null,
+        title: formData.title,
+        content: formData.content,
+        publish_at: formData.publishAt || null,
+        coins: parseInt(formData.coins),
+        author_thoughts: formData.authorThoughts,
+        age_rating: formData.ageRating,
+      };
+
+      console.log('Saving chapter with data:', chapterData);
+
       if (chapterId) {
-        await authorChapterService.updateChapter(chapterId, novelId, userId, {
-          chapter_number: parseInt(formData.chapterNumber),
-          part_number: formData.partNumber ? parseInt(formData.partNumber) : null,
-          title: formData.title,
-          content: formData.content,
-          publish_at: formData.publishAt || null,
-          coins: parseInt(formData.coins),
-          author_thoughts: formData.authorThoughts,
-          age_rating: formData.ageRating,
-        });
+        await authorChapterService.updateChapter(chapterId, novelId, userId, chapterData);
       } else {
         await authorChapterService.createChapter(novelId, userId, {
-          chapter_number: parseInt(formData.chapterNumber),
-          part_number: formData.partNumber ? parseInt(formData.partNumber) : null,
-          title: formData.title,
-          content: formData.content,
-          publish_at: formData.publishAt || null,
-          coins: parseInt(formData.coins),
-          author_thoughts: formData.authorThoughts,
-          age_rating: formData.ageRating,
+          ...chapterData,
           volume_id: volumeId
         });
       }
@@ -237,6 +236,8 @@ export default function ChapterEditForm({
               onSettingsChange={(settings) => setFormData(prev => ({ ...prev, ...settings }))}
               showSchedulePopup={showSchedulePopup}
               onCloseSchedulePopup={() => setShowSchedulePopup(false)}
+              onSave={handleSave}
+              isSaving={isSaving}
             />
           )}
         </div>

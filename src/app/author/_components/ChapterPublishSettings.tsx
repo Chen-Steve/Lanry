@@ -8,6 +8,8 @@ interface ChapterPublishSettingsProps {
   onSettingsChange: (settings: { publishAt: string; coins: string }) => void;
   showSchedulePopup?: boolean;
   onCloseSchedulePopup?: () => void;
+  onSave?: () => void;
+  isSaving?: boolean;
 }
 
 export default function ChapterPublishSettings({
@@ -16,6 +18,8 @@ export default function ChapterPublishSettings({
   onSettingsChange,
   showSchedulePopup = false,
   onCloseSchedulePopup,
+  onSave,
+  isSaving = false,
 }: ChapterPublishSettingsProps) {
   useEffect(() => {
     // When publishAt is set to a future date and coins is 0, set it to default from localStorage
@@ -58,22 +62,11 @@ export default function ChapterPublishSettings({
                         <div className="flex items-center gap-2">
                           <input
                             type="datetime-local"
-                            value={toLocalDatetimeValue(publishAt) || new Date().toISOString().slice(0, 16)}
-                            onClick={(e) => {
-                              console.log('DateTime input clicked');
-                              console.log('Current value:', e.currentTarget.value);
-                              console.log('Raw publishAt:', publishAt);
-                              console.log('Converted value:', toLocalDatetimeValue(publishAt));
-                            }}
-                            onFocus={(e) => {
-                              console.log('DateTime input focused');
-                              console.log('Current value:', e.currentTarget.value);
-                            }}
+                            value={toLocalDatetimeValue(publishAt)}
                             onChange={(e) => {
-                              console.log('DateTime value changing');
-                              console.log('New value:', e.target.value);
+                              console.log('Selected datetime:', e.target.value);
                               const newPublishAt = fromLocalDatetimeValue(e.target.value);
-                              console.log('Converted value:', newPublishAt);
+                              console.log('Converted to ISO:', newPublishAt);
                               onSettingsChange({
                                 publishAt: newPublishAt,
                                 coins: newPublishAt ? coins : '0'
@@ -154,8 +147,27 @@ export default function ChapterPublishSettings({
                   type="button"
                   onClick={onCloseSchedulePopup}
                   className="px-4 py-2 text-sm font-medium text-foreground bg-background border border-border rounded-lg hover:bg-accent transition-colors"
+                  disabled={isSaving}
                 >
                   Close
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (onSave) {
+                      await onSave();
+                      onCloseSchedulePopup?.();
+                    }
+                  }}
+                  disabled={isSaving}
+                  className="px-4 py-2 text-sm font-medium text-background bg-primary border border-primary rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSaving ? (
+                    <Icon icon="mdi:loading" className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Icon icon="mdi:content-save" className="w-4 h-4" />
+                  )}
+                  {isSaving ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>
             </div>

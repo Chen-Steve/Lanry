@@ -133,9 +133,6 @@ export async function getChapterNavigation(novelId: string, currentChapterNumber
 
     // Get current date in UTC for filtering
     const now = new Date();
-    now.setMinutes(now.getMinutes() + 1); // Add 1 minute buffer
-    const nowUTC = now.toISOString();
-
     // Mark chapters as accessible based on publish status, unlocks, and user role
     const accessibleChapters = chapters.map(chapter => {
       if (hasFullAccess) return { ...chapter, isAccessible: true };
@@ -329,8 +326,14 @@ export async function getChaptersForList({
     // Get current date in UTC for filtering
     // Add a small buffer (1 minute) to prevent edge cases
     const now = new Date();
-    now.setMinutes(now.getMinutes() + 1);
-    const nowUTC = now.toISOString();
+    const utcNow = Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate(),
+      now.getUTCHours(),
+      now.getUTCMinutes() + 1
+    );
+    const nowUTC = new Date(utcNow).toISOString();
 
     // If user is not author/translator, filter based on advanced/regular and unlocks
     if (!hasTranslatorAccess) {
@@ -356,26 +359,16 @@ export async function getChaptersForList({
           query = query.not('chapter_number', 'in', `(${unlockedChapterNumbers.join(',')})`);
         }
       } else {
-        // Regular chapters: either
-        // 1. Free (no coins) OR
-        // 2. Published based on UTC time OR
-        // 3. Unlocked by the user
-        const conditions = [];
-        
-        // Free chapters
-        conditions.push('coins.is.null');
-        conditions.push('coins.eq.0');
-        
-        // Published chapters
-        conditions.push(`publish_at.lte.${nowUTC}`);
-        
-        // Unlocked chapters
-        if (unlockedChapterNumbers.length > 0) {
-          conditions.push(`chapter_number.in.(${unlockedChapterNumbers.join(',')})`);
-        }
-        
-        // Combine all conditions with OR
-        query = query.or(conditions.join(','));
+        // Regular chapters: All chapters EXCEPT advanced chapters
+        query = query.or(
+          `publish_at.lte.${nowUTC},` + // Published chapters
+          `coins.is.null,` + // Free chapters
+          `coins.eq.0${  // Also free chapters
+            unlockedChapterNumbers.length > 0 
+              ? `,chapter_number.in.(${unlockedChapterNumbers.join(',')})` 
+              : ''
+          }`
+        );
       }
 
       if (volumeId) {
@@ -415,15 +408,24 @@ export async function getChaptersForList({
       regularCount: allChapters?.filter(ch => {
         const isUnlocked = unlockedChapterNumbers.includes(ch.chapter_number);
         const publishDate = ch.publish_at ? new Date(ch.publish_at) : null;
-        return !ch.coins || ch.coins === 0 || // Free chapters
-               (publishDate && publishDate <= now) || // Published chapters (using the same UTC time as above)
-               isUnlocked; // Unlocked chapters
+        
+        // A chapter is advanced if it:
+        // 1. Has a future publish date AND
+        // 2. Has coins AND
+        // 3. Is not unlocked
+        const isAdvanced = publishDate && 
+                          publishDate > now && 
+                          ch.coins > 0 && 
+                          !isUnlocked;
+        
+        // Regular chapters are everything that's not advanced
+        return !isAdvanced;
       }).length || 0,
       advancedCount: allChapters?.filter(ch => {
         const isUnlocked = unlockedChapterNumbers.includes(ch.chapter_number);
         const publishDate = ch.publish_at ? new Date(ch.publish_at) : null;
         return publishDate && 
-               publishDate > now && // Future publish date (using the same UTC time as above)
+               publishDate > now && // Future publish date
                ch.coins > 0 &&
                !isUnlocked; // Not unlocked
       }).length || 0,

@@ -1,60 +1,39 @@
 // Format a date string that includes timezone offset tag [+/-hours]
 export function formatLocalDateTime(date: string | null): string {
   if (!date) return '';
-  
   const d = new Date(date);
-  const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  
-  // Use a more consistent format that matches the datetime-local input
-  const formattedDate = d.toLocaleString('en-US', {
+  return d.toLocaleString('en-US', {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
     hour: 'numeric',
     minute: '2-digit',
-    hour12: true,
-    timeZone: userTimezone
+    hour12: true
   });
-  
-  return `${formattedDate} ${userTimezone}`;
 }
 
 // Convert a date to local datetime-local value for input
 export function toLocalDatetimeValue(date: string | null): string {
-  if (!date) {
-    const now = new Date();
-    const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    return now.toLocaleString('sv', { timeZone: userTimezone }).slice(0, 16);
-  }
+  if (!date) return new Date().toISOString().slice(0, 16);
   
-  try {
-    const d = new Date(date);
-    if (isNaN(d.getTime())) {
-      const now = new Date();
-      const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      return now.toLocaleString('sv', { timeZone: userTimezone }).slice(0, 16);
-    }
-    
-    // Convert to local date string in YYYY-MM-DDThh:mm format using the user's timezone
-    const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    const formatter = new Intl.DateTimeFormat('sv', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZone: userTimezone
-    });
-    
-    return formatter.format(d).replace(' ', 'T');
-  } catch {
-    const now = new Date();
-    const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    return now.toLocaleString('sv', { timeZone: userTimezone }).slice(0, 16);
-  }
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return new Date().toISOString().slice(0, 16);
+  
+  // Adjust for timezone offset to show the correct local time
+  const tzOffset = d.getTimezoneOffset() * 60000; // offset in milliseconds
+  const localDate = new Date(d.getTime() + tzOffset);
+  
+  // Format as YYYY-MM-DDThh:mm in local time
+  const year = localDate.getFullYear();
+  const month = String(localDate.getMonth() + 1).padStart(2, '0');
+  const day = String(localDate.getDate()).padStart(2, '0');
+  const hours = String(localDate.getHours()).padStart(2, '0');
+  const minutes = String(localDate.getMinutes()).padStart(2, '0');
+  
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
-// Convert local datetime-local value to ISO string while preserving local time
+// Convert local datetime-local value to ISO string
 export function fromLocalDatetimeValue(localValue: string): string {
   if (!localValue) return '';
   
@@ -63,53 +42,18 @@ export function fromLocalDatetimeValue(localValue: string): string {
   const [year, month, day] = datePart.split('-').map(Number);
   const [hours, minutes] = timePart.split(':').map(Number);
   
-  // Create a date object in UTC directly with the local time values
-  const utcDate = new Date(Date.UTC(year, month - 1, day, hours, minutes));
+  // Create a date object in local time
+  const localDate = new Date(year, month - 1, day, hours, minutes);
   
-  // Get the user's timezone offset in minutes
-  const targetDate = new Date(year, month - 1, day, hours, minutes);
-  const tzOffset = -targetDate.getTimezoneOffset();
+  // Convert to UTC by subtracting the timezone offset
+  const tzOffset = localDate.getTimezoneOffset() * 60000; // offset in milliseconds
+  const utcDate = new Date(localDate.getTime() - tzOffset);
   
-  // Adjust the UTC date by the timezone offset to preserve the local time
-  const adjustedDate = new Date(utcDate.getTime() - (tzOffset * 60000));
-  
-  return adjustedDate.toISOString();
+  return utcDate.toISOString();
 }
 
-// Convert a UTC date string to the user's local time for comparison
-export function toUserLocalTime(date: string | null): Date | null {
-  if (!date) return null;
-  
-  try {
-    const d = new Date(date);
-    if (isNaN(d.getTime())) return null;
-    
-    // Get the user's timezone
-    const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    
-    // Convert the UTC date to a string in the user's timezone
-    const localDateStr = d.toLocaleString('en-US', {
-      timeZone: userTimezone,
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false
-    });
-    
-    // Parse the local date string back to a Date object
-    return new Date(localDateStr);
-  } catch {
-    return null;
-  }
-}
-
-// Check if a date string represents a future date in user's timezone
+// Check if a date string represents a future date
 export function isFutureDate(date: string | null): boolean {
   if (!date) return false;
-  const now = new Date();
-  const localDate = toUserLocalTime(date);
-  return localDate ? localDate > now : false;
+  return new Date(date) > new Date();
 } 
