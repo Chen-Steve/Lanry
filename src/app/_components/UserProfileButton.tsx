@@ -35,6 +35,7 @@ const UserProfileButton = ({
 }: UserProfileButtonProps) => {
   const router = useRouter();
   const [isRandomizing, setIsRandomizing] = useState(false);
+  const [forumComingSoon, setForumComingSoon] = useState(false);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -140,6 +141,14 @@ const UserProfileButton = ({
           <Icon icon="ph:user" className="text-lg" />
           <span>View Profile</span>
         </Link>
+
+        <button
+          onClick={() => setForumComingSoon(true)}
+          className="flex w-full items-center gap-2 px-3 py-2 text-sm text-foreground rounded-md hover:bg-accent transition-colors"
+        >
+          <Icon icon="ph:chats" className="text-lg" />
+          <span>{forumComingSoon ? "Coming Soon!" : "Forum"}</span>
+        </button>
 
         {userProfile?.role && (userProfile.role === 'AUTHOR' || userProfile.role === 'TRANSLATOR') && (
           <Link
