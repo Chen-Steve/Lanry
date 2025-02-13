@@ -133,20 +133,23 @@ export async function getChapterNavigation(novelId: string, currentChapterNumber
 
     // Get current date in UTC for filtering
     const nowUTC = new Date().toISOString();
+    const nowUTCTime = new Date(nowUTC).getTime();
 
     // Mark chapters as accessible based on publish status, unlocks, and user role
     const accessibleChapters = chapters.map(chapter => {
       if (hasFullAccess) return { ...chapter, isAccessible: true };
 
-      const isPublished = !chapter.publish_at || chapter.publish_at <= nowUTC;
       const isUnlocked = userUnlocks.includes(chapter.chapter_number);
       const isFree = !chapter.coins || chapter.coins === 0;
+      const publishDate = chapter.publish_at;
       
       // A chapter is accessible if:
       // 1. It's free OR
-      // 2. It's published (past publish date in UTC) OR
-      // 3. User has unlocked it
-      const isAccessible = isFree || isPublished || isUnlocked;
+      // 2. User has unlocked it OR
+      // 3. The publish time has passed in the user's timezone
+      const isAccessible = isFree || 
+                          isUnlocked || 
+                          (!publishDate || new Date(publishDate).getTime() <= nowUTCTime);
 
       return {
         ...chapter,
