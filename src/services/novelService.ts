@@ -311,26 +311,22 @@ export async function getNovelsWithRecentUnlocks(
   offset: number = 0
 ): Promise<{ novels: Novel[]; total: number }> {
   try {
-    const now = new Date().toISOString();
-    
-    // Get novels with chapters that were recently unlocked (publish date just passed)
+    // Get all novels with their most recent chapter
     const { data: novels, error, count } = await supabase
       .from('novels')
       .select(`
         *,
-        chapters!inner (
+        chapters (
           id,
           chapter_number,
           part_number,
           title,
           publish_at,
-          coins
+          coins,
+          created_at
         )
       `, { count: 'exact' })
-      .lt('chapters.publish_at', now) // Only get chapters that are now published
-      .gt('chapters.publish_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()) // Within last 7 days
-      .gt('chapters.coins', 0) // Only chapters that required coins
-      .order('publish_at', { ascending: false, foreignTable: 'chapters' })
+      .order('created_at', { foreignTable: 'chapters', ascending: false })
       .range(offset, offset + limit - 1);
 
     if (error) throw error;
