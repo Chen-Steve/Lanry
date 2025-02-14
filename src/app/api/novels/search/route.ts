@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { Prisma, NovelStatus } from '@prisma/client';
+import { type NextRequest } from 'next/server';
 
 const ITEMS_PER_PAGE = 6;
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
+    const searchParams = request.nextUrl.searchParams;
     const query = searchParams.get('q');
     const author = searchParams.get('author');
     const tags = searchParams.getAll('tags');

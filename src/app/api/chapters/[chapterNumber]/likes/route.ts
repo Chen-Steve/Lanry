@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
@@ -133,7 +133,7 @@ export async function POST(
 }
 
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { chapterNumber: string } }
 ) {
   try {
@@ -149,8 +149,7 @@ export async function GET(
     }
 
     // Get the novel ID from the query params
-    const { searchParams } = new URL(request.url);
-    const novelId = searchParams.get('novelId');
+    const novelId = request.nextUrl.searchParams.get('novelId');
     if (!novelId) {
       return NextResponse.json(
         { error: 'Novel ID is required' },

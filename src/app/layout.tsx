@@ -66,12 +66,6 @@ export default function RootLayout({
         <Script 
           src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`} 
           strategy="afterInteractive"
-          onLoad={() => {
-            console.log('[GA] GTM script loaded');
-          }}
-          onError={(e) => {
-            console.error('[GA] Error loading GTM script:', e);
-          }}
         />
         <Script id="google-analytics-config" strategy="afterInteractive">
           {`
