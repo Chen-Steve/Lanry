@@ -2,7 +2,7 @@
 
 import { Novel } from '@/types/database';
 import { useEffect, useState } from 'react';
-import { getNovelsWithAdvancedChapters, getNovelsWithRecentUnlocks, getTopNovels } from '@/services/novelService';
+import { getNovels, getNovelsWithAdvancedChapters, getTopNovels } from '@/services/novelService';
 import LoadingGrid from './LoadingGrid';
 import AdvancedChapters from './AdvancedChapters';
 import NewReleases from './RecentReleases';
@@ -23,13 +23,13 @@ const NovelListing = () => {
   useEffect(() => {
     const fetchNovels = async () => {
       try {
-        // Fetch novels with recent unlocks with pagination
-        const { novels: novelsWithUnlocks, total } = await getNovelsWithRecentUnlocks(
-          ITEMS_PER_PAGE,
-          (currentPage - 1) * ITEMS_PER_PAGE
-        );
+        // Fetch all novels with pagination
+        const { novels: allNovels, total } = await getNovels({
+          limit: ITEMS_PER_PAGE,
+          offset: (currentPage - 1) * ITEMS_PER_PAGE
+        });
         
-        setNovels(novelsWithUnlocks);
+        setNovels(allNovels);
         setTotalNovels(total);
         
         // Only fetch featured novels on first page load

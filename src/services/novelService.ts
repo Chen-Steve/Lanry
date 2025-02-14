@@ -231,36 +231,44 @@ export async function toggleBookmark(novelId: string, userId: string, isCurrentl
 
 export async function getNovels(options: GetNovelsOptions = {}): Promise<{ novels: Novel[]; total: number }> {
   try {
-    const { limit = 24, offset = 0, categories } = options;
+    const { limit = 12, offset = 0, categories } = options;
     
     console.log('Fetching novels with options:', { limit, offset, categories });
     
-    // First get the latest chapter dates for each novel
+    // First get all novels count and IDs
+    const { data: allNovels, count: totalCount } = await supabase
+      .from('novels')
+      .select('id', { count: 'exact' })
+      .order('created_at', { ascending: false });
+    
+    if (!allNovels) {
+      return { novels: [], total: 0 };
+    }
+
+    // Get the latest chapter dates for each novel
     const { data: latestChapters } = await supabase
       .from('chapters')
       .select('novel_id, created_at, title')
       .order('created_at', { ascending: false });
 
-    if (!latestChapters) {
-      throw new Error('Failed to fetch latest chapters');
-    }
-
-    console.log('Latest 5 chapters:', latestChapters.slice(0, 5).map(ch => ({
-      novel_id: ch.novel_id,
-      title: ch.title,
-      created_at: new Date(ch.created_at).toISOString(),
-      created_at_local: new Date(ch.created_at).toLocaleString()
-    })));
-
     // Get unique novel IDs ordered by their latest chapter date
-    const orderedNovelIds = [...new Set(latestChapters.map(ch => ch.novel_id))];
+    const orderedNovelIds = latestChapters 
+      ? [...new Set(latestChapters.map(ch => ch.novel_id))]
+      : [];
     
-    console.log('First 5 novel IDs in order:', orderedNovelIds.slice(0, 5));
+    // Get all novel IDs that are not in orderedNovelIds
+    const novelsWithoutChapters = allNovels
+      .filter(novel => !orderedNovelIds.includes(novel.id))
+      .map(novel => novel.id);
     
-    if (orderedNovelIds.length === 0) {
-      console.log('No novels found with chapters');
-      return { novels: [], total: 0 };
-    }
+    // Combine IDs, putting novels with chapters first
+    const allNovelIds = [...orderedNovelIds, ...novelsWithoutChapters];
+    
+    console.log('Novels distribution:', {
+      total: allNovelIds.length,
+      withChapters: orderedNovelIds.length,
+      withoutChapters: novelsWithoutChapters.length
+    });
 
     // Then fetch the full novel data in the correct order
     let query = supabase
@@ -295,8 +303,7 @@ export async function getNovels(options: GetNovelsOptions = {}): Promise<{ novel
             updated_at
           )
         )
-      `, { count: 'exact' })
-      .in('id', orderedNovelIds);
+      `);
 
     // Apply category filters if provided
     if (categories?.included && categories.included.length > 0) {
@@ -306,40 +313,32 @@ export async function getNovels(options: GetNovelsOptions = {}): Promise<{ novel
       query = query.not('categories', 'cs', `{${categories.excluded.join(',')}}`);
     }
 
-    const { data, error, count } = await query;
+    // Only apply ID filtering if we have novels
+    if (allNovelIds.length > 0) {
+      query = query.in('id', allNovelIds);
+    }
+
+    const { data, error } = await query;
 
     if (error) throw error;
 
     console.log('Fetched novels count:', data?.length);
 
-    // Sort the novels to match the order of orderedNovelIds
+    // Sort the novels to match the order of allNovelIds
     const sortedNovels = data?.sort((a: Novel, b: Novel) => {
-      const aIndex = orderedNovelIds.indexOf(a.id);
-      const bIndex = orderedNovelIds.indexOf(b.id);
+      const aIndex = allNovelIds.indexOf(a.id);
+      const bIndex = allNovelIds.indexOf(b.id);
       return aIndex - bIndex;
     });
-
-    // Log the first 5 novels after sorting
-    console.log('First 5 novels after sorting:', sortedNovels?.slice(0, 5).map(novel => ({
-      id: novel.id,
-      title: novel.title,
-      latestChapter: novel.chapters
-        .sort((a: Chapter, b: Chapter) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0]
-    })).map(n => ({
-      id: n.id,
-      title: n.title,
-      latestChapterTitle: n.latestChapter?.title,
-      latestChapterDate: n.latestChapter ? new Date(n.latestChapter.created_at).toLocaleString() : 'No chapters'
-    })));
 
     // Apply pagination
     const paginatedNovels = sortedNovels?.slice(offset, offset + limit);
 
     console.log('Returning paginated novels:', {
-      totalNovels: count,
+      totalNovels: totalCount,
       returnedNovels: paginatedNovels?.length,
       page: Math.floor(offset / limit) + 1,
-      totalPages: Math.ceil((count || 0) / limit)
+      totalPages: Math.ceil((totalCount || 0) / limit)
     });
 
     return {
@@ -357,7 +356,7 @@ export async function getNovels(options: GetNovelsOptions = {}): Promise<{ novel
         } : null,
         categories: novel.categories?.map((item: { category: NovelCategory }) => item.category) || []
       })) || [],
-      total: count || 0
+      total: totalCount || 0
     };
   } catch (error) {
     console.error('Error fetching novels:', error);
