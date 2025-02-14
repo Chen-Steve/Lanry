@@ -9,24 +9,7 @@ import { ThemeProvider } from '@/lib/ThemeContext';
 import CookieConsent from './_components/CookieConsent';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
-import { pageView } from '@/lib/gtag';
-import { usePathname, useSearchParams } from 'next/navigation';
-import { useEffect } from 'react';
-
-// Analytics wrapper component
-function AnalyticsWrapper({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-
-  useEffect(() => {
-    if (pathname) {
-      const url = pathname + (searchParams?.toString() ? `?${searchParams.toString()}` : '');
-      pageView(url);
-    }
-  }, [pathname, searchParams]);
-
-  return <>{children}</>;
-}
+import AnalyticsWrapper from './_components/AnalyticsWrapper';
 
 export const metadata: Metadata = {
   title: "Lanry",
