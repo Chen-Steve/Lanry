@@ -8,7 +8,7 @@ if (!GA_MEASUREMENT_ID) {
 declare global {
   interface Window {
     gtag: (
-      command: 'js' | 'config' | 'consent' | 'event' | 'set',
+      command: 'js' | 'config' | 'consent' | 'event' | 'set' | 'get',
       target: Date | string,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       params?: any
@@ -20,9 +20,19 @@ declare global {
 
 // Initialize Google Analytics with consent mode
 export const initializeGoogleAnalytics = () => {
+  if (typeof window === 'undefined') return;
+
+  console.log('[GA] Initializing Google Analytics...');
+
   const script = document.createElement('script');
   script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`;
   script.async = true;
+  script.onload = () => {
+    console.log('[GA] GTM script loaded successfully');
+  };
+  script.onerror = (error) => {
+    console.error('[GA] Error loading GTM script:', error);
+  };
   document.head.appendChild(script);
 
   window.dataLayer = window.dataLayer || [];
@@ -30,22 +40,28 @@ export const initializeGoogleAnalytics = () => {
     window.dataLayer.push(args);
   };
 
-  // Initialize with default consent settings (all denied)
+  // Check stored consent
+  const storedConsent = localStorage.getItem('cookie-consent');
+  const hasConsent = storedConsent === 'accepted';
+
+  console.log('[GA] Current consent status:', storedConsent);
+
+  // Initialize with consent settings based on stored preference
   window.gtag('js', new Date());
   window.gtag('consent', 'default', {
-    'analytics_storage': 'denied',
-    'ad_storage': 'denied',
-    'ad_user_data': 'denied',
-    'ad_personalization': 'denied',
-    'functionality_storage': 'denied',
-    'personalization_storage': 'denied',
+    'analytics_storage': hasConsent ? 'granted' : 'denied',
+    'ad_storage': hasConsent ? 'granted' : 'denied',
+    'ad_user_data': hasConsent ? 'granted' : 'denied',
+    'ad_personalization': hasConsent ? 'granted' : 'denied',
+    'functionality_storage': hasConsent ? 'granted' : 'denied',
+    'personalization_storage': hasConsent ? 'granted' : 'denied',
     'security_storage': 'granted', // Always granted as it's essential
-    'ads_data_redaction': 'true'  // Redact ad click identifiers when ad_storage is denied
   });
 
   window.gtag('config', GA_MEASUREMENT_ID, {
     page_path: window.location.pathname,
-    anonymize_ip: true // IP anonymization
+    anonymize_ip: true, // IP anonymization
+    debug_mode: true // Enable debug mode temporarily
   });
 };
 
@@ -55,6 +71,8 @@ export const updateAnalyticsConsent = ({ analytics, advertising }: {
   advertising: boolean;
 }) => {
   if (typeof window === 'undefined') return;
+
+  console.log('[GA] Updating consent:', { analytics, advertising });
 
   const consentStatus = (granted: boolean) => granted ? 'granted' : 'denied';
   const adStorage = consentStatus(advertising);
@@ -66,7 +84,6 @@ export const updateAnalyticsConsent = ({ analytics, advertising }: {
     'ad_personalization': adStorage,
     'functionality_storage': consentStatus(analytics || advertising),
     'personalization_storage': consentStatus(analytics || advertising),
-    'ads_data_redaction': adStorage === 'denied' ? 'true' : 'false'
   };
 
   window.gtag('consent', 'update', consentParams);
@@ -77,11 +94,16 @@ export const updateAnalyticsConsent = ({ analytics, advertising }: {
     send_page_view: true,
     anonymize_ip: true
   });
+
+  // Debug output
+  console.log('[GA] Consent updated:', consentParams);
 };
 
 // Track page views
 export const pageView = (url: string) => {
   if (typeof window === 'undefined') return;
+  
+  console.log('[GA] Tracking pageview:', url);
   
   window.gtag('config', GA_MEASUREMENT_ID, {
     page_path: url,
@@ -97,6 +119,8 @@ export const event = ({ action, category, label, value }: {
   value?: number;
 }) => {
   if (typeof window === 'undefined') return;
+
+  console.log('[GA] Tracking event:', { action, category, label, value });
 
   window.gtag('event', action, {
     event_category: category,

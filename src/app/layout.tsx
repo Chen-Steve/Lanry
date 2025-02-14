@@ -9,6 +9,24 @@ import { ThemeProvider } from '@/lib/ThemeContext';
 import CookieConsent from './_components/CookieConsent';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
+import { pageView } from '@/lib/gtag';
+import { usePathname, useSearchParams } from 'next/navigation';
+import { useEffect } from 'react';
+
+// Analytics wrapper component
+function AnalyticsWrapper({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (pathname) {
+      const url = pathname + (searchParams?.toString() ? `?${searchParams.toString()}` : '');
+      pageView(url);
+    }
+  }, [pathname, searchParams]);
+
+  return <>{children}</>;
+}
 
 export const metadata: Metadata = {
   title: "Lanry",
@@ -57,16 +75,30 @@ export default function RootLayout({
             
             // Enable ads data redaction when ad storage is denied
             gtag('set', 'ads_data_redaction', true);
+
+            // Debug output
+            console.log('[GA] Initial setup complete');
           `}
         </Script>
-        <Script src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`} strategy="afterInteractive" />
+        <Script 
+          src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`} 
+          strategy="afterInteractive"
+          onLoad={() => {
+            console.log('[GA] GTM script loaded');
+          }}
+          onError={(e) => {
+            console.error('[GA] Error loading GTM script:', e);
+          }}
+        />
         <Script id="google-analytics-config" strategy="afterInteractive">
           {`
             gtag('js', new Date());
             gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}', {
               page_path: window.location.pathname,
-              send_page_view: true
+              send_page_view: true,
+              debug_mode: true
             });
+            console.log('[GA] Configuration complete');
           `}
         </Script>
         <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1969691044413795"
@@ -75,15 +107,17 @@ export default function RootLayout({
       <body className="min-h-screen relative">
         <Providers>
           <ThemeProvider>
-            <div className="flex flex-col min-h-screen">
-              <Header />
-              <main className="flex-grow">
-                {children}
-              </main>
-              <Footer />
-            </div>
-            <Toaster position="bottom-right" />
-            <CookieConsent />
+            <AnalyticsWrapper>
+              <div className="flex flex-col min-h-screen">
+                <Header />
+                <main className="flex-grow">
+                  {children}
+                </main>
+                <Footer />
+              </div>
+              <Toaster position="bottom-right" />
+              <CookieConsent />
+            </AnalyticsWrapper>
           </ThemeProvider>
         </Providers>
         <Analytics />
