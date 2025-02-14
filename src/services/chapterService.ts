@@ -327,6 +327,11 @@ export async function getChaptersForList({
       .select('id, chapter_number, part_number, title, publish_at, coins, age_rating, volume_id', { count: 'exact' })
       .eq('novel_id', novel.id);
 
+    // Apply volume filtering first, before any other filters
+    if (volumeId) {
+      query = query.eq('volume_id', volumeId);
+    }
+
     // Get current date in UTC for filtering - using strict UTC time
     const nowUTC = new Date().toISOString();
     const nowUTCTime = new Date(nowUTC).getTime();
@@ -395,10 +400,6 @@ export async function getChaptersForList({
             query = query.eq('id', '-1');
           }
         }
-      }
-
-      if (volumeId) {
-        query = query.eq('volume_id', volumeId);
       }
     }
 
