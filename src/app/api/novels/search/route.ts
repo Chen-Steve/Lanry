@@ -8,8 +8,8 @@ const ITEMS_PER_PAGE = 6;
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    const query = searchParams.get('q');
-    const author = searchParams.get('author');
+    const query = searchParams.get('q')?.trim();
+    const author = searchParams.get('author')?.trim();
     const tags = searchParams.getAll('tags');
     const status = searchParams.get('status') as NovelStatus | null;
     const page = parseInt(searchParams.get('page') || '1');
@@ -18,25 +18,22 @@ export async function GET(request: NextRequest) {
     // Build the where clause
     let where: Prisma.NovelWhereInput = {};
 
-    // Add title search if query exists
-    if (query?.trim()) {
+    // Optimize search query based on the search term
+    if (query) {
       where = {
         ...where,
-        OR: [
-          { title: { contains: query.trim(), mode: 'insensitive' } },
-          { description: { contains: query.trim(), mode: 'insensitive' } }
-        ]
+        title: {
+          contains: query,
+          mode: Prisma.QueryMode.insensitive
+        }
       };
     }
 
     // Add author search if author exists
-    if (author?.trim()) {
-      const user = await prisma.profile.findFirst({
+    if (author) {
+      const user = await prisma.profile.findUnique({
         where: {
-          username: {
-            equals: author.trim(),
-            mode: 'insensitive'
-          }
+          username: author.toLowerCase()
         },
         select: {
           id: true
@@ -51,7 +48,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Add tag filtering if tags exist
+    // Optimize tag filtering
     if (tags.length > 0) {
       where = {
         ...where,
@@ -65,7 +62,7 @@ export async function GET(request: NextRequest) {
       };
     }
 
-    // Add status filtering if status exists
+    // Add status filtering
     if (status) {
       where = {
         ...where,
@@ -73,49 +70,101 @@ export async function GET(request: NextRequest) {
       };
     }
 
-    // Get total count for pagination
-    const totalCount = await prisma.novel.count({ where });
+    // Get total count for pagination using optimized count query
+    const totalCount = await prisma.novel.count({
+      where
+    });
+
     const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
 
-    // Get paginated novels
+    // Optimize the main search query
     const novels = await prisma.novel.findMany({
       where,
-      include: {
-        tags: {
-          include: {
-            tag: true
-          }
-        },
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        coverImageUrl: true,
+        status: true,
+        updatedAt: true,
+        bookmarkCount: true,
+        author: true,
         authorProfile: {
           select: {
             username: true
+          }
+        },
+        _count: {
+          select: {
+            chapters: true
           }
         }
       },
       take: ITEMS_PER_PAGE,
       skip,
       orderBy: [
-        { updatedAt: 'desc' },
-        { bookmarkCount: 'desc' }
+        { bookmarkCount: 'desc' },
+        { updatedAt: 'desc' }
       ]
     });
 
-    // Transform the response to include flat tag array and author username
+    // Fetch tags in a separate query for better performance
+    const novelIds = novels.map(novel => novel.id);
+    const tagsMap = new Map();
+    
+    if (novelIds.length > 0) {
+      const novelTags = await prisma.tagsOnNovels.findMany({
+        where: {
+          novelId: {
+            in: novelIds
+          }
+        },
+        select: {
+          novelId: true,
+          tag: {
+            select: {
+              id: true,
+              name: true
+            }
+          }
+        }
+      });
+
+      // Group tags by novel ID
+      novelTags.forEach(({ novelId, tag }) => {
+        if (!tagsMap.has(novelId)) {
+          tagsMap.set(novelId, []);
+        }
+        tagsMap.get(novelId).push(tag);
+      });
+    }
+
+    // Optimize response transformation
     const transformedNovels = novels.map(novel => ({
-      ...novel,
+      id: novel.id,
+      title: novel.title,
+      slug: novel.slug,
+      coverImageUrl: novel.coverImageUrl,
+      status: novel.status,
+      updatedAt: novel.updatedAt,
+      bookmarkCount: novel.bookmarkCount,
       author: novel.authorProfile?.username || novel.author,
-      tags: novel.tags.map(t => t.tag),
-      authorProfile: undefined
+      tags: tagsMap.get(novel.id) || [],
+      chapterCount: novel._count.chapters
     }));
 
     return NextResponse.json({
       novels: transformedNovels,
-      totalPages
+      totalPages,
+      totalCount
     });
   } catch (error) {
     console.error('Search error:', error);
     return NextResponse.json(
-      { error: 'Failed to search novels', details: error instanceof Error ? error.message : String(error) },
+      { 
+        error: 'Failed to search novels', 
+        details: error instanceof Error ? error.message : String(error) 
+      },
       { status: 500 }
     );
   }
