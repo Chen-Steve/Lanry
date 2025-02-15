@@ -48,7 +48,7 @@ const SearchSection: React.FC<SearchSectionProps> = ({
         setIsLoading(true);
 
         const response = await fetch(
-          `/api/novels/search?q=${encodeURIComponent(query)}`,
+          `/api/novels/search?q=${encodeURIComponent(query)}&basic=true`,
           { signal: abortControllerRef.current.signal }
         );
         

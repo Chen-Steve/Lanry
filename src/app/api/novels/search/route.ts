@@ -5,6 +5,21 @@ import { type NextRequest } from 'next/server';
 
 const ITEMS_PER_PAGE = 6;
 
+type MinimalNovel = {
+  id: string;
+  title: string;
+  slug: string;
+  author: string | null;
+  authorProfile: { username: string | null } | null;
+};
+
+type FullNovel = MinimalNovel & {
+  coverImageUrl: string | null;
+  status: NovelStatus;
+  updatedAt: Date;
+  _count: { chapters: number };
+};
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
@@ -12,50 +27,75 @@ export async function GET(request: NextRequest) {
     const author = searchParams.get('author')?.trim();
     const tags = searchParams.getAll('tags');
     const status = searchParams.get('status') as NovelStatus | null;
+    const category = searchParams.get('category')?.trim();
     const page = parseInt(searchParams.get('page') || '1');
     const skip = (page - 1) * ITEMS_PER_PAGE;
+    const isBasicSearch = searchParams.get('basic') === 'true';
 
     // Build the where clause
     let where: Prisma.NovelWhereInput = {};
 
     // Optimize search query based on the search term
     if (query) {
-      where = {
-        ...where,
-        title: {
-          contains: query,
-          mode: Prisma.QueryMode.insensitive
-        }
-      };
+      if (isBasicSearch) {
+        // For basic search, match only distinct words or parts
+        where = {
+          OR: [
+            { title: { mode: 'insensitive', startsWith: query } },
+            { title: { mode: 'insensitive', endsWith: query } },
+            { title: { mode: 'insensitive', contains: ` ${query}` } },
+            { title: { mode: 'insensitive', contains: `${query} ` } }
+          ]
+        };
+      } else {
+        // For advanced search, keep the flexible matching
+        where = {
+          ...where,
+          title: {
+            contains: query,
+            mode: Prisma.QueryMode.insensitive
+          }
+        };
+      }
     }
 
     // Add author search if author exists
     if (author) {
-      const user = await prisma.profile.findUnique({
-        where: {
-          username: author.toLowerCase()
-        },
-        select: {
-          id: true
+      where = {
+        ...where,
+        translator: {
+          username: {
+            mode: 'insensitive',
+            equals: author
+          }
         }
-      });
-
-      if (user) {
-        where = {
-          ...where,
-          authorProfileId: user.id
-        };
-      }
+      };
     }
 
     // Optimize tag filtering
     if (tags.length > 0) {
       where = {
         ...where,
-        tags: {
+        AND: tags.map(tagId => ({
+          tags: {
+            some: {
+              tag: {
+                id: tagId
+              }
+            }
+          }
+        }))
+      };
+    }
+
+    // Add category filtering
+    if (category) {
+      where = {
+        ...where,
+        categories: {
           some: {
-            tagId: {
-              in: tags
+            category: {
+              id: category
             }
           }
         }
@@ -80,14 +120,24 @@ export async function GET(request: NextRequest) {
     // Optimize the main search query
     const novels = await prisma.novel.findMany({
       where,
-      select: {
+      select: isBasicSearch ? {
+        // Minimal select for basic search
+        id: true,
+        title: true,
+        slug: true,
+        author: true,
+        authorProfile: {
+          select: {
+            username: true
+          }
+        }
+      } : {
         id: true,
         title: true,
         slug: true,
         coverImageUrl: true,
         status: true,
         updatedAt: true,
-        bookmarkCount: true,
         author: true,
         authorProfile: {
           select: {
@@ -103,55 +153,66 @@ export async function GET(request: NextRequest) {
       take: ITEMS_PER_PAGE,
       skip,
       orderBy: [
-        { bookmarkCount: 'desc' },
         { updatedAt: 'desc' }
       ]
     });
 
-    // Fetch tags in a separate query for better performance
-    const novelIds = novels.map(novel => novel.id);
+    // Fetch tags only if needed
     const tagsMap = new Map();
-    
-    if (novelIds.length > 0) {
-      const novelTags = await prisma.tagsOnNovels.findMany({
-        where: {
-          novelId: {
-            in: novelIds
-          }
-        },
-        select: {
-          novelId: true,
-          tag: {
-            select: {
-              id: true,
-              name: true
+    if (!isBasicSearch && novels.length > 0) {
+      const novelIds = novels.map(novel => novel.id);
+      
+      if (novelIds.length > 0) {
+        const novelTags = await prisma.tagsOnNovels.findMany({
+          where: {
+            novelId: {
+              in: novelIds
+            }
+          },
+          select: {
+            novelId: true,
+            tag: {
+              select: {
+                id: true,
+                name: true
+              }
             }
           }
-        }
-      });
+        });
 
-      // Group tags by novel ID
-      novelTags.forEach(({ novelId, tag }) => {
-        if (!tagsMap.has(novelId)) {
-          tagsMap.set(novelId, []);
-        }
-        tagsMap.get(novelId).push(tag);
-      });
+        // Group tags by novel ID
+        novelTags.forEach(({ novelId, tag }) => {
+          if (!tagsMap.has(novelId)) {
+            tagsMap.set(novelId, []);
+          }
+          tagsMap.get(novelId).push(tag);
+        });
+      }
     }
 
     // Optimize response transformation
-    const transformedNovels = novels.map(novel => ({
-      id: novel.id,
-      title: novel.title,
-      slug: novel.slug,
-      coverImageUrl: novel.coverImageUrl,
-      status: novel.status,
-      updatedAt: novel.updatedAt,
-      bookmarkCount: novel.bookmarkCount,
-      author: novel.authorProfile?.username || novel.author,
-      tags: tagsMap.get(novel.id) || [],
-      chapterCount: novel._count.chapters
-    }));
+    const transformedNovels = novels.map(novel => {
+      const baseNovel = {
+        id: novel.id,
+        title: novel.title,
+        slug: novel.slug,
+        author: novel.authorProfile?.username || novel.author,
+      };
+
+      if (!isBasicSearch) {
+        const fullNovel = novel as FullNovel;
+        return {
+          ...baseNovel,
+          coverImageUrl: fullNovel.coverImageUrl,
+          status: fullNovel.status,
+          updatedAt: fullNovel.updatedAt,
+          tags: tagsMap.get(novel.id) || [],
+          chapterCount: fullNovel._count.chapters
+        };
+      }
+
+      return baseNovel;
+    });
 
     return NextResponse.json({
       novels: transformedNovels,

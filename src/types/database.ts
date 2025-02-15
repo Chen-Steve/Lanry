@@ -45,6 +45,7 @@ export interface Novel {
   is_author_name_custom?: boolean;
   categories?: NovelCategory[];
   tags?: Tag[];
+  chapterCount?: number;
   characters?: {
     id: string;
     name: string;

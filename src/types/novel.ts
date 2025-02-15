@@ -3,7 +3,7 @@ export interface Novel {
   title: string;
   author_profile_id?: string;
   cover_image_url?: string;
-  chaptersCount?: number;
+  chapterCount?: number;
 }
 
 export interface Volume {

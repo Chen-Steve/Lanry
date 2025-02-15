@@ -128,6 +128,9 @@ export default function NovelList({
                         {novel.description}
                       </p>
                     )}
+                    <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
+                      {novel.chapterCount} {novel.chapterCount === 1 ? 'chapter' : 'chapters'}
+                    </div>
                   </div>
                 </div>
               </Link>
