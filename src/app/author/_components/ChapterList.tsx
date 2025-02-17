@@ -420,7 +420,15 @@ export default function ChapterList({
         </div>
         <div className={`divide-y divide-border ${isCollapsed ? 'hidden' : ''}`}>
           {volumeChapters
-            .sort((a, b) => a.chapter_number - b.chapter_number)
+            .sort((a, b) => {
+              if (a.chapter_number !== b.chapter_number) {
+                return a.chapter_number - b.chapter_number;
+              }
+              // If chapter numbers are equal, sort by part number
+              const partA = a.part_number || 0;
+              const partB = b.part_number || 0;
+              return partA - partB;
+            })
             .map(renderChapter)}
         </div>
       </div>
@@ -526,7 +534,15 @@ export default function ChapterList({
                 </div>
                 <div className="divide-y divide-border mt-2">
                   {chaptersGroupedByVolume.noVolumeChapters
-                    .sort((a, b) => a.chapter_number - b.chapter_number)
+                    .sort((a, b) => {
+                      if (a.chapter_number !== b.chapter_number) {
+                        return a.chapter_number - b.chapter_number;
+                      }
+                      // If chapter numbers are equal, sort by part number
+                      const partA = a.part_number || 0;
+                      const partB = b.part_number || 0;
+                      return partA - partB;
+                    })
                     .map(renderChapter)}
                 </div>
               </div>
