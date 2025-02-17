@@ -36,6 +36,11 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Force PayPal iframes to have a lower z-index */
+iframe {
+  z-index: 0 !important;
+}
+
 .blobs-container {
   position: fixed;
   top: 0;
