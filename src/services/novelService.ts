@@ -245,29 +245,59 @@ export async function getNovels(options: GetNovelsOptions = {}): Promise<{ novel
       return { novels: [], total: 0 };
     }
 
-    // Get the latest chapter dates for each novel
-    const { data: latestChapters } = await supabase
-      .from('chapters')
-      .select('novel_id, created_at, title')
-      .order('created_at', { ascending: false });
+    const now = new Date().toISOString();
 
-    // Get unique novel IDs ordered by their latest chapter date
-    const orderedNovelIds = latestChapters 
-      ? [...new Set(latestChapters.map(ch => ch.novel_id))]
-      : [];
+    // Get the latest chapter dates and recently unlocked chapters
+    const [{ data: latestChapters }, { data: recentUnlocks }] = await Promise.all([
+      supabase
+        .from('chapters')
+        .select('novel_id, created_at, title')
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('chapters')
+        .select('novel_id, publish_at')
+        .lte('publish_at', now) // Get chapters that just became available
+        .gt('publish_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()) // Within last 7 days
+    ]);
+
+    // Create a map of novel IDs to their latest activity (either chapter creation or unlock)
+    const novelActivityMap = new Map<string, Date>();
+
+    // Add chapters based on creation date
+    latestChapters?.forEach(chapter => {
+      const currentDate = novelActivityMap.get(chapter.novel_id);
+      const chapterDate = new Date(chapter.created_at);
+      if (!currentDate || chapterDate > currentDate) {
+        novelActivityMap.set(chapter.novel_id, chapterDate);
+      }
+    });
+
+    // Add recently unlocked chapters
+    recentUnlocks?.forEach(chapter => {
+      const currentDate = novelActivityMap.get(chapter.novel_id);
+      const unlockDate = new Date(chapter.publish_at);
+      if (!currentDate || unlockDate > currentDate) {
+        novelActivityMap.set(chapter.novel_id, unlockDate);
+      }
+    });
+
+    // Convert map to array and sort by date
+    const orderedNovelIds = Array.from(novelActivityMap.entries())
+      .sort((a, b) => b[1].getTime() - a[1].getTime())
+      .map(([id]) => id);
     
     // Get all novel IDs that are not in orderedNovelIds
-    const novelsWithoutChapters = allNovels
+    const novelsWithoutActivity = allNovels
       .filter(novel => !orderedNovelIds.includes(novel.id))
       .map(novel => novel.id);
     
-    // Combine IDs, putting novels with chapters first
-    const allNovelIds = [...orderedNovelIds, ...novelsWithoutChapters];
+    // Combine IDs, putting novels with activity first
+    const allNovelIds = [...orderedNovelIds, ...novelsWithoutActivity];
     
     console.log('Novels distribution:', {
       total: allNovelIds.length,
-      withChapters: orderedNovelIds.length,
-      withoutChapters: novelsWithoutChapters.length
+      withActivity: orderedNovelIds.length,
+      withoutActivity: novelsWithoutActivity.length
     });
 
     // Then fetch the full novel data in the correct order
