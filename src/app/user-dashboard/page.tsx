@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, lazy, Suspense, useEffect, memo } from 'react';
+import { useState, lazy, Suspense, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import supabase from '@/lib/supabaseClient';
 import { Icon } from '@iconify/react';
@@ -14,18 +14,6 @@ const ReadingHistorySection = lazy(() =>
   import('@/app/user-dashboard/_components/ReadingHistory').catch(() => {
     console.error('Failed to load ReadingHistory component');
     return { default: () => <div>Failed to load reading history</div> };
-  })
-);
-
-const BookmarksFallback = memo(({ }: { userId: string | undefined, isOwnProfile: boolean }) => (
-  <div>Failed to load bookmarks</div>
-));
-BookmarksFallback.displayName = 'BookmarksFallback';
-
-const Bookmarks = lazy(() => 
-  import('@/app/user-dashboard/_components/Bookmarks').catch(() => {
-    console.error('Failed to load Bookmarks component');
-    return { default: BookmarksFallback };
   })
 );
 
@@ -64,7 +52,7 @@ const ErrorFallback = ({ error, resetErrorBoundary }: {
   </div>
 );
 
-type DashboardTab = 'reading' | 'bookmarks' | 'settings';
+type DashboardTab = 'reading' | 'settings';
 
 const TabButton = ({ 
   active, 
@@ -107,7 +95,7 @@ export default function UserDashboard() {
       const targetId = profileId || user?.id;
       if (!targetId) return null;
 
-      // Fetch profile with bookmarks and reading history counts
+      // Fetch profile with reading history counts
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select(`
@@ -115,7 +103,6 @@ export default function UserDashboard() {
           coins,
           created_at,
           current_streak,
-          bookmarks!inner(count),
           reading_history!inner(count)
         `)
         .eq('id', targetId)
@@ -137,7 +124,6 @@ export default function UserDashboard() {
       return {
         ...profile,
         reading_time: readingTimeData || { total_minutes: 0 },
-        bookmarks_count: profile.bookmarks[0]?.count || 0,
         stories_read: profile.reading_history[0]?.count || 0
       };
     },
@@ -307,7 +293,6 @@ export default function UserDashboard() {
           year: 'numeric'
         })}
         storiesRead={profile?.stories_read || 0}
-        bookmarkCount={profile?.bookmarks_count || 0}
       />
 
       {/* Navigation Tabs */}
@@ -318,12 +303,6 @@ export default function UserDashboard() {
             onClick={() => setActiveTab('reading')}
           >
             Recent Reads
-          </TabButton>
-          <TabButton 
-            active={activeTab === 'bookmarks'} 
-            onClick={() => setActiveTab('bookmarks')}
-          >
-            Bookmarks
           </TabButton>
           {isOwnProfile && (
             <TabButton 
@@ -343,7 +322,6 @@ export default function UserDashboard() {
         >
           <Suspense fallback={<TabSkeleton />}>
             {activeTab === 'reading' && <ReadingHistorySection userId={profile?.id} />}
-            {activeTab === 'bookmarks' && <Bookmarks userId={profile?.id} isOwnProfile={isOwnProfile} />}
             {isOwnProfile && activeTab === 'settings' && <Settings profile={profile} />}
           </Suspense>
         </ErrorBoundary>

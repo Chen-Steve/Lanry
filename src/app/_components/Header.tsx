@@ -134,6 +134,16 @@ const Header = () => {
                 <NotificationButton />
               </div>
 
+              {/* Bookmarks */}
+              <div className="flex-none">
+                <Link 
+                  href="/bookmarks"
+                  className="bg-secondary/80 backdrop-blur-sm p-2 text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-secondary/90 inline-flex items-center"
+                >
+                  <Icon icon="mdi:bookmark-multiple" className="w-5 h-5" />
+                </Link>
+              </div>
+
               {/* Auth Button */}
               <div className="flex-none">
                 {renderAuthLink()}

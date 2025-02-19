@@ -141,8 +141,29 @@ model Profile {
   chapterThreadCommentLikes ChapterThreadCommentLike[]
   receivedNotifications Notification[] @relation("ReceivedNotifications")
   sentNotifications     Notification[] @relation("SentNotifications")
+  bookmarkFolders      BookmarkFolder[]
 
   @@map("profiles")
+}
+
+model BookmarkFolder {
+  id          String    @id @default(uuid())
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  name        String
+  description String?
+  icon        String?
+  color       String?
+  profile     Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  profileId   String    @map("profile_id")
+  bookmarks   Bookmark[]
+  parentFolder BookmarkFolder?  @relation("FolderHierarchy", fields: [parentFolderId], references: [id])
+  parentFolderId String?        @map("parent_folder_id")
+  subFolders   BookmarkFolder[] @relation("FolderHierarchy")
+
+  @@unique([profileId, name, parentFolderId])
+  @@index([profileId])
+  @@map("bookmark_folders")
 }
 
 model Bookmark {
@@ -153,8 +174,11 @@ model Bookmark {
   profileId String   @map("profile_id")
   novel     Novel    @relation(fields: [novelId], references: [id], onDelete: Cascade)
   novelId   String   @map("novel_id")
+  folder    BookmarkFolder? @relation(fields: [folderId], references: [id])
+  folderId  String?   @map("folder_id")
 
   @@unique([profileId, novelId])
+  @@index([folderId])
   @@map("bookmarks")
 }
 

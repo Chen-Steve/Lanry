@@ -29,14 +29,12 @@ interface StatusSectionProps {
   totalReadingTime: number;
   joinedDate: string;
   storiesRead: number;
-  bookmarkCount: number;
 }
 
 export default function StatusSection({ 
   totalReadingTime = 0,
   joinedDate,
   storiesRead = 0,
-  bookmarkCount = 0,
 }: StatusSectionProps) {
   const formatReadingTime = (minutes: number) => {
     const hours = Math.floor(minutes / 60);
@@ -71,15 +69,6 @@ export default function StatusSection({
       gradientTo: 'to-emerald-500/5',
       iconColor: 'text-emerald-500',
       textColor: 'text-emerald-900 dark:text-emerald-100'
-    },
-    {
-      icon: 'heroicons:bookmark',
-      label: 'Bookmarks',
-      value: bookmarkCount,
-      gradientFrom: 'from-purple-500/10',
-      gradientTo: 'to-purple-500/5',
-      iconColor: 'text-purple-500',
-      textColor: 'text-purple-900 dark:text-purple-100'
     }
   ];
 
