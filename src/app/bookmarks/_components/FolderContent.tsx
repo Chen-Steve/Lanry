@@ -6,22 +6,6 @@ import { Icon } from '@iconify/react';
 import { useAuth } from '@/hooks/useAuth';
 import supabase from '@/lib/supabaseClient';
 import BookmarkItem from './BookmarkItem';
-
-interface Novel {
-  id: string;
-  title: string;
-  slug: string | null;
-  cover_image_url: string;
-}
-
-interface Bookmark {
-  id: string;
-  profileId: string;
-  novelId: string;
-  createdAt: string;
-  novel: Novel;
-}
-
 interface BookmarkRow {
   id: string;
   profile_id: string;

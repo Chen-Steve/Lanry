@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Icon } from '@iconify/react';
 import { toast } from 'react-hot-toast';
 import ChapterEditor from './ChapterEditor';
@@ -41,15 +41,7 @@ export default function ChapterEditForm({
     ageRating: 'EVERYONE' as 'EVERYONE' | 'TEEN' | 'MATURE',
   });
 
-  useEffect(() => {
-    if (chapterId) {
-      fetchChapterDetails();
-    } else {
-      setIsLoading(false);
-    }
-  }, [chapterId]);
-
-  const fetchChapterDetails = async () => {
+  const fetchChapterDetails = useCallback(async () => {
     try {
       setIsLoading(true);
       const chapters = await authorChapterService.fetchNovelChapters(novelId, userId, true);
@@ -74,7 +66,15 @@ export default function ChapterEditForm({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [novelId, userId]);
+
+  useEffect(() => {
+    if (chapterId) {
+      fetchChapterDetails();
+    } else {
+      setIsLoading(false);
+    }
+  }, [chapterId, fetchChapterDetails]);
 
   const handleSave = async (e?: React.FormEvent) => {
     if (e) {

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Icon } from '@iconify/react';
 import type { Novel, Tag } from '@/types/database';
 import { NovelStatus } from '@prisma/client';
@@ -118,12 +118,7 @@ export default function AdvancedSearch() {
     }
   }, []);
 
-  // Add initial load effect
-  useEffect(() => {
-    handleSearch(true);
-  }, []); // Empty dependency array for initial load only
-
-  const handleSearch = async (resetPage: boolean = false) => {
+  const handleSearch = useCallback(async (resetPage: boolean = false) => {
     const newPage = resetPage ? 1 : filters.page;
     
     if (resetPage) {
@@ -172,7 +167,11 @@ export default function AdvancedSearch() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [filters]);
+
+  useEffect(() => {
+    handleSearch(true);
+  }, [handleSearch]);
 
   const handlePageChange = (newPage: number) => {
     setFilters(prev => ({ ...prev, page: newPage }));

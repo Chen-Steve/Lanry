@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { Icon } from '@iconify/react';
 import { ChapterListProps, ChapterListChapter, Volume } from '../_types/authorTypes';
 import { toast } from 'react-hot-toast';
@@ -62,10 +62,33 @@ export default function ChapterList({
   const [isLoadingSettings, setIsLoadingSettings] = useState(false);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
 
-  // Load settings on component mount
+  const fetchGlobalSettings = useCallback(async () => {
+    setIsLoadingSettings(true);
+    try {
+      const settings = await authorChapterService.getGlobalSettings(novelId, userId);
+      const savedDays = localStorage.getItem('publishingDays');
+      const savedUsePublishingDays = localStorage.getItem('usePublishingDays');
+
+      setGlobalSettings({
+        releaseInterval: settings.autoReleaseInterval,
+        fixedPrice: settings.fixedPriceAmount,
+        autoReleaseEnabled: settings.autoReleaseEnabled,
+        fixedPriceEnabled: settings.fixedPriceEnabled,
+        publishingDays: savedDays ? JSON.parse(savedDays) : [],
+        usePublishingDays: savedUsePublishingDays ? JSON.parse(savedUsePublishingDays) : false
+      });
+    } catch (error) {
+      console.error('Error fetching global settings:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      toast.error(`Failed to load settings: ${errorMessage}`);
+    } finally {
+      setIsLoadingSettings(false);
+    }
+  }, [novelId, userId]);
+
   useEffect(() => {
     fetchGlobalSettings();
-  }, [novelId, userId]);
+  }, [fetchGlobalSettings]);
 
   const chaptersGroupedByVolume = useMemo(() => {
     // Filter chapters based on search query
@@ -225,31 +248,6 @@ export default function ChapterList({
     } catch (error) {
       console.error('Error updating default coins:', error);
       toast.error('Failed to update default coins');
-    }
-  };
-
-  const fetchGlobalSettings = async () => {
-    setIsLoadingSettings(true);
-    try {
-      const settings = await authorChapterService.getGlobalSettings(novelId, userId);
-      // Load publishing days settings from localStorage
-      const savedDays = localStorage.getItem('publishingDays');
-      const savedUsePublishingDays = localStorage.getItem('usePublishingDays');
-
-      setGlobalSettings({
-        releaseInterval: settings.autoReleaseInterval,
-        fixedPrice: settings.fixedPriceAmount,
-        autoReleaseEnabled: settings.autoReleaseEnabled,
-        fixedPriceEnabled: settings.fixedPriceEnabled,
-        publishingDays: savedDays ? JSON.parse(savedDays) : [],
-        usePublishingDays: savedUsePublishingDays ? JSON.parse(savedUsePublishingDays) : false
-      });
-    } catch (error) {
-      console.error('Error fetching global settings:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      toast.error(`Failed to load settings: ${errorMessage}`);
-    } finally {
-      setIsLoadingSettings(false);
     }
   };
 

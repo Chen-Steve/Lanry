@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import supabase from '@/lib/supabaseClient';
 import { Icon } from '@iconify/react';
 
@@ -28,7 +28,7 @@ export default function NovelStatistics() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedNovel, setSelectedNovel] = useState<string | null>(null);
 
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession();
     
     if (!session?.user) return;
@@ -73,7 +73,7 @@ export default function NovelStatistics() {
       setSelectedNovel(formattedStats[0].id);
     }
     setIsLoading(false);
-  };
+  }, [selectedNovel]);
 
   const handleNovelClick = async (novelId: string) => {
     setSelectedNovel(novelId);
@@ -81,7 +81,7 @@ export default function NovelStatistics() {
 
   useEffect(() => {
     fetchStats();
-  }, []);
+  }, [fetchStats]);
 
   if (isLoading) {
     return (

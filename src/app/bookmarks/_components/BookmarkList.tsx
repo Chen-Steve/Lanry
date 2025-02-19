@@ -4,7 +4,6 @@ import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tansta
 import { Icon } from '@iconify/react';
 import { useEffect, useState, memo } from 'react';
 import { useInView } from 'react-intersection-observer';
-import { ErrorBoundary } from 'react-error-boundary';
 import BookmarkItem from './BookmarkItem';
 import supabase from '@/lib/supabaseClient';
 import type { AuthChangeEvent } from '@supabase/supabase-js';
@@ -66,21 +65,6 @@ const DeleteConfirmation = memo(({ isOpen, onClose, onConfirm, title }: DeleteCo
   );
 });
 DeleteConfirmation.displayName = 'DeleteConfirmation';
-
-const ErrorFallback = ({ error, resetErrorBoundary }: { error: Error; resetErrorBoundary: () => void }) => {
-  return (
-    <div className="text-center">
-      <Icon icon="mdi:alert" className="w-12 h-12 mx-auto mb-2 text-red-500 dark:text-red-400" />
-      <p className="text-red-500 dark:text-red-400 mb-4">{error.message}</p>
-      <button
-        onClick={() => resetErrorBoundary()}
-        className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
-      >
-        Try again
-      </button>
-    </div>
-  );
-};
 
 const BookmarkList = ({ 
   userId, 
