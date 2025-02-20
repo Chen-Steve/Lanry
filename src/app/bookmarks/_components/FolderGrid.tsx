@@ -264,8 +264,8 @@ const FolderGrid = ({ userId }: FolderGridProps) => {
         </div>
       )}
       
-      <div className="flex items-start gap-4">
-        <div className={`${viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4' : 'flex flex-col gap-2'} flex-1`}>
+      <div className="flex flex-col-reverse sm:flex-row items-start gap-4">
+        <div className={`${viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4' : 'flex flex-col gap-2'} flex-1 w-full`}>
           {folders.map((folder) => (
             <Link 
               key={folder.id}

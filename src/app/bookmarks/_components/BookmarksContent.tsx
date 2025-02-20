@@ -156,47 +156,6 @@ export default function BookmarksContent() {
               Folders
             </button>
           </div>
-
-          {/* Action Buttons */}
-          {activeTab === 'bookmarks' && (
-            <div className="flex items-center gap-2">
-              {mode === 'view' ? (
-                <button
-                  onClick={() => handleModeChange('select')}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-md hover:bg-accent transition-colors text-sm"
-                >
-                  <Icon icon="mdi:select" className="w-4 h-4" />
-                  <span>Select</span>
-                </button>
-              ) : (
-                <>
-                  <button
-                    onClick={() => handleModeChange('view')}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-md hover:bg-accent transition-colors text-sm"
-                  >
-                    <Icon icon="mdi:close" className="w-4 h-4" />
-                    <span>Cancel</span>
-                  </button>
-                  <button
-                    onClick={handleBulkDelete}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-md hover:bg-accent transition-colors text-sm text-red-500 hover:text-red-600"
-                    disabled={selectedItems.length === 0}
-                  >
-                    <Icon icon="mdi:trash-can" className="w-4 h-4" />
-                    <span>Delete {selectedItems.length > 0 ? `(${selectedItems.length})` : ''}</span>
-                  </button>
-                  <button
-                    onClick={handleBulkMove}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-md hover:bg-accent transition-colors text-sm"
-                    disabled={selectedItems.length === 0}
-                  >
-                    <Icon icon="mdi:folder-move" className="w-4 h-4" />
-                    <span>Move {selectedItems.length > 0 ? `(${selectedItems.length})` : ''}</span>
-                  </button>
-                </>
-              )}
-            </div>
-          )}
         </div>
       </div>
 
@@ -206,7 +165,16 @@ export default function BookmarksContent() {
           isOwnProfile={true}
           mode={mode}
           selectedItems={selectedItems}
-          onSelectionChange={setSelectedItems}
+          onSelectionChange={(items) => {
+            setSelectedItems(items);
+            if (items.length === 0 && mode === 'select') {
+              handleModeChange('view');
+            } else if (mode === 'view') {
+              handleModeChange('select');
+            }
+          }}
+          onBulkDelete={handleBulkDelete}
+          onBulkMove={handleBulkMove}
         />
       )}
       {activeTab === 'folders' && (

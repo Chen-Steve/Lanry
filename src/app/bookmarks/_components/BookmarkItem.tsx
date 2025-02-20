@@ -29,7 +29,6 @@ interface BookmarkFolder {
 interface BookmarkItemProps {
   bookmark: Bookmark;
   isOwnProfile: boolean;
-  onDeleteClick: (id: string, title: string) => void;
   isFirstPage: boolean;
   index: number;
   folders?: BookmarkFolder[];
@@ -40,7 +39,6 @@ interface BookmarkItemProps {
 const BookmarkItem = memo(({ 
   bookmark, 
   isOwnProfile, 
-  onDeleteClick, 
   isFirstPage,
   index,
   folders = [],
@@ -98,35 +96,6 @@ const BookmarkItem = memo(({
             className="object-cover transition-transform duration-300 group-hover:scale-105"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          {isOwnProfile && (
-            <div className="absolute top-1 right-1 z-10 flex gap-1">
-              {onMoveToFolder && (
-                <button
-                  ref={buttonRef}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setIsMenuOpen(prev => !prev);
-                  }}
-                  className="p-1 bg-black/70 hover:bg-accent/90 rounded-full text-white backdrop-blur-sm transition-colors"
-                  aria-label="Move to folder"
-                >
-                  <Icon icon="mdi:folder-move" className="w-3.5 h-3.5" />
-                </button>
-              )}
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  onDeleteClick(bookmark.id, bookmark.novel.title);
-                }}
-                className="p-1 bg-black/70 hover:bg-red-500/90 rounded-full text-white backdrop-blur-sm transition-colors"
-                aria-label="Remove bookmark"
-              >
-                <Icon icon="mdi:trash-can" className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          )}
         </div>
         <div className="mt-1.5 px-0.5">
           <h3 className="text-sm font-medium truncate relative z-10 text-foreground">{bookmark.novel.title}</h3>
