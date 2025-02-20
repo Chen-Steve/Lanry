@@ -107,8 +107,6 @@ const UserProfileButton = ({
         return 'mdi:reply';
       case 'like':
         return 'mdi:heart';
-      case 'follow':
-        return 'mdi:account-plus';
       case 'system':
         return 'mdi:information';
       default:
