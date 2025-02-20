@@ -129,14 +129,14 @@ const BookmarkItem = memo(({
           )}
         </div>
         <div className="mt-1.5 px-0.5">
-          <h3 className="text-sm font-medium truncate relative z-10 text-foreground group-hover:text-white transition-colors">{bookmark.novel.title}</h3>
+          <h3 className="text-sm font-medium truncate relative z-10 text-foreground">{bookmark.novel.title}</h3>
         </div>
       </Link>
 
       {isMenuOpen && isOwnProfile && onMoveToFolder && (
         <div 
           ref={menuRef}
-          className={`absolute z-[100] w-44 py-1 bg-background/95 backdrop-blur-sm rounded-md shadow-lg border ${
+          className={`absolute z-[100] w-44 py-1 bg-background rounded-md shadow-lg border ${
             shouldAlignRight ? 'right-1' : 'left-1'
           }`}
           style={{

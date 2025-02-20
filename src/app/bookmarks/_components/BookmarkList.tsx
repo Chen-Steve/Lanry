@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tansta
 import { Icon } from '@iconify/react';
 import { useEffect, useState, memo } from 'react';
 import { useInView } from 'react-intersection-observer';
+import { toast } from 'react-hot-toast';
 import BookmarkItem from './BookmarkItem';
 import supabase from '@/lib/supabaseClient';
 import type { AuthChangeEvent } from '@supabase/supabase-js';
@@ -154,12 +155,25 @@ const BookmarkList = ({
 
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, { folderId }) => {
       queryClient.invalidateQueries({ queryKey: ['bookmarks'] });
       queryClient.invalidateQueries({ queryKey: ['folderBookmarks'] });
+      toast.success(
+        folderId 
+          ? 'Novel moved to folder successfully' 
+          : 'Novel removed from folder successfully',
+        {
+          icon: folderId ? '📁' : '↩️',
+          duration: 2000
+        }
+      );
     },
     onError: (error) => {
       console.error('Error moving bookmark:', error);
+      toast.error('Failed to move novel to folder', {
+        icon: '❌',
+        duration: 3000
+      });
     }
   });
 
