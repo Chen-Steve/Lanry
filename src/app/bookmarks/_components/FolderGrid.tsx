@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Icon } from '@iconify/react';
-import { useState, memo } from 'react';
+import { useState, memo, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { CreateFolderDialog, DeleteFolderDialog, type BookmarkFolder } from './BookmarkFolders';
@@ -62,24 +62,32 @@ const fetchFoldersWithCovers = async (userId: string | undefined): Promise<Folde
 
   if (error) throw error;
 
-  console.log('Raw folders data:', folders);
+  console.log('Raw folders data:', JSON.stringify(folders, null, 2));
 
   const processedFolders = (folders as unknown as FolderResponse[]).map(folder => {
-    console.log('Processing folder:', folder.name, 'Bookmarks:', folder.bookmarks);
+    console.log(`\nProcessing folder "${folder.name}":`);
+    console.log('Bookmarks data:', JSON.stringify(folder.bookmarks, null, 2));
     
     const validCovers = (folder.bookmarks || [])
-      .filter(b => b?.novel && b.novel.cover_image_url)
+      .filter(b => {
+        console.log('Checking bookmark:', b);
+        const isValid = b?.novel && b.novel.cover_image_url;
+        console.log('Is valid cover?', isValid);
+        return isValid;
+      })
       .map(b => b.novel.cover_image_url)
       .filter((url): url is string => url !== null);
 
-    console.log('Valid covers for folder:', folder.name, validCovers);
+    console.log('Valid covers found:', validCovers);
 
     let coverImage: string | undefined;
     if (validCovers.length > 0) {
       const randomIndex = Math.floor(Math.random() * validCovers.length);
       const randomCover = validCovers[randomIndex];
       coverImage = randomCover;
-      console.log('Selected cover for folder:', folder.name, coverImage);
+      console.log('Selected cover:', coverImage);
+    } else {
+      console.log('No valid covers found for this folder');
     }
 
     return {
@@ -92,7 +100,6 @@ const fetchFoldersWithCovers = async (userId: string | undefined): Promise<Folde
     };
   });
 
-  console.log('Processed folders:', processedFolders);
   return processedFolders;
 };
 
@@ -102,7 +109,17 @@ const FolderGrid = ({ userId }: FolderGridProps) => {
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<'view' | 'select'>('view');
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
   const queryClient = useQueryClient();
+
+  const handleImageError = useCallback((imageUrl: string) => {
+    setFailedImages(prev => {
+      const newSet = new Set(prev);
+      newSet.add(imageUrl);
+      return newSet;
+    });
+  }, []);
 
   const { data: folders = [], isLoading, error: fetchError } = useQuery({
     queryKey: ['bookmarkFolders', userId],
@@ -240,62 +257,24 @@ const FolderGrid = ({ userId }: FolderGridProps) => {
   }
 
   return (
-    <>
-      <div className="flex flex-col gap-3">
-        {error && (
-          <div className="bg-red-500/10 text-red-500 px-3 py-1.5 rounded-md text-xs">
-            {error}
-          </div>
-        )}
-        <div className="flex justify-end items-center gap-2">
-          {mode === 'view' ? (
-            <>
-              <button
-                onClick={() => handleModeChange('select')}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-md hover:bg-accent transition-colors text-sm"
-              >
-                <Icon icon="mdi:select" className="w-4 h-4" />
-                <span>Select</span>
-              </button>
-              <button
-                onClick={() => setIsCreateFolderOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-1 rounded-md border bg-primary/5 hover:bg-primary/10 text-primary transition-colors duration-200 text-sm"
-              >
-                <Icon icon="mdi:plus" className="w-4 h-4" />
-                <span>New Folder</span>
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                onClick={() => handleModeChange('view')}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-md hover:bg-accent transition-colors text-sm"
-              >
-                <Icon icon="mdi:close" className="w-4 h-4" />
-                <span>Cancel</span>
-              </button>
-              <button
-                onClick={() => {
-                  if (selectedItems.length > 0) {
-                    bulkDeleteMutation.mutate();
-                  }
-                }}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-md hover:bg-accent transition-colors text-sm text-red-500 hover:text-red-600"
-                disabled={selectedItems.length === 0}
-              >
-                <Icon icon="mdi:trash-can" className="w-4 h-4" />
-                <span>Delete {selectedItems.length > 0 ? `(${selectedItems.length})` : ''}</span>
-              </button>
-            </>
-          )}
+    <div className="flex flex-col gap-2">
+      {error && (
+        <div className="bg-red-500/10 text-red-500 px-3 py-1.5 rounded-md text-xs">
+          {error}
         </div>
-
-        <div className="flex flex-col gap-1">
+      )}
+      
+      <div className="flex items-start gap-4">
+        <div className={`${viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4' : 'flex flex-col gap-2'} flex-1`}>
           {folders.map((folder) => (
             <Link 
               key={folder.id}
               href={mode === 'select' ? '#' : `/bookmarks/folder/${folder.id}`}
-              className="group relative flex items-center gap-3 py-1.5 px-2.5 hover:bg-accent/10 rounded-md transition-colors"
+              className={`group relative rounded-lg transition-all ${
+                viewMode === 'grid'
+                  ? 'p-4 hover:bg-accent/5 border border-border/40 hover:border-border'
+                  : 'p-2 hover:bg-accent/10'
+              }`}
               onClick={(e) => {
                 if (mode === 'select') {
                   e.preventDefault();
@@ -308,7 +287,7 @@ const FolderGrid = ({ userId }: FolderGridProps) => {
               }}
             >
               {mode === 'select' && (
-                <div className={`absolute -top-0.5 -left-0.5 z-20 w-4 h-4 rounded-full ${
+                <div className={`absolute ${viewMode === 'grid' ? 'top-2 left-2' : '-top-0.5 -left-0.5'} z-20 w-4 h-4 rounded-full ${
                   selectedItems.includes(folder.id) 
                     ? 'border-[3px] border-primary' 
                     : 'border-2 border-muted-foreground hover:border-primary'
@@ -318,32 +297,124 @@ const FolderGrid = ({ userId }: FolderGridProps) => {
                   )}
                 </div>
               )}
-              <div className="relative w-12 h-12 flex-shrink-0 rounded-md overflow-hidden bg-primary/10">
-                {folder.coverImage ? (
-                  <Image 
-                    src={folder.coverImage}
-                    alt={`Cover for ${folder.name}`}
-                    fill
-                    sizes="48px"
-                    className="object-cover"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.src = '/images/default-cover.jpg';
-                    }}
-                  />
-                ) : (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <Icon icon="mdi:folder" className="w-6 h-6 text-primary/40" />
+              
+              <div className={`flex ${viewMode === 'grid' ? 'flex-col gap-4' : 'flex-row gap-3'} items-${viewMode === 'grid' ? 'stretch' : 'center'}`}>
+                <div className={`relative ${viewMode === 'grid' ? 'aspect-[4/3] w-full' : 'w-12 h-12'} flex-shrink-0 rounded-md overflow-hidden ${!folder.coverImage || failedImages.has(folder.coverImage) ? 'bg-gradient-to-br from-primary/5 via-primary/10 to-primary/20' : 'bg-primary/10'}`}>
+                  {folder.coverImage && !failedImages.has(folder.coverImage) ? (
+                    <>
+                      <Image 
+                        src={folder.coverImage}
+                        alt={`Cover for ${folder.name}`}
+                        fill
+                        sizes={viewMode === 'grid' ? '(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw' : '48px'}
+                        className="object-cover"
+                        onError={() => {
+                          if (folder.coverImage) {
+                            console.error('Image failed to load:', folder.coverImage);
+                            handleImageError(folder.coverImage);
+                          }
+                        }}
+                        loading="eager"
+                        priority={true}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-primary/10 to-primary/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </>
+                  ) : (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-primary/5 via-primary/10 to-primary/20">
+                      <Icon 
+                        icon={folder.icon || 'mdi:folder'} 
+                        className={`${viewMode === 'grid' ? 'w-20 h-20' : 'w-8 h-8'} text-primary/40`}
+                      />
+                    </div>
+                  )}
+                  {folder.bookmarkCount > 0 && (
+                    <div className="absolute bottom-1 right-1 px-1.5 py-0.5 text-xs font-medium bg-background/90 backdrop-blur-sm rounded-md text-foreground/90 shadow-sm">
+                      {folder.bookmarkCount}
+                    </div>
+                  )}
+                </div>
+
+                <div className={`flex flex-col ${viewMode === 'grid' ? 'gap-1' : 'gap-0.5'} min-w-0 ${viewMode === 'grid' ? '' : 'flex-1'}`}>
+                  <div className="flex items-center gap-2">
+                    <span className={`font-medium truncate ${viewMode === 'grid' ? 'text-base' : 'text-sm'}`}>
+                      {folder.name}
+                    </span>
                   </div>
-                )}
-              </div>
-              <div className="flex flex-col gap-0.5">
-                <span className="text-sm font-medium">
-                  {folder.name}
-                </span>
+                  {folder.bookmarkCount > 0 && (
+                    <span className="text-xs text-muted-foreground">
+                      {folder.bookmarkCount} {folder.bookmarkCount === 1 ? 'bookmark' : 'bookmarks'}
+                    </span>
+                  )}
+                </div>
               </div>
             </Link>
           ))}
+        </div>
+
+        <div className="flex items-start justify-end">
+          <div className="flex items-center gap-2">
+            <div className="flex items-center bg-accent/20 rounded-lg p-0.5">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`p-1.5 rounded-md transition-colors ${
+                  viewMode === 'grid' ? 'bg-background shadow-sm' : 'hover:bg-accent/30'
+                }`}
+                aria-label="Grid view"
+              >
+                <Icon icon="mdi:grid" className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`p-1.5 rounded-md transition-colors ${
+                  viewMode === 'list' ? 'bg-background shadow-sm' : 'hover:bg-accent/30'
+                }`}
+                aria-label="List view"
+              >
+                <Icon icon="mdi:format-list-bulleted" className="w-4 h-4" />
+              </button>
+            </div>
+
+            {mode === 'view' ? (
+              <>
+                <button
+                  onClick={() => handleModeChange('select')}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md hover:bg-accent/20 transition-colors text-sm"
+                >
+                  <Icon icon="mdi:select" className="w-4 h-4" />
+                  <span>Select</span>
+                </button>
+                <button
+                  onClick={() => setIsCreateFolderOpen(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors text-sm"
+                >
+                  <Icon icon="mdi:plus" className="w-4 h-4" />
+                  <span>New Folder</span>
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => handleModeChange('view')}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md hover:bg-accent/20 transition-colors text-sm"
+                >
+                  <Icon icon="mdi:close" className="w-4 h-4" />
+                  <span>Cancel</span>
+                </button>
+                <button
+                  onClick={() => {
+                    if (selectedItems.length > 0) {
+                      bulkDeleteMutation.mutate();
+                    }
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors text-sm"
+                  disabled={selectedItems.length === 0}
+                >
+                  <Icon icon="mdi:trash-can" className="w-4 h-4" />
+                  <span>Delete {selectedItems.length > 0 ? `(${selectedItems.length})` : ''}</span>
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
@@ -366,7 +437,7 @@ const FolderGrid = ({ userId }: FolderGridProps) => {
         }}
         folderName={deletingFolder?.name || ''}
       />
-    </>
+    </div>
   );
 };
 
