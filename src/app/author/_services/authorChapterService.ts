@@ -1,5 +1,6 @@
 import supabase from '@/lib/supabaseClient';
 import { generateChapterSlug, generateUUID } from '@/lib/utils';
+import { notificationService } from '@/services/notificationService';
 
 export async function fetchAuthorNovels(userId: string, authorOnly: boolean) {
   let query = supabase
@@ -92,6 +93,12 @@ export async function updateChapter(
     .eq('novel_id', novelId);
 
   if (error) throw error;
+
+  // Check if we should send notifications
+  const { shouldNotify, chapterData: notificationData } = await shouldNotifyForChapter(chapterId);
+  if (shouldNotify && notificationData) {
+    await sendChapterNotifications(notificationData);
+  }
 }
 
 export async function createChapter(
@@ -142,14 +149,15 @@ export async function createChapter(
 
   // Create the chapter
   const chapterId = generateUUID();
+  const finalCoins = novel.fixed_price_enabled ? novel.fixed_price_amount : chapterData.coins;
+  
   const { error } = await supabase
     .from('chapters')
     .insert({
       id: chapterId,
       novel_id: novelId,
       ...chapterData,
-      // Apply fixed price if enabled, otherwise use provided coins value
-      coins: novel.fixed_price_enabled ? novel.fixed_price_amount : chapterData.coins,
+      coins: finalCoins,
       volume_id: chapterData.volume_id,
       slug: generateChapterSlug(chapterData.chapter_number, chapterData.part_number),
       created_at: new Date().toISOString(),
@@ -158,12 +166,18 @@ export async function createChapter(
 
   if (error) throw error;
 
+  // Check if we should send notifications
+  const { shouldNotify, chapterData: notificationData } = await shouldNotifyForChapter(chapterId);
+  if (shouldNotify && notificationData) {
+    await sendChapterNotifications(notificationData);
+  }
+
   // Apply auto-release schedule if no publish date is set
   if (!chapterData.publish_at) {
     await applyAutoReleaseSchedule(novelId, userId, chapterId);
   }
 
-  return chapterId; // Return the generated chapterId
+  return chapterId;
 }
 
 export async function deleteChapter(chapterId: string, novelId: string, userId: string) {
@@ -539,5 +553,112 @@ async function verifyNovelAuthor(novelId: string, userId: string) {
 
   if (novel?.author_profile_id !== userId) {
     throw new Error('Not authorized to modify chapters for this novel');
+  }
+}
+
+// Helper function to check if a chapter should trigger notifications
+async function shouldNotifyForChapter(chapterId: string): Promise<{
+  shouldNotify: boolean;
+  chapterData?: {
+    title: string;
+    chapterNumber: number;
+    novelId: string;
+    novelTitle: string;
+    authorId: string;
+  };
+}> {
+  type ChapterWithNovel = {
+    title: string;
+    chapter_number: number;
+    novel_id: string;
+    coins: number;
+    publish_at: string | null;
+    created_at: string;
+    updated_at: string;
+    novels: {
+      title: string;
+      author_profile_id: string;
+    };
+  };
+
+  type SupabaseResponse = {
+    data: ChapterWithNovel | null;
+    error: Error | null;
+  };
+
+  const { data: chapter, error: chapterError } = await supabase
+    .from('chapters')
+    .select(`
+      title,
+      chapter_number,
+      novel_id,
+      coins,
+      publish_at,
+      created_at,
+      updated_at,
+      novels!inner (
+        title,
+        author_profile_id
+      )
+    `)
+    .eq('id', chapterId)
+    .single() as SupabaseResponse;
+
+  if (chapterError || !chapter) {
+    console.error('Error fetching chapter for notification check:', chapterError);
+    return { shouldNotify: false };
+  }
+
+  const now = new Date();
+  const updatedAt = new Date(chapter.updated_at);
+  const publishAt = chapter.publish_at ? new Date(chapter.publish_at) : null;
+
+  // Only notify if:
+  // 1. Chapter was updated within the last 5 minutes (to avoid sending notifications for old chapters)
+  // 2. AND either:
+  //    a. It's an advanced chapter (has coins)
+  //    b. OR it's a free chapter that's published immediately (publish_at is null or now/past)
+  if (now.getTime() - updatedAt.getTime() > 5 * 60 * 1000) {
+    return { shouldNotify: false };
+  }
+
+  const isAdvancedChapter = chapter.coins > 0;
+  const isImmediatelyPublished = !publishAt || publishAt <= now;
+
+  if (!isAdvancedChapter && !isImmediatelyPublished) {
+    return { shouldNotify: false };
+  }
+
+  return {
+    shouldNotify: true,
+    chapterData: {
+      title: chapter.title,
+      chapterNumber: chapter.chapter_number,
+      novelId: chapter.novel_id,
+      novelTitle: chapter.novels.title,
+      authorId: chapter.novels.author_profile_id
+    }
+  };
+}
+
+// Helper function to send notifications for a published chapter
+async function sendChapterNotifications(chapterData: {
+  title: string;
+  chapterNumber: number;
+  novelId: string;
+  novelTitle: string;
+  authorId: string;
+}) {
+  try {
+    await notificationService.sendChapterReleaseNotifications({
+      novelId: chapterData.novelId,
+      chapterNumber: chapterData.chapterNumber,
+      chapterTitle: chapterData.title,
+      novelTitle: chapterData.novelTitle,
+      authorId: chapterData.authorId
+    });
+  } catch (error) {
+    console.error('Error sending chapter notifications:', error);
+    // Don't throw error to prevent blocking chapter creation
   }
 } 

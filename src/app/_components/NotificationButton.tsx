@@ -88,10 +88,10 @@ const NotificationButton = () => {
         return 'mdi:reply';
       case 'like':
         return 'mdi:heart';
-      case 'follow':
-        return 'mdi:account-plus';
       case 'system':
         return 'mdi:information';
+      case 'chapter_release':
+        return 'ph:book-bookmark-bold';
       default:
         return 'mdi:bell';
     }
