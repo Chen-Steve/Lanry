@@ -44,38 +44,21 @@ export default function RootLayout({
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
 
-            // Set default consent mode with wait_for_update
+            // Set default consent mode
             gtag('consent', 'default', {
-              'ad_storage': 'denied',
-              'ad_user_data': 'denied',
-              'ad_personalization': 'denied',
               'analytics_storage': 'denied',
               'wait_for_update': 500
             });
-
-            // Enable URL passthrough for better measurement without cookies
-            gtag('set', 'url_passthrough', true);
-            
-            // Enable ads data redaction when ad storage is denied
-            gtag('set', 'ads_data_redaction', true);
-
-            // Debug output
-            console.log('[GA] Initial setup complete');
           `}
         </Script>
         <Script 
-          src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`} 
+          src="https://www.googletagmanager.com/gtag/js?id=G-PVZ6V89JEJ"
           strategy="afterInteractive"
         />
         <Script id="google-analytics-config" strategy="afterInteractive">
           {`
             gtag('js', new Date());
-            gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}', {
-              page_path: window.location.pathname,
-              send_page_view: true,
-              debug_mode: true
-            });
-            console.log('[GA] Configuration complete');
+            gtag('config', 'G-PVZ6V89JEJ');
           `}
         </Script>
         <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1969691044413795"

@@ -1,5 +1,5 @@
 // Google Analytics Measurement ID
-export const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_ID ?? '';
+export const GA_MEASUREMENT_ID = 'G-PVZ6V89JEJ';
 
 if (!GA_MEASUREMENT_ID) {
   console.warn('Google Analytics ID is not defined in environment variables');
@@ -49,51 +49,24 @@ export const initializeGoogleAnalytics = () => {
   // Initialize with consent settings based on stored preference
   window.gtag('js', new Date());
   window.gtag('consent', 'default', {
-    'analytics_storage': hasConsent ? 'granted' : 'denied',
-    'ad_storage': hasConsent ? 'granted' : 'denied',
-    'ad_user_data': hasConsent ? 'granted' : 'denied',
-    'ad_personalization': hasConsent ? 'granted' : 'denied',
-    'functionality_storage': hasConsent ? 'granted' : 'denied',
-    'personalization_storage': hasConsent ? 'granted' : 'denied',
-    'security_storage': 'granted', // Always granted as it's essential
+    'analytics_storage': hasConsent ? 'granted' : 'denied'
   });
 
-  window.gtag('config', GA_MEASUREMENT_ID, {
-    page_path: window.location.pathname,
-    anonymize_ip: true, // IP anonymization
-    debug_mode: true // Enable debug mode temporarily
-  });
+  window.gtag('config', GA_MEASUREMENT_ID);
 };
 
 // Update consent settings based on user choice
-export const updateAnalyticsConsent = ({ analytics, advertising }: {
-  analytics: boolean;
-  advertising: boolean;
-}) => {
+export const updateAnalyticsConsent = ({ analytics }: { analytics: boolean }) => {
   if (typeof window === 'undefined') return;
 
-  console.log('[GA] Updating consent:', { analytics, advertising });
-
-  const consentStatus = (granted: boolean) => granted ? 'granted' : 'denied';
-  const adStorage = consentStatus(advertising);
+  console.log('[GA] Updating consent:', { analytics });
 
   const consentParams = {
-    'analytics_storage': consentStatus(analytics),
-    'ad_storage': adStorage,
-    'ad_user_data': adStorage,
-    'ad_personalization': adStorage,
-    'functionality_storage': consentStatus(analytics || advertising),
-    'personalization_storage': consentStatus(analytics || advertising),
+    'analytics_storage': analytics ? 'granted' : 'denied'
   };
 
   window.gtag('consent', 'update', consentParams);
-
-  // Send page view after consent update
-  window.gtag('config', GA_MEASUREMENT_ID, {
-    page_path: window.location.pathname,
-    send_page_view: true,
-    anonymize_ip: true
-  });
+  window.gtag('config', GA_MEASUREMENT_ID);
 
   // Debug output
   console.log('[GA] Consent updated:', consentParams);
@@ -106,8 +79,7 @@ export const pageView = (url: string) => {
   console.log('[GA] Tracking pageview:', url);
   
   window.gtag('config', GA_MEASUREMENT_ID, {
-    page_path: url,
-    send_page_view: true
+    page_path: url
   });
 };
 
