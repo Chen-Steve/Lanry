@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useParams, useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { useAuth } from '@/hooks/useAuth';
@@ -68,36 +68,12 @@ export default function FolderContent() {
   const { userId } = useAuth();
   const router = useRouter();
   const { id: folderId } = useParams();
-  const queryClient = useQueryClient();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['folderBookmarks', folderId, userId],
     queryFn: () => fetchFolderBookmarks(folderId as string, userId),
     enabled: !!folderId && !!userId,
   });
-
-  const deleteBookmarkMutation = useMutation({
-    mutationFn: async (bookmarkId: string) => {
-      const { error } = await supabase
-        .from('bookmarks')
-        .delete()
-        .eq('id', bookmarkId);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['folderBookmarks'] });
-    },
-    onError: (error) => {
-      console.error('Error deleting bookmark:', error);
-    }
-  });
-
-  const handleDeleteBookmark = (id: string, title: string) => {
-    if (window.confirm(`Are you sure you want to remove "${title}" from your bookmarks?`)) {
-      deleteBookmarkMutation.mutate(id);
-    }
-  };
 
   if (isLoading) {
     return (
@@ -143,9 +119,13 @@ export default function FolderContent() {
               key={bookmark.id}
               bookmark={bookmark}
               isOwnProfile={true}
-              onDeleteClick={handleDeleteBookmark}
               isFirstPage={true}
               index={index}
+              folders={[]}
+              onMoveToFolder={(bookmarkId, folderId) => {
+                // Handle move to folder logic here
+                console.log('Move bookmark', bookmarkId, 'to folder', folderId);
+              }}
             />
           ))}
         </div>
