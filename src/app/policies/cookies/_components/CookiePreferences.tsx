@@ -50,13 +50,12 @@ export default function CookiePreferences() {
     
     // Update consent based on new settings
     updateAnalyticsConsent({
-      analytics: newSettings.analytics,
-      advertising: newSettings.advertising
+      analytics: newSettings.analytics
     });
     
     // Save overall consent status
     localStorage.setItem('cookie-consent', 
-      newSettings.analytics || newSettings.preferences || newSettings.advertising 
+      newSettings.analytics || newSettings.preferences
         ? 'accepted' 
         : 'declined'
     );
@@ -149,4 +148,4 @@ export default function CookiePreferences() {
       </div>
     </div>
   );
-} 
+}
