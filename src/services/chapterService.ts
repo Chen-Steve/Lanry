@@ -60,7 +60,7 @@ export async function getChapter(novelId: string, chapterNumber: number, partNum
     // Check if chapter is published or user has unlocked it
     const isPublished = !chapter.publish_at || chapter.publish_at <= new Date().toISOString();
     
-    if (!isPublished || chapter.coins > 0) {
+    if (!isPublished && chapter.coins > 0) {
       // Check if user has unlocked this chapter
       if (!user) return { ...chapter, isLocked: true };
 
