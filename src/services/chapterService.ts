@@ -64,14 +64,21 @@ export async function getChapter(novelId: string, chapterNumber: number, partNum
       // Check if user has unlocked this chapter
       if (!user) return { ...chapter, isLocked: true };
 
-      const { data: unlock } = await supabase
+      let query = supabase
         .from('chapter_unlocks')
         .select('*')
         .eq('novel_id', novel.id)
         .eq('chapter_number', chapterNumber)
-        .eq('profile_id', user.id)
-        .eq('part_number', partNumber)
-        .single();
+        .eq('profile_id', user.id);
+
+      // Handle part_number separately based on whether it's null
+      if (partNumber === null) {
+        query = query.is('part_number', null);
+      } else {
+        query = query.eq('part_number', partNumber);
+      }
+
+      const { data: unlock } = await query.maybeSingle();
 
       if (!unlock) return { ...chapter, isLocked: true };
     }
