@@ -8,6 +8,8 @@ import AdvancedChapters from './AdvancedChapters';
 import NewReleases from './RecentReleases';
 import FeaturedNovel from './FeaturedNovel';
 import RegularNovels from './RegularNovels';
+import TranslatorProfiles from './TranslatorProfiles';
+import { getTranslators, Translator } from '@/services/translatorService';
 
 const NovelListing = () => {
   const [novels, setNovels] = useState<Novel[]>([]);
@@ -17,6 +19,7 @@ const NovelListing = () => {
   const [featuredNovels, setFeaturedNovels] = useState<Novel[]>([]);
   const [advancedNovels, setAdvancedNovels] = useState<Novel[]>([]);
   const [recentAdvancedNovels, setRecentAdvancedNovels] = useState<Novel[]>([]);
+  const [translators, setTranslators] = useState<Translator[]>([]);
 
   const ITEMS_PER_PAGE = 12;
 
@@ -63,6 +66,20 @@ const NovelListing = () => {
     fetchAdvancedNovels();
   }, []);
 
+  useEffect(() => {
+    const fetchTranslators = async () => {
+      try {
+        const data = await getTranslators();
+        console.log('Fetched translators:', data);
+        setTranslators(data);
+      } catch (error) {
+        console.error('Error fetching translators:', error);
+      }
+    };
+
+    fetchTranslators();
+  }, []);
+
   const totalPages = Math.ceil(totalNovels / ITEMS_PER_PAGE);
 
   const handlePageChange = (newPage: number) => {
@@ -107,6 +124,8 @@ const NovelListing = () => {
         totalPages={totalPages}
         onPageChange={handlePageChange}
       />
+
+      <TranslatorProfiles translators={translators} />
 
       <AdvancedChapters
         novels={advancedNovels}

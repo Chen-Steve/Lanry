@@ -27,7 +27,7 @@ const RegularNovels = ({
 
   return (
     <>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-x-2 pb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-x-2 pb-4">
         {novels.map((novel, index) => (
           <NovelCard 
             key={novel.id} 
@@ -37,7 +37,7 @@ const RegularNovels = ({
             }}
             isPriority={index < 6}
             size="small"
-            className="mt-6"
+            className="mt-4"
           />
         ))}
       </div>
