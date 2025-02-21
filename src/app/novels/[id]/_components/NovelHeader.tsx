@@ -403,14 +403,6 @@ export const NovelHeader = ({
               characters={characters}
             />
           </div>
-
-          {/* Desktop Synopsis - In Right Column */}
-          <div className="hidden sm:block">
-            <NovelSynopsis
-              description={description}
-              characters={characters}
-            />
-          </div>
         </div>
       </div>
     </>
