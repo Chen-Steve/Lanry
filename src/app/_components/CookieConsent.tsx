@@ -3,27 +3,14 @@
 import { useState, useEffect } from 'react';
 import { Icon } from '@iconify/react';
 import Link from 'next/link';
-import { initializeGoogleAnalytics, updateAnalyticsConsent } from '@/lib/gtag';
-
-declare global {
-  interface Window {
-    [key: `ga-disable-${string}`]: boolean;
-  }
-}
 
 export default function CookieConsent() {
   const [showConsent, setShowConsent] = useState(false);
 
   useEffect(() => {
-    // Initialize Google Analytics with default (denied) consent
-    initializeGoogleAnalytics();
-
     const consent = localStorage.getItem('cookie-consent');
     if (!consent) {
       setShowConsent(true);
-    } else if (consent === 'accepted') {
-      // If user has already accepted, update consent
-      updateAnalyticsConsent({ analytics: true });
     }
 
     // Listen for the custom event to show cookie consent
@@ -39,13 +26,17 @@ export default function CookieConsent() {
 
   const acceptCookies = () => {
     localStorage.setItem('cookie-consent', 'accepted');
-    updateAnalyticsConsent({ analytics: true });
+    window.gtag('consent', 'update', {
+      'analytics_storage': 'granted'
+    });
     setShowConsent(false);
   };
 
   const declineCookies = () => {
     localStorage.setItem('cookie-consent', 'declined');
-    updateAnalyticsConsent({ analytics: false });
+    window.gtag('consent', 'update', {
+      'analytics_storage': 'denied'
+    });
     setShowConsent(false);
   };
 

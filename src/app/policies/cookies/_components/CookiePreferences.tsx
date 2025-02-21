@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { Icon } from '@iconify/react';
-import { updateAnalyticsConsent } from '@/lib/gtag';
 
 interface CookieSettings {
   essential: boolean;
@@ -49,8 +48,8 @@ export default function CookiePreferences() {
     setSettings(newSettings);
     
     // Update consent based on new settings
-    updateAnalyticsConsent({
-      analytics: newSettings.analytics
+    window.gtag('consent', 'update', {
+      'analytics_storage': newSettings.analytics ? 'granted' : 'denied'
     });
     
     // Save overall consent status

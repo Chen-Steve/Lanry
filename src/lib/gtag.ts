@@ -4,13 +4,14 @@ export const GA_MEASUREMENT_ID = 'G-PVZ6V89JEJ';
 declare global {
   interface Window {
     gtag: (
-      command: 'js' | 'config' | 'event',
-      target: Date | string,
+      command: 'js' | 'config' | 'event' | 'consent',
+      target: Date | string | 'update',
       params?: {
         page_path?: string;
         event_category?: string;
         event_label?: string;
         value?: number;
+        analytics_storage?: 'granted' | 'denied';
         [key: string]: unknown;
       }
     ) => void;
