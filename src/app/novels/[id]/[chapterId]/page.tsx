@@ -252,6 +252,45 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
     notFound();
   }
 
+  if (chapter.isLocked) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <Link 
+          href={`/novels/${novelId}`}
+          className="text-black hover:text-gray-700 flex items-center gap-1 text-sm md:text-base mb-8"
+        >
+          <Icon icon="mdi:arrow-left" />
+          <span>Back to Novel</span>
+        </Link>
+        
+        <div className="text-center py-12">
+          <Icon 
+            icon="ph:lock-key-bold" 
+            className="mx-auto text-4xl text-primary mb-4"
+          />
+          <h1 className="text-xl font-semibold mb-4">
+            Chapter {chapter.chapter_number}{chapter.part_number ? ` Part ${chapter.part_number}` : ''}: {chapter.title}
+          </h1>
+          <div className="space-y-4 max-w-md mx-auto">
+            <p className="text-muted-foreground">
+              This is an advanced chapter that requires unlocking to read.
+            </p>
+            <div className="flex items-center justify-center gap-2 text-lg font-semibold text-primary">
+              <Icon icon="ph:coins" className="text-2xl" />
+              <span>{chapter.coins} coins</span>
+            </div>
+            <Link
+              href={`/novels/${novelId}#chapters`}
+              className="inline-block px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium"
+            >
+              Go to Novel Page to Purchase
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-4 md:py-8">
       <ChapterHeader

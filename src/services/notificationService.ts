@@ -160,13 +160,17 @@ export const notificationService = {
     chapterNumber,
     chapterTitle,
     novelTitle,
-    authorId
+    authorId,
+    partNumber,
+    novelSlug
   }: {
     novelId: string;
     chapterNumber: number;
     chapterTitle: string;
     novelTitle: string;
     authorId: string;
+    partNumber?: number | null;
+    novelSlug: string;
   }) {
     try {
       console.log('Sending chapter release notifications for:', {
@@ -174,7 +178,9 @@ export const notificationService = {
         chapterNumber,
         chapterTitle,
         novelTitle,
-        authorId
+        authorId,
+        partNumber,
+        novelSlug
       });
 
       // Get all users who have bookmarked this novel
@@ -193,8 +199,8 @@ export const notificationService = {
         recipient_id: bookmark.profile_id,
         sender_id: authorId,
         type: 'chapter_release' as const,
-        content: `Chapter ${chapterNumber}: ${chapterTitle} has been released for "${novelTitle}"`,
-        link: `/novel/${novelId}/chapter/${chapterNumber}`,
+        content: `Chapter ${chapterNumber}${partNumber ? ` Part ${partNumber}` : ''}: ${chapterTitle} has been released for "${novelTitle}"`,
+        link: `/novels/${novelSlug}/c${chapterNumber}${partNumber ? `-p${partNumber}` : ''}`,
         read: false,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),

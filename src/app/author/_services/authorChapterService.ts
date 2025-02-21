@@ -562,14 +562,17 @@ async function shouldNotifyForChapter(chapterId: string): Promise<{
   chapterData?: {
     title: string;
     chapterNumber: number;
+    partNumber: number | null;
     novelId: string;
     novelTitle: string;
+    novelSlug: string;
     authorId: string;
   };
 }> {
   type ChapterWithNovel = {
     title: string;
     chapter_number: number;
+    part_number: number | null;
     novel_id: string;
     coins: number;
     publish_at: string | null;
@@ -578,6 +581,7 @@ async function shouldNotifyForChapter(chapterId: string): Promise<{
     novels: {
       title: string;
       author_profile_id: string;
+      slug: string;
     };
   };
 
@@ -591,6 +595,7 @@ async function shouldNotifyForChapter(chapterId: string): Promise<{
     .select(`
       title,
       chapter_number,
+      part_number,
       novel_id,
       coins,
       publish_at,
@@ -598,7 +603,8 @@ async function shouldNotifyForChapter(chapterId: string): Promise<{
       updated_at,
       novels!inner (
         title,
-        author_profile_id
+        author_profile_id,
+        slug
       )
     `)
     .eq('id', chapterId)
@@ -634,8 +640,10 @@ async function shouldNotifyForChapter(chapterId: string): Promise<{
     chapterData: {
       title: chapter.title,
       chapterNumber: chapter.chapter_number,
+      partNumber: chapter.part_number,
       novelId: chapter.novel_id,
       novelTitle: chapter.novels.title,
+      novelSlug: chapter.novels.slug,
       authorId: chapter.novels.author_profile_id
     }
   };
@@ -645,16 +653,20 @@ async function shouldNotifyForChapter(chapterId: string): Promise<{
 async function sendChapterNotifications(chapterData: {
   title: string;
   chapterNumber: number;
+  partNumber: number | null;
   novelId: string;
   novelTitle: string;
+  novelSlug: string;
   authorId: string;
 }) {
   try {
     await notificationService.sendChapterReleaseNotifications({
       novelId: chapterData.novelId,
       chapterNumber: chapterData.chapterNumber,
+      partNumber: chapterData.partNumber,
       chapterTitle: chapterData.title,
       novelTitle: chapterData.novelTitle,
+      novelSlug: chapterData.novelSlug,
       authorId: chapterData.authorId
     });
   } catch (error) {
