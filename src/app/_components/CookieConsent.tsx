@@ -23,7 +23,7 @@ export default function CookieConsent() {
       setShowConsent(true);
     } else if (consent === 'accepted') {
       // If user has already accepted, update consent
-      updateAnalyticsConsent({ analytics: true, advertising: true });
+      updateAnalyticsConsent({ analytics: true });
     }
 
     // Listen for the custom event to show cookie consent
@@ -39,13 +39,13 @@ export default function CookieConsent() {
 
   const acceptCookies = () => {
     localStorage.setItem('cookie-consent', 'accepted');
-    updateAnalyticsConsent({ analytics: true, advertising: true });
+    updateAnalyticsConsent({ analytics: true });
     setShowConsent(false);
   };
 
   const declineCookies = () => {
     localStorage.setItem('cookie-consent', 'declined');
-    updateAnalyticsConsent({ analytics: false, advertising: false });
+    updateAnalyticsConsent({ analytics: false });
     setShowConsent(false);
   };
 
@@ -56,7 +56,7 @@ export default function CookieConsent() {
       <div className="flex items-start gap-3 mb-4">
         <Icon icon="material-symbols:cookie-outline" className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
         <p className="text-sm text-gray-600 dark:text-gray-300">
-          We use cookies to enhance your experience and analyze site traffic.
+          We use cookies to analyze site traffic and enhance your experience.
           <Link href="/policies/cookies" className="text-blue-500 hover:text-blue-600 ml-1 inline-flex items-center gap-1">
             Learn more
             <Icon icon="material-symbols:arrow-outward" className="w-3 h-3" />
