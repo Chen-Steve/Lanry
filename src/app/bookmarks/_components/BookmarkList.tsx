@@ -316,7 +316,7 @@ const BookmarkList = ({
 
         {/* Selection Action Button */}
         {isOwnProfile && (
-          <div className="fixed sm:absolute bottom-4 right-4 flex gap-2">
+          <div className="fixed sm:absolute bottom-[7.5rem] sm:bottom-4 right-4 flex gap-2 z-50">
             {mode === 'view' ? (
               <button
                 onClick={() => {
@@ -324,7 +324,7 @@ const BookmarkList = ({
                     onSelectionChange([]);
                   }
                 }}
-                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium shadow-lg hover:bg-primary/90 transition-colors"
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium shadow-lg hover:bg-primary/90 transition-colors backdrop-blur-sm"
                 aria-label="Select bookmarks"
               >
                 Edit
@@ -333,13 +333,13 @@ const BookmarkList = ({
               <>
                 <button
                   onClick={() => onSelectionChange([])}
-                  className="px-4 py-2 bg-background text-foreground border rounded-lg text-sm font-medium shadow-lg hover:bg-accent transition-colors"
+                  className="px-4 py-2 bg-background/95 text-foreground rounded-lg text-sm font-medium shadow-lg hover:bg-accent transition-colors backdrop-blur-sm"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={onBulkDelete}
-                  className="px-4 py-2 bg-background text-red-500 border rounded-lg text-sm font-medium shadow-lg hover:bg-accent transition-colors"
+                  className="px-4 py-2 bg-background/95 text-red-500 rounded-lg text-sm font-medium shadow-lg hover:bg-accent transition-colors backdrop-blur-sm"
                   disabled={selectedItems.length === 0}
                 >
                   Delete {selectedItems.length > 0 ? `(${selectedItems.length})` : ''}

@@ -264,8 +264,8 @@ const FolderGrid = ({ userId }: FolderGridProps) => {
         </div>
       )}
       
-      <div className="flex flex-col-reverse sm:flex-row items-start gap-4">
-        <div className={`${viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4' : 'flex flex-col gap-2'} flex-1 w-full`}>
+      <div className="relative space-y-4">
+        <div className={`${viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4' : 'flex flex-col gap-2'} w-full`}>
           {folders.map((folder) => (
             <Link 
               key={folder.id}
@@ -351,70 +351,69 @@ const FolderGrid = ({ userId }: FolderGridProps) => {
           ))}
         </div>
 
-        <div className="flex items-start justify-end">
-          <div className="flex items-center gap-2">
-            <div className="flex items-center bg-accent/20 rounded-lg p-0.5">
-              <button
-                onClick={() => setViewMode('grid')}
-                className={`p-1.5 rounded-md transition-colors ${
-                  viewMode === 'grid' ? 'bg-background shadow-sm' : 'hover:bg-accent/30'
-                }`}
-                aria-label="Grid view"
-              >
-                <Icon icon="mdi:grid" className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setViewMode('list')}
-                className={`p-1.5 rounded-md transition-colors ${
-                  viewMode === 'list' ? 'bg-background shadow-sm' : 'hover:bg-accent/30'
-                }`}
-                aria-label="List view"
-              >
-                <Icon icon="mdi:format-list-bulleted" className="w-4 h-4" />
-              </button>
-            </div>
-
-            {mode === 'view' ? (
-              <>
-                <button
-                  onClick={() => handleModeChange('select')}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md hover:bg-accent/20 transition-colors text-sm"
-                >
-                  <Icon icon="mdi:select" className="w-4 h-4" />
-                  <span>Select</span>
-                </button>
-                <button
-                  onClick={() => setIsCreateFolderOpen(true)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors text-sm"
-                >
-                  <Icon icon="mdi:plus" className="w-4 h-4" />
-                  <span>New Folder</span>
-                </button>
-              </>
-            ) : (
-              <>
-                <button
-                  onClick={() => handleModeChange('view')}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md hover:bg-accent/20 transition-colors text-sm"
-                >
-                  <Icon icon="mdi:close" className="w-4 h-4" />
-                  <span>Cancel</span>
-                </button>
-                <button
-                  onClick={() => {
-                    if (selectedItems.length > 0) {
-                      bulkDeleteMutation.mutate();
-                    }
-                  }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors text-sm"
-                  disabled={selectedItems.length === 0}
-                >
-                  <Icon icon="mdi:trash-can" className="w-4 h-4" />
-                  <span>Delete {selectedItems.length > 0 ? `(${selectedItems.length})` : ''}</span>
-                </button>
-              </>
-            )}
+        {/* Floating Action Button */}
+        <div className="fixed sm:absolute bottom-[7.5rem] sm:bottom-4 right-4 flex gap-2 z-50">
+          <div className="flex items-center bg-accent/20 rounded-lg p-0.5 shadow-lg backdrop-blur-sm">
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`p-1.5 rounded-md transition-colors ${
+                viewMode === 'grid' ? 'bg-background shadow-sm' : 'hover:bg-accent/30'
+              }`}
+              aria-label="Grid view"
+            >
+              <Icon icon="mdi:grid" className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`p-1.5 rounded-md transition-colors ${
+                viewMode === 'list' ? 'bg-background shadow-sm' : 'hover:bg-accent/30'
+              }`}
+              aria-label="List view"
+            >
+              <Icon icon="mdi:format-list-bulleted" className="w-4 h-4" />
+            </button>
           </div>
+
+          {mode === 'view' ? (
+            <>
+              <button
+                onClick={() => handleModeChange('select')}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-background/95 text-foreground rounded-lg text-sm font-medium shadow-lg hover:bg-accent transition-colors backdrop-blur-sm"
+              >
+                <Icon icon="mdi:select" className="w-4 h-4" />
+                <span>Select</span>
+              </button>
+              <button
+                onClick={() => setIsCreateFolderOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium shadow-lg hover:bg-primary/90 transition-colors"
+              >
+                <Icon icon="mdi:plus" className="w-4 h-4" />
+                <span>New Folder</span>
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={() => handleModeChange('view')}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-background/95 text-foreground rounded-lg text-sm font-medium shadow-lg hover:bg-accent transition-colors backdrop-blur-sm"
+              >
+                <Icon icon="mdi:close" className="w-4 h-4" />
+                <span>Cancel</span>
+              </button>
+              <button
+                onClick={() => {
+                  if (selectedItems.length > 0) {
+                    bulkDeleteMutation.mutate();
+                  }
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-background/95 text-red-500 rounded-lg text-sm font-medium shadow-lg hover:bg-accent transition-colors backdrop-blur-sm"
+                disabled={selectedItems.length === 0}
+              >
+                <Icon icon="mdi:trash-can" className="w-4 h-4" />
+                <span>Delete {selectedItems.length > 0 ? `(${selectedItems.length})` : ''}</span>
+              </button>
+            </>
+          )}
         </div>
       </div>
 
