@@ -118,8 +118,8 @@ export default function AdvancedSearch() {
     }
   }, []);
 
-  const handleSearch = useCallback(async (resetPage: boolean = false) => {
-    const newPage = resetPage ? 1 : filters.page;
+  const handleSearch = useCallback(async (resetPage: boolean = false, searchFilters: SearchFilters = filters) => {
+    const newPage = resetPage ? 1 : searchFilters.page;
     
     if (resetPage) {
       setFilters(prev => ({ ...prev, page: 1 }));
@@ -131,27 +131,26 @@ export default function AdvancedSearch() {
     try {
       const queryParams = new URLSearchParams();
       
-      // Only add search parameters if they exist
-      if (filters.query.trim()) {
-        queryParams.append('q', filters.query);
+      if (searchFilters.query.trim()) {
+        queryParams.append('q', searchFilters.query);
       }
 
-      if (filters.author.trim()) {
-        queryParams.append('author', filters.author);
+      if (searchFilters.author.trim()) {
+        queryParams.append('author', searchFilters.author);
       }
       
-      if (filters.tags.length > 0) {
-        filters.tags.forEach(tag => {
+      if (searchFilters.tags.length > 0) {
+        searchFilters.tags.forEach(tag => {
           queryParams.append('tags', tag.id);
         });
       }
       
-      if (filters.status) {
-        queryParams.append('status', filters.status);
+      if (searchFilters.status) {
+        queryParams.append('status', searchFilters.status);
       }
 
-      if (filters.category) {
-        queryParams.append('category', filters.category);
+      if (searchFilters.category) {
+        queryParams.append('category', searchFilters.category);
       }
 
       queryParams.append('page', newPage.toString());
@@ -167,15 +166,20 @@ export default function AdvancedSearch() {
     } finally {
       setIsLoading(false);
     }
-  }, [filters]);
+  }, []);
 
+  // Effect to trigger search when filters change
   useEffect(() => {
-    handleSearch(true);
-  }, [handleSearch]);
+    handleSearch(false, filters);
+  }, [filters, handleSearch]);
+
+  // Initial load effect
+  useEffect(() => {
+    handleSearch(true, filters);
+  }, []); // Empty dependency array for initial load only
 
   const handlePageChange = (newPage: number) => {
     setFilters(prev => ({ ...prev, page: newPage }));
-    handleSearch(false);
   };
 
   // Handle tag selection
