@@ -276,10 +276,12 @@ export default function UserDashboard() {
             )}
           </div>
           <div className="flex gap-2">
-            <div className="flex items-center gap-1.5 bg-amber-100 dark:bg-amber-500/10 px-2.5 py-1 rounded-md">
-              <Icon icon="ph:coin-fill" className="w-4 h-4 text-amber-500" />
-              <span className="text-sm text-amber-700 dark:text-amber-300 font-medium">{profile?.coins || 0}</span>
-            </div>
+            {isOwnProfile && (
+              <div className="flex items-center gap-1.5 bg-amber-100 dark:bg-amber-500/10 px-2.5 py-1 rounded-md">
+                <Icon icon="ph:coin-fill" className="w-4 h-4 text-amber-500" />
+                <span className="text-sm text-amber-700 dark:text-amber-300 font-medium">{profile?.coins || 0}</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
