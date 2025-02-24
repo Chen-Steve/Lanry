@@ -335,6 +335,8 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
         onCommentStateChange={setIsCommentOpen}
         authorId={chapter.novel.author_profile_id}
         ageRating={chapter.age_rating}
+        chapterId={chapter.id}
+        isTranslator={user?.id === chapter.novel.translator_id}
       />
 
       {/* Bottom Navigation */}

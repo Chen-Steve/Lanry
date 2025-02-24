@@ -14,6 +14,7 @@ import FootnoteTooltip from './FootnoteTooltip';
 import { toast } from 'react-hot-toast';
 import ScreenshotProtection from '../ScreenshotProtection';
 import ChapterParagraph from './ChapterParagraph';
+import TranslatorChapterEdit from './TranslatorChapterEdit';
 
 // Extend the base type to include avatar_url
 interface ChapterComment extends Omit<BaseChapterComment, 'profile'> {
@@ -38,6 +39,8 @@ interface ChapterContentProps {
   onCommentStateChange: (isOpen: boolean) => void;
   authorId: string;
   ageRating: 'EVERYONE' | 'TEEN' | 'MATURE';
+  chapterId: string;
+  isTranslator?: boolean;
 }
 
 export default function ChapterContent({
@@ -53,8 +56,11 @@ export default function ChapterContent({
   onCommentStateChange,
   authorId,
   ageRating,
+  chapterId,
+  isTranslator = false,
 }: ChapterContentProps) {
   const [selectedParagraphId, setSelectedParagraphId] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
   const { comments, addComment, deleteComment, updateComment, isAuthenticated, isLoading, userId } = useComments(novelId, chapterNumber);
   const isMobile = useMediaQuery('(max-width: 768px)');
 
@@ -227,101 +233,130 @@ export default function ChapterContent({
                 Published {formatDate(createdAt)}
               </p>
             </div>
-            <div className="md:hidden text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
-              <Icon icon="mdi:gesture-tap-hold" className="w-4 h-4" />
-              <span>Hold text to comment</span>
-            </div>
+            {isTranslator && (
+              <button
+                onClick={() => setIsEditing(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+              >
+                <Icon icon="mdi:pencil" className="w-4 h-4" />
+                Edit Chapter
+              </button>
+            )}
+            {!isTranslator && !isMobile && (
+              <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                <Icon icon="mdi:gesture-tap-hold" className="w-4 h-4" />
+                <span>Hold text to comment</span>
+              </div>
+            )}
           </div>
         </div>
         
-        {!isMobile ? (
-          <ScreenshotProtection>
-            <div 
-              className="prose prose-sm md:prose-base max-w-2xl mx-auto text-black dark:text-white chapter-content select-none dark:prose-invert"
-              style={getTextStyles(fontFamily, fontSize)}
-            >
-              {paragraphs.map((paragraph, index) => {
-                const paragraphId = `p-${index}`;
-                const paragraphComments = comments[paragraphId] || [];
-                
-                return (
-                  <ChapterParagraph
-                    key={`${chapterNumber}-${paragraphId}`}
-                    paragraph={paragraph}
-                    paragraphId={paragraphId}
-                    index={index}
-                    totalParagraphs={paragraphs.length}
-                    selectedParagraphId={selectedParagraphId}
-                    commentCount={paragraphComments.length}
-                    isMobile={isMobile}
-                    onParagraphClick={handleParagraphClick}
-                    onParagraphLongPress={handleParagraphLongPress}
-                    onCommentClick={handleCommentClick}
-                  />
-                );
-              })}
-
-              {/* Like Button Section - Moved inside the prose div */}
-              <div className="flex justify-center items-center gap-3 mt-4 mb-8">
-                <button
-                  onClick={handleLikeClick}
-                  className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
-                  aria-label={isLiked ? 'Unlike chapter' : 'Like chapter'}
-                >
-                  <Icon 
-                    icon={isLiked ? "mdi:heart" : "mdi:heart-outline"} 
-                    className={`w-6 h-6 ${isLiked ? 'text-red-500' : 'text-gray-600 dark:text-gray-400'}`}
-                  />
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    {likeCount} {likeCount === 1 ? 'Like' : 'Likes'}
-                  </span>
-                </button>
-              </div>
-            </div>
-          </ScreenshotProtection>
+        {isEditing && isTranslator ? (
+          <TranslatorChapterEdit
+            chapterId={chapterId}
+            novelId={novelId}
+            initialContent={content}
+            initialTitle={title}
+            initialAuthorThoughts={authorThoughts}
+            onSave={() => {
+              setIsEditing(false);
+              // Refresh the page to show updated content
+              window.location.reload();
+            }}
+            onCancel={() => setIsEditing(false)}
+          />
         ) : (
-          <div 
-            className="prose prose-sm md:prose-base max-w-2xl mx-auto text-black dark:text-white chapter-content select-none dark:prose-invert"
-            style={getTextStyles(fontFamily, fontSize)}
-          >
-            {paragraphs.map((paragraph, index) => {
-              const paragraphId = `p-${index}`;
-              const paragraphComments = comments[paragraphId] || [];
-              
-              return (
-                <ChapterParagraph
-                  key={`${chapterNumber}-${paragraphId}`}
-                  paragraph={paragraph}
-                  paragraphId={paragraphId}
-                  index={index}
-                  totalParagraphs={paragraphs.length}
-                  selectedParagraphId={selectedParagraphId}
-                  commentCount={paragraphComments.length}
-                  isMobile={isMobile}
-                  onParagraphClick={handleParagraphClick}
-                  onParagraphLongPress={handleParagraphLongPress}
-                  onCommentClick={handleCommentClick}
-                />
-              );
-            })}
+          <>
+            {!isMobile ? (
+              <ScreenshotProtection>
+                <div 
+                  className="prose prose-sm md:prose-base max-w-2xl mx-auto text-black dark:text-white chapter-content select-none dark:prose-invert"
+                  style={getTextStyles(fontFamily, fontSize)}
+                >
+                  {paragraphs.map((paragraph, index) => {
+                    const paragraphId = `p-${index}`;
+                    const paragraphComments = comments[paragraphId] || [];
+                    
+                    return (
+                      <ChapterParagraph
+                        key={`${chapterNumber}-${paragraphId}`}
+                        paragraph={paragraph}
+                        paragraphId={paragraphId}
+                        index={index}
+                        totalParagraphs={paragraphs.length}
+                        selectedParagraphId={selectedParagraphId}
+                        commentCount={paragraphComments.length}
+                        isMobile={isMobile}
+                        onParagraphClick={handleParagraphClick}
+                        onParagraphLongPress={handleParagraphLongPress}
+                        onCommentClick={handleCommentClick}
+                      />
+                    );
+                  })}
 
-            {/* Like Button Section - Moved inside the prose div */}
-            <div className="flex justify-center items-center gap-3 mt-4 mb-8">
-              <button
-                onClick={handleLikeClick}
-                className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
-                aria-label={isLiked ? 'Unlike chapter' : 'Like chapter'}
+                  {/* Like Button Section - Moved inside the prose div */}
+                  <div className="flex justify-center items-center gap-3 mt-4 mb-8">
+                    <button
+                      onClick={handleLikeClick}
+                      className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
+                      aria-label={isLiked ? 'Unlike chapter' : 'Like chapter'}
+                    >
+                      <Icon 
+                        icon={isLiked ? "mdi:heart" : "mdi:heart-outline"} 
+                        className={`w-6 h-6 ${isLiked ? 'text-red-500' : 'text-gray-600 dark:text-gray-400'}`}
+                      />
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        {likeCount} {likeCount === 1 ? 'Like' : 'Likes'}
+                      </span>
+                    </button>
+                  </div>
+                </div>
+              </ScreenshotProtection>
+            ) : (
+              <div 
+                className="prose prose-sm md:prose-base max-w-2xl mx-auto text-black dark:text-white chapter-content select-none dark:prose-invert"
+                style={getTextStyles(fontFamily, fontSize)}
               >
-                <Icon 
-                  icon={isLiked ? "mdi:heart" : "mdi:heart-outline"} 
-                  className={`w-6 h-6 ${isLiked ? 'text-red-500' : 'text-gray-600 dark:text-gray-400'}`}
-                />
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {likeCount} {likeCount === 1 ? 'Like' : 'Likes'}
-                </span>
-              </button>
-            </div>
-          </div>
+                {paragraphs.map((paragraph, index) => {
+                  const paragraphId = `p-${index}`;
+                  const paragraphComments = comments[paragraphId] || [];
+                  
+                  return (
+                    <ChapterParagraph
+                      key={`${chapterNumber}-${paragraphId}`}
+                      paragraph={paragraph}
+                      paragraphId={paragraphId}
+                      index={index}
+                      totalParagraphs={paragraphs.length}
+                      selectedParagraphId={selectedParagraphId}
+                      commentCount={paragraphComments.length}
+                      isMobile={isMobile}
+                      onParagraphClick={handleParagraphClick}
+                      onParagraphLongPress={handleParagraphLongPress}
+                      onCommentClick={handleCommentClick}
+                    />
+                  );
+                })}
+
+                {/* Like Button Section - Moved inside the prose div */}
+                <div className="flex justify-center items-center gap-3 mt-4 mb-8">
+                  <button
+                    onClick={handleLikeClick}
+                    className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
+                    aria-label={isLiked ? 'Unlike chapter' : 'Like chapter'}
+                  >
+                    <Icon 
+                      icon={isLiked ? "mdi:heart" : "mdi:heart-outline"} 
+                      className={`w-6 h-6 ${isLiked ? 'text-red-500' : 'text-gray-600 dark:text-gray-400'}`}
+                    />
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      {likeCount} {likeCount === 1 ? 'Like' : 'Likes'}
+                    </span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
 
         {/* Author's Thoughts Section */}
