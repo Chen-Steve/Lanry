@@ -165,18 +165,15 @@ export async function getChapterNavigation(novelId: string, currentChapterNumber
       };
     });
 
-    // Filter chapters for navigation based on accessibility
-    const navigableChapters = accessibleChapters.filter(ch => ch.isAccessible);
-
     // Find the current chapter index considering both chapter number and part number
-    const currentIndex = navigableChapters.findIndex(ch => 
+    const currentIndex = accessibleChapters.findIndex(ch => 
       ch.chapter_number === currentChapterNumber && 
       ch.part_number === currentPartNumber
     );
     
     return {
-      prevChapter: currentIndex > 0 ? navigableChapters[currentIndex - 1] : null,
-      nextChapter: currentIndex < navigableChapters.length - 1 ? navigableChapters[currentIndex + 1] : null,
+      prevChapter: currentIndex > 0 ? accessibleChapters[currentIndex - 1] : null,
+      nextChapter: currentIndex < accessibleChapters.length - 1 ? accessibleChapters[currentIndex + 1] : null,
       availableChapters: accessibleChapters.map(ch => ({
         chapter_number: ch.chapter_number,
         part_number: ch.part_number,

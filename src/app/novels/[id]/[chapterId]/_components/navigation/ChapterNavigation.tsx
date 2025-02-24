@@ -4,8 +4,18 @@ import { useMemo } from 'react';
 
 interface ChapterNavigationProps {
   navigation: {
-    prevChapter: { chapter_number: number; part_number?: number | null; volume_id?: string } | null;
-    nextChapter: { chapter_number: number; part_number?: number | null; volume_id?: string } | null;
+    prevChapter: { 
+      chapter_number: number; 
+      part_number?: number | null; 
+      volume_id?: string;
+      isAccessible?: boolean;
+    } | null;
+    nextChapter: { 
+      chapter_number: number; 
+      part_number?: number | null; 
+      volume_id?: string;
+      isAccessible?: boolean;
+    } | null;
   };
   novelId: string;
   currentChapter: number;
@@ -66,14 +76,12 @@ export default function ChapterNavigation({
 
   // Group chapters by volume
   const chaptersGroupedByVolume = useMemo(() => {
-    // Only include accessible chapters
-    const accessibleChapters = availableChapters.filter(chapter => chapter.isAccessible !== false);
-    
-    const noVolumeChapters = accessibleChapters.filter(chapter => !chapter.volume_id);
-    const volumeChapters = new Map<string, typeof accessibleChapters>();
+    // Include all chapters, not just accessible ones
+    const noVolumeChapters = availableChapters.filter(chapter => !chapter.volume_id);
+    const volumeChapters = new Map<string, typeof availableChapters>();
     
     volumes.forEach(volume => {
-      const chaptersForVolume = accessibleChapters.filter(chapter => chapter.volume_id === volume.id);
+      const chaptersForVolume = availableChapters.filter(chapter => chapter.volume_id === volume.id);
       if (chaptersForVolume.length > 0) {
         volumeChapters.set(volume.id, chaptersForVolume);
       }
@@ -85,6 +93,26 @@ export default function ChapterNavigation({
     };
   }, [availableChapters, volumes]);
 
+  const formatChapterButton = (chapter: typeof availableChapters[0]) => {
+    const isLocked = chapter.isAccessible === false;
+    return (
+      <button
+        key={`${chapter.chapter_number}-${chapter.part_number || ''}`}
+        onClick={() => handleChapterSelect(chapter.chapter_number, chapter.part_number, chapter.volume_id)}
+        className={`w-full px-3 py-2 text-left hover:bg-accent transition-colors text-xs sm:text-sm flex items-center justify-between ${
+          chapter.chapter_number === currentChapter && 
+          chapter.part_number === currentPartNumber && 
+          chapter.volume_id === currentVolumeId
+            ? 'bg-accent'
+            : ''
+        } ${isLocked ? 'text-muted-foreground' : 'text-foreground'}`}
+      >
+        <span>{formatDropdownTitle(chapter.chapter_number, chapter.part_number)}</span>
+        {isLocked && <Icon icon="mdi:lock" className="text-base flex-shrink-0" />}
+      </button>
+    );
+  };
+
   return (
     <div className="flex items-center justify-center w-full max-w-screen-lg mx-auto px-2">
       <div className="inline-flex items-center gap-2 h-10">
@@ -95,11 +123,16 @@ export default function ChapterNavigation({
               href={`/novels/${novelId}/c${navigation.prevChapter.chapter_number}${
                 navigation.prevChapter.part_number ? `-p${navigation.prevChapter.part_number}` : ''
               }`}
-              className="inline-flex items-center justify-center w-full h-full px-1.5 sm:px-2 bg-background hover:bg-accent rounded-lg text-foreground transition-colors text-xs sm:text-sm whitespace-nowrap border border-border"
+              className={`inline-flex items-center justify-center w-full h-full px-1.5 sm:px-2 bg-background hover:bg-accent rounded-lg transition-colors text-xs sm:text-sm whitespace-nowrap border border-border ${
+                navigation.prevChapter.isAccessible === false ? 'text-muted-foreground' : 'text-foreground'
+              }`}
             >
               <div className="flex items-center gap-0.5 sm:gap-1">
                 <Icon icon="mdi:chevron-left" className="text-base sm:text-lg" />
                 <span>{formatChapterTitle(navigation.prevChapter.chapter_number, navigation.prevChapter.part_number)}</span>
+                {navigation.prevChapter.isAccessible === false && (
+                  <Icon icon="mdi:lock" className="text-base flex-shrink-0" />
+                )}
               </div>
             </Link>
           ) : (
@@ -121,6 +154,15 @@ export default function ChapterNavigation({
 
           {isDropdownOpen && (
             <div className={`absolute ${dropdownPosition} w-[280px] sm:w-[320px] -translate-x-1/2 left-1/2 max-h-[60vh] overflow-y-auto bg-background border-border border rounded-lg shadow-lg z-50`}>
+              {/* Chapters without volume - show these first if they exist */}
+              {chaptersGroupedByVolume.noVolumeChapters.length > 0 && (
+                <div className="border-b border-border">
+                  {chaptersGroupedByVolume.noVolumeChapters
+                    .sort(sortChapters)
+                    .map(chapter => formatChapterButton(chapter))}
+                </div>
+              )}
+
               {/* Volumes */}
               {volumes
                 .sort((a, b) => a.volume_number - b.volume_number)
@@ -135,47 +177,10 @@ export default function ChapterNavigation({
                       </div>
                       {volumeChapters
                         .sort(sortChapters)
-                        .map((chapter) => (
-                          <button
-                            key={`${chapter.chapter_number}-${chapter.part_number || ''}`}
-                            onClick={() => handleChapterSelect(chapter.chapter_number, chapter.part_number, chapter.volume_id)}
-                            className={`w-full px-3 py-2 text-left hover:bg-accent transition-colors text-foreground text-xs sm:text-sm ${
-                              chapter.chapter_number === currentChapter && 
-                              chapter.part_number === currentPartNumber && 
-                              chapter.volume_id === currentVolumeId
-                                ? 'bg-accent'
-                                : ''
-                            }`}
-                          >
-                            {formatDropdownTitle(chapter.chapter_number, chapter.part_number)}
-                          </button>
-                        ))}
+                        .map(chapter => formatChapterButton(chapter))}
                     </div>
                   );
                 })}
-
-              {/* Chapters without volume */}
-              {chaptersGroupedByVolume.noVolumeChapters.length > 0 && (
-                <>
-                  {chaptersGroupedByVolume.noVolumeChapters
-                    .sort(sortChapters)
-                    .map((chapter) => (
-                      <button
-                        key={`${chapter.chapter_number}-${chapter.part_number || ''}`}
-                        onClick={() => handleChapterSelect(chapter.chapter_number, chapter.part_number, chapter.volume_id)}
-                        className={`w-full px-3 py-2 text-left hover:bg-accent transition-colors text-foreground text-xs sm:text-sm ${
-                          chapter.chapter_number === currentChapter && 
-                          chapter.part_number === currentPartNumber && 
-                          !currentVolumeId
-                            ? 'bg-accent'
-                            : ''
-                        }`}
-                      >
-                        {formatDropdownTitle(chapter.chapter_number, chapter.part_number)}
-                      </button>
-                    ))}
-                </>
-              )}
 
               {chaptersGroupedByVolume.noVolumeChapters.length === 0 && volumes.length === 0 && (
                 <div className="px-3 py-2 text-muted-foreground text-xs sm:text-sm text-center">
@@ -193,10 +198,15 @@ export default function ChapterNavigation({
               href={`/novels/${novelId}/c${navigation.nextChapter.chapter_number}${
                 navigation.nextChapter.part_number ? `-p${navigation.nextChapter.part_number}` : ''
               }`}
-              className="inline-flex items-center justify-center w-full h-full px-1.5 sm:px-2 bg-background hover:bg-accent rounded-lg text-foreground transition-colors text-xs sm:text-sm whitespace-nowrap border border-border"
+              className={`inline-flex items-center justify-center w-full h-full px-1.5 sm:px-2 bg-background hover:bg-accent rounded-lg transition-colors text-xs sm:text-sm whitespace-nowrap border border-border ${
+                navigation.nextChapter.isAccessible === false ? 'text-muted-foreground' : 'text-foreground'
+              }`}
             >
               <div className="flex items-center gap-0.5 sm:gap-1">
                 <span>{formatChapterTitle(navigation.nextChapter.chapter_number, navigation.nextChapter.part_number)}</span>
+                {navigation.nextChapter.isAccessible === false && (
+                  <Icon icon="mdi:lock" className="text-base flex-shrink-0" />
+                )}
                 <Icon icon="mdi:chevron-right" className="text-base sm:text-lg" />
               </div>
             </Link>

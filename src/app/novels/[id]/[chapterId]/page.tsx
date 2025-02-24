@@ -16,6 +16,7 @@ import ChapterSidebar from './_components/navigation/ChapterSidebar';
 import ChapterNavigation from './_components/navigation/ChapterNavigation';
 import ChapterComments from './_components/interaction/comments/ChapterComments';
 import { useReadingTimeTracker } from '@/hooks/useReadingTimeTracker';
+import ChapterPurchaseButton from './_components/interaction/ChapterPurchaseButton';
 
 function ScrollToTopButton() {
   const [isVisible, setIsVisible] = useState(false);
@@ -121,9 +122,18 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
   );
   const [fontSize, setFontSize] = useLocalStorage('chapter-font-size', 16);
   const [isCommentOpen, setIsCommentOpen] = useState(false);
+  const [user, setUser] = useState<{ id: string } | null>(null);
 
   // Add the reading time tracker
   useReadingTimeTracker();
+
+  useEffect(() => {
+    const loadUserData = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    loadUserData();
+  }, []);
 
   useEffect(() => {
     const loadChapterData = async () => {
@@ -272,19 +282,15 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
             Chapter {chapter.chapter_number}{chapter.part_number ? ` Part ${chapter.part_number}` : ''}: {chapter.title}
           </h1>
           <div className="space-y-4 max-w-md mx-auto">
-            <p className="text-muted-foreground">
-              This is an advanced chapter that requires unlocking to read.
-            </p>
-            <div className="flex items-center justify-center gap-2 text-lg font-semibold text-primary">
-              <Icon icon="ph:coins" className="text-2xl" />
-              <span>{chapter.coins} coins</span>
-            </div>
-            <Link
-              href={`/novels/${novelId}#chapters`}
-              className="inline-block px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium"
-            >
-              Go to Novel Page to Purchase
-            </Link>
+            <ChapterPurchaseButton
+              novelId={novelId}
+              chapterNumber={chapter.chapter_number}
+              partNumber={chapter.part_number}
+              coins={chapter.coins}
+              authorId={chapter.novel?.author_profile_id || ''}
+              userProfileId={user?.id}
+              isAuthenticated={!!user}
+            />
           </div>
         </div>
       </div>
