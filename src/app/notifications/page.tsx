@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Icon } from '@iconify/react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { notificationService, type Notification } from '@/services/notificationService';
 import { useAuth } from '@/hooks/useAuth';
 import { formatRelativeDate } from '@/lib/utils';
@@ -110,10 +111,12 @@ const NotificationsPage = () => {
             {notification.sender && (
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 {notification.sender.avatar_url && (
-                  <img 
+                  <Image 
                     src={notification.sender.avatar_url} 
                     alt={notification.sender.username || 'User'} 
-                    className="w-4 h-4 rounded-full"
+                    width={16}
+                    height={16}
+                    className="rounded-full"
                   />
                 )}
                 <span>{notification.sender.username || 'Unknown user'}</span>
@@ -192,6 +195,19 @@ const NotificationsPage = () => {
 
       {/* Notifications List */}
       <div className="space-y-3">
+        {/* Permanent System Notice */}
+        <div className="bg-yellow-500/10 border border-yellow-500/20 p-4 rounded-lg">
+          <div className="flex items-center gap-3">
+            <Icon 
+              icon="ph:warning-circle-bold" 
+              className="w-6 h-6 text-yellow-500 flex-shrink-0"
+            />
+            <p className="text-sm text-yellow-700">
+              Please do not share the website&apos;s link on social media or other websites except for NovelUpdates.
+            </p>
+          </div>
+        </div>
+
         {isLoading ? (
           <div className="text-center py-12 text-muted-foreground">
             <Icon icon="ph:circle-notch" className="w-12 h-12 mx-auto mb-4 animate-spin" />
