@@ -234,6 +234,18 @@ export function ChapterComments({ chapterId, authorId }: ChapterCommentsProps) {
 
   return (
     <div className="space-y-4">
+      <div className="bg-yellow-500/10 border border-yellow-500/20 p-4 rounded-lg">
+        <div className="flex items-center gap-3">
+          <Icon 
+            icon="ph:warning-circle-bold" 
+            className="w-6 h-6 text-yellow-500 flex-shrink-0"
+          />
+          <p className="text-sm text-yellow-700 dark:text-yellow-400">
+            Please do not share the website&apos;s link on social media or other websites except for NovelUpdates.
+          </p>
+        </div>
+      </div>
+
       <h3 className="text-lg font-semibold">Comments</h3>
       
       {userId ? (
