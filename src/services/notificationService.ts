@@ -173,60 +173,108 @@ export const notificationService = {
     novelSlug: string;
   }) {
     try {
-      console.log('Sending chapter release notifications for:', {
+      const nowUTC = new Date().toISOString();
+      
+      console.log('Starting chapter release notification process:', {
         novelId,
         chapterNumber,
         chapterTitle,
         novelTitle,
         authorId,
         partNumber,
-        novelSlug
+        novelSlug,
+        timestamp: nowUTC
       });
 
       // Get all users who have bookmarked this novel
       const { data: bookmarks, error: bookmarksError } = await supabase
         .from('bookmarks')
-        .select('profile_id')
+        .select('id, profile_id, created_at')
         .eq('novel_id', novelId);
 
-      if (bookmarksError) throw bookmarksError;
+      if (bookmarksError) {
+        console.error('Error fetching bookmarks:', bookmarksError);
+        throw bookmarksError;
+      }
 
-      console.log('Found bookmarks:', bookmarks);
+      console.log('Found bookmarks:', {
+        count: bookmarks?.length || 0,
+        bookmarkDetails: bookmarks?.map(b => ({
+          bookmarkId: b.id,
+          profileId: b.profile_id,
+          createdAt: b.created_at
+        }))
+      });
+
+      if (!bookmarks || bookmarks.length === 0) {
+        console.log('No bookmarks found for novel:', {
+          novelId,
+          authorId,
+          timestamp: nowUTC
+        });
+        return [];
+      }
 
       // Create notifications for each user who has bookmarked the novel
-      const notifications = bookmarks.map(bookmark => ({
-        id: generateUUID(),
-        recipient_id: bookmark.profile_id,
-        sender_id: authorId,
-        type: 'chapter_release' as const,
-        content: `Chapter ${chapterNumber}${partNumber ? ` Part ${partNumber}` : ''}: ${chapterTitle} has been released for "${novelTitle}"`,
-        link: `/novels/${novelSlug}/c${chapterNumber}${partNumber ? `-p${partNumber}` : ''}`,
-        read: false,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        novel_id: novelId
-      }));
+      const notifications = bookmarks.map(bookmark => {
+        const notification = {
+          id: generateUUID(),
+          recipient_id: bookmark.profile_id,
+          sender_id: authorId,
+          type: 'chapter_release' as const,
+          content: `Chapter ${chapterNumber}${partNumber ? ` Part ${partNumber}` : ''}: ${chapterTitle} has been released for "${novelTitle}"`,
+          link: `/novels/${novelSlug}/c${chapterNumber}${partNumber ? `-p${partNumber}` : ''}`,
+          read: false,
+          created_at: nowUTC,
+          updated_at: nowUTC,
+          novel_id: novelId
+        };
+        console.log('Creating notification:', {
+          notificationId: notification.id,
+          recipientId: notification.recipient_id,
+          senderId: notification.sender_id,
+          bookmarkId: bookmark.id,
+          timestamp: nowUTC
+        });
+        return notification;
+      });
 
-      console.log('Created notification objects:', notifications);
+      console.log('Prepared notifications:', {
+        count: notifications.length,
+        recipientIds: notifications.map(n => n.recipient_id),
+        timestamp: nowUTC
+      });
 
       if (notifications.length > 0) {
+        console.log('Inserting notifications into database...');
         const { error: insertError } = await supabase
           .from('notifications')
           .insert(notifications);
 
         if (insertError) {
-          console.error('Error inserting notifications:', insertError);
+          console.error('Error inserting notifications:', {
+            error: insertError,
+            recipientIds: notifications.map(n => n.recipient_id),
+            timestamp: nowUTC
+          });
           throw insertError;
         }
 
-        console.log('Successfully inserted notifications');
-      } else {
-        console.log('No notifications to send - no bookmarks found');
+        console.log('Successfully inserted notifications:', {
+          count: notifications.length,
+          recipientIds: notifications.map(n => n.recipient_id),
+          timestamp: nowUTC
+        });
       }
 
       return notifications;
     } catch (error) {
-      console.error('Error sending chapter release notifications:', error);
+      console.error('Error in sendChapterReleaseNotifications:', {
+        error,
+        novelId,
+        authorId,
+        timestamp: new Date().toISOString()
+      });
       throw error;
     }
   }

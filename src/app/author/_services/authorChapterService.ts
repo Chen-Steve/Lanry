@@ -590,6 +590,8 @@ async function shouldNotifyForChapter(chapterId: string): Promise<{
     error: Error | null;
   };
 
+  console.log('Checking notifications for chapter:', chapterId);
+
   const { data: chapter, error: chapterError } = await supabase
     .from('chapters')
     .select(`
@@ -615,38 +617,69 @@ async function shouldNotifyForChapter(chapterId: string): Promise<{
     return { shouldNotify: false };
   }
 
-  const now = new Date();
-  const updatedAt = new Date(chapter.updated_at);
-  const publishAt = chapter.publish_at ? new Date(chapter.publish_at) : null;
+  console.log('Chapter data:', {
+    chapterNumber: chapter.chapter_number,
+    title: chapter.title,
+    coins: chapter.coins,
+    publishAt: chapter.publish_at,
+    updatedAt: chapter.updated_at,
+    createdAt: chapter.created_at
+  });
 
-  // Only notify if:
-  // 1. Chapter was updated within the last 5 minutes (to avoid sending notifications for old chapters)
+  // Use UTC dates for all comparisons
+  const nowUTC = new Date().toISOString();
+  const updatedAtUTC = chapter.updated_at;
+  const createdAtUTC = chapter.created_at;
+  const publishAtUTC = chapter.publish_at;
+  
+  // Check if this is a new chapter (created within the last minute)
+  const isNewChapter = Date.parse(nowUTC) - Date.parse(createdAtUTC) <= 60 * 1000;
+  
+  // Check if this is an update to an existing chapter (updated within the last minute)
+  const isRecentUpdate = Date.parse(nowUTC) - Date.parse(updatedAtUTC) <= 60 * 1000;
+  
+  // A chapter is considered advanced if it has coins and a future publish date
+  const isAdvancedChapter = chapter.coins > 0 && publishAtUTC && Date.parse(publishAtUTC) > Date.parse(nowUTC);
+  
+  // A chapter is immediately published if it has no publish date or the publish date is now/past
+  const isImmediatelyPublished = !publishAtUTC || Date.parse(publishAtUTC) <= Date.parse(nowUTC);
+
+  console.log('Notification checks:', {
+    nowUTC,
+    updatedAtUTC,
+    createdAtUTC,
+    publishAtUTC,
+    isNewChapter,
+    isRecentUpdate,
+    isAdvancedChapter,
+    isImmediatelyPublished,
+    timeSinceCreation: (Date.parse(nowUTC) - Date.parse(createdAtUTC)) / 1000,
+    timeSinceUpdate: (Date.parse(nowUTC) - Date.parse(updatedAtUTC)) / 1000
+  });
+
+  // Send notification if:
+  // 1. It's a new chapter OR a recent update
   // 2. AND either:
-  //    a. It's an advanced chapter (has coins)
-  //    b. OR it's a free chapter that's published immediately (publish_at is null or now/past)
-  if (now.getTime() - updatedAt.getTime() > 5 * 60 * 1000) {
-    return { shouldNotify: false };
+  //    - It's an advanced chapter (has coins and future publish date)
+  //    - OR it's published immediately
+  if ((isNewChapter || isRecentUpdate) && (isAdvancedChapter || isImmediatelyPublished)) {
+    console.log('Will send notification for chapter');
+    return {
+      shouldNotify: true,
+      chapterData: {
+        title: chapter.title,
+        chapterNumber: chapter.chapter_number,
+        partNumber: chapter.part_number,
+        novelId: chapter.novel_id,
+        novelTitle: chapter.novels.title,
+        novelSlug: chapter.novels.slug,
+        authorId: chapter.novels.author_profile_id
+      }
+    };
   }
 
-  const isAdvancedChapter = chapter.coins > 0;
-  const isImmediatelyPublished = !publishAt || publishAt <= now;
-
-  if (!isAdvancedChapter && !isImmediatelyPublished) {
-    return { shouldNotify: false };
-  }
-
-  return {
-    shouldNotify: true,
-    chapterData: {
-      title: chapter.title,
-      chapterNumber: chapter.chapter_number,
-      partNumber: chapter.part_number,
-      novelId: chapter.novel_id,
-      novelTitle: chapter.novels.title,
-      novelSlug: chapter.novels.slug,
-      authorId: chapter.novels.author_profile_id
-    }
-  };
+  console.log('Will NOT send notification for chapter');
+  return { shouldNotify: false };
 }
 
 // Helper function to send notifications for a published chapter
