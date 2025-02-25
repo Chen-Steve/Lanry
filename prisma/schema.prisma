@@ -130,7 +130,7 @@ model Profile {
   chapterComments    ChapterComment[]
   chapterThreadComments ChapterThreadComment[]
   novelComments      NovelComment[]
-  coins              Int       @default(0)
+  coins              Decimal @default(0) @db.Decimal(10,1)
   transactions       CoinTransaction[]
   chapterUnlocks     ChapterUnlock[]
   authoredNovels     Novel[]   @relation("NovelAuthor")
