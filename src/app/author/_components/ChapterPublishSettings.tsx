@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Icon } from '@iconify/react';
-import { formatLocalDateTime, toLocalDatetimeValue, fromLocalDatetimeValue, isFutureDate } from '@/utils/dateUtils';
+import { formatLocalDateTime, toLocalDatetimeValue, isFutureDate } from '@/utils/dateUtils';
 
 interface ChapterPublishSettingsProps {
   publishAt: string;
@@ -21,6 +21,75 @@ export default function ChapterPublishSettings({
   onSave,
   isSaving = false,
 }: ChapterPublishSettingsProps) {
+  // Generate time options in 30-minute intervals
+  const timeOptions = useMemo(() => {
+    const options = [];
+    for (let hour = 0; hour < 24; hour++) {
+      for (const minute of [0, 30]) {
+        const period = hour < 12 ? 'AM' : 'PM';
+        const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+        const hourStr = displayHour.toString();
+        const minStr = minute.toString().padStart(2, '0');
+        // Store in 24h format but display in 12h
+        const value = `${hour.toString().padStart(2, '0')}:${minStr}`;
+        const label = `${hourStr}:${minStr} ${period}`;
+        options.push({ value, label });
+      }
+    }
+    return options;
+  }, []);
+
+  const getCurrentTimeValue = (date: string | null) => {
+    if (!date) return '';
+    // Parse time directly from ISO string to avoid timezone conversion
+    const timeStr = date.split('T')[1];
+    const [hours, minutes] = timeStr.split(':');
+    return `${hours}:${minutes}`;
+  };
+
+  const handleDateTimeChange = (type: 'date' | 'time', value: string) => {
+    let year, month, day, hours, minutes;
+
+    if (publishAt) {
+      // Parse existing date
+      const [datePart, timePart] = publishAt.split('T');
+      [year, month, day] = datePart.split('-').map(Number);
+      [hours, minutes] = timePart.split(':').map(Number);
+    } else {
+      // Use current date
+      const now = new Date();
+      year = now.getFullYear();
+      month = now.getMonth() + 1;
+      day = now.getDate();
+      hours = now.getHours();
+      minutes = now.getMinutes();
+    }
+
+    if (type === 'date') {
+      // Update just the date portion
+      [year, month, day] = value.split('-').map(Number);
+    } else if (type === 'time') {
+      // Update just the time portion
+      [hours, minutes] = value.split(':').map(Number);
+    }
+
+    // Create ISO string without timezone suffix to keep it local
+    const isoString = `${year}-${
+      month.toString().padStart(2, '0')
+    }-${
+      day.toString().padStart(2, '0')
+    }T${
+      hours.toString().padStart(2, '0')
+    }:${
+      minutes.toString().padStart(2, '0')
+    }:00.000`;
+
+    onSettingsChange({
+      publishAt: isoString,
+      coins: coins
+    });
+  };
+
   useEffect(() => {
     // When publishAt is set to a future date and coins is 0, set it to default from localStorage
     if (publishAt && isFutureDate(publishAt) && (coins === '0' || !coins)) {
@@ -34,8 +103,8 @@ export default function ChapterPublishSettings({
       {/* Schedule Settings Popup */}
       {showSchedulePopup && (
         <>
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onCloseSchedulePopup} />
-          <div className="fixed inset-0 z-[51] flex items-center justify-center pointer-events-none">
+          <div className="fixed inset-0 z-[60] bg-black/50" onClick={onCloseSchedulePopup} />
+          <div className="fixed inset-0 z-[61] flex items-center justify-center pointer-events-none">
             <div className="relative bg-background rounded-lg shadow-lg w-full max-w-md mx-4 pointer-events-auto">
               <div className="flex items-center justify-between p-4 border-b border-border">
                 <h3 className="text-lg font-semibold text-foreground">Chapter Settings</h3>
@@ -61,22 +130,28 @@ export default function ChapterPublishSettings({
                       <div className="flex flex-col gap-2">
                         <div className="flex items-center gap-2">
                           <input
-                            type="datetime-local"
-                            value={toLocalDatetimeValue(publishAt)}
-                            onChange={(e) => {
-                              console.log('Selected datetime:', e.target.value);
-                              const newPublishAt = fromLocalDatetimeValue(e.target.value);
-                              console.log('Converted to ISO:', newPublishAt);
-                              onSettingsChange({
-                                publishAt: newPublishAt,
-                                coins: newPublishAt ? coins : '0'
-                              });
-                            }}
-                            min={new Date().toISOString().slice(0, 16)}
-                            className="flex-1 p-2 text-sm border border-border rounded bg-background text-foreground focus:ring-primary relative z-[60] hover:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:text-foreground [&::-webkit-calendar-picker-indicator]:hover:cursor-pointer [&::-webkit-calendar-picker-indicator]:p-0 [&::-webkit-calendar-picker-indicator]:m-0 [&::-webkit-calendar-picker-indicator]:h-5 [&::-webkit-calendar-picker-indicator]:w-5"
+                            type="date"
+                            value={publishAt ? toLocalDatetimeValue(publishAt).split('T')[0] : ''}
+                            onChange={(e) => handleDateTimeChange('date', e.target.value)}
+                            min={new Date().toISOString().split('T')[0]}
+                            className="flex-1 p-2 text-sm border border-border rounded bg-background text-foreground focus:ring-primary relative hover:cursor-pointer"
                             style={{ colorScheme: 'dark' }}
-                            aria-label="Publication date and time"
+                            aria-label="Publication date"
                           />
+                          <select
+                            value={getCurrentTimeValue(publishAt)}
+                            onChange={(e) => handleDateTimeChange('time', e.target.value)}
+                            className="flex-1 p-2 text-sm border border-border rounded bg-background text-foreground focus:ring-primary relative hover:cursor-pointer"
+                            style={{ colorScheme: 'dark' }}
+                            aria-label="Publication time"
+                          >
+                            <option value="">Select time</option>
+                            {timeOptions.map((time) => (
+                              <option key={time.value} value={time.value}>
+                                {time.label}
+                              </option>
+                            ))}
+                          </select>
                         </div>
                         {publishAt && (
                           <p className="text-xs text-muted-foreground pl-7">
