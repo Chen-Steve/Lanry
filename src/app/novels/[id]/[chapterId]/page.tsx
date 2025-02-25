@@ -272,6 +272,23 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
           <Icon icon="mdi:arrow-left" />
           <span>Back to Novel</span>
         </Link>
+
+        {/* Top Navigation */}
+        <div className="mb-6">
+          <ChapterNavigation
+            navigation={navigation}
+            novelId={novelId}
+            currentChapter={chapter?.chapter_number || 0}
+            currentPartNumber={chapter?.part_number}
+            currentVolumeId={chapter?.volume_id}
+            availableChapters={navigation.availableChapters}
+            volumes={navigation.volumes}
+            isDropdownOpen={isDropdownOpen}
+            setIsDropdownOpen={setIsDropdownOpen}
+            handleChapterSelect={handleChapterSelect}
+            position="top"
+          />
+        </div>
         
         <div className="text-center py-12">
           <Icon 
@@ -292,6 +309,23 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
               isAuthenticated={!!user}
             />
           </div>
+        </div>
+
+        {/* Bottom Navigation */}
+        <div className="border-t pt-4">
+          <ChapterNavigation
+            navigation={navigation}
+            novelId={novelId}
+            currentChapter={chapter?.chapter_number || 0}
+            currentPartNumber={chapter?.part_number}
+            currentVolumeId={chapter?.volume_id}
+            availableChapters={navigation.availableChapters}
+            volumes={navigation.volumes}
+            isDropdownOpen={isDropdownOpen}
+            setIsDropdownOpen={setIsDropdownOpen}
+            handleChapterSelect={handleChapterSelect}
+            position="bottom"
+          />
         </div>
       </div>
     );
