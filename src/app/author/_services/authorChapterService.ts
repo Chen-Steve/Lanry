@@ -138,10 +138,10 @@ export async function createChapter(
     }
   }
 
-  // Get novel settings for fixed pricing
+  // Get novel settings for fixed pricing and auto-release
   const { data: novel, error: novelError } = await supabase
     .from('novels')
-    .select('fixed_price_enabled, fixed_price_amount')
+    .select('fixed_price_enabled, fixed_price_amount, auto_release_enabled, auto_release_interval')
     .eq('id', novelId)
     .single();
 
@@ -149,7 +149,13 @@ export async function createChapter(
 
   // Create the chapter
   const chapterId = generateUUID();
+  
+  // Determine the coins based on fixed price settings
   const finalCoins = novel.fixed_price_enabled ? novel.fixed_price_amount : chapterData.coins;
+
+  // If no publish date is set and auto-release is enabled, set publish_at to null
+  // so it can be handled by applyAutoReleaseSchedule
+  const publishAt = novel.auto_release_enabled ? null : chapterData.publish_at;
   
   const { error } = await supabase
     .from('chapters')
@@ -158,6 +164,7 @@ export async function createChapter(
       novel_id: novelId,
       ...chapterData,
       coins: finalCoins,
+      publish_at: publishAt,
       volume_id: chapterData.volume_id,
       slug: generateChapterSlug(chapterData.chapter_number, chapterData.part_number),
       created_at: new Date().toISOString(),
@@ -172,8 +179,8 @@ export async function createChapter(
     await sendChapterNotifications(notificationData);
   }
 
-  // Apply auto-release schedule if no publish date is set
-  if (!chapterData.publish_at) {
+  // Apply auto-release schedule if enabled
+  if (novel.auto_release_enabled) {
     await applyAutoReleaseSchedule(novelId, userId, chapterId);
   }
 
@@ -436,7 +443,7 @@ export async function applyAutoReleaseSchedule(
 
   if (!novel.auto_release_enabled) return;
 
-  let publishAt: Date;
+  let publishAt: Date = new Date(); // Initialize with current date as fallback
   const now = new Date();
   
   // Function to adjust time to target hour (in local time)
@@ -453,37 +460,44 @@ export async function applyAutoReleaseSchedule(
 
   // Check if using publishing days from localStorage
   const savedUsePublishingDays = localStorage.getItem(`usePublishingDays_${novelId}`);
-  const usePublishingDays = savedUsePublishingDays ? JSON.parse(savedUsePublishingDays) : false;
+  let shouldUsePublishingDays = savedUsePublishingDays ? JSON.parse(savedUsePublishingDays) : false;
 
-  if (usePublishingDays) {
+  if (shouldUsePublishingDays) {
     const savedDays = localStorage.getItem(`publishingDays_${novelId}`);
     const publishingDays = savedDays ? JSON.parse(savedDays) : [];
 
-    if (baseDate) {
-      publishAt = getNextPublishingDate(new Date(baseDate), publishingDays);
+    if (publishingDays.length === 0) {
+      // If no publishing days are selected, fall back to interval-based scheduling
+      shouldUsePublishingDays = false;
     } else {
-      // First, try to find the latest advanced chapter
-      const { data: advancedChapters, error: advancedError } = await supabase
-        .from('chapters')
-        .select('publish_at, chapter_number')
-        .eq('novel_id', novelId)
-        .not('id', 'eq', chapterId)
-        .gt('publish_at', now.toISOString())
-        .order('publish_at', { ascending: false })
-        .limit(1);
-
-      if (advancedError) throw advancedError;
-
-      if (advancedChapters && advancedChapters.length > 0) {
-        // If we found an advanced chapter, use its publish date as base
-        publishAt = getNextPublishingDate(new Date(advancedChapters[0].publish_at), publishingDays);
+      if (baseDate) {
+        publishAt = getNextPublishingDate(new Date(baseDate), publishingDays);
       } else {
-        // If no advanced chapters exist, use current date
-        publishAt = getNextPublishingDate(now, publishingDays);
+        // First, try to find the latest advanced chapter
+        const { data: advancedChapters, error: advancedError } = await supabase
+          .from('chapters')
+          .select('publish_at, chapter_number')
+          .eq('novel_id', novelId)
+          .not('id', 'eq', chapterId)
+          .gt('publish_at', now.toISOString())
+          .order('publish_at', { ascending: false })
+          .limit(1);
+
+        if (advancedError) throw advancedError;
+
+        if (advancedChapters && advancedChapters.length > 0) {
+          // If we found an advanced chapter, use its publish date as base
+          publishAt = getNextPublishingDate(new Date(advancedChapters[0].publish_at), publishingDays);
+        } else {
+          // If no advanced chapters exist, use current date
+          publishAt = getNextPublishingDate(now, publishingDays);
+        }
       }
     }
-  } else {
-    // Use the original interval-based logic
+  }
+
+  // Use interval-based scheduling if not using publishing days or if no publishing days were selected
+  if (!shouldUsePublishingDays) {
     if (baseDate) {
       const localBaseDate = new Date(baseDate);
       // Ensure the time is set to 5 AM local time
@@ -530,6 +544,7 @@ export async function applyAutoReleaseSchedule(
     publish_at: publishAtISO
   };
 
+  // Always apply fixed price if enabled
   if (novel.fixed_price_enabled) {
     updateData.coins = novel.fixed_price_amount;
   }
