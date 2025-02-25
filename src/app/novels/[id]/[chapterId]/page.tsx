@@ -313,7 +313,7 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
         </div>
 
         {/* Bottom Navigation */}
-        <div className="border-t pt-4">
+        <div className="pt-4">
           <ChapterNavigation
             navigation={navigation}
             novelId={novelId}
@@ -376,7 +376,7 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
       />
 
       {/* Bottom Navigation */}
-      <div className="border-t pt-4">
+      <div className="pt-4">
         <ChapterNavigation
           navigation={navigation}
           novelId={novelId}
