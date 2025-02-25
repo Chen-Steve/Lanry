@@ -41,6 +41,7 @@ interface ChapterContentProps {
   ageRating: 'EVERYONE' | 'TEEN' | 'MATURE';
   chapterId: string;
   isTranslator?: boolean;
+  publishAt?: string;
 }
 
 export default function ChapterContent({
@@ -58,11 +59,15 @@ export default function ChapterContent({
   ageRating,
   chapterId,
   isTranslator = false,
+  publishAt
 }: ChapterContentProps) {
   const [selectedParagraphId, setSelectedParagraphId] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const { comments, addComment, deleteComment, updateComment, isAuthenticated, isLoading, userId } = useComments(novelId, chapterNumber);
   const isMobile = useMediaQuery('(max-width: 768px)');
+
+  // Check if the chapter is indefinitely locked
+  const isIndefinitelyLocked = publishAt && new Date(publishAt).getFullYear() > new Date().getFullYear() + 50;
 
   const handleCloseComment = () => {
     setSelectedParagraphId(null);
@@ -228,30 +233,39 @@ export default function ChapterContent({
                     Teen
                   </span>
                 )}
+                {isIndefinitelyLocked && (
+                  <span className="px-2 py-0.5 text-xs font-medium bg-accent text-muted-foreground rounded-md flex items-center gap-1">
+                    <Icon icon="mdi:clock-outline" className="w-3.5 h-3.5" />
+                    Coming Soon
+                  </span>
+                )}
               </div>
               <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400">
-                Published {formatDate(createdAt)}
+                {isIndefinitelyLocked ? 'Not yet available' : `Published ${formatDate(createdAt)}`}
               </p>
             </div>
-            {isTranslator && (
-              <button
-                onClick={() => setIsEditing(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-              >
-                <Icon icon="mdi:pencil" className="w-4 h-4" />
-                Edit Chapter
-              </button>
-            )}
-            {!isTranslator && !isMobile && (
-              <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                <Icon icon="mdi:gesture-tap-hold" className="w-4 h-4" />
-                <span>Hold text to comment</span>
-              </div>
-            )}
+            
+            <div className="flex items-center gap-3">
+              {isTranslator && !isIndefinitelyLocked && (
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                >
+                  <Icon icon="mdi:pencil" className="w-4 h-4" />
+                  Edit Chapter
+                </button>
+              )}
+              {!isTranslator && !isMobile && !isIndefinitelyLocked && (
+                <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                  <Icon icon="mdi:gesture-tap-hold" className="w-4 h-4" />
+                  <span>Hold text to comment</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
         
-        {isEditing && isTranslator ? (
+        {isEditing && isTranslator && !isIndefinitelyLocked ? (
           <TranslatorChapterEdit
             chapterId={chapterId}
             novelId={novelId}
@@ -265,6 +279,12 @@ export default function ChapterContent({
             }}
             onCancel={() => setIsEditing(false)}
           />
+        ) : isIndefinitelyLocked ? (
+          <div className="text-center py-12">
+            <Icon icon="mdi:clock-outline" className="text-6xl text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">Coming Soon</h3>
+            <p className="text-sm text-muted-foreground">This chapter is not yet available</p>
+          </div>
         ) : (
           <>
             {!isMobile ? (
@@ -293,23 +313,6 @@ export default function ChapterContent({
                       />
                     );
                   })}
-
-                  {/* Like Button Section - Moved inside the prose div */}
-                  <div className="flex justify-center items-center gap-3 mt-4 mb-8">
-                    <button
-                      onClick={handleLikeClick}
-                      className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
-                      aria-label={isLiked ? 'Unlike chapter' : 'Like chapter'}
-                    >
-                      <Icon 
-                        icon={isLiked ? "mdi:heart" : "mdi:heart-outline"} 
-                        className={`w-6 h-6 ${isLiked ? 'text-red-500' : 'text-gray-600 dark:text-gray-400'}`}
-                      />
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        {likeCount} {likeCount === 1 ? 'Like' : 'Likes'}
-                      </span>
-                    </button>
-                  </div>
                 </div>
               </ScreenshotProtection>
             ) : (
@@ -337,31 +340,35 @@ export default function ChapterContent({
                     />
                   );
                 })}
-
-                {/* Like Button Section - Moved inside the prose div */}
-                <div className="flex justify-center items-center gap-3 mt-4 mb-8">
-                  <button
-                    onClick={handleLikeClick}
-                    className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
-                    aria-label={isLiked ? 'Unlike chapter' : 'Like chapter'}
-                  >
-                    <Icon 
-                      icon={isLiked ? "mdi:heart" : "mdi:heart-outline"} 
-                      className={`w-6 h-6 ${isLiked ? 'text-red-500' : 'text-gray-600 dark:text-gray-400'}`}
-                    />
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      {likeCount} {likeCount === 1 ? 'Like' : 'Likes'}
-                    </span>
-                  </button>
-                </div>
               </div>
             )}
           </>
         )}
 
-        {/* Author's Thoughts Section */}
-        {authorThoughts && authorThoughts.trim() !== '' && (
-          <div className="mt-8 max-w-2xl mx-auto border-t border-gray-200 dark:border-gray-700 pt-8">
+        {/* Like Button Section */}
+        {!isIndefinitelyLocked && (
+          <div className="mt-8 max-w-2xl mx-auto flex justify-center">
+            <button
+              onClick={handleLikeClick}
+              className={`flex items-center gap-2 px-6 py-3 rounded-lg transition-colors ${
+                isLiked 
+                  ? 'text-red-500 hover:text-red-600 bg-red-50 dark:bg-red-500/10' 
+                  : 'text-muted-foreground hover:text-red-500 bg-accent hover:bg-accent/80'
+              }`}
+              title={isLiked ? 'Unlike chapter' : 'Like chapter'}
+            >
+              <Icon 
+                icon={isLiked ? "mdi:heart" : "mdi:heart-outline"} 
+                className="w-6 h-6" 
+              />
+              <span className="font-medium">{likeCount}</span>
+            </button>
+          </div>
+        )}
+
+        {/* Author's Thoughts Section - Only show if not indefinitely locked */}
+        {!isIndefinitelyLocked && authorThoughts && authorThoughts.trim() !== '' && (
+          <div className="mt-8 max-w-2xl mx-auto">
             <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-6">
               <div className="flex items-center gap-2 mb-4">
                 <Icon icon="mdi:thought-bubble" className="w-6 h-6 text-gray-600 dark:text-gray-400" />
@@ -376,7 +383,7 @@ export default function ChapterContent({
           </div>
         )}
 
-        {selectedParagraphId && (
+        {selectedParagraphId && !isIndefinitelyLocked && (
           <CommentPopover
             paragraphId={selectedParagraphId}
             comments={(comments[selectedParagraphId] || []).map(comment => ({

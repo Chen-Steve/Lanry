@@ -307,6 +307,7 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
               authorId={chapter.novel?.author_profile_id || ''}
               userProfileId={user?.id}
               isAuthenticated={!!user}
+              publishAt={chapter.publish_at}
             />
           </div>
         </div>
@@ -371,6 +372,7 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
         ageRating={chapter.age_rating}
         chapterId={chapter.id}
         isTranslator={user?.id === chapter.novel.translator_id}
+        publishAt={chapter.publish_at}
       />
 
       {/* Bottom Navigation */}

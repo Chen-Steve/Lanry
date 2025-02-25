@@ -175,12 +175,13 @@ export const ChapterListItem = memo(function ChapterListItem({
   }, [chapter.chapter_number, chapter.coins, chapter.novel_id, chapter.part_number, isAuthenticated, novelSlug, router, unlockChapter, userProfile?.id, novelAuthorId]);
 
   const isPublished = !chapter.publish_at || new Date(chapter.publish_at) <= new Date();
+  const isIndefinitelyLocked = chapter.publish_at && new Date(chapter.publish_at).getFullYear() > new Date().getFullYear() + 50;
 
   const chapterContent = (
     <div className="flex items-center justify-between w-full">
       <div className="flex items-center gap-2 min-w-0">
         <span className="font-medium whitespace-nowrap flex items-center gap-1">
-          {!isPublished && !isUnlocked && !hasTranslatorAccess && (
+          {(!isPublished || isIndefinitelyLocked) && !isUnlocked && !hasTranslatorAccess && (
             <Icon icon="material-symbols:lock" className="text-xs" />
           )}
           Ch. {chapter.chapter_number}{chapter.part_number ? `.${chapter.part_number}` : ''}
@@ -197,6 +198,8 @@ export const ChapterListItem = memo(function ChapterListItem({
             <span className="text-emerald-600 dark:text-emerald-400">
               {hasTranslatorAccess ? 'Translator Access' : 'Unlocked'}
             </span>
+          ) : isIndefinitelyLocked ? (
+            <span className="text-muted-foreground">Coming Soon</span>
           ) : (
             <>
               {isUnlocking ? (
@@ -227,7 +230,15 @@ export const ChapterListItem = memo(function ChapterListItem({
     </div>
   );
 
-  if (!isPublished && !isUnlocked && !hasTranslatorAccess) {
+  if ((!isPublished || isIndefinitelyLocked) && !isUnlocked && !hasTranslatorAccess) {
+    if (isIndefinitelyLocked) {
+      // For indefinitely locked chapters, show a non-interactive element
+      return (
+        <div className="w-full opacity-70">
+          {chapterContent}
+        </div>
+      );
+    }
     return (
       <button
         onClick={handleLockedChapterClick}
@@ -240,7 +251,7 @@ export const ChapterListItem = memo(function ChapterListItem({
   }
 
   // Only allow navigation if the chapter is published, unlocked, or user has translator access
-  if (isPublished || isUnlocked || hasTranslatorAccess) {
+  if ((isPublished && !isIndefinitelyLocked) || isUnlocked || hasTranslatorAccess) {
     return (
       <Link
         href={`/novels/${novelSlug}/c${chapter.chapter_number}${chapter.part_number ? `-p${chapter.part_number}` : ''}`}

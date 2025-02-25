@@ -13,6 +13,7 @@ interface ChapterPurchaseButtonProps {
   authorId: string;
   userProfileId?: string;
   isAuthenticated: boolean;
+  publishAt?: string;
 }
 
 export default function ChapterPurchaseButton({
@@ -22,7 +23,8 @@ export default function ChapterPurchaseButton({
   coins,
   authorId,
   userProfileId,
-  isAuthenticated
+  isAuthenticated,
+  publishAt
 }: ChapterPurchaseButtonProps) {
   const [isUnlocking, setIsUnlocking] = useState(false);
 
@@ -83,6 +85,21 @@ export default function ChapterPurchaseButton({
       throw error;
     }
   }, [novelId, authorId, chapterNumber, partNumber, userProfileId, coins]);
+
+  // Check if the chapter is indefinitely locked
+  const isIndefinitelyLocked = publishAt && new Date(publishAt).getFullYear() > new Date().getFullYear() + 50;
+
+  if (isIndefinitelyLocked) {
+    return (
+      <div className="space-y-4">
+        <div className="p-4 bg-accent/50 rounded-lg text-center">
+          <Icon icon="mdi:clock-outline" className="text-2xl text-muted-foreground mx-auto mb-2" />
+          <p className="text-sm font-medium text-foreground">Coming Soon</p>
+          <p className="text-xs text-muted-foreground mt-1">This chapter is not yet available</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleUnlock = async () => {
     if (!isAuthenticated) {
@@ -207,4 +224,4 @@ export default function ChapterPurchaseButton({
       )}
     </button>
   );
-} 
+}
