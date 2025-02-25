@@ -4,6 +4,7 @@ import { Chapter, Novel } from '@/types/database';
 type ChapterWithNovel = Chapter & {
   novel: Novel;
   isLocked?: boolean;
+  hasTranslatorAccess?: boolean;
 };
 
 export async function getChapter(novelId: string, chapterNumber: number, partNumber?: number | null): Promise<ChapterWithNovel | null> {
@@ -51,10 +52,17 @@ export async function getChapter(novelId: string, chapterNumber: number, partNum
     const isAuthor = user && novel.author_profile_id === user.id;
     const isTranslator = user && novel.translator_id === user.id;
     const isTranslatorCreated = user && novel.author_profile_id === user.id && novel.is_author_name_custom === true;
+    const hasTranslatorAccess = isAuthor || isTranslator || isTranslatorCreated;
 
-    // If user is author, translator, or created the novel as a translator, they can access all chapters
-    if (isAuthor || isTranslator || isTranslatorCreated) {
-      return chapter;
+    // Add translator access information to the chapter data
+    const chapterWithAccess = {
+      ...chapter,
+      hasTranslatorAccess
+    };
+
+    // If user has translator access, they can access all chapters
+    if (hasTranslatorAccess) {
+      return chapterWithAccess;
     }
 
     // Check if chapter is published or user has unlocked it
@@ -62,7 +70,7 @@ export async function getChapter(novelId: string, chapterNumber: number, partNum
     
     if (!isPublished && chapter.coins > 0) {
       // Check if user has unlocked this chapter
-      if (!user) return { ...chapter, isLocked: true };
+      if (!user) return { ...chapter, isLocked: true, hasTranslatorAccess: false };
 
       let query = supabase
         .from('chapter_unlocks')
@@ -80,10 +88,10 @@ export async function getChapter(novelId: string, chapterNumber: number, partNum
 
       const { data: unlock } = await query.maybeSingle();
 
-      if (!unlock) return { ...chapter, isLocked: true };
+      if (!unlock) return { ...chapter, isLocked: true, hasTranslatorAccess: false };
     }
 
-    return chapter;
+    return chapterWithAccess;
   } catch (error) {
     console.error('Error fetching chapter:', error);
     return null;

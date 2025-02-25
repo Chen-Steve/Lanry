@@ -32,6 +32,26 @@ export default function TranslatorChapterEdit({
   const handleSave = async () => {
     try {
       setIsSaving(true);
+
+      // First verify if user is the translator for this novel
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { data: novel, error: novelError } = await supabase
+        .from('novels')
+        .select('translator_id, author_profile_id, is_author_name_custom')
+        .eq('id', novelId)
+        .single();
+
+      if (novelError) throw novelError;
+      
+      // Check if user is translator or created the novel as a translator
+      const isTranslator = novel.translator_id === user.id;
+      const isTranslatorCreated = novel.author_profile_id === user.id && novel.is_author_name_custom === true;
+      
+      if (!isTranslator && !isTranslatorCreated) {
+        throw new Error('Not authorized to edit this chapter');
+      }
       
       const { error } = await supabase
         .from('chapters')
@@ -49,7 +69,7 @@ export default function TranslatorChapterEdit({
       onSave();
     } catch (error) {
       console.error('Error saving chapter:', error);
-      toast.error('Failed to save chapter');
+      toast.error(error instanceof Error ? error.message : 'Failed to save chapter');
     } finally {
       setIsSaving(false);
     }

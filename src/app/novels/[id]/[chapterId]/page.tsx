@@ -371,7 +371,7 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
         authorId={chapter.novel.author_profile_id}
         ageRating={chapter.age_rating}
         chapterId={chapter.id}
-        isTranslator={user?.id === chapter.novel.translator_id}
+        isTranslator={chapter.hasTranslatorAccess}
         publishAt={chapter.publish_at}
       />
 
