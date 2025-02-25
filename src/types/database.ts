@@ -127,6 +127,7 @@ export interface CommentsByParagraph {
 
 export type ChapterWithNovel = Chapter & {
   novel: Novel;
+  hasTranslatorAccess?: boolean;
 };
 
 export interface CoinTransaction {
