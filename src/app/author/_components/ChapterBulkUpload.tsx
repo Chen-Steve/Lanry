@@ -170,7 +170,6 @@ export default function ChapterBulkUpload({ novelId, userId, onUploadComplete }:
     }
 
     setIsUploading(true);
-    const failedUploads: { name: string; reason: string }[] = [];
 
     try {
       // First extract all file contents
@@ -226,11 +225,11 @@ export default function ChapterBulkUpload({ novelId, userId, onUploadComplete }:
             lastPublishDate = new Date(latestChapter.publish_at);
           }
         } catch (error) {
-          // Ignore error - this just means no previous chapters exist
           console.debug('No previous chapters found:', error);
         }
       }
 
+      // Process each file sequentially and abort on any error
       for (const { file, content: { content, title: contentTitle, chapterNumber, partNumber } } of sortedFiles) {
         try {
           // If we couldn't extract chapter number from content, try filename
@@ -238,45 +237,22 @@ export default function ChapterBulkUpload({ novelId, userId, onUploadComplete }:
           let finalPartNumber = partNumber;
           
           if (finalChapterNumber === null) {
-            // Updated pattern to better handle decimal chapter numbers
             const titleMatch = file.name.match(/^chapter[\s-]?(\d+)(?:[-\s.](\d+))?\.(docx|txt)$/i);
-            console.log('Filename:', file.name);
-            console.log('Title match result:', titleMatch);
             
             if (!titleMatch) {
-              failedUploads.push({ 
-                name: file.name, 
-                reason: 'could not determine chapter number'
-              });
-              continue;
+              throw new Error(`Could not determine chapter number for ${file.name}`);
             }
             finalChapterNumber = parseInt(titleMatch[1]);
             finalPartNumber = titleMatch[2] ? parseInt(titleMatch[2]) : null;
-            console.log('Extracted from filename:', { finalChapterNumber, finalPartNumber });
           }
 
-          // Title priority:
-          // 1. Check filename for title
-          // 2. If no filename title, use content title
-          // 3. If neither exists, leave empty (will show as just "Chapter X")
           let finalTitle = '';
-          
-          // First check filename for title - updated pattern to match after part number
           const filenameTitleMatch = file.name.match(/^chapter[\s-]?(\d+)(?:[-\s.](\d+))?(?:[-:_\s]+(.+?))?\.(docx|txt)$/i);
-          console.log('Title match:', filenameTitleMatch);
           if (filenameTitleMatch && filenameTitleMatch[3]) {
             finalTitle = filenameTitleMatch[3].trim();
-          } 
-          // If no filename title, try content title
-          else if (contentTitle) {
+          } else if (contentTitle) {
             finalTitle = contentTitle;
           }
-
-          console.log('Final values before creation:', {
-            chapter_number: finalChapterNumber,
-            part_number: finalPartNumber,
-            title: finalTitle
-          });
 
           // Create the chapter with publish_at based on settings
           const chapterId = await authorChapterService.createChapter(novelId, userId, {
@@ -285,7 +261,7 @@ export default function ChapterBulkUpload({ novelId, userId, onUploadComplete }:
             title: finalTitle,
             content,
             publish_at: !useAutoRelease && bulkPublishDate ? bulkPublishDate : null,
-            coins: 0, // Let the service handle fixed pricing
+            coins: 0,
           });
 
           // Only apply auto-release schedule if useAutoRelease is true
@@ -297,52 +273,31 @@ export default function ChapterBulkUpload({ novelId, userId, onUploadComplete }:
               lastPublishDate
             );
 
-            // Update the last publish date for the next chapter
             if (newPublishDate) {
               lastPublishDate = newPublishDate;
             }
           }
-
         } catch (error) {
           console.error(`Error uploading ${file.name}:`, error);
           const errorMessage = error instanceof Error ? error.message : 'unknown error';
+          
+          // Show error message and abort the entire upload
           if (errorMessage.includes('already exists')) {
-            failedUploads.push({ 
-              name: file.name, 
-              reason: 'duplicate chapter'
-            });
+            toast.error(`Upload aborted: Chapter ${file.name} already exists`);
           } else {
-            failedUploads.push({ 
-              name: file.name, 
-              reason: errorMessage
-            });
+            toast.error(`Upload aborted: Failed to upload ${file.name} - ${errorMessage}`);
           }
+          
+          // Exit the function, effectively aborting the upload
+          return;
         }
       }
 
-      if (failedUploads.length === 0) {
-        toast.success('All chapters uploaded successfully!');
-        setFiles([]);
-        onUploadComplete();
-        setIsOpen(false);
-      } else {
-        const groupedFailures = failedUploads.reduce((acc, { name, reason }) => {
-          if (!acc[reason]) {
-            acc[reason] = [];
-          }
-          acc[reason].push(name);
-          return acc;
-        }, {} as Record<string, string[]>);
+      toast.success('All chapters uploaded successfully!');
+      setFiles([]);
+      onUploadComplete();
+      setIsOpen(false);
 
-        Object.entries(groupedFailures).forEach(([reason, files]) => {
-          const fileList = files.join(', ');
-          if (reason === 'duplicate chapter') {
-            toast.error(`Skipped duplicate chapters: ${fileList}`);
-          } else {
-            toast.error(`Failed to upload (${reason}): ${fileList}`);
-          }
-        });
-      }
     } catch (error) {
       console.error('Bulk upload error:', error);
       toast.error('Failed to complete bulk upload');
