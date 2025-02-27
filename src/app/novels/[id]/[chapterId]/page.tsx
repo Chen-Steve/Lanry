@@ -103,25 +103,33 @@ const updateReadingHistory = async (
   }
 };
 
+interface ChapterNavigation {
+  prevChapter: { id: string; chapter_number: number; part_number?: number | null; title: string } | null;
+  nextChapter: { id: string; chapter_number: number; part_number?: number | null; title: string } | null;
+  availableChapters: Array<{ chapter_number: number; part_number?: number | null; volume_id?: string }>;
+  volumes: Array<{ id: string; title: string; volume_number: number }>;
+}
+
+const initialNavigation: ChapterNavigation = {
+  prevChapter: null,
+  nextChapter: null,
+  availableChapters: [],
+  volumes: []
+};
+
 export default function ChapterPage({ params }: { params: { id: string; chapterId: string } }) {
   const { id: novelId, chapterId } = params;
   const [chapter, setChapter] = useState<ChapterWithNovel | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [navigation, setNavigation] = useState<{
-    prevChapter: { id: string; chapter_number: number; part_number?: number | null; title: string } | null;
-    nextChapter: { id: string; chapter_number: number; part_number?: number | null; title: string } | null;
-    availableChapters: Array<{ chapter_number: number; part_number?: number | null; volume_id?: string }>;
-    volumes: Array<{ id: string; title: string; volume_number: number }>;
-  }>({ prevChapter: null, nextChapter: null, availableChapters: [], volumes: [] });
+  const [navigation, setNavigation] = useState<ChapterNavigation>(initialNavigation);
   const [totalChapters, setTotalChapters] = useState(0);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isCommentOpen, setIsCommentOpen] = useState(false);
   const [fontFamily, setFontFamily] = useLocalStorage(
     'chapter-font-family',
     'ui-sans-serif, system-ui, sans-serif'
   );
   const [fontSize, setFontSize] = useLocalStorage('chapter-font-size', 16);
-  const [isCommentOpen, setIsCommentOpen] = useState(false);
   const [user, setUser] = useState<{ id: string } | null>(null);
 
   // Add the reading time tracker
@@ -289,8 +297,6 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
             currentVolumeId={chapter?.volume_id}
             availableChapters={navigation.availableChapters}
             volumes={navigation.volumes}
-            isDropdownOpen={isDropdownOpen}
-            setIsDropdownOpen={setIsDropdownOpen}
             handleChapterSelect={handleChapterSelect}
             position="top"
           />
@@ -328,8 +334,6 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
             currentVolumeId={chapter?.volume_id}
             availableChapters={navigation.availableChapters}
             volumes={navigation.volumes}
-            isDropdownOpen={isDropdownOpen}
-            setIsDropdownOpen={setIsDropdownOpen}
             handleChapterSelect={handleChapterSelect}
             position="bottom"
           />
@@ -356,8 +360,6 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
           currentVolumeId={chapter?.volume_id}
           availableChapters={navigation.availableChapters}
           volumes={navigation.volumes}
-          isDropdownOpen={isDropdownOpen}
-          setIsDropdownOpen={setIsDropdownOpen}
           handleChapterSelect={handleChapterSelect}
           position="top"
         />
@@ -391,8 +393,6 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
           currentVolumeId={chapter?.volume_id}
           availableChapters={navigation.availableChapters}
           volumes={navigation.volumes}
-          isDropdownOpen={isDropdownOpen}
-          setIsDropdownOpen={setIsDropdownOpen}
           handleChapterSelect={handleChapterSelect}
           position="bottom"
         />
@@ -417,7 +417,6 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
         currentFont={fontFamily}
         currentSize={fontSize}
         isCommentOpen={isCommentOpen}
-        isDropdownOpen={isDropdownOpen}
         firstChapter={Math.min(...navigation.availableChapters.map(ch => ch.chapter_number))}
       />
       

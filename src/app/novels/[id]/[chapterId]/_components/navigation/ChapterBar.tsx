@@ -19,7 +19,6 @@ interface ChapterProgressBarProps {
   currentFont: string;
   currentSize: number;
   isCommentOpen: boolean;
-  isDropdownOpen: boolean;
   firstChapter: number;
 }
 
@@ -33,7 +32,6 @@ export default function ChapterProgressBar({
   currentFont,
   currentSize,
   isCommentOpen,
-  isDropdownOpen,
   firstChapter,
 }: ChapterProgressBarProps) {
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -80,61 +78,11 @@ export default function ChapterProgressBar({
     if (!isMobile) return;
 
     const handleTouchStart = (e: TouchEvent) => {
-      if (isCommentOpen || isDropdownOpen) return;
-      
-      // Ignore if the touch is on a link, button, or form element
-      const target = e.target as HTMLElement;
-      if (
-        target.tagName.toLowerCase() === 'a' || 
-        target.tagName.toLowerCase() === 'button' ||
-        target.tagName.toLowerCase() === 'textarea' ||
-        target.tagName.toLowerCase() === 'form' ||
-        target.closest('a') ||
-        target.closest('button') ||
-        target.closest('textarea') ||
-        target.closest('form')
-      ) {
-        return;
-      }
-      
       setTouchStartY(e.touches[0].clientY);
       setIsTouching(true);
     };
 
-    const handleTouchEnd = (e: TouchEvent) => {
-      if (isCommentOpen || isDropdownOpen) return;
-      
-      if (!touchStartY || !isTouching) return;
-
-      const target = e.target as HTMLElement;
-      // Ignore if the touch ended on a link, button, or form element
-      if (
-        target.tagName.toLowerCase() === 'a' || 
-        target.tagName.toLowerCase() === 'button' ||
-        target.tagName.toLowerCase() === 'textarea' ||
-        target.tagName.toLowerCase() === 'form' ||
-        target.closest('a') ||
-        target.closest('button') ||
-        target.closest('textarea') ||
-        target.closest('form')
-      ) {
-        setTouchStartY(null);
-        setIsTouching(false);
-        return;
-      }
-
-      const touchEndY = e.changedTouches[0].clientY;
-      const touchDistance = Math.abs(touchEndY - touchStartY);
-
-      if (touchDistance < 10) {
-        if (
-          !(e.target as HTMLElement).closest('[role="scrollbar"]') &&
-          !(progressBarRef.current?.contains(e.target as Node))
-        ) {
-          setIsVisible(prev => !prev);
-        }
-      }
-
+    const handleTouchEnd = () => {
       setTouchStartY(null);
       setIsTouching(false);
     };
@@ -146,13 +94,13 @@ export default function ChapterProgressBar({
       document.removeEventListener('touchstart', handleTouchStart);
       document.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [isMobile, touchStartY, isTouching, isCommentOpen, isDropdownOpen]);
+  }, [isMobile, touchStartY, isTouching, isCommentOpen]);
 
   useEffect(() => {
-    if ((isCommentOpen || isDropdownOpen) && isVisible) {
+    if (isCommentOpen && isVisible) {
       setIsVisible(false);
     }
-  }, [isCommentOpen, isDropdownOpen, isVisible]);
+  }, [isCommentOpen, isVisible]);
 
   if (!isMobile) return null;
 

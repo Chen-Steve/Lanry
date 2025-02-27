@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 
 interface ChapterNavigationProps {
   navigation: {
@@ -32,8 +32,6 @@ interface ChapterNavigationProps {
     title: string;
     volume_number: number;
   }>;
-  isDropdownOpen: boolean;
-  setIsDropdownOpen: (open: boolean) => void;
   handleChapterSelect: (chapterNumber: number, partNumber?: number | null, volumeId?: string | null) => void;
   position?: 'top' | 'bottom';
 }
@@ -46,14 +44,27 @@ export default function ChapterNavigation({
   currentVolumeId,
   availableChapters = [],
   volumes = [],
-  isDropdownOpen, 
-  setIsDropdownOpen, 
   handleChapterSelect,
   position = 'bottom'
 }: ChapterNavigationProps) {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
   const dropdownPosition = position === 'top' 
     ? 'top-full left-1/2 -translate-x-1/2 mt-2' 
     : 'bottom-full left-1/2 -translate-x-1/2 mb-2';
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const formatDropdownTitle = (chapterNumber: number, partNumber?: number | null) => {
     return `Chapter ${chapterNumber}${partNumber ? ` Part ${partNumber}` : ''}`;
@@ -98,7 +109,10 @@ export default function ChapterNavigation({
     return (
       <button
         key={`${chapter.chapter_number}-${chapter.part_number || ''}`}
-        onClick={() => handleChapterSelect(chapter.chapter_number, chapter.part_number, chapter.volume_id)}
+        onClick={() => {
+          handleChapterSelect(chapter.chapter_number, chapter.part_number, chapter.volume_id);
+          setIsDropdownOpen(false);
+        }}
         className={`w-full px-3 py-2 text-left hover:bg-accent transition-colors text-xs sm:text-sm flex items-center justify-between ${
           chapter.chapter_number === currentChapter && 
           chapter.part_number === currentPartNumber && 
@@ -143,7 +157,7 @@ export default function ChapterNavigation({
         </div>
 
         {/* Chapter Selector */}
-        <div className="relative w-[140px] sm:w-[180px] h-full">
+        <div className="relative w-[140px] sm:w-[180px] h-full" ref={dropdownRef}>
           <button
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             className="w-full h-full px-1.5 sm:px-2 border border-border rounded-lg flex items-center justify-center gap-1 bg-background hover:bg-accent transition-colors text-foreground text-xs sm:text-sm"
