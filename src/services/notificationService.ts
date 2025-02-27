@@ -17,6 +17,11 @@ export interface Notification {
     username: string | null;
     avatar_url: string | null;
   };
+  novel?: {
+    chapters: Array<{
+      publish_at: string | null;
+    }>;
+  };
 }
 
 export const notificationService = {
@@ -75,6 +80,11 @@ export const notificationService = {
           sender:profiles!sender_id (
             username,
             avatar_url
+          ),
+          novel:novels (
+            chapters (
+              publish_at
+            )
           )
         `)
         .eq('recipient_id', userId)
@@ -83,7 +93,18 @@ export const notificationService = {
 
       if (error) throw error;
 
-      return data;
+      // Filter out chapter release notifications where the chapter's publish_at hasn't arrived yet
+      const filteredData = data?.filter(notification => {
+        if (notification.type !== 'chapter_release') return true;
+        
+        // For chapter releases, check the chapter's publish_at time
+        const chapter = notification.novel?.chapters?.[0];
+        if (!chapter?.publish_at) return true; // If no publish_at, show immediately
+        
+        return new Date(chapter.publish_at) <= new Date();
+      });
+
+      return filteredData || [];
     } catch (error) {
       console.error('Error fetching notifications:', error);
       throw error;
@@ -162,7 +183,8 @@ export const notificationService = {
     novelTitle,
     authorId,
     partNumber,
-    novelSlug
+    novelSlug,
+    publishAt
   }: {
     novelId: string;
     chapterNumber: number;
@@ -171,6 +193,7 @@ export const notificationService = {
     authorId: string;
     partNumber?: number | null;
     novelSlug: string;
+    publishAt?: Date | null;
   }) {
     try {
       const nowUTC = new Date().toISOString();
@@ -183,7 +206,8 @@ export const notificationService = {
         authorId,
         partNumber,
         novelSlug,
-        timestamp: nowUTC
+        timestamp: nowUTC,
+        publishAt
       });
 
       // Get all users who have bookmarked this novel
@@ -278,4 +302,4 @@ export const notificationService = {
       throw error;
     }
   }
-}; 
+};

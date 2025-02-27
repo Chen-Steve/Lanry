@@ -44,6 +44,11 @@ const NotificationsPage = () => {
     };
 
     fetchNotifications();
+
+    // Set up polling for new notifications
+    const pollInterval = setInterval(fetchNotifications, 60000); // Poll every minute
+
+    return () => clearInterval(pollInterval);
   }, [userId]);
 
   const handleMarkAsRead = async (notificationId: string) => {
