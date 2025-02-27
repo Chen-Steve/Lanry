@@ -262,7 +262,13 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
     notFound();
   }
 
-  if (chapter.isLocked) {
+  // Check if the chapter should be free:
+  // 1. It's published (publish date has passed)
+  // 2. It was an advanced chapter that is now published
+  const isPublished = !chapter.publish_at || new Date(chapter.publish_at) <= new Date();
+  const shouldBeFree = isPublished && chapter.publish_at; // If it has a publish date and it's passed, it should be free
+
+  if (chapter.isLocked && !shouldBeFree) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-8">
         <Link 

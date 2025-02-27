@@ -176,6 +176,10 @@ export const ChapterListItem = memo(function ChapterListItem({
 
   const isPublished = !chapter.publish_at || new Date(chapter.publish_at) <= new Date();
   const isIndefinitelyLocked = chapter.publish_at && new Date(chapter.publish_at).getFullYear() > new Date().getFullYear() + 50;
+  // A chapter is free if:
+  // 1. It has no coins set, OR
+  // 2. It was an advanced chapter that is now published
+  const isFree = !chapter.coins || chapter.coins === 0 || (chapter.publish_at && isPublished);
 
   const chapterContent = (
     <div className="flex items-center justify-between w-full">
@@ -230,15 +234,22 @@ export const ChapterListItem = memo(function ChapterListItem({
     </div>
   );
 
-  if ((!isPublished || isIndefinitelyLocked) && !isUnlocked && !hasTranslatorAccess) {
-    if (isIndefinitelyLocked) {
-      // For indefinitely locked chapters, show a non-interactive element
-      return (
-        <div className="w-full opacity-70">
-          {chapterContent}
-        </div>
-      );
-    }
+  // Only allow navigation if:
+  // 1. Chapter is published AND either free or unlocked, OR
+  // 2. User has translator access
+  if ((isPublished && !isIndefinitelyLocked && (isFree || isUnlocked)) || hasTranslatorAccess) {
+    return (
+      <Link
+        href={`/novels/${novelSlug}/c${chapter.chapter_number}${chapter.part_number ? `-p${chapter.part_number}` : ''}`}
+        className="w-full hover:bg-accent/50 transition-colors"
+      >
+        {chapterContent}
+      </Link>
+    );
+  }
+
+  // For unpublished or paid chapters that aren't unlocked, show purchase button
+  if (isPublished && !isIndefinitelyLocked && !isFree && !isUnlocked) {
     return (
       <button
         onClick={handleLockedChapterClick}
@@ -250,19 +261,7 @@ export const ChapterListItem = memo(function ChapterListItem({
     );
   }
 
-  // Only allow navigation if the chapter is published, unlocked, or user has translator access
-  if ((isPublished && !isIndefinitelyLocked) || isUnlocked || hasTranslatorAccess) {
-    return (
-      <Link
-        href={`/novels/${novelSlug}/c${chapter.chapter_number}${chapter.part_number ? `-p${chapter.part_number}` : ''}`}
-        className="w-full hover:bg-accent/50 transition-colors"
-      >
-        {chapterContent}
-      </Link>
-    );
-  }
-
-  // For any other case, render as a non-interactive element
+  // For any other case (indefinitely locked or unpublished), render as non-interactive
   return (
     <div className="w-full opacity-50">
       {chapterContent}
