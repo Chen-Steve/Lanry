@@ -17,8 +17,15 @@ const TranslatorProfiles = ({ translators }: TranslatorProfilesProps) => {
 
   return (
     <div className="mb-6">
-      <div className="flex items-center gap-2 mb-3 px-4">
-        <h2 className="text-lg font-semibold text-center w-full underline decoration-dashed underline-[3px] underline-offset-4">Active Translators</h2>
+      <div className="flex items-center justify-between gap-2 mb-3 px-4">
+        <h2 className="text-lg font-semibold text-center underline decoration-dashed underline-[3px] underline-offset-4">Active Translators</h2>
+        <Link 
+          href="/translators"
+          className="text-sm text-primary hover:text-primary-dark transition-colors inline-flex items-center gap-1"
+        >
+          View all
+          <Icon icon="mdi:arrow-right" className="w-4 h-4" />
+        </Link>
       </div>
 
       <div className="px-4">
