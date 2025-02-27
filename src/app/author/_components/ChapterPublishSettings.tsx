@@ -10,6 +10,7 @@ interface ChapterPublishSettingsProps {
   onCloseSchedulePopup?: () => void;
   onSave?: () => void;
   isSaving?: boolean;
+  autoReleaseEnabled?: boolean;
 }
 
 export default function ChapterPublishSettings({
@@ -20,7 +21,9 @@ export default function ChapterPublishSettings({
   onCloseSchedulePopup,
   onSave,
   isSaving = false,
+  autoReleaseEnabled = false,
 }: ChapterPublishSettingsProps) {
+  const [hasBeenTouched, setHasBeenTouched] = useState(false);
   const [isIndefinitelyLocked, setIsIndefinitelyLocked] = useState(() => {
     // Check if publishAt is set to a far future date (e.g., > 50 years from now)
     if (!publishAt) return false;
@@ -57,6 +60,7 @@ export default function ChapterPublishSettings({
   };
 
   const handleDateTimeChange = (type: 'date' | 'time', value: string) => {
+    setHasBeenTouched(true);
     let year, month, day, hours, minutes;
 
     if (publishAt) {
@@ -100,8 +104,9 @@ export default function ChapterPublishSettings({
   };
 
   useEffect(() => {
-    // When publishAt is set to a future date and coins is 0, set it to default from localStorage
-    if (publishAt && isFutureDate(publishAt) && (coins === '0' || !coins)) {
+    // When publishAt is set to a future date and no coins are set, use default from localStorage
+    // But don't override if coins were explicitly set to 0
+    if (publishAt && isFutureDate(publishAt) && !coins) {
       const defaultCoins = localStorage.getItem('defaultChapterCoins') || '1';
       onSettingsChange({ publishAt, coins: defaultCoins });
     }
@@ -110,6 +115,7 @@ export default function ChapterPublishSettings({
   // Effect to handle indefinite lock changes
   useEffect(() => {
     if (isIndefinitelyLocked) {
+      setHasBeenTouched(true);
       // Set a far future date (e.g., 100 years from now) when indefinitely locked
       const farFutureDate = new Date();
       farFutureDate.setFullYear(farFutureDate.getFullYear() + 100);
@@ -117,13 +123,13 @@ export default function ChapterPublishSettings({
         publishAt: farFutureDate.toISOString(),
         coins: '0' // Set coins to 0 since it can't be purchased
       });
-    } else {
-      // When unlocking, set to tomorrow by default if no previous date exists
-      // or if the current date is far in the future (was indefinitely locked)
-      const currentDate = publishAt ? new Date(publishAt) : new Date();
+    } else if (hasBeenTouched && publishAt) {
+      // Only set default values if the settings have been touched AND there was a previous publish date
+      // This prevents setting a default date when creating a new chapter
+      const currentDate = new Date(publishAt);
       const isFarFuture = currentDate.getFullYear() > new Date().getFullYear() + 50;
       
-      if (!publishAt || isFarFuture) {
+      if (isFarFuture) {
         const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
         tomorrow.setHours(0, 0, 0, 0);
@@ -133,21 +139,36 @@ export default function ChapterPublishSettings({
         });
       }
     }
-  }, [isIndefinitelyLocked, onSettingsChange, publishAt]);
+  }, [isIndefinitelyLocked, onSettingsChange, publishAt, hasBeenTouched]);
+
+  // Effect to handle auto-release enabled state
+  useEffect(() => {
+    if (autoReleaseEnabled && !isIndefinitelyLocked && (!coins || coins === '0')) {
+      // If auto-release is enabled and no coins are set, set default coins
+      const defaultCoins = localStorage.getItem('defaultChapterCoins') || '1';
+      onSettingsChange({ publishAt, coins: defaultCoins });
+    }
+  }, [autoReleaseEnabled, isIndefinitelyLocked, coins, publishAt, onSettingsChange]);
 
   return (
     <>
       {/* Schedule Settings Popup */}
       {showSchedulePopup && (
         <>
-          <div className="fixed inset-0 z-[60] bg-black/50" onClick={onCloseSchedulePopup} />
+          <div className="fixed inset-0 z-[60] bg-black/50" onClick={() => {
+            setHasBeenTouched(true);
+            onCloseSchedulePopup?.();
+          }} />
           <div className="fixed inset-0 z-[61] flex items-center justify-center pointer-events-none">
             <div className="relative bg-background rounded-lg shadow-lg w-full max-w-md mx-4 pointer-events-auto">
               <div className="flex items-center justify-between p-4 border-b border-border">
                 <h3 className="text-lg font-semibold text-foreground">Chapter Settings</h3>
                 <button
                   type="button"
-                  onClick={onCloseSchedulePopup}
+                  onClick={() => {
+                    setHasBeenTouched(true);
+                    onCloseSchedulePopup?.();
+                  }}
                   className="text-muted-foreground hover:text-foreground transition-colors"
                   aria-label="Close schedule settings"
                 >
@@ -167,7 +188,10 @@ export default function ChapterPublishSettings({
                       <input
                         type="checkbox"
                         checked={isIndefinitelyLocked}
-                        onChange={(e) => setIsIndefinitelyLocked(e.target.checked)}
+                        onChange={(e) => {
+                          setHasBeenTouched(true);
+                          setIsIndefinitelyLocked(e.target.checked);
+                        }}
                         className="sr-only peer"
                         aria-label="Keep chapter locked indefinitely"
                       />
@@ -256,10 +280,20 @@ export default function ChapterPublishSettings({
                       <div className="flex items-center justify-between">
                         <label className="text-sm text-muted-foreground">Cost in Coins</label>
                       </div>
+                      {autoReleaseEnabled && (
+                        <div className="p-3 bg-primary/10 rounded-lg mb-2">
+                          <div className="flex items-start gap-2">
+                            <Icon icon="mdi:information" className="text-primary mt-0.5" />
+                            <p className="text-xs text-primary">
+                              Auto-release is enabled. Chapters must have a coin price of at least 1 for advanced access.
+                            </p>
+                          </div>
+                        </div>
+                      )}
                       <input
                         type="number"
-                        min="1"
-                        placeholder="Set Cost"
+                        min={autoReleaseEnabled && !isIndefinitelyLocked ? "1" : "0"}
+                        placeholder={autoReleaseEnabled ? "Minimum 1 coin" : "Set Cost"}
                         value={coins}
                         onKeyDown={(e) => {
                           if (e.key === 'e' || e.key === 'E' || e.key === '+' || e.key === '-') {
@@ -267,12 +301,18 @@ export default function ChapterPublishSettings({
                           }
                         }}
                         onChange={(e) => {
+                          setHasBeenTouched(true);
                           const value = e.target.value.replace(/[eE]/g, '');
                           onSettingsChange({ publishAt, coins: value });
                         }}
                         onBlur={(e) => {
-                          const value = parseInt(e.target.value) || 1;
-                          onSettingsChange({ publishAt, coins: Math.max(1, value).toString() });
+                          setHasBeenTouched(true);
+                          let value = parseInt(e.target.value) || 0;
+                          // Enforce minimum 1 coin if auto-release is enabled
+                          if (autoReleaseEnabled && !isIndefinitelyLocked && value < 1) {
+                            value = 1;
+                          }
+                          onSettingsChange({ publishAt, coins: value.toString() });
                         }}
                         className="w-full p-2 text-sm border border-border rounded bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                         title="Set coins required to access this chapter"
@@ -291,7 +331,10 @@ export default function ChapterPublishSettings({
               <div className="flex justify-end gap-2 p-4 border-t border-border bg-accent/50">
                 <button
                   type="button"
-                  onClick={onCloseSchedulePopup}
+                  onClick={() => {
+                    setHasBeenTouched(true);
+                    onCloseSchedulePopup?.();
+                  }}
                   className="px-4 py-2 text-sm font-medium text-foreground bg-background border border-border rounded-lg hover:bg-accent transition-colors"
                   disabled={isSaving}
                 >
@@ -300,6 +343,7 @@ export default function ChapterPublishSettings({
                 <button
                   type="button"
                   onClick={async () => {
+                    setHasBeenTouched(true);
                     if (onSave) {
                       await onSave();
                       onCloseSchedulePopup?.();

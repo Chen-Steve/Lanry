@@ -147,30 +147,55 @@ export async function createChapter(
 
   const chapterId = generateUUID();
   
-  // Only apply fixed price if enabled AND no specific coin amount was provided
+  // Determine coins:
+  // 1. If fixed price is enabled and no specific coins set, use fixed price
+  // 2. If specific coins provided in chapterData, use that
+  // 3. If both disabled and no specific coins set, default to 0 (free)
   const finalCoins = novel.fixed_price_enabled && chapterData.coins === undefined 
     ? novel.fixed_price_amount 
-    : chapterData.coins;
+    : chapterData.coins ?? 0; // Default to 0 if not specified
 
-  // Only apply auto-release if:
-  // 1. Auto-release is enabled
-  // 2. No specific publish date was provided
-  // 3. Coins are not set to 0 (indicating immediate release)
+  // Determine publish date:
+  // 1. If specific publish_at provided in chapterData, use that
+  // 2. If auto-release enabled and no specific date set, set to null for auto-release handling
+  // 3. If both disabled and no specific date set, set to current time (immediate release)
+  let publishAt: string | null;
+  if (chapterData.publish_at !== undefined && chapterData.publish_at !== null) {
+    // Use specifically set publish date
+    publishAt = chapterData.publish_at;
+  } else if (novel.auto_release_enabled) {
+    // Let auto-release handle it
+    publishAt = null;
+  } else {
+    // Default to immediate release in local time
+    const now = new Date();
+    publishAt = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString();
+  }
+
+  // Determine if we should apply auto-release
   const shouldApplyAutoRelease = novel.auto_release_enabled && 
     !chapterData.publish_at && 
     finalCoins !== 0;
-
-  const publishAt = shouldApplyAutoRelease ? null : chapterData.publish_at;
+  
+  // Prepare chapter data without publish_at and coins to prevent overriding
+  const cleanChapterData = {
+    chapter_number: chapterData.chapter_number,
+    part_number: chapterData.part_number,
+    title: chapterData.title,
+    content: chapterData.content,
+    author_thoughts: chapterData.author_thoughts,
+    age_rating: chapterData.age_rating,
+    volume_id: chapterData.volume_id,
+  };
   
   const { error } = await supabase
     .from('chapters')
     .insert({
       id: chapterId,
       novel_id: novelId,
-      ...chapterData,
+      ...cleanChapterData,
       coins: finalCoins,
       publish_at: publishAt,
-      volume_id: chapterData.volume_id,
       slug: generateChapterSlug(chapterData.chapter_number, chapterData.part_number),
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()

@@ -15,6 +15,7 @@ interface ChapterEditFormProps {
   volumeId?: string;
   onCancel: () => void;
   onSave: () => void;
+  autoReleaseEnabled?: boolean;
 }
 
 export default function ChapterEditForm({ 
@@ -23,7 +24,8 @@ export default function ChapterEditForm({
   userId,
   volumeId,
   onCancel,
-  onSave
+  onSave,
+  autoReleaseEnabled = false
 }: ChapterEditFormProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -238,6 +240,7 @@ export default function ChapterEditForm({
               onCloseSchedulePopup={() => setShowSchedulePopup(false)}
               onSave={handleSave}
               isSaving={isSaving}
+              autoReleaseEnabled={autoReleaseEnabled}
             />
           )}
         </div>

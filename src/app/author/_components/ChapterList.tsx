@@ -66,8 +66,8 @@ export default function ChapterList({
     setIsLoadingSettings(true);
     try {
       const settings = await authorChapterService.getGlobalSettings(novelId, userId);
-      const savedDays = localStorage.getItem('publishingDays');
-      const savedUsePublishingDays = localStorage.getItem('usePublishingDays');
+      const savedDays = localStorage.getItem(`publishingDays_${novelId}`);
+      const savedUsePublishingDays = localStorage.getItem(`usePublishingDays_${novelId}`);
 
       setGlobalSettings({
         releaseInterval: settings.autoReleaseInterval,
@@ -261,6 +261,7 @@ export default function ChapterList({
   }) => {
     setIsSavingSettings(true);
     try {
+      // Only update database fields
       await authorChapterService.updateGlobalSettings(novelId, userId, {
         autoReleaseEnabled: settings.autoReleaseEnabled,
         autoReleaseInterval: settings.releaseInterval,
@@ -268,9 +269,8 @@ export default function ChapterList({
         fixedPriceAmount: settings.fixedPrice
       });
       
-      // Save publishing days settings to localStorage
-      localStorage.setItem('publishingDays', JSON.stringify(settings.publishingDays));
-      localStorage.setItem('usePublishingDays', JSON.stringify(settings.usePublishingDays));
+      // Publishing days are only saved to localStorage
+      // No need to save here as it's handled in the GlobalSettingsModal component
       
       if (onLoadChapters) {
         await onLoadChapters();
@@ -438,9 +438,8 @@ export default function ChapterList({
       {showChapterForm ? (
         <ChapterEditForm
           novelId={novelId}
-          userId={userId}
           chapterId={editingChapter?.id}
-          volumeId={selectedVolumeId}
+          userId={userId}
           onCancel={() => {
             setShowChapterForm(false);
             setEditingChapter(null);
@@ -455,6 +454,7 @@ export default function ChapterList({
               onLoadChapters();
             }
           }}
+          autoReleaseEnabled={globalSettings?.autoReleaseEnabled || false}
         />
       ) : (
         <div className="flex flex-col h-full">
