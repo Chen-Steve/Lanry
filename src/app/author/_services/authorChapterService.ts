@@ -675,39 +675,25 @@ async function shouldNotifyForChapter(chapterId: string): Promise<{
   const nowUTC = new Date().toISOString();
   const updatedAtUTC = chapter.updated_at;
   const createdAtUTC = chapter.created_at;
-  const publishAtUTC = chapter.publish_at;
   
   // Check if this is a new chapter (created within the last minute)
   const isNewChapter = Date.parse(nowUTC) - Date.parse(createdAtUTC) <= 60 * 1000;
   
   // Check if this is an update to an existing chapter (updated within the last minute)
   const isRecentUpdate = Date.parse(nowUTC) - Date.parse(updatedAtUTC) <= 60 * 1000;
-  
-  // A chapter is considered advanced if it has coins and a future publish date
-  const isAdvancedChapter = chapter.coins > 0 && publishAtUTC && Date.parse(publishAtUTC) > Date.parse(nowUTC);
-  
-  // A chapter is immediately published if it has no publish date or the publish date is now/past
-  const isImmediatelyPublished = !publishAtUTC || Date.parse(publishAtUTC) <= Date.parse(nowUTC);
 
   console.log('Notification checks:', {
     nowUTC,
     updatedAtUTC,
     createdAtUTC,
-    publishAtUTC,
     isNewChapter,
     isRecentUpdate,
-    isAdvancedChapter,
-    isImmediatelyPublished,
     timeSinceCreation: (Date.parse(nowUTC) - Date.parse(createdAtUTC)) / 1000,
     timeSinceUpdate: (Date.parse(nowUTC) - Date.parse(updatedAtUTC)) / 1000
   });
 
-  // Send notification if:
-  // 1. It's a new chapter OR a recent update
-  // 2. AND either:
-  //    - It's an advanced chapter (has coins and future publish date)
-  //    - OR it's published immediately
-  if ((isNewChapter || isRecentUpdate) && (isAdvancedChapter || isImmediatelyPublished)) {
+  // Send notification if it's a new chapter or a recent update
+  if (isNewChapter || isRecentUpdate) {
     console.log('Will send notification for chapter');
     return {
       shouldNotify: true,

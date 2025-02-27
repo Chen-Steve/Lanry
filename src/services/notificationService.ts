@@ -83,7 +83,8 @@ export const notificationService = {
           ),
           novel:novels (
             chapters (
-              publish_at
+              publish_at,
+              created_at
             )
           )
         `)
@@ -93,18 +94,8 @@ export const notificationService = {
 
       if (error) throw error;
 
-      // Filter out chapter release notifications where the chapter's publish_at hasn't arrived yet
-      const filteredData = data?.filter(notification => {
-        if (notification.type !== 'chapter_release') return true;
-        
-        // For chapter releases, check the chapter's publish_at time
-        const chapter = notification.novel?.chapters?.[0];
-        if (!chapter?.publish_at) return true; // If no publish_at, show immediately
-        
-        return new Date(chapter.publish_at) <= new Date();
-      });
-
-      return filteredData || [];
+      // Return all notifications immediately - no filtering based on publish_at
+      return data || [];
     } catch (error) {
       console.error('Error fetching notifications:', error);
       throw error;
