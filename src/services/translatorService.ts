@@ -14,13 +14,15 @@ interface TranslatorData {
   username: string;
   avatar_url: string | null;
   author_bio: string | null;
-  novels: Novel[];
+  translatedNovels: Novel[];
+  authoredNovels: Novel[];
   role: string;
 }
 
 interface Novel {
   id: string;
   chapters: { count: number }[];
+  is_author_name_custom: boolean;
 }
 
 export const getTranslators = async (): Promise<Translator[]> => {
@@ -31,9 +33,14 @@ export const getTranslators = async (): Promise<Translator[]> => {
       username,
       avatar_url,
       author_bio,
-      novels:novels!translator_id (
+      translatedNovels:novels!translator_id (
         id,
         chapters(count)
+      ),
+      authoredNovels:novels!author_profile_id (
+        id,
+        chapters(count),
+        is_author_name_custom
       ),
       role
     `)
@@ -46,13 +53,31 @@ export const getTranslators = async (): Promise<Translator[]> => {
     return [];
   }
 
-  return (data as TranslatorData[]).map(translator => ({
-    id: translator.id,
-    username: translator.username,
-    avatarUrl: translator.avatar_url,
-    bio: translator.author_bio,
-    novelCount: translator.novels.length,
-    chapterCount: translator.novels.reduce((total, novel) => 
-      total + (novel.chapters[0]?.count || 0), 0)
-  }));
+  return (data as TranslatorData[])
+    .filter(translator => {
+      // Count novels where user is translator_id
+      const translatedCount = translator.translatedNovels?.length || 0;
+      // Count novels where user is author_profile_id AND is_author_name_custom is true
+      const authoredAsTranslatorCount = translator.authoredNovels?.filter(n => n.is_author_name_custom)?.length || 0;
+      
+      // Only include translators who have at least one novel in either category
+      return translatedCount > 0 || authoredAsTranslatorCount > 0;
+    })
+    .map(translator => {
+      // Combine both types of novels for counts
+      const allTranslatedNovels = [
+        ...(translator.translatedNovels || []),
+        ...(translator.authoredNovels?.filter(n => n.is_author_name_custom) || [])
+      ];
+
+      return {
+        id: translator.id,
+        username: translator.username,
+        avatarUrl: translator.avatar_url,
+        bio: translator.author_bio,
+        novelCount: allTranslatedNovels.length,
+        chapterCount: allTranslatedNovels.reduce((total, novel) => 
+          total + (novel.chapters[0]?.count || 0), 0)
+      };
+    });
 }; 
