@@ -175,7 +175,8 @@ export const notificationService = {
     authorId,
     partNumber,
     novelSlug,
-    publishAt
+    publishAt,
+    coins = 0
   }: {
     novelId: string;
     chapterNumber: number;
@@ -185,6 +186,7 @@ export const notificationService = {
     partNumber?: number | null;
     novelSlug: string;
     publishAt?: Date | null;
+    coins?: number;
   }) {
     try {
       const nowUTC = new Date().toISOString();
@@ -198,7 +200,8 @@ export const notificationService = {
         partNumber,
         novelSlug,
         timestamp: nowUTC,
-        publishAt
+        publishAt,
+        coins
       });
 
       // Get all users who have bookmarked this novel
@@ -232,12 +235,17 @@ export const notificationService = {
 
       // Create notifications for each user who has bookmarked the novel
       const notifications = bookmarks.map(bookmark => {
+        const isAdvanced = coins > 0 || (publishAt && new Date(publishAt) > new Date(nowUTC));
+        const notificationContent = isAdvanced
+          ? `[Advanced] Chapter ${chapterNumber}${partNumber ? ` Part ${partNumber}` : ''}: ${chapterTitle} is now available for early access in "${novelTitle}"`
+          : `Chapter ${chapterNumber}${partNumber ? ` Part ${partNumber}` : ''}: ${chapterTitle} has been released for "${novelTitle}"`;
+
         const notification = {
           id: generateUUID(),
           recipient_id: bookmark.profile_id,
           sender_id: authorId,
           type: 'chapter_release' as const,
-          content: `Chapter ${chapterNumber}${partNumber ? ` Part ${partNumber}` : ''}: ${chapterTitle} has been released for "${novelTitle}"`,
+          content: notificationContent,
           link: `/novels/${novelSlug}/c${chapterNumber}${partNumber ? `-p${partNumber}` : ''}`,
           read: false,
           created_at: nowUTC,

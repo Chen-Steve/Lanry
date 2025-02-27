@@ -76,12 +76,12 @@ export function useComments(novelId: string, chapterNumber: number) {
       channel = supabase
         .channel(`novel-${novelId}-chapter-${chapterNumber}-comments`)
         .on(
-          'postgres_changes' as `postgres_changes`,
+          'postgres_changes',
           {
             event: '*',
             schema: 'public',
             table: 'chapter_comments',
-            filter: `novel_id=eq.${novelId},chapter_number=eq.${chapterNumber}`
+            filter: `novel_id=eq.${novelId} and chapter_number=eq.${chapterNumber}`
           },
           (payload: RealtimePostgresChangesPayload<DatabaseComment>) => {
             if (payload.eventType === 'DELETE') return;

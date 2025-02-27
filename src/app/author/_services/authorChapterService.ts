@@ -612,6 +612,8 @@ async function shouldNotifyForChapter(chapterId: string): Promise<{
     novelTitle: string;
     novelSlug: string;
     authorId: string;
+    coins: number;
+    publishAt: string | null;
   };
 }> {
   type ChapterWithNovel = {
@@ -693,7 +695,9 @@ async function shouldNotifyForChapter(chapterId: string): Promise<{
         novelId: chapter.novel_id,
         novelTitle: chapter.novels.title,
         novelSlug: chapter.novels.slug,
-        authorId: chapter.novels.author_profile_id
+        authorId: chapter.novels.author_profile_id,
+        coins: chapter.coins,
+        publishAt: chapter.publish_at
       }
     };
   }
@@ -711,6 +715,8 @@ async function sendChapterNotifications(chapterData: {
   novelTitle: string;
   novelSlug: string;
   authorId: string;
+  coins: number;
+  publishAt: string | null;
 }) {
   try {
     await notificationService.sendChapterReleaseNotifications({
@@ -720,7 +726,9 @@ async function sendChapterNotifications(chapterData: {
       chapterTitle: chapterData.title,
       novelTitle: chapterData.novelTitle,
       novelSlug: chapterData.novelSlug,
-      authorId: chapterData.authorId
+      authorId: chapterData.authorId,
+      coins: chapterData.coins,
+      publishAt: chapterData.publishAt ? new Date(chapterData.publishAt) : null
     });
   } catch (error) {
     console.error('Error sending chapter notifications:', error);
