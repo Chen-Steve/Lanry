@@ -69,26 +69,41 @@ export default function ChapterList({
       const savedDays = localStorage.getItem(`publishingDays_${novelId}`);
       const savedUsePublishingDays = localStorage.getItem(`usePublishingDays_${novelId}`);
 
-      setGlobalSettings({
-        releaseInterval: settings.autoReleaseInterval,
-        fixedPrice: settings.fixedPriceAmount,
-        autoReleaseEnabled: settings.autoReleaseEnabled,
-        fixedPriceEnabled: settings.fixedPriceEnabled,
+      // Ensure we have valid values before updating state
+      const newSettings = {
+        releaseInterval: settings.autoReleaseInterval || 7,
+        fixedPrice: settings.fixedPriceAmount || 10,
+        autoReleaseEnabled: Boolean(settings.autoReleaseEnabled),
+        fixedPriceEnabled: Boolean(settings.fixedPriceEnabled),
         publishingDays: savedDays ? JSON.parse(savedDays) : [],
         usePublishingDays: savedUsePublishingDays ? JSON.parse(savedUsePublishingDays) : false
-      });
+      };
+
+      console.log('Fetched global settings:', newSettings); // Debug log
+      setGlobalSettings(newSettings);
     } catch (error) {
       console.error('Error fetching global settings:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       toast.error(`Failed to load settings: ${errorMessage}`);
+      
+      // Set default values on error
+      setGlobalSettings({
+        releaseInterval: 7,
+        fixedPrice: 10,
+        autoReleaseEnabled: false,
+        fixedPriceEnabled: false,
+        publishingDays: [],
+        usePublishingDays: false
+      });
     } finally {
       setIsLoadingSettings(false);
     }
   }, [novelId, userId]);
 
+  // Ensure settings are refreshed when needed
   useEffect(() => {
     fetchGlobalSettings();
-  }, [fetchGlobalSettings]);
+  }, [fetchGlobalSettings, novelId]); // Added novelId as dependency
 
   const chaptersGroupedByVolume = useMemo(() => {
     // Filter chapters based on search query
@@ -261,6 +276,8 @@ export default function ChapterList({
   }) => {
     setIsSavingSettings(true);
     try {
+      console.log('Saving global settings:', settings); // Debug log
+      
       // Only update database fields
       await authorChapterService.updateGlobalSettings(novelId, userId, {
         autoReleaseEnabled: settings.autoReleaseEnabled,
@@ -269,16 +286,23 @@ export default function ChapterList({
         fixedPriceAmount: settings.fixedPrice
       });
       
-      // Publishing days are only saved to localStorage
-      // No need to save here as it's handled in the GlobalSettingsModal component
+      // Update local state immediately after successful save
+      setGlobalSettings(settings);
+      
+      // Close the modal
+      setIsGlobalSettingsModalOpen(false);
       
       if (onLoadChapters) {
         await onLoadChapters();
       }
+      
       toast.success('Settings updated successfully');
     } catch (error) {
       console.error('Error updating settings:', error);
-      toast.error('Failed to update settings');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      toast.error(`Failed to update settings: ${errorMessage}`);
+      // Refresh settings from server on error
+      await fetchGlobalSettings();
     } finally {
       setIsSavingSettings(false);
     }

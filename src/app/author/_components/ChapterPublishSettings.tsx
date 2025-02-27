@@ -291,18 +291,16 @@ export default function ChapterPublishSettings({
                         </div>
                       )}
                       <input
-                        type="number"
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
                         min={autoReleaseEnabled && !isIndefinitelyLocked ? "1" : "0"}
                         placeholder={autoReleaseEnabled ? "Minimum 1 coin" : "Set Cost"}
                         value={coins}
-                        onKeyDown={(e) => {
-                          if (e.key === 'e' || e.key === 'E' || e.key === '+' || e.key === '-') {
-                            e.preventDefault();
-                          }
-                        }}
                         onChange={(e) => {
                           setHasBeenTouched(true);
-                          const value = e.target.value.replace(/[eE]/g, '');
+                          // Only allow numeric input
+                          const value = e.target.value.replace(/[^0-9]/g, '');
                           onSettingsChange({ publishAt, coins: value });
                         }}
                         onBlur={(e) => {
@@ -314,7 +312,7 @@ export default function ChapterPublishSettings({
                           }
                           onSettingsChange({ publishAt, coins: value.toString() });
                         }}
-                        className="w-full p-2 text-sm border border-border rounded bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                        className="w-full p-2 text-sm border border-border rounded bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         title="Set coins required to access this chapter"
                       />
                       {coins !== '0' && (
