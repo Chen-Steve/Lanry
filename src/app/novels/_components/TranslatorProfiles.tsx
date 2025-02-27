@@ -1,12 +1,29 @@
 import { Icon } from '@iconify/react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { getTranslators, Translator } from '@/services/translatorService';
+
+// Define border styles with glow effects
+const borderStyles = {
+  emerald: 'border-2 border-emerald-400 shadow-[0_0_10px_theme(colors.emerald.400)] hover:shadow-[0_0_15px_theme(colors.emerald.400)]',
+  violet: 'border-2 border-violet-400 shadow-[0_0_10px_theme(colors.violet.400)] hover:shadow-[0_0_15px_theme(colors.violet.400)]',
+  rose: 'border-2 border-rose-400 shadow-[0_0_10px_theme(colors.rose.400)] hover:shadow-[0_0_15px_theme(colors.rose.400)]',
+  amber: 'border-2 border-amber-400 shadow-[0_0_10px_theme(colors.amber.400)] hover:shadow-[0_0_15px_theme(colors.amber.400)]',
+  cyan: 'border-2 border-cyan-400 shadow-[0_0_10px_theme(colors.cyan.400)] hover:shadow-[0_0_15px_theme(colors.cyan.400)]',
+  fuchsia: 'border-2 border-fuchsia-400 shadow-[0_0_10px_theme(colors.fuchsia.400)] hover:shadow-[0_0_15px_theme(colors.fuchsia.400)]',
+  lime: 'border-2 border-lime-400 shadow-[0_0_10px_theme(colors.lime.400)] hover:shadow-[0_0_15px_theme(colors.lime.400)]'
+} as const;
 
 const TranslatorProfiles = () => {
   const [translators, setTranslators] = useState<Translator[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Assign random border styles to translators
+  const translatorBorders = useMemo(() => {
+    const styles = Object.keys(borderStyles) as (keyof typeof borderStyles)[];
+    return translators.map(() => styles[Math.floor(Math.random() * styles.length)]);
+  }, [translators]);
 
   useEffect(() => {
     const fetchTranslators = async () => {
@@ -40,8 +57,8 @@ const TranslatorProfiles = () => {
         <div className="px-4">
           <div className="flex gap-0 overflow-x-auto pb-2 scroll-smooth [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/60 [&::-webkit-scrollbar-track]:bg-accent/30 [&::-webkit-scrollbar-track]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-primary">
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="flex-none w-[120px] flex flex-col items-center p-3 bg-card rounded-md">
-                <div className="w-16 h-16 mb-3 rounded-full bg-accent animate-pulse" />
+              <div key={i} className="flex-none w-[130px] flex flex-col items-center p-2 bg-card rounded-md">
+                <div className="w-24 h-24 mb-3 rounded-xl bg-accent animate-pulse" />
                 <div className="w-20 h-4 bg-accent animate-pulse rounded" />
               </div>
             ))}
@@ -68,25 +85,19 @@ const TranslatorProfiles = () => {
 
       <div className="px-4">
         <div className="flex gap-0 overflow-x-auto pb-2 scroll-smooth [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/60 [&::-webkit-scrollbar-track]:bg-accent/30 [&::-webkit-scrollbar-track]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-primary">
-          {translators.map((translator) => (
+          {translators.map((translator, index) => (
             <Link
               key={translator.id}
               href={`/user-dashboard?id=${translator.id}`}
-              className="group flex-none w-[120px] flex flex-col items-center p-3 bg-card hover:bg-accent/50 rounded-md transition-colors"
+              className="group flex-none w-[130px] flex flex-col items-center p-2 bg-card hover:bg-accent/50 rounded-md transition-colors"
             >
-              <div className="relative w-16 h-16 mb-3">
-                {translator.avatarUrl ? (
-                  <Image
-                    src={translator.avatarUrl}
-                    alt={translator.username}
-                    fill
-                    className="rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full rounded-full bg-accent flex items-center justify-center">
-                    <Icon icon="mdi:account" className="text-3xl text-muted-foreground" />
-                  </div>
-                )}
+              <div className={`relative w-24 h-24 mb-3 overflow-hidden rounded-xl bg-accent transition-all duration-300 group-hover:scale-110 ${borderStyles[translatorBorders[index]]}`}>
+                <Image
+                  src={translator.avatarUrl || '/lanry.jpg'}
+                  alt={translator.username}
+                  fill
+                  className="object-cover"
+                />
               </div>
 
               <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors text-center truncate w-full">
