@@ -190,7 +190,8 @@ export const notificationService = {
   }) {
     try {
       const now = new Date();
-      const nowUTC = now.toISOString();
+      const nowTimestamp = now.getTime();
+      const publishAtTimestamp = publishAt ? publishAt.getTime() : null;
       
       console.log('Starting chapter release notification process:', {
         novelId,
@@ -200,8 +201,10 @@ export const notificationService = {
         authorId,
         partNumber,
         novelSlug,
-        timestamp: nowUTC,
-        publishAt,
+        timestamp: now.toISOString(),
+        publishAt: publishAt?.toISOString(),
+        publishAtTimestamp,
+        nowTimestamp,
         coins
       });
 
@@ -229,14 +232,14 @@ export const notificationService = {
         console.log('No bookmarks found for novel:', {
           novelId,
           authorId,
-          timestamp: nowUTC
+          timestamp: now.toISOString()
         });
         return [];
       }
 
       // Create notifications for each user who has bookmarked the novel
       const notifications = bookmarks.map(bookmark => {
-        const isAdvanced = coins > 0 || (publishAt && publishAt.getTime() > now.getTime());
+        const isAdvanced = coins > 0 || (publishAtTimestamp && publishAtTimestamp > nowTimestamp);
         const notificationContent = isAdvanced
           ? `[Advanced] Chapter ${chapterNumber}${partNumber ? ` Part ${partNumber}` : ''}: ${chapterTitle} is now available for early access in "${novelTitle}"`
           : `Chapter ${chapterNumber}${partNumber ? ` Part ${partNumber}` : ''}: ${chapterTitle} has been released for "${novelTitle}"`;
@@ -249,8 +252,8 @@ export const notificationService = {
           content: notificationContent,
           link: `/novels/${novelSlug}/c${chapterNumber}${partNumber ? `-p${partNumber}` : ''}`,
           read: false,
-          created_at: nowUTC,
-          updated_at: nowUTC,
+          created_at: now.toISOString(),
+          updated_at: now.toISOString(),
           novel_id: novelId
         };
         console.log('Creating notification:', {
@@ -258,7 +261,10 @@ export const notificationService = {
           recipientId: notification.recipient_id,
           senderId: notification.sender_id,
           bookmarkId: bookmark.id,
-          timestamp: nowUTC
+          timestamp: now.toISOString(),
+          isAdvanced,
+          publishAtTimestamp,
+          nowTimestamp
         });
         return notification;
       });
@@ -266,7 +272,7 @@ export const notificationService = {
       console.log('Prepared notifications:', {
         count: notifications.length,
         recipientIds: notifications.map(n => n.recipient_id),
-        timestamp: nowUTC
+        timestamp: now.toISOString()
       });
 
       if (notifications.length > 0) {
@@ -279,7 +285,7 @@ export const notificationService = {
           console.error('Error inserting notifications:', {
             error: insertError,
             recipientIds: notifications.map(n => n.recipient_id),
-            timestamp: nowUTC
+            timestamp: now.toISOString()
           });
           throw insertError;
         }
@@ -287,7 +293,7 @@ export const notificationService = {
         console.log('Successfully inserted notifications:', {
           count: notifications.length,
           recipientIds: notifications.map(n => n.recipient_id),
-          timestamp: nowUTC
+          timestamp: now.toISOString()
         });
       }
 

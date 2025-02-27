@@ -1,6 +1,7 @@
 import supabase from '@/lib/supabaseClient';
 import { generateChapterSlug, generateUUID } from '@/lib/utils';
 import { notificationService } from '@/services/notificationService';
+import { PostgrestError } from '@supabase/supabase-js';
 
 export async function fetchAuthorNovels(userId: string, authorOnly: boolean) {
   let query = supabase
@@ -632,11 +633,6 @@ async function shouldNotifyForChapter(chapterId: string): Promise<{
     };
   };
 
-  type SupabaseResponse = {
-    data: ChapterWithNovel | null;
-    error: Error | null;
-  };
-
   console.log('Checking notifications for chapter:', chapterId);
 
   const { data: chapter, error: chapterError } = await supabase
@@ -650,39 +646,27 @@ async function shouldNotifyForChapter(chapterId: string): Promise<{
       publish_at,
       created_at,
       updated_at,
-      novels!inner (
+      novels:novels!inner (
         title,
         author_profile_id,
         slug
       )
     `)
     .eq('id', chapterId)
-    .single() as SupabaseResponse;
+    .single() as { data: ChapterWithNovel | null; error: PostgrestError | null };
 
   if (chapterError || !chapter) {
     console.error('Error fetching chapter for notification check:', chapterError);
     return { shouldNotify: false };
   }
 
-  console.log('Chapter data:', {
-    chapterNumber: chapter.chapter_number,
-    title: chapter.title,
-    coins: chapter.coins,
-    publishAt: chapter.publish_at,
-    updatedAt: chapter.updated_at,
-    createdAt: chapter.created_at
-  });
-
-  // Check if:
-  // 1. Chapter is newly created (within the last minute)
-  // 2. Chapter is published and free
+  // Get current time in UTC
   const now = new Date();
-  const nowUTC = now.toISOString();
-  const publishAtUTC = chapter.publish_at;
-  const createdAtUTC = chapter.created_at;
-  
-  // Convert all dates to UTC timestamps for comparison
-  const nowTimestamp = Date.UTC(
+  const createdAt = new Date(chapter.created_at);
+  const publishAt = chapter.publish_at ? new Date(chapter.publish_at) : null;
+
+  // Convert all times to UTC timestamps for comparison
+  const nowUTCTimestamp = Date.UTC(
     now.getUTCFullYear(),
     now.getUTCMonth(),
     now.getUTCDate(),
@@ -690,27 +674,57 @@ async function shouldNotifyForChapter(chapterId: string): Promise<{
     now.getUTCMinutes(),
     now.getUTCSeconds()
   );
-  
-  const createdAtDate = new Date(createdAtUTC);
-  const createdAtTimestamp = Date.UTC(
-    createdAtDate.getUTCFullYear(),
-    createdAtDate.getUTCMonth(),
-    createdAtDate.getUTCDate(),
-    createdAtDate.getUTCHours(),
-    createdAtDate.getUTCMinutes(),
-    createdAtDate.getUTCSeconds()
+
+  const createdAtUTCTimestamp = Date.UTC(
+    createdAt.getUTCFullYear(),
+    createdAt.getUTCMonth(),
+    createdAt.getUTCDate(),
+    createdAt.getUTCHours(),
+    createdAt.getUTCMinutes(),
+    createdAt.getUTCSeconds()
   );
 
-  const isNewlyCreated = nowTimestamp - createdAtTimestamp <= 60 * 1000;
-  const isPublishedAndFree = (!publishAtUTC || new Date(publishAtUTC).getTime() <= now.getTime()) && chapter.coins === 0;
+  const publishAtUTCTimestamp = publishAt ? Date.UTC(
+    publishAt.getUTCFullYear(),
+    publishAt.getUTCMonth(),
+    publishAt.getUTCDate(),
+    publishAt.getUTCHours(),
+    publishAt.getUTCMinutes(),
+    publishAt.getUTCSeconds()
+  ) : null;
 
-  console.log('Time comparisons:', {
-    nowUTC,
-    publishAtUTC,
-    createdAtUTC,
+  // Log detailed timezone information
+  console.log('Detailed time information:', {
+    currentTime: {
+      local: now.toLocaleString(),
+      utc: now.toUTCString(),
+      iso: now.toISOString(),
+      timestamp: nowUTCTimestamp,
+      timezoneOffset: now.getTimezoneOffset()
+    },
+    createdAt: {
+      original: chapter.created_at,
+      parsed: createdAt.toISOString(),
+      utc: createdAt.toUTCString(),
+      timestamp: createdAtUTCTimestamp
+    },
+    publishAt: publishAt ? {
+      original: chapter.publish_at,
+      parsed: publishAt.toISOString(),
+      utc: publishAt.toUTCString(),
+      timestamp: publishAtUTCTimestamp
+    } : null
+  });
+
+  // Check conditions using UTC timestamps
+  const isNewlyCreated = nowUTCTimestamp - createdAtUTCTimestamp <= 60 * 1000;
+  const isPublishedAndFree = (!publishAtUTCTimestamp || publishAtUTCTimestamp <= nowUTCTimestamp) && chapter.coins === 0;
+
+  console.log('Notification check results:', {
     isNewlyCreated,
     isPublishedAndFree,
-    timeDiff: nowTimestamp - createdAtTimestamp
+    timeSinceCreation: nowUTCTimestamp - createdAtUTCTimestamp,
+    coins: chapter.coins
   });
 
   if (isNewlyCreated || isPublishedAndFree) {
