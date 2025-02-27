@@ -197,11 +197,6 @@ const Header = () => {
                   </Link>
                 </div>
 
-                {/* Auth Button */}
-                <div className="flex-none">
-                  {renderAuthLink()}
-                </div>
-
                 {/* Mobile Menu Button */}
                 <button
                   className="md:hidden bg-secondary/80 backdrop-blur-sm p-2 text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-secondary/90"
@@ -210,6 +205,11 @@ const Header = () => {
                 >
                   <Icon icon="ph:list-bold" className="w-5 h-5" />
                 </button>
+
+                {/* Auth Button */}
+                <div className="flex-none">
+                  {renderAuthLink()}
+                </div>
               </div>
             </div>
           </div>

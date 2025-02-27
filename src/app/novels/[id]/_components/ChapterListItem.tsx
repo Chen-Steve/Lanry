@@ -174,12 +174,12 @@ export const ChapterListItem = memo(function ChapterListItem({
     }
   }, [chapter.chapter_number, chapter.coins, chapter.novel_id, chapter.part_number, isAuthenticated, novelSlug, router, unlockChapter, userProfile?.id, novelAuthorId]);
 
+  // A chapter is considered published if it has no publish date
+  // For advanced chapters, we consider them "published" for interaction purposes
   const isPublished = !chapter.publish_at || new Date(chapter.publish_at) <= new Date();
+  const isAdvancedChapter = chapter.publish_at && new Date(chapter.publish_at) > new Date();
   const isIndefinitelyLocked = chapter.publish_at && new Date(chapter.publish_at).getFullYear() > new Date().getFullYear() + 50;
-  // A chapter is free if:
-  // 1. It has no coins set, OR
-  // 2. It was an advanced chapter that is now published
-  const isFree = !chapter.coins || chapter.coins === 0 || (chapter.publish_at && isPublished);
+  const isFree = !chapter.coins || chapter.coins === 0;
 
   const chapterContent = (
     <div className="flex items-center justify-between w-full">
@@ -234,11 +234,11 @@ export const ChapterListItem = memo(function ChapterListItem({
     </div>
   );
 
-  // Only allow navigation if:
-  // 1. Chapter is published AND either free or unlocked, OR
-  // 2. User has translator access, OR
-  // 3. Chapter is unlocked (regardless of publish status)
-  if ((isPublished && !isIndefinitelyLocked && (isFree || isUnlocked)) || hasTranslatorAccess || isUnlocked) {
+  // Allow navigation for:
+  // 1. Published chapters that are free or unlocked
+  // 2. Users with translator access
+  // 3. Already unlocked chapters
+  if ((isPublished && (isFree || isUnlocked)) || hasTranslatorAccess || isUnlocked) {
     return (
       <Link
         href={`/novels/${novelSlug}/c${chapter.chapter_number}${chapter.part_number ? `-p${chapter.part_number}` : ''}`}
@@ -249,20 +249,22 @@ export const ChapterListItem = memo(function ChapterListItem({
     );
   }
 
-  // For unpublished or paid chapters that aren't unlocked, show purchase button
-  if (isPublished && !isIndefinitelyLocked && !isFree && !isUnlocked) {
+  // Show purchase button for:
+  // 1. Advanced chapters that aren't unlocked
+  // 2. Published chapters that aren't free and aren't unlocked
+  if ((isAdvancedChapter || isPublished) && !isIndefinitelyLocked && !isFree && !isUnlocked) {
     return (
       <button
         onClick={handleLockedChapterClick}
         disabled={isUnlocking}
-        className="w-full text-left"
+        className="w-full text-left hover:bg-accent/50 transition-colors"
       >
         {chapterContent}
       </button>
     );
   }
 
-  // For any other case (indefinitely locked or unpublished), render as non-interactive
+  // For indefinitely locked chapters, render as non-interactive
   return (
     <div className="w-full opacity-50">
       {chapterContent}
