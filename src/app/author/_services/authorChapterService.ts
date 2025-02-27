@@ -126,14 +126,12 @@ export async function createChapter(
     .eq('chapter_number', chapterData.chapter_number);
 
   if (existingChapters && existingChapters.length > 0) {
-    // If checking for both chapter and part number
     if (chapterData.part_number) {
       const duplicatePart = existingChapters.some(ch => ch.part_number === chapterData.part_number);
       if (duplicatePart) {
         throw new Error(`Chapter ${chapterData.chapter_number} Part ${chapterData.part_number} already exists`);
       }
     } else if (!chapterData.part_number && existingChapters.some(ch => !ch.part_number)) {
-      // If no part number and a chapter with this number exists without a part number
       throw new Error(`Chapter ${chapterData.chapter_number} already exists`);
     }
   }
@@ -147,15 +145,22 @@ export async function createChapter(
 
   if (novelError) throw novelError;
 
-  // Create the chapter
   const chapterId = generateUUID();
   
-  // Determine the coins based on fixed price settings
-  const finalCoins = novel.fixed_price_enabled ? novel.fixed_price_amount : chapterData.coins;
+  // Only apply fixed price if enabled AND no specific coin amount was provided
+  const finalCoins = novel.fixed_price_enabled && chapterData.coins === undefined 
+    ? novel.fixed_price_amount 
+    : chapterData.coins;
 
-  // If no publish date is set and auto-release is enabled, set publish_at to null
-  // so it can be handled by applyAutoReleaseSchedule
-  const publishAt = novel.auto_release_enabled ? null : chapterData.publish_at;
+  // Only apply auto-release if:
+  // 1. Auto-release is enabled
+  // 2. No specific publish date was provided
+  // 3. Coins are not set to 0 (indicating immediate release)
+  const shouldApplyAutoRelease = novel.auto_release_enabled && 
+    !chapterData.publish_at && 
+    finalCoins !== 0;
+
+  const publishAt = shouldApplyAutoRelease ? null : chapterData.publish_at;
   
   const { error } = await supabase
     .from('chapters')
@@ -179,8 +184,8 @@ export async function createChapter(
     await sendChapterNotifications(notificationData);
   }
 
-  // Apply auto-release schedule if enabled
-  if (novel.auto_release_enabled) {
+  // Only apply auto-release schedule if conditions are met
+  if (shouldApplyAutoRelease) {
     await applyAutoReleaseSchedule(novelId, userId, chapterId);
   }
 
