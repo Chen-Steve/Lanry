@@ -671,18 +671,19 @@ async function shouldNotifyForChapter(chapterId: string): Promise<{
     createdAt: chapter.created_at
   });
 
-  // Check if the chapter is published or being published
+  // Check if:
+  // 1. Chapter is newly created (within the last minute)
+  // 2. Chapter is published and free
   const nowUTC = new Date().toISOString();
   const publishAtUTC = chapter.publish_at;
+  const createdAtUTC = chapter.created_at;
   
-  // Send notification if:
-  // 1. Chapter is published immediately (publish_at is null or in the past)
-  // 2. Chapter is free (coins === 0)
-  const isPublished = !publishAtUTC || new Date(publishAtUTC) <= new Date(nowUTC);
-  const isFree = chapter.coins === 0;
+  const isNewlyCreated = Date.parse(nowUTC) - Date.parse(createdAtUTC) <= 60 * 1000;
+  const isPublishedAndFree = (!publishAtUTC || new Date(publishAtUTC) <= new Date(nowUTC)) && chapter.coins === 0;
 
-  if (isPublished && isFree) {
-    console.log('Will send notification for chapter - published and free');
+  if (isNewlyCreated || isPublishedAndFree) {
+    const reason = isNewlyCreated ? 'newly created chapter' : 'published and free chapter';
+    console.log(`Will send notification for chapter - ${reason}`);
     return {
       shouldNotify: true,
       chapterData: {
@@ -697,7 +698,7 @@ async function shouldNotifyForChapter(chapterId: string): Promise<{
     };
   }
 
-  console.log('Will NOT send notification for chapter - not published or not free');
+  console.log('Will NOT send notification for chapter - not newly created and not published/free');
   return { shouldNotify: false };
 }
 
