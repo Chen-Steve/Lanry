@@ -24,6 +24,13 @@ const Settings = lazy(() =>
   })
 );
 
+const TranslatorWorks = lazy(() => 
+  import('@/app/user-dashboard/_components/TranslatorWorks').catch(() => {
+    console.error('Failed to load TranslatorWorks component');
+    return { default: () => <div>Failed to load translator works</div> };
+  })
+);
+
 // Update TabSkeleton for mobile-first design
 const TabSkeleton = () => (
   <div className="p-3 sm:p-4">
@@ -52,7 +59,7 @@ const ErrorFallback = ({ error, resetErrorBoundary }: {
   </div>
 );
 
-type DashboardTab = 'reading' | 'settings';
+type DashboardTab = 'reading' | 'settings' | 'translations';
 
 const TabButton = ({ 
   active, 
@@ -297,37 +304,47 @@ export default function UserDashboard() {
         storiesRead={profile?.stories_read || 0}
       />
 
-      {/* Navigation Tabs */}
-      <nav className="border-b border-border p-1">
-        <div className="flex gap-1">
-          <TabButton 
-            active={activeTab === 'reading'} 
-            onClick={() => setActiveTab('reading')}
-          >
-            Recent Reads
-          </TabButton>
-          {isOwnProfile && (
-            <TabButton 
-              active={activeTab === 'settings'} 
-              onClick={() => setActiveTab('settings')}
-            >
-              Settings
-            </TabButton>
-          )}
-        </div>
-      </nav>
-
-      <div className={activeTab === 'settings' ? 'p-4' : ''}>
-        <ErrorBoundary
-          FallbackComponent={ErrorFallback}
-          onReset={() => setActiveTab('reading')}
+      {/* Tab Navigation */}
+      <div className="flex gap-2 mb-6">
+        <TabButton
+          active={activeTab === 'reading'}
+          onClick={() => setActiveTab('reading')}
         >
-          <Suspense fallback={<TabSkeleton />}>
-            {activeTab === 'reading' && <ReadingHistorySection userId={profile?.id} />}
-            {isOwnProfile && activeTab === 'settings' && <Settings profile={profile} />}
-          </Suspense>
-        </ErrorBoundary>
+          Reading History
+        </TabButton>
+        <TabButton
+          active={activeTab === 'translations'}
+          onClick={() => setActiveTab('translations')}
+        >
+          Translated Works
+        </TabButton>
+        {isOwnProfile && (
+          <TabButton
+            active={activeTab === 'settings'}
+            onClick={() => setActiveTab('settings')}
+          >
+            Settings
+          </TabButton>
+        )}
       </div>
+
+      {/* Tab Content */}
+      <ErrorBoundary
+        FallbackComponent={ErrorFallback}
+        resetKeys={[activeTab]}
+      >
+        <Suspense fallback={<TabSkeleton />}>
+          {activeTab === 'reading' && (
+            <ReadingHistorySection profileId={profile.id} />
+          )}
+          {activeTab === 'translations' && (
+            <TranslatorWorks profileId={profile.id} />
+          )}
+          {activeTab === 'settings' && isOwnProfile && (
+            <Settings profile={profile} />
+          )}
+        </Suspense>
+      </ErrorBoundary>
     </div>
   );
 } 

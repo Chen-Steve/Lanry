@@ -202,4 +202,6 @@ const ReadingHistorySection = ({ userId }: ReadingHistorySectionProps) => {
   );
 };
 
-export default ReadingHistorySection;
+export default function ReadingHistory({ profileId }: { profileId: string }) {
+  return <ReadingHistorySection userId={profileId} />;
+}
