@@ -7,6 +7,8 @@ import { notificationService, type Notification } from '@/services/notificationS
 import { useAuth } from '@/hooks/useAuth';
 import { formatRelativeDate } from '@/lib/utils';
 import { toast } from 'react-hot-toast';
+import supabase from '@/lib/supabaseClient';
+import { RealtimePostgresInsertPayload } from '@supabase/supabase-js';
 
 const NotificationButton = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -16,35 +18,52 @@ const NotificationButton = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { userId } = useAuth();
 
-  // Fetch unread count on mount and when userId changes
+  // Set up real-time subscription for notifications
   useEffect(() => {
-    const fetchUnreadCount = async () => {
-      if (!userId) return;
-      try {
-        const count = await notificationService.getUnreadCount(userId);
-        setUnreadCount(count);
-      } catch (error) {
-        console.error('Error fetching unread count:', error);
-      }
-    };
+    if (!userId) return;
 
-    fetchUnreadCount();
-    // Set up polling for unread count every 30 seconds
-    const interval = setInterval(fetchUnreadCount, 30000);
-    return () => clearInterval(interval);
+    const subscription = supabase
+      .channel('notifications')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `recipient_id=eq.${userId}`
+        },
+        async (payload: RealtimePostgresInsertPayload<Notification>) => {
+          // Fetch the complete notification with sender and novel data
+          const { data: newNotification } = await supabase
+            .from('notifications')
+            .select(`
+              *,
+              sender:profiles!sender_id (
+                username,
+                avatar_url
+              ),
+              novel:novels (
+                chapters (
+                  publish_at,
+                  created_at
+                )
+              )
+            `)
+            .eq('id', payload.new.id)
+            .single();
+
+          if (newNotification) {
+            setNotifications(prev => [newNotification, ...prev.slice(0, 4)]); // Keep only 5 most recent
+            setUnreadCount(prev => prev + 1);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [userId]);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   // Fetch notifications when dropdown opens
   useEffect(() => {
@@ -67,6 +86,18 @@ const NotificationButton = () => {
 
     fetchNotifications();
   }, [userId, isOpen]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Mark notification as read when clicked
   const handleNotificationClick = async (notificationId: string) => {

@@ -8,6 +8,8 @@ import { notificationService, type Notification } from '@/services/notificationS
 import { useAuth } from '@/hooks/useAuth';
 import { formatRelativeDate } from '@/lib/utils';
 import { toast } from 'react-hot-toast';
+import supabase from '@/lib/supabaseClient';
+import { RealtimePostgresInsertPayload } from '@supabase/supabase-js';
 
 type NotificationType = Notification['type'];
 
@@ -45,10 +47,51 @@ const NotificationsPage = () => {
 
     fetchNotifications();
 
-    // Set up polling for new notifications
-    const pollInterval = setInterval(fetchNotifications, 60000); // Poll every minute
+    // Set up real-time subscription for new notifications
+    const subscription = supabase
+      .channel('notifications')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `recipient_id=eq.${userId}`
+        },
+        async (payload: RealtimePostgresInsertPayload<Notification>) => {
+          // Fetch the complete notification with sender and novel data
+          const { data: newNotification } = await supabase
+            .from('notifications')
+            .select(`
+              *,
+              sender:profiles!sender_id (
+                username,
+                avatar_url
+              ),
+              novel:novels (
+                chapters (
+                  publish_at,
+                  created_at
+                )
+              )
+            `)
+            .eq('id', payload.new.id)
+            .single();
 
-    return () => clearInterval(pollInterval);
+          if (newNotification) {
+            setNotifications(prev => [newNotification, ...prev]);
+          }
+        }
+      )
+      .subscribe();
+
+    // Set up polling as a fallback (every 30 seconds)
+    const pollInterval = setInterval(fetchNotifications, 30000);
+
+    return () => {
+      subscription.unsubscribe();
+      clearInterval(pollInterval);
+    };
   }, [userId]);
 
   const handleMarkAsRead = async (notificationId: string) => {
