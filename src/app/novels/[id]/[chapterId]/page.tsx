@@ -5,7 +5,7 @@ import { getChapter, getChapterNavigation, getTotalChapters } from '@/services/c
 import { Icon } from '@iconify/react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { formatDate, generateUUID } from '@/lib/utils';
+import { generateUUID } from '@/lib/utils';
 import { ChapterWithNovel } from '@/types/database';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import ChapterHeader from './_components/content/ChapterHeader';
@@ -248,17 +248,9 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
           </h1>
           {error === 'This chapter is not yet available' && chapter && (
             <div className="space-y-2">
-              <p className="text-gray-500">
-                {chapter.publish_at ? 
-                  `This chapter will be available on ${formatDate(chapter.publish_at)}` :
-                  'This chapter requires unlocking to read'}
+              <p className="text-gray-600">
+                This chapter will be available soon.
               </p>
-              <Link
-                href={`/novels/${novelId}`}
-                className="inline-block px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-              >
-                Go to Novel Page to Unlock
-              </Link>
             </div>
           )}
         </div>
@@ -266,8 +258,44 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
     );
   }
 
-  if (!chapter) {
-    notFound();
+  if (!chapter) return notFound();
+
+  // Show purchase button if chapter is locked and not indefinitely locked
+  if (chapter.isLocked && (!chapter.publish_at || new Date(chapter.publish_at).getFullYear() <= new Date().getFullYear() + 50)) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <Link 
+          href={`/novels/${novelId}`}
+          className="text-black hover:text-gray-700 flex items-center gap-1 text-sm md:text-base mb-8"
+        >
+          <Icon icon="mdi:arrow-left" />
+          <span>Back to Novel</span>
+        </Link>
+
+        <div className="text-center py-12">
+          <Icon 
+            icon="mdi:lock" 
+            className="mx-auto text-4xl text-gray-400 mb-4"
+          />
+          <h1 className="text-xl font-semibold text-gray-900 mb-2">
+            Unlock Chapter {chapter.chapter_number}{chapter.part_number ? `.${chapter.part_number}` : ''}
+          </h1>
+          <p className="text-gray-600 mb-6">
+            This chapter requires {chapter.coins} coins to unlock.
+          </p>
+          <ChapterPurchaseButton
+            novelId={novelId}
+            chapterNumber={chapter.chapter_number}
+            partNumber={chapter.part_number}
+            coins={chapter.coins}
+            authorId={chapter.novel.author_profile_id}
+            userProfileId={user?.id}
+            isAuthenticated={!!user}
+            publishAt={chapter.publish_at}
+          />
+        </div>
+      </div>
+    );
   }
 
   // Check if the chapter should be free:

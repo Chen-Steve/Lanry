@@ -236,8 +236,9 @@ export const ChapterListItem = memo(function ChapterListItem({
 
   // Only allow navigation if:
   // 1. Chapter is published AND either free or unlocked, OR
-  // 2. User has translator access
-  if ((isPublished && !isIndefinitelyLocked && (isFree || isUnlocked)) || hasTranslatorAccess) {
+  // 2. User has translator access, OR
+  // 3. Chapter is unlocked (regardless of publish status)
+  if ((isPublished && !isIndefinitelyLocked && (isFree || isUnlocked)) || hasTranslatorAccess || isUnlocked) {
     return (
       <Link
         href={`/novels/${novelSlug}/c${chapter.chapter_number}${chapter.part_number ? `-p${chapter.part_number}` : ''}`}

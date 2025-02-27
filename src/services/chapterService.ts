@@ -65,21 +65,8 @@ export async function getChapter(novelId: string, chapterNumber: number, partNum
       return chapterWithAccess;
     }
 
-    // Check if chapter is published or user has unlocked it
-    const isPublished = !chapter.publish_at || chapter.publish_at <= new Date().toISOString();
-    const isFree = !chapter.coins || chapter.coins === 0;
-    
-    // Free chapters are always accessible if published
-    if (isFree && isPublished) {
-      return chapterWithAccess;
-    }
-
-    // If chapter is published but not free, check if user has unlocked it
-    if (isPublished) {
-      if (!user) {
-        return { ...chapter, isLocked: true, hasTranslatorAccess: false };
-      }
-
+    // First check if user has unlocked the chapter
+    if (user) {
       let query = supabase
         .from('chapter_unlocks')
         .select('*')
@@ -96,14 +83,22 @@ export async function getChapter(novelId: string, chapterNumber: number, partNum
 
       const { data: unlock } = await query.maybeSingle();
 
-      if (!unlock) {
-        return { ...chapter, isLocked: true, hasTranslatorAccess: false };
+      // If chapter is unlocked, allow access regardless of publish status
+      if (unlock) {
+        return chapterWithAccess;
       }
-      
+    }
+
+    // Check if chapter is published or free
+    const isPublished = !chapter.publish_at || chapter.publish_at <= new Date().toISOString();
+    const isFree = !chapter.coins || chapter.coins === 0;
+    
+    // Free chapters are always accessible if published
+    if (isFree && isPublished) {
       return chapterWithAccess;
     }
 
-    // If not published, chapter is locked
+    // If not unlocked and not free/published, chapter is locked
     return { ...chapter, isLocked: true, hasTranslatorAccess: false };
   } catch (error) {
     console.error('Error fetching chapter:', error);
