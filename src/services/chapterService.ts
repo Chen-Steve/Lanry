@@ -91,7 +91,7 @@ export async function getChapter(novelId: string, chapterNumber: number, partNum
 
     // Check if chapter is published or free
     const isPublished = !chapter.publish_at || chapter.publish_at <= new Date().toISOString();
-    const isFree = !chapter.coins || chapter.coins === 0;
+    const isFree = !chapter.coins || chapter.coins === 0 || (chapter.publish_at && isPublished);
     
     // Free chapters are always accessible if published
     if (isFree && isPublished) {
@@ -383,10 +383,8 @@ export async function getChaptersForList({
             .filter(ch => {
               const isUnlocked = unlockedChapterNumbers.includes(ch.chapter_number);
               const isFree = !ch.coins || ch.coins === 0;
-              return !ch.publish_at || 
-                     isFree || 
-                     isUnlocked || 
-                     new Date(ch.publish_at).getTime() <= nowUTCTime;
+              const isPublished = !ch.publish_at || new Date(ch.publish_at).getTime() <= nowUTCTime;
+              return isUnlocked || isFree || (ch.publish_at && isPublished);
             })
             .map(ch => ch.id);
 
@@ -459,28 +457,23 @@ export async function getChaptersForList({
         const isUnlocked = unlockedChapterNumbers.includes(ch.chapter_number);
         const publishDate = ch.publish_at;
         const isFree = !ch.coins || ch.coins === 0;
+        const isPublished = !publishDate || new Date(publishDate).getTime() <= new Date(nowUTC).getTime();
         
         // A chapter is regular if:
         // 1. It has no publish date (published immediately) OR
         // 2. It's free OR
         // 3. User has unlocked it OR
-        // 4. The publish time has passed
-        const isRegular = !publishDate || 
-               isFree || 
-               isUnlocked || 
-               (publishDate && new Date(publishDate).getTime() <= new Date(nowUTC).getTime());
-               
-        return isRegular;
+        // 4. It was an advanced chapter that is now published
+        return isUnlocked || isFree || (publishDate && isPublished);
       }).length || 0,
       advancedCount: allChapters?.filter(ch => {
         const publishDate = ch.publish_at;
+        const isPublished = publishDate && new Date(publishDate).getTime() > new Date(nowUTC).getTime();
         
         // A chapter is advanced if:
         // 1. Has a future publish date AND
         // 2. Has coins (is not free)
-        return publishDate && 
-               new Date(publishDate).getTime() > new Date(nowUTC).getTime() && 
-               ch.coins > 0;
+        return isPublished && ch.coins > 0;
       }).length || 0,
       total: allChapters?.length || 0
     };
