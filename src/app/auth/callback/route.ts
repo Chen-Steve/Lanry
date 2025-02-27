@@ -25,7 +25,9 @@ export async function GET(request: Request) {
         .eq('id', session.user.id)
         .single();
 
-      if (profileError && profileError.code === 'PGRST116') {
+      // Only create profile for OAuth providers (Google, Discord, etc.)
+      // Email signup is handled in useAuth.ts
+      if (profileError && profileError.code === 'PGRST116' && session.user.app_metadata.provider) {
         // Create profile if it doesn't exist
         const { error: createError } = await supabase
           .from('profiles')
@@ -34,6 +36,9 @@ export async function GET(request: Request) {
             username: session.user.email?.split('@')[0] || `user_${Math.random().toString(36).slice(2, 7)}`,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
+            current_streak: 0,
+            role: 'USER',
+            coins: 0
           }]);
 
         if (createError) {
