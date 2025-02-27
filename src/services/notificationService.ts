@@ -189,7 +189,8 @@ export const notificationService = {
     coins?: number;
   }) {
     try {
-      const nowUTC = new Date().toISOString();
+      const now = new Date();
+      const nowUTC = now.toISOString();
       
       console.log('Starting chapter release notification process:', {
         novelId,
@@ -235,7 +236,7 @@ export const notificationService = {
 
       // Create notifications for each user who has bookmarked the novel
       const notifications = bookmarks.map(bookmark => {
-        const isAdvanced = coins > 0 || (publishAt && new Date(publishAt) > new Date(nowUTC));
+        const isAdvanced = coins > 0 || (publishAt && publishAt.getTime() > now.getTime());
         const notificationContent = isAdvanced
           ? `[Advanced] Chapter ${chapterNumber}${partNumber ? ` Part ${partNumber}` : ''}: ${chapterTitle} is now available for early access in "${novelTitle}"`
           : `Chapter ${chapterNumber}${partNumber ? ` Part ${partNumber}` : ''}: ${chapterTitle} has been released for "${novelTitle}"`;

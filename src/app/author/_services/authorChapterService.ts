@@ -676,12 +676,42 @@ async function shouldNotifyForChapter(chapterId: string): Promise<{
   // Check if:
   // 1. Chapter is newly created (within the last minute)
   // 2. Chapter is published and free
-  const nowUTC = new Date().toISOString();
+  const now = new Date();
+  const nowUTC = now.toISOString();
   const publishAtUTC = chapter.publish_at;
   const createdAtUTC = chapter.created_at;
   
-  const isNewlyCreated = Date.parse(nowUTC) - Date.parse(createdAtUTC) <= 60 * 1000;
-  const isPublishedAndFree = (!publishAtUTC || new Date(publishAtUTC) <= new Date(nowUTC)) && chapter.coins === 0;
+  // Convert all dates to UTC timestamps for comparison
+  const nowTimestamp = Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate(),
+    now.getUTCHours(),
+    now.getUTCMinutes(),
+    now.getUTCSeconds()
+  );
+  
+  const createdAtDate = new Date(createdAtUTC);
+  const createdAtTimestamp = Date.UTC(
+    createdAtDate.getUTCFullYear(),
+    createdAtDate.getUTCMonth(),
+    createdAtDate.getUTCDate(),
+    createdAtDate.getUTCHours(),
+    createdAtDate.getUTCMinutes(),
+    createdAtDate.getUTCSeconds()
+  );
+
+  const isNewlyCreated = nowTimestamp - createdAtTimestamp <= 60 * 1000;
+  const isPublishedAndFree = (!publishAtUTC || new Date(publishAtUTC).getTime() <= now.getTime()) && chapter.coins === 0;
+
+  console.log('Time comparisons:', {
+    nowUTC,
+    publishAtUTC,
+    createdAtUTC,
+    isNewlyCreated,
+    isPublishedAndFree,
+    timeDiff: nowTimestamp - createdAtTimestamp
+  });
 
   if (isNewlyCreated || isPublishedAndFree) {
     const reason = isNewlyCreated ? 'newly created chapter' : 'published and free chapter';
