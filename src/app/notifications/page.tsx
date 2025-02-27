@@ -26,6 +26,7 @@ const NotificationsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<NotificationType | 'all'>('all');
   const [page, setPage] = useState(1);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const itemsPerPage = 20;
   const { userId } = useAuth();
 
@@ -200,23 +201,72 @@ const NotificationsPage = () => {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Notifications</h1>
         {notifications.length > 0 && (
-          <button
-            onClick={async () => {
-              try {
-                await notificationService.markAllAsRead(userId);
-                setNotifications(notifications.map(n => ({ ...n, read: true })));
-                toast.success('All notifications marked as read');
-              } catch (error) {
-                console.error('Error marking all as read:', error);
-                toast.error('Failed to mark all as read');
-              }
-            }}
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Mark all as read
-          </button>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={async () => {
+                try {
+                  await notificationService.markAllAsRead(userId);
+                  setNotifications(notifications.map(n => ({ ...n, read: true })));
+                  toast.success('All notifications marked as read');
+                } catch (error) {
+                  console.error('Error marking all as read:', error);
+                  toast.error('Failed to mark all as read');
+                }
+              }}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Mark all as read
+            </button>
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              className="text-sm text-red-500 hover:text-red-600 transition-colors flex items-center gap-1"
+            >
+              <Icon icon="ph:trash-bold" className="w-4 h-4" />
+              Delete all
+            </button>
+          </div>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-background rounded-lg p-6 max-w-md w-full mx-4 space-y-4 shadow-lg">
+            <div className="flex items-center gap-3 text-red-500">
+              <Icon icon="ph:warning-circle-bold" className="w-6 h-6" />
+              <h2 className="text-lg font-semibold">Delete All Notifications</h2>
+            </div>
+            <p className="text-muted-foreground">
+              Are you sure you want to delete all notifications? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="px-4 py-2 text-sm rounded-lg bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    await notificationService.deleteAllNotifications(userId);
+                    setNotifications([]);
+                    toast.success('All notifications deleted');
+                  } catch (error) {
+                    console.error('Error deleting all notifications:', error);
+                    toast.error('Failed to delete all notifications');
+                  } finally {
+                    setShowDeleteConfirm(false);
+                  }
+                }}
+                className="px-4 py-2 text-sm rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors"
+              >
+                Delete All
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4">

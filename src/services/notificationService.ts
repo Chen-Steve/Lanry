@@ -167,6 +167,20 @@ export const notificationService = {
     }
   },
 
+  async deleteAllNotifications(userId: string) {
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .delete()
+        .eq('recipient_id', userId);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error deleting all notifications:', error);
+      throw error;
+    }
+  },
+
   async sendChapterReleaseNotifications({
     novelId,
     chapterNumber,
