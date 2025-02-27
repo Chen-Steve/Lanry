@@ -1,4 +1,4 @@
-import { Chapter, UserProfile } from '@/types/database';
+import { UserProfile } from '@/types/database';
 import { Icon } from '@iconify/react';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
@@ -8,8 +8,19 @@ import supabase from '@/lib/supabaseClient';
 import { ChapterCountdown } from './ChapterCountdown';
 
 interface ChapterListItemProps {
-  chapter: Chapter & {
+  chapter: {
+    id: string;
+    chapter_number: number;
+    part_number?: number | null;
+    title: string;
+    publish_at?: string | null;
+    coins?: number;
+    age_rating?: string;
     novel_id: string;
+    content: string;
+    created_at: string;
+    slug: string;
+    author_profile_id: string;
   };
   novelSlug: string;
   userProfile: UserProfile | null;
@@ -17,16 +28,18 @@ interface ChapterListItemProps {
   novelAuthorId: string;
   hasTranslatorAccess?: boolean;
   isUnlocked?: boolean;
+  isPublished?: boolean;
 }
 
 export const ChapterListItem = memo(function ChapterListItem({ 
-  chapter, 
-  novelSlug, 
-  userProfile, 
+  chapter,
+  novelSlug,
+  userProfile,
   isAuthenticated,
   novelAuthorId,
   hasTranslatorAccess = false,
   isUnlocked = false,
+  isPublished = false
 }: ChapterListItemProps) {
   const [isUnlocking, setIsUnlocking] = useState(false);
   const router = useRouter();
@@ -174,18 +187,13 @@ export const ChapterListItem = memo(function ChapterListItem({
     }
   }, [chapter.chapter_number, chapter.coins, chapter.novel_id, chapter.part_number, isAuthenticated, novelSlug, router, unlockChapter, userProfile?.id, novelAuthorId]);
 
-  // A chapter is considered published if it has no publish date
-  // For advanced chapters, we consider them "published" for interaction purposes
-  const isPublished = !chapter.publish_at || new Date(chapter.publish_at) <= new Date();
-  const isAdvancedChapter = chapter.publish_at && new Date(chapter.publish_at) > new Date();
-  const isIndefinitelyLocked = chapter.publish_at && new Date(chapter.publish_at).getFullYear() > new Date().getFullYear() + 50;
   const isFree = !chapter.coins || chapter.coins === 0;
 
   const chapterContent = (
     <div className="flex items-center justify-between w-full">
       <div className="flex items-center gap-2 min-w-0">
         <span className="font-medium whitespace-nowrap flex items-center gap-1">
-          {(!isPublished || isIndefinitelyLocked) && !isUnlocked && !hasTranslatorAccess && (
+          {!isPublished && !isFree && !isUnlocked && !hasTranslatorAccess && (
             <Icon icon="material-symbols:lock" className="text-xs" />
           )}
           Ch. {chapter.chapter_number}{chapter.part_number ? `.${chapter.part_number}` : ''}
@@ -202,8 +210,8 @@ export const ChapterListItem = memo(function ChapterListItem({
             <span className="text-emerald-600 dark:text-emerald-400">
               {hasTranslatorAccess ? 'Translator Access' : 'Unlocked'}
             </span>
-          ) : isIndefinitelyLocked ? (
-            <span className="text-muted-foreground">Coming Soon</span>
+          ) : isFree ? (
+            <span className="text-muted-foreground">Free</span>
           ) : (
             <>
               {isUnlocking ? (
@@ -235,10 +243,11 @@ export const ChapterListItem = memo(function ChapterListItem({
   );
 
   // Allow navigation for:
-  // 1. Published chapters that are free or unlocked
-  // 2. Users with translator access
-  // 3. Already unlocked chapters
-  if ((isPublished && (isFree || isUnlocked)) || hasTranslatorAccess || isUnlocked) {
+  // 1. Published chapters (regardless of coins) OR
+  // 2. Free chapters OR
+  // 3. Users with translator access OR
+  // 4. Already unlocked chapters
+  if (isPublished || isFree || hasTranslatorAccess || isUnlocked) {
     return (
       <Link
         href={`/novels/${novelSlug}/c${chapter.chapter_number}${chapter.part_number ? `-p${chapter.part_number}` : ''}`}
@@ -250,9 +259,8 @@ export const ChapterListItem = memo(function ChapterListItem({
   }
 
   // Show purchase button for:
-  // 1. Advanced chapters that aren't unlocked
-  // 2. Published chapters that aren't free and aren't unlocked
-  if ((isAdvancedChapter || isPublished) && !isIndefinitelyLocked && !isFree && !isUnlocked) {
+  // 1. Unpublished chapters with coins that aren't unlocked
+  if (!isPublished && (chapter.coins ?? 0) > 0 && !isUnlocked) {
     return (
       <button
         onClick={handleLockedChapterClick}

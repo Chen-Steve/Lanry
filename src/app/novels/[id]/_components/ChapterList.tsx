@@ -137,6 +137,11 @@ export const ChapterList = ({
     }
   }, [currentPage, totalPages, loadChapters]);
 
+  const isChapterPublished = useCallback((publishAt: string | null | undefined): boolean => {
+    if (!publishAt) return true;
+    return new Date(publishAt) <= new Date();
+  }, []);
+
   const renderChapter = useCallback((chapter: ChapterListItem) => (
     <div key={chapter.id} className="w-full min-h-[2.5rem] flex items-center px-4 border-b border-border last:border-b-0 md:border-none">
       <div className="w-full">
@@ -155,10 +160,11 @@ export const ChapterList = ({
           novelAuthorId={novelAuthorId}
           hasTranslatorAccess={chapter.hasTranslatorAccess}
           isUnlocked={chapter.isUnlocked}
+          isPublished={isChapterPublished(chapter.publish_at)}
         />
       </div>
     </div>
-  ), [novelId, novelSlug, userProfile, isAuthenticated, novelAuthorId]);
+  ), [novelId, novelSlug, userProfile, isAuthenticated, novelAuthorId, isChapterPublished]);
 
   const renderPagination = useCallback(() => {
     const pages = [];
