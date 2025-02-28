@@ -56,7 +56,7 @@ const TranslatorProfiles = ({ translators }: TranslatorProfilesProps) => {
               className="group flex-none w-[130px] flex flex-col items-center p-2 bg-card hover:bg-accent/50 rounded-md transition-colors"
             >
               <div className={`relative w-24 h-24 mb-3 overflow-hidden rounded-xl bg-accent transition-all duration-300 group-hover:scale-110 ${borderStyles[translatorBorders[index]]}`}>
-                {failedImages.has(translator.id) ? (
+                {failedImages.has(translator.id) && !translator.avatarUrl ? (
                   <div className="w-full h-full flex items-center justify-center">
                     <Icon 
                       icon="mingcute:user-4-fill" 
@@ -72,7 +72,11 @@ const TranslatorProfiles = ({ translators }: TranslatorProfilesProps) => {
                     priority={index < 4}
                     unoptimized={!translator.avatarUrl || translator.avatarUrl === '/lanry.jpg'}
                     className="object-cover"
-                    onError={() => handleImageError(translator.id)}
+                    onError={() => {
+                      if (!translator.avatarUrl) {
+                        handleImageError(translator.id);
+                      }
+                    }}
                   />
                 )}
               </div>
