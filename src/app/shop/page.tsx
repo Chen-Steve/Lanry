@@ -51,6 +51,33 @@ export default function ShopPage() {
         <h1 className="text-2xl font-bold mb-2 text-foreground">Coin Shop</h1>
       </div>
 
+      {/* Survey Notice */}
+      <div className="bg-primary/10 border border-primary/20 p-4 rounded-lg mb-8">
+        <div className="flex items-start gap-3">
+          <Icon 
+            icon="ph:coins" 
+            className="w-6 h-6 text-primary flex-shrink-0 mt-0.5"
+          />
+          <div className="space-y-2">
+            <p className="text-sm font-medium">
+              🎉 Take our Survey - Win Free Coins! 
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Help us improve your reading experience! Complete our quick survey for a chance to win coins.
+            </p>
+            <a 
+              href="https://docs.google.com/forms/d/1o1QwzvulTDSm0jZn0-vcUNjgAVVqAdSW0qBQgFFvUTg/edit"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-sm text-primary hover:text-primary/80 font-medium"
+            >
+              Take the Survey
+              <Icon icon="ph:arrow-right" className="w-4 h-4" />
+            </a>
+          </div>
+        </div>
+      </div>
+
       <PayPalScriptProvider options={initialOptions}>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {coinPackages.map((pkg) => (
