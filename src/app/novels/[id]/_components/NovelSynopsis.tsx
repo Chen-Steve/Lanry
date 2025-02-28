@@ -24,7 +24,35 @@ export const NovelSynopsis = ({
   const [isExpanded, setIsExpanded] = useState(false);
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
   const truncateLength = isMobile ? 150 : 300;
-  const shouldShowButton = description.length > truncateLength || characters.length > 0;
+
+  // Clean and truncate text function
+  const getTruncatedText = (text: string) => {
+    // Clean up excessive whitespace while preserving basic paragraph structure
+    const cleanText = text.replace(/\n\s*\n/g, '\n\n').trim();
+    
+    // If expanded, return the full cleaned text
+    if (isExpanded) return cleanText;
+
+    // Find the first paragraph
+    const firstParagraphEnd = cleanText.indexOf('\n\n');
+    
+    // If there's only one paragraph or no paragraphs found
+    if (firstParagraphEnd === -1) {
+      // If the text is shorter than truncateLength, return it all
+      if (cleanText.length <= truncateLength) return cleanText;
+      
+      // Otherwise truncate at the last sentence within truncateLength
+      const truncated = cleanText.slice(0, truncateLength);
+      const lastPeriod = truncated.lastIndexOf('.', truncateLength);
+      return lastPeriod > 0 ? cleanText.slice(0, lastPeriod + 1) : truncated;
+    }
+
+    // Return just the first paragraph
+    return cleanText.slice(0, firstParagraphEnd);
+  };
+
+  const shouldShowButton = description.length > truncateLength || description.includes('\n\n');
+  const displayText = getTruncatedText(description);
 
   // Update truncation when window resizes
   useEffect(() => {
@@ -58,7 +86,7 @@ export const NovelSynopsis = ({
         <div 
           className="prose prose-sm max-w-none text-muted-foreground dark:prose-invert [&>p]:mb-4 [&>p:last-child]:mb-0 whitespace-pre-line"
           dangerouslySetInnerHTML={{ 
-            __html: formatText(isExpanded ? description : description.slice(0, truncateLength)) 
+            __html: formatText(displayText)
           }}
         />
         
@@ -122,7 +150,7 @@ export const NovelSynopsis = ({
             )}
             <button
               onClick={() => setIsExpanded(false)}
-              className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 font-medium mt-4 border border-black/20 dark:border-white/20 px-2 py-1 rounded-md bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800"
+              className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 font-medium mt-4 mb-8 border border-black/20 dark:border-white/20 px-2 py-1 rounded-md bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800"
             >
               <span>Show Less</span>
               <Icon 
