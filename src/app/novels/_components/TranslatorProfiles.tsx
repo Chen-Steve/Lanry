@@ -1,7 +1,7 @@
 import { Icon } from '@iconify/react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Translator } from '@/services/translatorService';
 
 // Define border styles with glow effects
@@ -20,6 +20,8 @@ interface TranslatorProfilesProps {
 }
 
 const TranslatorProfiles = ({ translators }: TranslatorProfilesProps) => {
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
+  
   // Assign random border styles to translators
   const translatorBorders = useMemo(() => {
     const styles = Object.keys(borderStyles) as (keyof typeof borderStyles)[];
@@ -27,6 +29,10 @@ const TranslatorProfiles = ({ translators }: TranslatorProfilesProps) => {
   }, [translators]);
 
   if (translators.length === 0) return null;
+
+  const handleImageError = (translatorId: string) => {
+    setFailedImages(prev => new Set(prev).add(translatorId));
+  };
 
   return (
     <div className="mb-6">
@@ -50,12 +56,25 @@ const TranslatorProfiles = ({ translators }: TranslatorProfilesProps) => {
               className="group flex-none w-[130px] flex flex-col items-center p-2 bg-card hover:bg-accent/50 rounded-md transition-colors"
             >
               <div className={`relative w-24 h-24 mb-3 overflow-hidden rounded-xl bg-accent transition-all duration-300 group-hover:scale-110 ${borderStyles[translatorBorders[index]]}`}>
-                <Image
-                  src={translator.avatarUrl || '/lanry.jpg'}
-                  alt={translator.username}
-                  fill
-                  className="object-cover"
-                />
+                {failedImages.has(translator.id) ? (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <Icon 
+                      icon="mingcute:user-4-fill" 
+                      className="w-12 h-12 text-muted-foreground/50" 
+                    />
+                  </div>
+                ) : (
+                  <Image
+                    src={translator.avatarUrl || '/lanry.jpg'}
+                    alt={translator.username}
+                    fill
+                    sizes="(max-width: 96px) 100vw, 96px"
+                    priority={index < 4}
+                    unoptimized={!translator.avatarUrl || translator.avatarUrl === '/lanry.jpg'}
+                    className="object-cover"
+                    onError={() => handleImageError(translator.id)}
+                  />
+                )}
               </div>
 
               <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors text-center truncate w-full">
