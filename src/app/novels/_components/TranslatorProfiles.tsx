@@ -65,12 +65,12 @@ const TranslatorProfiles = ({ translators }: TranslatorProfilesProps) => {
                       const parent = target.parentElement;
                       if (parent) {
                         parent.innerHTML = translator.username?.[0]?.toUpperCase() || '?';
-                        parent.className = `w-full h-full flex items-center justify-center text-primary-foreground text-2xl font-semibold ${borderStyles[translatorBorders[index]]}`;
+                        parent.className = `w-full h-full flex items-center justify-center text-foreground dark:text-primary-foreground text-2xl font-semibold ${borderStyles[translatorBorders[index]]}`;
                       }
                     }}
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-primary-foreground text-2xl font-semibold">
+                  <div className="w-full h-full flex items-center justify-center text-foreground dark:text-primary-foreground text-2xl font-semibold">
                     {translator.username?.[0]?.toUpperCase() || '?'}
                   </div>
                 )}
