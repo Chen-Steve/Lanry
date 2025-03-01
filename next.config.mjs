@@ -9,7 +9,7 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: 'vkgkhipasxqxitwlktwz.supabase.co',
-        pathname: '/storage/v1/object/public/**'
+        pathname: '/storage/v1/**'
       },
       {
         protocol: 'https',
@@ -30,6 +30,10 @@ const nextConfig = {
           key: 'X-Content-Type-Options',
           value: 'nosniff',
         },
+        {
+          key: 'Cache-Control',
+          value: 'public, max-age=31536000, immutable'
+        }
       ],
     },
   ],

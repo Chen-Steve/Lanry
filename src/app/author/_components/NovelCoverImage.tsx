@@ -10,6 +10,12 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
+// Add a helper function to get direct CDN URL
+function getDirectCDNUrl(publicUrl: string) {
+  // Convert Supabase storage URL to direct CDN URL
+  return publicUrl.replace('.supabase.co/storage/v1/object/public/', '.supabase.co/storage/v1/render/image/public/');
+}
+
 interface NovelCoverImageProps {
   coverImageUrl?: string;
   onUpdate: (url: string) => Promise<void>;
@@ -100,12 +106,13 @@ export default function NovelCoverImage({ coverImageUrl, onUpdate, onDelete }: N
           <>
             {coverImageUrl ? (
               <Image
-                src={coverImageUrl}
+                src={getDirectCDNUrl(coverImageUrl)}
                 alt="Novel cover"
                 fill
                 sizes="180px"
                 className="object-cover"
                 priority
+                unoptimized
               />
             ) : (
               <div className="w-full h-full bg-accent flex items-center justify-center">
