@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import supabase from '@/lib/supabaseClient';
 import type { UserProfile } from '@/types/database';
-import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Icon } from '@iconify/react';
 import { uploadImage } from '@/services/uploadService';
@@ -30,8 +29,9 @@ const Settings = ({ profile }: SettingsProps) => {
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(profile.avatar_url || null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isEditingUsername, setIsEditingUsername] = useState(false);
+  const [tempUsername, setTempUsername] = useState(profile.username || '');
   const queryClient = useQueryClient();
-  const router = useRouter();
 
   const { isLoading, data } = useQuery({
     queryKey: ['profile'],
@@ -109,20 +109,21 @@ const Settings = ({ profile }: SettingsProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isEditingUsername) {
+      setProfileState({ ...profileState, username: tempUsername });
+    }
+    setIsEditingUsername(false);
     mutation.mutate(profileState);
   };
 
-  const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      // console.error('Error logging out:', error);
-      alert('Failed to log out');
-      return;
+  const handleUsernameEdit = () => {
+    if (isEditingUsername) {
+      // Cancel edit
+      setTempUsername(profileState.username || '');
+      setIsEditingUsername(false);
+    } else {
+      setIsEditingUsername(true);
     }
-    
-    // Clear any cached data
-    queryClient.clear();
-    router.push('/auth');
   };
 
   if (isLoading) {
@@ -170,28 +171,42 @@ const Settings = ({ profile }: SettingsProps) => {
           </div>
           
           <div className="flex-1 space-y-1">
-            <div>
+            <div className="max-w-xs">
               <div className="flex justify-between items-center">
                 <label htmlFor="username" className="text-sm text-foreground">
                   Username
                 </label>
                 <span className="text-xs text-muted-foreground">
-                  {(profileState.username?.length || 0)}/50
+                  {(tempUsername.length || 0)}/50
                 </span>
               </div>
-              <input
-                type="text"
-                id="username"
-                value={profileState.username || ''}
-                onChange={(e) => {
-                  if (e.target.value.length <= 50) {
-                    setProfileState({ ...profileState, username: e.target.value });
-                  }
-                }}
-                maxLength={50}
-                className="w-full p-1.5 text-sm text-foreground bg-background border border-border rounded focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
-                placeholder="Enter username"
-              />
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  id="username"
+                  value={tempUsername}
+                  onChange={(e) => {
+                    if (e.target.value.length <= 50) {
+                      setTempUsername(e.target.value);
+                    }
+                  }}
+                  disabled={!isEditingUsername}
+                  maxLength={50}
+                  className="flex-1 p-1.5 text-sm text-foreground bg-background border border-border rounded focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                  placeholder="Enter username"
+                />
+                <button
+                  type="button"
+                  onClick={handleUsernameEdit}
+                  className="px-2.5 py-1.5 text-sm border border-border rounded hover:bg-accent transition-colors"
+                >
+                  {isEditingUsername ? (
+                    <Icon icon="heroicons:x-mark" className="w-4 h-4 text-muted-foreground" />
+                  ) : (
+                    <Icon icon="heroicons:pencil-square" className="w-4 h-4 text-muted-foreground" />
+                  )}
+                </button>
+              </div>
             </div>
             {avatarFile && (
               <p className="text-xs text-muted-foreground">
@@ -202,21 +217,15 @@ const Settings = ({ profile }: SettingsProps) => {
         </div>
 
         <div className="flex items-center gap-2 pt-2">
-          <button
-            type="submit"
-            disabled={mutation.isPending || isUploading}
-            className="px-3 py-1.5 text-sm bg-primary text-primary-foreground rounded disabled:opacity-50 hover:bg-primary/90 transition-colors"
-          >
-            {mutation.isPending || isUploading ? 'Saving...' : 'Save'}
-          </button>
-          
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="px-3 py-1.5 text-sm bg-red-600 dark:bg-red-900 text-white rounded hover:bg-red-700 dark:hover:bg-red-800 transition-colors"
-          >
-            Logout
-          </button>
+          {(isEditingUsername || avatarFile) && (
+            <button
+              type="submit"
+              disabled={mutation.isPending || isUploading}
+              className="px-3 py-1.5 text-sm bg-primary text-primary-foreground rounded disabled:opacity-50 hover:bg-primary/90 transition-colors"
+            >
+              {mutation.isPending || isUploading ? 'Saving...' : 'Save Changes'}
+            </button>
+          )}
         </div>
       </form>
     </div>

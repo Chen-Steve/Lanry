@@ -8,7 +8,6 @@ import { useQuery } from '@tanstack/react-query';
 import { ErrorBoundary } from 'react-error-boundary';
 import StatusSection from '@/app/user-dashboard/_components/StatusSection';
 import Image from 'next/image';
-import Link from 'next/link';
 
 const ReadingHistorySection = lazy(() => 
   import('@/app/user-dashboard/_components/ReadingHistory').catch(() => {
@@ -268,18 +267,21 @@ export default function UserDashboard() {
           )}
         </div>
         <div className="flex-grow">
-          <div className="flex items-center gap-3 mb-2">
+          <div className="flex items-center justify-between gap-3 mb-2">
             <h1 className="text-xl font-bold text-foreground">
               {profile?.username || 'User'}
             </h1>
-            {isOwnProfile && (profile?.role === 'AUTHOR' || profile?.role === 'TRANSLATOR') && (
-              <Link
-                href="/author/dashboard"
-                className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+            {isOwnProfile && (
+              <button
+                onClick={async () => {
+                  await supabase.auth.signOut();
+                  router.push('/auth');
+                }}
+                className="inline-flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-md text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
-                <Icon icon="mdi:pencil" className="text-lg" />
-                <span>Author</span>
-              </Link>
+                <Icon icon="heroicons:arrow-right-on-rectangle" className="w-4 h-4 flex-shrink-0" />
+                <span className="mt-[1px]">Logout</span>
+              </button>
             )}
           </div>
           <div className="flex gap-2">

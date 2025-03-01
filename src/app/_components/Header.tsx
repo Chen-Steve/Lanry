@@ -12,54 +12,76 @@ import { usePathname } from 'next/navigation';
 import { useScrollDirection } from '@/hooks/useScrollDirection';
 
 const MobileMenu = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
+  const pathname = usePathname();
+
+  const menuItems = [
+    { icon: "ph:house-bold", label: "Home", href: "/" },
+    { icon: "ph:shopping-cart-simple-bold", label: "Shop", href: "/shop" },
+    { icon: "mdi:bookmark-multiple", label: "Bookmarks", href: "/bookmarks" },
+    { icon: "ic:baseline-discord", label: "Discord", href: "https://discord.gg/DXHRpV3sxF", external: true },
+  ];
+
   return (
     <>
-      {/* Backdrop */}
+      {/* Backdrop with improved blur and opacity */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50"
+          className="fixed inset-0 bg-background/90 backdrop-blur-md z-50 transition-opacity duration-300"
           onClick={onClose}
         />
       )}
       
-      {/* Menu */}
+      {/* Menu with improved styling */}
       <div className={`
-        fixed right-0 top-0 h-full w-64 bg-background border-l border-border
-        transform transition-transform duration-300 ease-in-out z-50
-        ${isOpen ? 'translate-x-0' : 'translate-x-full'}
+        fixed right-0 top-0 h-full w-60 bg-background/95 backdrop-blur-sm
+        border-l border-border shadow-lg
+        transform transition-all duration-300 ease-out z-50
+        ${isOpen ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}
       `}>
-        <div className="p-4">
-          <button 
-            onClick={onClose}
-            className="absolute top-4 right-4 p-2 text-muted-foreground hover:text-foreground"
-            aria-label="Close menu"
-          >
-            <Icon icon="ph:x-bold" className="w-5 h-5" />
-          </button>
-          
-          <div className="space-y-4 mt-12">
-            <div className="flex items-center gap-3 p-2 text-muted-foreground hover:text-foreground">
+        <div className="flex flex-col h-full">
+          {/* Header */}
+          <div className="flex justify-end p-2">
+            <button 
+              onClick={onClose}
+              className="p-2 hover:bg-secondary rounded-lg text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="Close menu"
+            >
+              <Icon icon="ph:x-bold" className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Navigation Items */}
+          <nav className="flex-1 p-4">
+            <ul className="space-y-2">
+              {menuItems.map((item) => (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    target={item.external ? "_blank" : undefined}
+                    rel={item.external ? "noopener noreferrer" : undefined}
+                    onClick={onClose}
+                    className={`
+                      flex items-center gap-3 p-3 rounded-lg transition-colors
+                      ${pathname === item.href ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:bg-secondary/80 hover:text-foreground'}
+                    `}
+                  >
+                    <Icon icon={item.icon} className="w-5 h-5" />
+                    <span>{item.label}</span>
+                    {item.external && (
+                      <Icon icon="ph:arrow-square-out" className="w-4 h-4 ml-auto" />
+                    )}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+
+          {/* Footer */}
+          <div className="p-4 border-t border-border">
+            <div className="flex items-center gap-3 p-3 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors">
               <ThemeToggle />
               <span>Theme</span>
             </div>
-            
-            <Link 
-              href="https://discord.gg/DXHRpV3sxF"
-              className="flex items-center gap-3 p-2 text-muted-foreground hover:text-foreground"
-              onClick={onClose}
-            >
-              <Icon icon="ic:baseline-discord" className="w-5 h-5" />
-              <span>Join Discord</span>
-            </Link>
-            
-            <Link 
-              href="/bookmarks"
-              className="flex items-center gap-3 p-2 text-muted-foreground hover:text-foreground"
-              onClick={onClose}
-            >
-              <Icon icon="mdi:bookmark-multiple" className="w-5 h-5" />
-              <span>Bookmarks</span>
-            </Link>
           </div>
         </div>
       </div>
