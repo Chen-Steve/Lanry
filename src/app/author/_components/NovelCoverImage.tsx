@@ -2,6 +2,13 @@ import { Icon } from '@iconify/react';
 import Image from 'next/image';
 import { useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { createClient } from '@supabase/supabase-js';
+import { nanoid } from 'nanoid';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 interface NovelCoverImageProps {
   coverImageUrl?: string;
@@ -35,21 +42,26 @@ export default function NovelCoverImage({ coverImageUrl, onUpdate, onDelete }: N
 
     setIsUploadingCover(true);
     try {
-      const formData = new FormData();
-      formData.append('file', file);
+      // Generate a unique filename with original extension
+      const ext = file.name.split('.').pop();
+      const filename = `${nanoid()}.${ext}`;
 
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
+      // Upload directly to Supabase Storage
+      const { data, error } = await supabase.storage
+        .from('novel-covers')
+        .upload(filename, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Upload failed');
-      }
+      if (error) throw error;
 
-      const data = await response.json();
-      await onUpdate(data.url);
+      // Get the public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('novel-covers')
+        .getPublicUrl(data.path);
+
+      await onUpdate(publicUrl);
       toast.success('Cover image updated successfully');
     } catch (error) {
       console.error('Error uploading cover:', error);
