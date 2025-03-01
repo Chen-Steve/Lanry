@@ -4,7 +4,7 @@ import { nanoid } from 'nanoid';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
 export async function POST(req: Request) {
@@ -77,5 +77,5 @@ export async function POST(req: Request) {
   }
 }
 
-// Replace the old config with the new route segment config
-export const runtime = 'edge'; 
+// Remove the edge runtime config
+// export const runtime = 'edge'; 
