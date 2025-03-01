@@ -43,7 +43,7 @@ const MobileMenu = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
           <div className="flex justify-end p-2">
             <button 
               onClick={onClose}
-              className="p-2 hover:bg-secondary rounded-lg text-muted-foreground hover:text-foreground transition-colors"
+              className="p-2 hover:bg-secondary rounded-lg text-black hover:text-black dark:text-white dark:hover:text-white transition-colors"
               aria-label="Close menu"
             >
               <Icon icon="ph:x-bold" className="w-5 h-5" />
@@ -62,7 +62,9 @@ const MobileMenu = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
                     onClick={onClose}
                     className={`
                       flex items-center gap-3 p-3 rounded-lg transition-colors
-                      ${pathname === item.href ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:bg-secondary/80 hover:text-foreground'}
+                      ${pathname === item.href 
+                        ? 'bg-secondary text-black dark:text-white' 
+                        : 'text-black/80 hover:text-black hover:bg-secondary/80 dark:text-white/80 dark:hover:text-white'}
                     `}
                   >
                     <Icon icon={item.icon} className="w-5 h-5" />
@@ -78,7 +80,7 @@ const MobileMenu = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
 
           {/* Footer */}
           <div className="p-4 border-t border-border">
-            <div className="flex items-center gap-3 p-3 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors">
+            <div className="flex items-center gap-3 p-3 rounded-lg text-black/80 hover:text-black dark:text-white/80 dark:hover:text-white hover:bg-secondary/80 transition-colors">
               <ThemeToggle />
               <span>Theme</span>
             </div>
@@ -221,7 +223,7 @@ const Header = () => {
 
                 {/* Mobile Menu Button */}
                 <button
-                  className="md:hidden bg-secondary/80 backdrop-blur-sm p-2 text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-secondary/90"
+                  className="md:hidden bg-secondary/80 backdrop-blur-sm p-2 text-muted-foreground hover:text-foreground dark:text-white dark:hover:text-white transition-colors rounded-lg hover:bg-secondary/90"
                   onClick={() => setIsMobileMenuOpen(true)}
                   aria-label="Open menu"
                 >
