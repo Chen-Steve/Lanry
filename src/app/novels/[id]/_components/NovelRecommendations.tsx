@@ -3,35 +3,117 @@ import supabase from '@/lib/supabaseClient';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Icon } from '@iconify/react';
-import { Novel } from '@/types/database';
+import type { Novel, NovelCategory, Tag } from '@/types/database';
 
 interface NovelRecommendationsProps {
   novelId: string;
-  genre?: string;
+  categories?: NovelCategory[];
+  tags?: Tag[];
 }
 
-export const NovelRecommendations = ({ novelId }: NovelRecommendationsProps) => {
-  const [recommendations, setRecommendations] = useState<Novel[]>([]);
+interface CategoryJoinRow {
+  category: {
+    id: string;
+    name: string;
+  };
+}
+
+interface TagJoinRow {
+  tag: {
+    id: string;
+    name: string;
+  };
+}
+
+interface NovelWithRelations extends Omit<Novel, 'categories' | 'tags'> {
+  categories: CategoryJoinRow[];
+  tags: TagJoinRow[];
+  cover_image_url: string;
+}
+
+export const NovelRecommendations = ({ novelId, categories = [], tags = [] }: NovelRecommendationsProps) => {
+  const [recommendations, setRecommendations] = useState<(Novel & { relevanceScore?: number })[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchRecommendations = async () => {
       try {
+        if (!categories.length && !tags.length) {
+          // If no categories or tags, fetch random recommendations
+          const { data: novels, error } = await supabase
+            .from('novels')
+            .select('*')
+            .neq('id', novelId)
+            .limit(6);
+
+          if (error) throw error;
+          
+          const mappedNovels = (novels || []).map(novel => ({
+            ...novel,
+            coverImageUrl: novel.cover_image_url,
+            categories: [],
+            tags: []
+          })) as (Novel & { relevanceScore?: number })[];
+          
+          setRecommendations(mappedNovels);
+          return;
+        }
+
+        // Fetch novels that share categories or tags
+        const categoryIds = categories.map(category => category.id);
+        const tagIds = tags.map(tag => tag.id);
+
         const { data: novels, error } = await supabase
           .from('novels')
-          .select('*, bookmark_count')
+          .select(`
+            *,
+            categories:categories_on_novels(category:category_id(*)),
+            tags:tags_on_novels(tag:tag_id(*))
+          `)
           .neq('id', novelId)
-          .limit(6);
+          .or(`categories.category_id.in.(${categoryIds.join(',')}),tags.tag_id.in.(${tagIds.join(',')})`)
+          .limit(12);
 
         if (error) throw error;
-        
-        const mappedNovels = (novels || []).map(novel => ({
-          ...novel,
-          coverImageUrl: novel.cover_image_url,
-          bookmarkCount: novel.bookmark_count
-        }));
-        
-        setRecommendations(mappedNovels);
+
+        // Map and sort novels by relevance (number of matching categories and tags)
+        const mappedNovels = (novels as NovelWithRelations[] || []).map(novel => {
+          const novelCategories = novel.categories?.map(c => c.category.id) || [];
+          const novelTags = novel.tags?.map(t => t.tag.id) || [];
+          
+          // Calculate relevance score
+          const matchingCategories = categoryIds.filter(id => novelCategories.includes(id)).length;
+          const matchingTags = tagIds.filter(id => novelTags.includes(id)).length;
+          const relevanceScore = (matchingCategories * 2) + matchingTags; // Categories weighted more heavily
+
+          // Transform to match Novel type
+          const transformedNovel: Novel & { relevanceScore: number } = {
+            ...novel,
+            coverImageUrl: novel.cover_image_url,
+            categories: novel.categories.map(c => ({
+              id: c.category.id,
+              name: c.category.name,
+              created_at: '',
+              updated_at: ''
+            })),
+            tags: novel.tags.map(t => ({
+              id: t.tag.id,
+              name: t.tag.name,
+              createdAt: new Date(),
+              updatedAt: new Date()
+            })),
+            relevanceScore
+          };
+
+          return transformedNovel;
+        });
+
+        // Sort by relevance score and take top 6
+        const sortedNovels = mappedNovels
+          .sort((a, b) => (b.relevanceScore || 0) - (a.relevanceScore || 0))
+          .slice(0, 6);
+
+        setRecommendations(sortedNovels);
       } catch (error) {
         console.error('Error fetching recommendations:', error);
       } finally {
@@ -40,7 +122,7 @@ export const NovelRecommendations = ({ novelId }: NovelRecommendationsProps) => 
     };
 
     fetchRecommendations();
-  }, [novelId]);
+  }, [novelId, categories, tags]);
 
   if (isLoading) {
     return (
@@ -95,12 +177,9 @@ export const NovelRecommendations = ({ novelId }: NovelRecommendationsProps) => 
               )}
             </div>
             <div className="mt-1 px-0.5">
-              <h3 className="text-xs font-medium text-foreground line-clamp-1">
+              <h3 className="text-base sm:text-base font-bold text-foreground line-clamp-1">
                 {novel.title}
               </h3>
-              <div className="text-muted-foreground flex items-center gap-1.5 text-[10px] mt-0.5">
-                <span>{novel.bookmarkCount || 0} bookmarks</span>
-              </div>
             </div>
           </Link>
         ))}

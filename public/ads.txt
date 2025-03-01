@@ -1,1 +1,5 @@
-google.com, pub-1969691044413795, DIRECT, f08c47fec0942fa0 
+# Google AdSense
+google.com, pub-1969691044413795, DIRECT, f08c47fec0942fa0
+
+# Pubfuture
+#include https://adstxt.pubfuture.com/site/67c2994e21be5e217a7cfe77/www.lanry.space/ads.txt 

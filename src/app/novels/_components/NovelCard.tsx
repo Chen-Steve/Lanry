@@ -65,7 +65,7 @@ const NovelCard = ({ novel, isPriority = false, size = 'small', className = '' }
           chapterCount={totalChapters}
         />
         <div className="mt-0.5">
-          <h3 className="text-xs sm:text-sm text-foreground font-medium leading-none line-clamp-2">
+          <h3 className="text-base sm:text-base text-foreground leading-none line-clamp-2">
             {novel.title}
           </h3>
         </div>
