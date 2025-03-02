@@ -159,9 +159,7 @@ export default function CreateProfilePage() {
 
   return (
     <div className="min-h-screen p-6">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6">Create Your Profile</h1>
-        
+      <div className="max-w-4xl mx-auto">        
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
           <h2 className="text-xl font-semibold mb-4">Authentication Status</h2>
           {user ? (
