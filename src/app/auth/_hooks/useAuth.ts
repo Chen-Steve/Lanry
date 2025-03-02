@@ -118,13 +118,16 @@ export function useAuth() {
             console.log('[Auth] Creating profile for email user');
             await createUserProfile(session.user.id, session.user.email);
           }
+          
+          // Only redirect for non-Google sign-ins
+          // Add a small delay before redirect
+          await new Promise(resolve => setTimeout(resolve, 500));
+          console.log('[Auth] Redirecting to home page');
+          router.push('/');
+          router.refresh();
+        } else {
+          console.log('[Auth] Google sign-in detected, not redirecting (handled by callback route)');
         }
-        
-        // Add a small delay before redirect
-        await new Promise(resolve => setTimeout(resolve, 500));
-        console.log('[Auth] Redirecting to home page');
-        router.push('/');
-        router.refresh();
       }
     });
 
