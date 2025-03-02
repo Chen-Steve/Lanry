@@ -100,7 +100,9 @@ export default function DebugPage() {
         .insert([{
           id: readingTimeId,
           profile_id: user.id,
-          total_minutes: 0
+          total_minutes: 0,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         }]);
 
       if (readingTimeError) {
