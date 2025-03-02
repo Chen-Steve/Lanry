@@ -24,52 +24,8 @@ export async function GET(request: Request) {
       if (session?.user) {
         console.log('[Auth Callback] User authenticated:', session.user.id);
         
-        // Always ensure profile exists - check first
-        const { data: existingProfile } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('id', session.user.id)
-          .single();
-
-        // If profile doesn't exist, create it
-        if (!existingProfile) {
-          console.log('[Auth Callback] Creating profile for user:', session.user.id);
-          
-          // Create profile
-          const { error: createError } = await supabase
-            .from('profiles')
-            .insert([{
-              id: session.user.id,
-              username: session.user.email?.split('@')[0] || `user_${Math.random().toString(36).slice(2, 7)}`,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-              current_streak: 0,
-              role: 'USER',
-              coins: 0
-            }]);
-
-          if (createError) {
-            console.error('[Auth Callback] Error creating profile:', createError);
-            return NextResponse.redirect(new URL('/auth?error=profile_creation_failed', requestUrl.origin));
-          }
-
-          // Create reading time record
-          const { error: readingTimeError } = await supabase
-            .from('reading_time')
-            .insert([{
-              profile_id: session.user.id,
-              total_minutes: 0
-            }]);
-
-          if (readingTimeError) {
-            console.error('[Auth Callback] Error creating reading time:', readingTimeError);
-            // Continue anyway since the profile was created
-          }
-          
-          console.log('[Auth Callback] Successfully created profile for:', session.user.id);
-        } else {
-          console.log('[Auth Callback] Profile already exists for:', session.user.id);
-        }
+        // Redirect to the creating-profile page which will handle profile creation
+        return NextResponse.redirect(new URL('/auth/creating-profile', requestUrl.origin));
       }
     } catch (error) {
       console.error('[Auth Callback] Error exchanging code for session:', error);
@@ -77,6 +33,6 @@ export async function GET(request: Request) {
     }
   }
 
-  // URL to redirect to after sign in process completes
+  // Fallback redirect if something went wrong
   return NextResponse.redirect(new URL('/', requestUrl.origin));
 } 

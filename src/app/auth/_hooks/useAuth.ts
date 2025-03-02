@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import supabase from '@/lib/supabaseClient';
 import { generateUsername } from '@/utils/username';
-import { ensureProfile } from '@/utils/ensureProfile';
 
 type AuthMode = 'signin' | 'signup';
 
@@ -104,15 +103,27 @@ export function useAuth() {
           provider: session.user.app_metadata.provider
         });
 
-        // Ensure profile exists for the user
-        const result = await ensureProfile(supabase, session.user.id, session.user.email);
-        console.log('[Auth] Profile check result:', result);
+        // For Google sign-in, the callback route will handle the redirect to creating-profile
+        // For email sign-in, we need to handle profile creation here
+        if (session.user.app_metadata.provider !== 'google') {
+          // Check if profile exists
+          const { error: profileCheckError } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('id', session.user.id)
+            .single();
 
-        // Add a small delay before redirect
-        await new Promise(resolve => setTimeout(resolve, 500));
-        console.log('[Auth] Redirecting to home page');
-        router.push('/');
-        router.refresh();
+          if (profileCheckError && profileCheckError.code === 'PGRST116') {
+            console.log('[Auth] Creating profile for email user');
+            await createUserProfile(session.user.id, session.user.email);
+          }
+          
+          // Add a small delay before redirect
+          await new Promise(resolve => setTimeout(resolve, 500));
+          console.log('[Auth] Redirecting to home page');
+          router.push('/');
+          router.refresh();
+        }
       }
     });
 

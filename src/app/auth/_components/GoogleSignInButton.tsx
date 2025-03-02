@@ -38,7 +38,7 @@ export function GoogleSignInButton({ loading }: GoogleSignInButtonProps) {
       ) : (
         <>
           <Icon icon="flat-color-icons:google" className="text-xl" />
-          <span>Continue with Google</span>
+          <span>Sign in with Google</span>
         </>
       )}
     </a>
