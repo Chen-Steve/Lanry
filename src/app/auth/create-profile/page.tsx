@@ -17,7 +17,7 @@ interface Profile {
   coins: number;
 }
 
-export default function DebugPage() {
+export default function CreateProfilePage() {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -156,7 +156,7 @@ export default function DebugPage() {
   return (
     <div className="min-h-screen p-6">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6">Auth Debug Page</h1>
+        <h1 className="text-2xl font-bold mb-6">Create Your Profile</h1>
         
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
           <h2 className="text-xl font-semibold mb-4">Authentication Status</h2>
@@ -176,10 +176,6 @@ export default function DebugPage() {
                   <p className="text-sm text-gray-500 dark:text-gray-400">Provider:</p>
                   <p>{user.app_metadata?.provider || 'email'}</p>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Created At:</p>
-                  <p>{new Date(user.created_at).toLocaleString()}</p>
-                </div>
               </div>
             </div>
           ) : (
@@ -194,10 +190,6 @@ export default function DebugPage() {
               <p className="text-green-600 dark:text-green-400 font-medium">✓ Profile exists</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Profile ID:</p>
-                  <p className="font-mono text-sm break-all">{profile.id}</p>
-                </div>
-                <div>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Username:</p>
                   <p>{profile.username}</p>
                 </div>
@@ -205,15 +197,21 @@ export default function DebugPage() {
                   <p className="text-sm text-gray-500 dark:text-gray-400">Created At:</p>
                   <p>{new Date(profile.created_at).toLocaleString()}</p>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Coins:</p>
-                  <p>{profile.coins}</p>
-                </div>
+              </div>
+              
+              <div className="mt-4">
+                <Link 
+                  href="/"
+                  className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 inline-flex items-center gap-2"
+                >
+                  <Icon icon="mdi:home" className="w-5 h-5" />
+                  Continue to Home
+                </Link>
               </div>
             </div>
           ) : (
             <div>
-              <p className="text-red-600 dark:text-red-400 mb-4">No profile found</p>
+              <p className="text-amber-600 dark:text-amber-400 mb-4">Final Step! Create your profile!</p>
               {user && (
                 <button
                   onClick={createProfile}
@@ -226,7 +224,10 @@ export default function DebugPage() {
                       Creating Profile...
                     </>
                   ) : (
-                    <>Create Profile</>
+                    <>
+                      <Icon icon="mdi:account-plus" className="w-5 h-5" />
+                      Create Profile
+                    </>
                   )}
                 </button>
               )}
@@ -245,21 +246,6 @@ export default function DebugPage() {
             <p className="text-green-600 dark:text-green-400">{success}</p>
           </div>
         )}
-        
-        <div className="flex gap-4">
-          <Link 
-            href="/"
-            className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600"
-          >
-            Back to Home
-          </Link>
-          <Link 
-            href="/auth"
-            className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600"
-          >
-            Go to Auth Page
-          </Link>
-        </div>
       </div>
     </div>
   );

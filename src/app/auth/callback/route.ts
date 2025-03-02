@@ -58,8 +58,8 @@ export async function GET(request: Request) {
           
           if (createError) {
             console.error('[Auth Callback] Error creating profile:', createError);
-            // Redirect to debug page if profile creation fails
-            return NextResponse.redirect(new URL('/auth/debug', requestUrl.origin));
+            // Redirect to create-profile page if profile creation fails
+            return NextResponse.redirect(new URL('/auth/create-profile', requestUrl.origin));
           }
           
           // Create reading time record with UUID
@@ -76,15 +76,15 @@ export async function GET(request: Request) {
           
           if (readingTimeError) {
             console.error('[Auth Callback] Error creating reading time:', readingTimeError);
-            // Redirect to debug page if reading time creation fails
-            return NextResponse.redirect(new URL('/auth/debug', requestUrl.origin));
+            // Redirect to create-profile page if reading time creation fails
+            return NextResponse.redirect(new URL('/auth/create-profile', requestUrl.origin));
           }
           
           console.log('[Auth Callback] Profile created successfully');
         }
         
-        // Always redirect to debug page after Google sign-in
-        return NextResponse.redirect(new URL('/auth/debug', requestUrl.origin));
+        // Always redirect to create-profile page after Google sign-in
+        return NextResponse.redirect(new URL('/auth/create-profile', requestUrl.origin));
       }
     } catch (error) {
       console.error('[Auth Callback] Error processing callback:', error);
