@@ -11,7 +11,7 @@ interface AuthFormProps {
   credentials: {
     email: string;
     password: string;
-    confirmPassword: string;
+    confirmPassword?: string;
   };
   error: string;
   emailError: string;
@@ -87,7 +87,7 @@ export function AuthForm({
       {mode === 'signup' && (
         <>
           <PasswordInput
-            value={credentials.confirmPassword}
+            value={credentials.confirmPassword || ''}
             onChange={onConfirmPasswordChange}
             placeholder="Confirm Password"
             showPassword={showPassword}

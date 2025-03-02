@@ -4,11 +4,12 @@ import supabase from '@/lib/supabaseClient';
 import { generateUsername } from '@/utils/username';
 
 type AuthMode = 'signin' | 'signup';
-type Credentials = {
+
+interface Credentials {
   email: string;
   password: string;
-  confirmPassword: string;
-};
+  confirmPassword?: string;
+}
 
 export function useAuth() {
   const [mode, setMode] = useState<AuthMode>('signin');
