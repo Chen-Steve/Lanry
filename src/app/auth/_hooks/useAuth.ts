@@ -104,26 +104,25 @@ export function useAuth() {
           provider: session.user.app_metadata.provider
         });
 
-        // For email sign-in, we need to handle profile creation here
-        if (session.user.app_metadata.provider !== 'google') {
-          // Check if profile exists
-          const { error: profileCheckError } = await supabase
-            .from('profiles')
-            .select('id')
-            .eq('id', session.user.id)
-            .single();
+        // Check if profile exists for ALL sign-in methods
+        const { error: profileCheckError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('id', session.user.id)
+          .single();
 
-          if (profileCheckError && profileCheckError.code === 'PGRST116') {
-            console.log('[Auth] Creating profile for email user');
-            await createUserProfile(session.user.id, session.user.email);
-          }
-          
-          // Add a small delay before redirect
-          await new Promise(resolve => setTimeout(resolve, 500));
-          console.log('[Auth] Redirecting to home page');
-          router.push('/');
-          router.refresh();
+        if (profileCheckError && profileCheckError.code === 'PGRST116') {
+          console.log('[Auth] Creating profile for user:', session.user.id);
+          await createUserProfile(session.user.id, session.user.email);
+        } else {
+          console.log('[Auth] Profile already exists for user:', session.user.id);
         }
+        
+        // Add a small delay before redirect
+        await new Promise(resolve => setTimeout(resolve, 500));
+        console.log('[Auth] Redirecting to home page');
+        router.push('/');
+        router.refresh();
       }
     });
 
@@ -211,6 +210,7 @@ export function useAuth() {
   const handleGoogleSignIn = async () => {
     try {
       setGoogleLoading(true);
+      toast.loading('Signing in with Google...');
       
       // Get the current URL from window location
       const redirectUrl = typeof window !== 'undefined' 
@@ -223,9 +223,6 @@ export function useAuth() {
         throw new Error('No redirect URL available');
       }
 
-      // Show loading toast
-      const loadingToast = toast.loading('Signing in with Google...');
-
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -237,14 +234,8 @@ export function useAuth() {
         }
       });
 
-      if (error) {
-        toast.dismiss(loadingToast);
-        throw error;
-      }
-
-      // The redirect will happen automatically, but we'll show a toast
-      toast.dismiss(loadingToast);
-      toast.loading('Creating your profile...');
+      if (error) throw error;
+      // Profile creation will happen in the auth state change handler
       
     } catch (error) {
       console.error('Google sign-in error:', error);
