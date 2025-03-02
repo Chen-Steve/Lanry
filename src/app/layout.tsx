@@ -61,7 +61,7 @@ export default function RootLayout({
             gtag('config', 'G-PVZ6V89JEJ');
           `}
         </Script>
-        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1969691044413795"
+        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7984663674761616"
           crossOrigin="anonymous"></script>
       </head>
       <body className="min-h-screen relative">
