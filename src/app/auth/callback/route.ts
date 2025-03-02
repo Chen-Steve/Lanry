@@ -27,19 +27,14 @@ export async function GET(request: Request) {
       
       if (session?.user) {
         console.log('[Auth Callback] User authenticated:', session.user.id);
-        console.log('[Auth Callback] User email:', session.user.email);
-        console.log('[Auth Callback] Auth provider:', session.user.app_metadata.provider);
         
-        // EXPLICITLY create profile here for Google sign-in
-        // First check if profile exists
-        console.log('[Auth Callback] Checking if profile exists');
+        // Check if profile exists
         const { data: existingProfile } = await supabase
           .from('profiles')
           .select('id')
           .eq('id', session.user.id)
           .single();
         
-        // If profile doesn't exist or there was an error finding it, create it
         if (!existingProfile) {
           console.log('[Auth Callback] No existing profile found, creating profile for user:', session.user.id);
           
@@ -48,10 +43,7 @@ export async function GET(request: Request) {
             ? session.user.email.split('@')[0] 
             : `user_${Math.random().toString(36).slice(2, 7)}`;
           
-          console.log('[Auth Callback] Generated username:', username);
-          
           // Create profile
-          console.log('[Auth Callback] Inserting profile into database');
           const { error: createError } = await supabase
             .from('profiles')
             .insert([{
@@ -63,42 +55,41 @@ export async function GET(request: Request) {
               role: 'USER',
               coins: 0
             }]);
-
+          
           if (createError) {
             console.error('[Auth Callback] Error creating profile:', createError);
-            return NextResponse.redirect(new URL('/auth?error=profile_creation_failed', requestUrl.origin));
+            // Redirect to debug page if profile creation fails
+            return NextResponse.redirect(new URL('/auth/debug', requestUrl.origin));
           }
-
-          // Create reading time record
-          console.log('[Auth Callback] Creating reading time record');
+          
+          // Create reading time record with UUID
+          const readingTimeId = crypto.randomUUID();
           const { error: readingTimeError } = await supabase
             .from('reading_time')
             .insert([{
+              id: readingTimeId,
               profile_id: session.user.id,
               total_minutes: 0
             }]);
-
+          
           if (readingTimeError) {
             console.error('[Auth Callback] Error creating reading time:', readingTimeError);
-            // Continue anyway since the profile was created
+            // Redirect to debug page if reading time creation fails
+            return NextResponse.redirect(new URL('/auth/debug', requestUrl.origin));
           }
           
-          console.log('[Auth Callback] Successfully created profile for:', session.user.id);
-        } else {
-          console.log('[Auth Callback] Profile already exists for:', session.user.id);
+          console.log('[Auth Callback] Profile created successfully');
         }
-      } else {
-        console.log('[Auth Callback] No user in session after authentication');
+        
+        // Always redirect to debug page after Google sign-in
+        return NextResponse.redirect(new URL('/auth/debug', requestUrl.origin));
       }
     } catch (error) {
-      console.error('[Auth Callback] Error exchanging code for session:', error);
-      return NextResponse.redirect(new URL('/auth?error=auth_error', requestUrl.origin));
+      console.error('[Auth Callback] Error processing callback:', error);
+      return NextResponse.redirect(new URL('/auth?error=callback_error', requestUrl.origin));
     }
-  } else {
-    console.log('[Auth Callback] No code parameter found in URL');
   }
 
-  console.log('[Auth Callback] Redirecting to home page');
-  // Redirect to home page
-  return NextResponse.redirect(new URL('/', requestUrl.origin));
+  // Something went wrong, redirect to auth page
+  return NextResponse.redirect(new URL('/auth?error=no_code', requestUrl.origin));
 } 
