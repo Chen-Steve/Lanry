@@ -16,6 +16,7 @@ export default function AuthPage() {
     resetForm,
     validateEmail,
     googleLoading,
+    handleGoogleSignIn,
   } = useAuth();
 
   return (
@@ -34,6 +35,7 @@ export default function AuthPage() {
         <div className="space-y-2">
           <GoogleSignInButton 
             loading={googleLoading}
+            onClick={handleGoogleSignIn}
           />
         </div>
 
@@ -46,7 +48,7 @@ export default function AuthPage() {
           </div>
         </div>
 
-        <AuthForm
+        <AuthForm 
           mode={mode}
           credentials={credentials}
           error={error}
@@ -61,14 +63,13 @@ export default function AuthPage() {
           validateEmail={validateEmail}
         />
 
-        <button
-          type="button"
+        <button 
           onClick={resetForm}
-          className="w-full text-center text-foreground hover:text-muted-foreground text-sm py-1 font-medium"
+          className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           {mode === 'signin' 
             ? "Don't have an account? Sign up" 
-            : 'Already have an account? Sign in'}
+            : "Already have an account? Sign in"}
         </button>
       </div>
     </div>

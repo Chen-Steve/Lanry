@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import supabase from '@/lib/supabaseClient';
 import { generateUsername } from '@/utils/username';
+import { toast } from 'react-hot-toast';
 
 type AuthMode = 'signin' | 'signup';
 
@@ -103,7 +104,6 @@ export function useAuth() {
           provider: session.user.app_metadata.provider
         });
 
-        // For Google sign-in, the callback route will handle the redirect to creating-profile
         // For email sign-in, we need to handle profile creation here
         if (session.user.app_metadata.provider !== 'google') {
           // Check if profile exists
@@ -223,6 +223,9 @@ export function useAuth() {
         throw new Error('No redirect URL available');
       }
 
+      // Show loading toast
+      const loadingToast = toast.loading('Signing in with Google...');
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -234,12 +237,19 @@ export function useAuth() {
         }
       });
 
-      if (error) throw error;
-      // Profile creation will happen in the callback route
+      if (error) {
+        toast.dismiss(loadingToast);
+        throw error;
+      }
+
+      // The redirect will happen automatically, but we'll show a toast
+      toast.dismiss(loadingToast);
+      toast.loading('Creating your profile...');
       
     } catch (error) {
       console.error('Google sign-in error:', error);
       setError(error instanceof Error ? error.message : 'Google sign-in failed');
+      toast.error('Google sign-in failed');
     } finally {
       setGoogleLoading(false);
     }
