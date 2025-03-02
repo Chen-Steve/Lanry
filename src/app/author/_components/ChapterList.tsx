@@ -464,6 +464,7 @@ export default function ChapterList({
           novelId={novelId}
           chapterId={editingChapter?.id}
           userId={userId}
+          volumeId={selectedVolumeId}
           onCancel={() => {
             setShowChapterForm(false);
             setEditingChapter(null);
