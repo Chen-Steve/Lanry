@@ -93,10 +93,12 @@ export default function DebugPage() {
         return;
       }
 
-      // Create reading time record
+      // Create reading time record with UUID
+      const readingTimeId = crypto.randomUUID();
       const { error: readingTimeError } = await supabase
         .from('reading_time')
         .insert([{
+          id: readingTimeId,
           profile_id: user.id,
           total_minutes: 0
         }]);
