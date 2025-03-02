@@ -104,18 +104,20 @@ export function useAuth() {
           provider: session.user.app_metadata.provider
         });
 
-        // Check if profile exists for ALL sign-in methods
-        const { error: profileCheckError } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('id', session.user.id)
-          .single();
+        // For email sign-in, we need to handle profile creation here
+        // Google sign-in profile creation is handled in the callback route
+        if (session.user.app_metadata.provider !== 'google') {
+          // Check if profile exists
+          const { error: profileCheckError } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('id', session.user.id)
+            .single();
 
-        if (profileCheckError && profileCheckError.code === 'PGRST116') {
-          console.log('[Auth] Creating profile for user:', session.user.id);
-          await createUserProfile(session.user.id, session.user.email);
-        } else {
-          console.log('[Auth] Profile already exists for user:', session.user.id);
+          if (profileCheckError && profileCheckError.code === 'PGRST116') {
+            console.log('[Auth] Creating profile for email user');
+            await createUserProfile(session.user.id, session.user.email);
+          }
         }
         
         // Add a small delay before redirect
