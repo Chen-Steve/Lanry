@@ -3,7 +3,6 @@
 import { useAuth } from './_hooks/useAuth';
 import { AuthForm } from './_components/AuthForm';
 import { GoogleSignInButton } from './_components/GoogleSignInButton';
-import { DiscordSignInButton } from './_components/DiscordSignInButton';
 
 export default function AuthPage() {
   const {
@@ -17,7 +16,6 @@ export default function AuthPage() {
     resetForm,
     validateEmail,
     googleLoading,
-    discordLoading
   } = useAuth();
 
   return (
@@ -36,10 +34,6 @@ export default function AuthPage() {
         <div className="space-y-2">
           <GoogleSignInButton 
             loading={googleLoading}
-          />
-          
-          <DiscordSignInButton
-            loading={discordLoading}
           />
         </div>
 
