@@ -43,6 +43,10 @@ export default function CreateProfilePage() {
           
           if (profileError && profileError.code === 'PGRST116') {
             setProfile(null);
+            // Automatically create profile if it doesn't exist
+            setTimeout(() => {
+              createProfile(session.user);
+            }, 500);
           } else if (profileData) {
             setProfile(profileData);
           }
@@ -58,8 +62,8 @@ export default function CreateProfilePage() {
     checkAuth();
   }, []);
 
-  const createProfile = async () => {
-    if (!user) {
+  const createProfile = async (userToUse = user) => {
+    if (!userToUse) {
       setError('No authenticated user found');
       return;
     }
@@ -70,8 +74,8 @@ export default function CreateProfilePage() {
       setSuccess(null);
       
       // Generate username from email or random string
-      const username = user.email 
-        ? user.email.split('@')[0] 
+      const username = userToUse.email 
+        ? userToUse.email.split('@')[0] 
         : `user_${Math.random().toString(36).slice(2, 7)}`;
       
       console.log('Creating profile with username:', username);
@@ -80,7 +84,7 @@ export default function CreateProfilePage() {
       const { error: createError } = await supabase
         .from('profiles')
         .insert([{
-          id: user.id,
+          id: userToUse.id,
           username,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
@@ -103,7 +107,7 @@ export default function CreateProfilePage() {
       
       const readingTimeData = {
         id: readingTimeId,
-        profile_id: user.id,
+        profile_id: userToUse.id,
         total_minutes: 0,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
@@ -131,7 +135,7 @@ export default function CreateProfilePage() {
       const { data: profileData } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', user.id)
+        .eq('id', userToUse.id)
         .single();
       
       if (profileData) {
@@ -214,7 +218,7 @@ export default function CreateProfilePage() {
               <p className="text-amber-600 dark:text-amber-400 mb-4">Final Step! Create your profile!</p>
               {user && (
                 <button
-                  onClick={createProfile}
+                  onClick={() => createProfile(user)}
                   disabled={creating}
                   className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 disabled:opacity-50 flex items-center gap-2"
                 >

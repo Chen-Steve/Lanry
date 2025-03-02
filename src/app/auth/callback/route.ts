@@ -28,63 +28,79 @@ export async function GET(request: Request) {
       if (session?.user) {
         console.log('[Auth Callback] User authenticated:', session.user.id);
         
-        // Check if profile exists
-        const { data: existingProfile } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('id', session.user.id)
-          .single();
-        
-        if (!existingProfile) {
-          console.log('[Auth Callback] No existing profile found, creating profile for user:', session.user.id);
-          
-          // Generate username from email or random string
-          const username = session.user.email 
-            ? session.user.email.split('@')[0] 
-            : `user_${Math.random().toString(36).slice(2, 7)}`;
-          
-          // Create profile
-          const { error: createError } = await supabase
+        try {
+          // Check if profile exists
+          const { data: existingProfile } = await supabase
             .from('profiles')
-            .insert([{
-              id: session.user.id,
-              username,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-              current_streak: 0,
-              role: 'USER',
-              coins: 0
-            }]);
+            .select('id')
+            .eq('id', session.user.id)
+            .single();
           
-          if (createError) {
-            console.error('[Auth Callback] Error creating profile:', createError);
-            // Redirect to create-profile page if profile creation fails
-            return NextResponse.redirect(new URL('/auth/create-profile', requestUrl.origin));
+          if (!existingProfile) {
+            console.log('[Auth Callback] No existing profile found, attempting to create profile');
+            
+            try {
+              // Generate username from email or random string
+              const username = session.user.email 
+                ? session.user.email.split('@')[0] 
+                : `user_${Math.random().toString(36).slice(2, 7)}`;
+              
+              // Create profile
+              const { error: createError } = await supabase
+                .from('profiles')
+                .insert([{
+                  id: session.user.id,
+                  username,
+                  created_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString(),
+                  current_streak: 0,
+                  role: 'USER',
+                  coins: 0
+                }]);
+              
+              if (createError) {
+                console.error('[Auth Callback] Error creating profile:', createError);
+                // Continue to create-profile page for manual creation
+              } else {
+                // Try to create reading time record
+                try {
+                  const readingTimeId = crypto.randomUUID();
+                  const { error: readingTimeError } = await supabase
+                    .from('reading_time')
+                    .insert([{
+                      id: readingTimeId,
+                      profile_id: session.user.id,
+                      total_minutes: 0,
+                      created_at: new Date().toISOString(),
+                      updated_at: new Date().toISOString()
+                    }]);
+                  
+                  if (readingTimeError) {
+                    console.error('[Auth Callback] Error creating reading time:', readingTimeError);
+                  } else {
+                    console.log('[Auth Callback] Profile and reading time created successfully');
+                  }
+                } catch (readingTimeError) {
+                  console.error('[Auth Callback] Exception creating reading time:', readingTimeError);
+                }
+              }
+            } catch (profileError) {
+              console.error('[Auth Callback] Exception creating profile:', profileError);
+            }
+          } else {
+            console.log('[Auth Callback] Profile already exists for user:', session.user.id);
           }
-          
-          // Create reading time record with UUID
-          const readingTimeId = crypto.randomUUID();
-          const { error: readingTimeError } = await supabase
-            .from('reading_time')
-            .insert([{
-              id: readingTimeId,
-              profile_id: session.user.id,
-              total_minutes: 0,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            }]);
-          
-          if (readingTimeError) {
-            console.error('[Auth Callback] Error creating reading time:', readingTimeError);
-            // Redirect to create-profile page if reading time creation fails
-            return NextResponse.redirect(new URL('/auth/create-profile', requestUrl.origin));
-          }
-          
-          console.log('[Auth Callback] Profile created successfully');
+        } catch (checkError) {
+          console.error('[Auth Callback] Error checking for existing profile:', checkError);
         }
         
         // Always redirect to create-profile page after Google sign-in
+        // This page will handle both cases: profile exists or needs to be created
+        console.log('[Auth Callback] Redirecting to create-profile page');
         return NextResponse.redirect(new URL('/auth/create-profile', requestUrl.origin));
+      } else {
+        console.error('[Auth Callback] No user in session after authentication');
+        return NextResponse.redirect(new URL('/auth?error=no_user', requestUrl.origin));
       }
     } catch (error) {
       console.error('[Auth Callback] Error processing callback:', error);
@@ -93,5 +109,6 @@ export async function GET(request: Request) {
   }
 
   // Something went wrong, redirect to auth page
+  console.error('[Auth Callback] No code parameter found in URL');
   return NextResponse.redirect(new URL('/auth?error=no_code', requestUrl.origin));
 } 
