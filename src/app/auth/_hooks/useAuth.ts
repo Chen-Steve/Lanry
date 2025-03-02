@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import supabase from '@/lib/supabaseClient';
 import { generateUsername } from '@/utils/username';
+import { ensureProfile } from '@/utils/ensureProfile';
 
 type AuthMode = 'signin' | 'signup';
 
@@ -103,20 +104,9 @@ export function useAuth() {
           provider: session.user.app_metadata.provider
         });
 
-        // Check if profile exists
-        const { error: profileCheckError } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('id', session.user.id)
-          .single();
-
-        if (profileCheckError && profileCheckError.code === 'PGRST116') {
-          // Only create profile for Google sign-in here, email signup handles it separately
-          if (session.user.app_metadata.provider === 'google') {
-            console.log('[Auth] Creating profile for Google user');
-            await createUserProfile(session.user.id, session.user.email);
-          }
-        }
+        // Ensure profile exists for the user
+        const result = await ensureProfile(supabase, session.user.id, session.user.email);
+        console.log('[Auth] Profile check result:', result);
 
         // Add a small delay before redirect
         await new Promise(resolve => setTimeout(resolve, 500));

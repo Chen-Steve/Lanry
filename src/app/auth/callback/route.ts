@@ -25,14 +25,14 @@ export async function GET(request: Request) {
         console.log('[Auth Callback] User authenticated:', session.user.id);
         
         // Always ensure profile exists - check first
-        const { error: profileCheckError } = await supabase
+        const { data: existingProfile } = await supabase
           .from('profiles')
           .select('id')
           .eq('id', session.user.id)
           .single();
 
         // If profile doesn't exist, create it
-        if (profileCheckError && profileCheckError.code === 'PGRST116') {
+        if (!existingProfile) {
           console.log('[Auth Callback] Creating profile for user:', session.user.id);
           
           // Create profile
