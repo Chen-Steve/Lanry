@@ -130,7 +130,7 @@ model Profile {
   chapterComments    ChapterComment[]
   chapterThreadComments ChapterThreadComment[]
   novelComments      NovelComment[]
-  coins              Decimal @default(0) @db.Decimal(10,1)
+  coins              Decimal @default(0) @db.Decimal
   transactions       CoinTransaction[]
   chapterUnlocks     ChapterUnlock[]
   authoredNovels     Novel[]   @relation("NovelAuthor")
@@ -260,7 +260,7 @@ model ChapterUnlock {
   profile      Profile  @relation(fields: [profile_id], references: [id])
   novel        Novel    @relation(fields: [novel_id], references: [id])
 
-  @@unique([profile_id, novel_id, chapter_number])
+  @@unique([profile_id, novel_id, chapter_number, part_number])
   @@index([profile_id, novel_id, chapter_number, part_number])
   @@map("chapter_unlocks")
 }

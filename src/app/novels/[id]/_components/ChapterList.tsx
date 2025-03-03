@@ -45,13 +45,19 @@ export const ChapterList = ({
       counts.set(volume.id, {
         total: volumeChapters.length,
         regular: volumeChapters.filter(ch => {
-          return !ch.coins || ch.coins === 0 || // Free chapters
-                 !ch.publish_at || ch.publish_at <= now; // Published chapters
+          return !ch.coins || 
+                 ch.coins === 0 || // Free chapters
+                 !ch.publish_at || 
+                 ch.publish_at <= now || // Published chapters
+                 ch.isUnlocked || // Unlocked chapters
+                 ch.hasTranslatorAccess; // Translator access
         }).length,
         advanced: volumeChapters.filter(ch => {
-          return ch.publish_at && 
-                 ch.publish_at > now && // Future publish date
-                 ch.coins > 0;
+          const isAdvanced = ch.publish_at && 
+                           ch.publish_at > now && // Future publish date
+                           ch.coins > 0;
+          const isAccessible = ch.isUnlocked || ch.hasTranslatorAccess;
+          return isAdvanced && !isAccessible;
         }).length
       });
     });
@@ -96,18 +102,24 @@ export const ChapterList = ({
       const now = new Date().toISOString();
       setChapterCounts({
         regularCount: initialChapters.filter(ch => {
-          return !ch.coins || ch.coins === 0 || // Free chapters
-                 !ch.publish_at || ch.publish_at <= now; // Published chapters
+          return !ch.coins || 
+                 ch.coins === 0 || // Free chapters
+                 !ch.publish_at || 
+                 ch.publish_at <= now || // Published chapters
+                 ch.isUnlocked || // Unlocked chapters
+                 ch.hasTranslatorAccess; // Translator access
         }).length,
         advancedCount: initialChapters.filter(ch => {
-          return ch.publish_at && 
-                 ch.publish_at > now && // Future publish date
-                 ch.coins > 0;
+          const isAdvanced = ch.publish_at && 
+                           ch.publish_at > now && // Future publish date
+                           ch.coins > 0;
+          const isAccessible = ch.isUnlocked || ch.hasTranslatorAccess;
+          return isAdvanced && !isAccessible;
         }).length,
         total: initialChapters.length
       });
     }
-  }, []);
+  }, [initialChapters, loadChapters]);
 
   // Handle volume or advanced chapter toggle
   useEffect(() => {
@@ -137,9 +149,19 @@ export const ChapterList = ({
     }
   }, [currentPage, totalPages, loadChapters]);
 
-  const isChapterPublished = useCallback((publishAt: string | null | undefined): boolean => {
-    if (!publishAt) return true;
-    return new Date(publishAt) <= new Date();
+  const isChapterPublished = useCallback((chapter: ChapterListItem): boolean => {
+    // A chapter is considered "published" if:
+    // 1. It has no publish date OR
+    // 2. Its publish date has passed OR
+    // 3. It's free (no coins) OR
+    // 4. It's been unlocked by the user OR
+    // 5. User has translator access
+    return !chapter.publish_at || 
+           new Date(chapter.publish_at) <= new Date() ||
+           !chapter.coins ||
+           chapter.coins === 0 ||
+           !!chapter.isUnlocked ||
+           !!chapter.hasTranslatorAccess;
   }, []);
 
   const renderChapter = useCallback((chapter: ChapterListItem) => (
@@ -160,7 +182,7 @@ export const ChapterList = ({
           novelAuthorId={novelAuthorId}
           hasTranslatorAccess={chapter.hasTranslatorAccess}
           isUnlocked={chapter.isUnlocked}
-          isPublished={isChapterPublished(chapter.publish_at)}
+          isPublished={isChapterPublished(chapter)}
         />
       </div>
     </div>

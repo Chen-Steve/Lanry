@@ -387,16 +387,29 @@ export async function getChaptersForList({
     }
 
     // Get user's unlocks if authenticated
-    let unlockedChapterNumbers: number[] = [];
+    let unlockedChapters: { chapter_number: number; part_number: number | null; }[] = [];
     if (userId) {
       const { data: unlocks } = await supabase
         .from('chapter_unlocks')
-        .select('chapter_number')
+        .select('chapter_number, part_number')
         .eq('novel_id', novel.id)
         .eq('profile_id', userId);
 
-      unlockedChapterNumbers = unlocks?.map(u => u.chapter_number) || [];
+      unlockedChapters = unlocks || [];
     }
+
+    // Helper function to check if a chapter is unlocked
+    const isChapterUnlocked = (chapter: { chapter_number: number; part_number: number | null }) => {
+      return unlockedChapters.some(unlock => {
+        const chapterNumberMatches = unlock.chapter_number === chapter.chapter_number;
+        const partNumberMatches = 
+          // If both are null, they match
+          (unlock.part_number === null && chapter.part_number === null) ||
+          // If both are numbers and equal, they match
+          (unlock.part_number === chapter.part_number);
+        return chapterNumberMatches && partNumberMatches;
+      });
+    };
 
     // If user is not author/translator, filter based on advanced/regular and unlocks
     if (!hasTranslatorAccess) {
@@ -404,13 +417,13 @@ export async function getChaptersForList({
         // Get all chapters first for time comparison
         const { data: regularChapters } = await supabase
           .from('chapters')
-          .select('id, publish_at, coins, chapter_number')
+          .select('id, publish_at, coins, chapter_number, part_number')
           .eq('novel_id', novel.id);
 
         if (regularChapters) {
           const regularIds = regularChapters
             .filter(ch => {
-              const isUnlocked = unlockedChapterNumbers.includes(ch.chapter_number);
+              const isUnlocked = isChapterUnlocked(ch);
               const isFree = !ch.coins || ch.coins === 0;
               const isPublished = isChapterPublished(ch.publish_at);
               // A chapter is accessible if:
@@ -436,13 +449,17 @@ export async function getChaptersForList({
       // Get all chapters with coins that have future publish dates
       const { data: advancedChapters } = await supabase
         .from('chapters')
-        .select('id, publish_at')
+        .select('id, publish_at, chapter_number, part_number')
         .eq('novel_id', novel.id)
         .gt('coins', 0);
 
       if (advancedChapters) {
         const advancedIds = advancedChapters
-          .filter(ch => !isChapterPublished(ch.publish_at))
+          .filter(ch => {
+            const isNotPublished = !isChapterPublished(ch.publish_at);
+            const isNotUnlocked = !isChapterUnlocked(ch);
+            return isNotPublished && isNotUnlocked;
+          })
           .map(ch => ch.id);
 
         if (advancedIds.length > 0) {
@@ -451,11 +468,6 @@ export async function getChaptersForList({
           // No advanced chapters found, return empty result
           query = query.eq('id', '-1');
         }
-      }
-
-      // For non-translators, also filter out unlocked chapters
-      if (!hasTranslatorAccess && unlockedChapterNumbers?.length > 0) {
-        query = query.not('chapter_number', 'in', `(${unlockedChapterNumbers.join(',')})`);
       }
     }
 
@@ -472,7 +484,7 @@ export async function getChaptersForList({
     // Get counts for regular and advanced chapters
     const { data: allChapters } = await supabase
       .from('chapters')
-      .select('chapter_number, publish_at, coins')
+      .select('chapter_number, publish_at, coins, part_number')
       .eq('novel_id', novel.id);
 
     // Log some sample chapter data to understand the time comparisons
@@ -487,20 +499,12 @@ export async function getChaptersForList({
 
     const counts = {
       regularCount: allChapters?.filter(ch => {
-        const isUnlocked = unlockedChapterNumbers.includes(ch.chapter_number);
+        const isUnlocked = isChapterUnlocked(ch);
         const isFree = !ch.coins || ch.coins === 0;
         const isPublished = isChapterPublished(ch.publish_at);
-        
-        // A chapter is regular if:
-        // 1. User has unlocked it OR
-        // 2. It's free (no coins) OR
-        // 3. It's published (publish date has passed)
         return isUnlocked || isFree || isPublished;
       }).length || 0,
       advancedCount: allChapters?.filter(ch => {
-        // A chapter is advanced only if:
-        // 1. It's not published yet AND
-        // 2. Has coins
         return !isChapterPublished(ch.publish_at) && ch.coins > 0;
       }).length || 0,
       total: allChapters?.length || 0
@@ -510,7 +514,7 @@ export async function getChaptersForList({
     const processedChapters = chapters?.map(chapter => ({
       ...chapter,
       hasTranslatorAccess: includeAccess ? hasTranslatorAccess : undefined,
-      isUnlocked: includeAccess ? unlockedChapterNumbers.includes(chapter.chapter_number) : undefined,
+      isUnlocked: includeAccess ? isChapterUnlocked(chapter) : undefined,
       volume_id: chapter.volume_id
     })) as ChapterListItem[] || [];
 
