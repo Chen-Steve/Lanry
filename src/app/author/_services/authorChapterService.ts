@@ -504,10 +504,10 @@ export async function applyAutoReleaseSchedule(
       if (baseDate) {
         publishAt = getNextPublishingDate(new Date(baseDate), publishingDays);
       } else {
-        // First, try to find the latest advanced chapter
-        const { data: advancedChapters, error: advancedError } = await supabase
+        // First check for advanced chapters
+        const { data: advancedChapter, error: advancedError } = await supabase
           .from('chapters')
-          .select('publish_at, chapter_number')
+          .select('publish_at')
           .eq('novel_id', novelId)
           .not('id', 'eq', chapterId)
           .gt('publish_at', now.toISOString())
@@ -516,12 +516,15 @@ export async function applyAutoReleaseSchedule(
 
         if (advancedError) throw advancedError;
 
-        if (advancedChapters && advancedChapters.length > 0) {
-          // If we found an advanced chapter, use its publish date as base
-          publishAt = getNextPublishingDate(new Date(advancedChapters[0].publish_at), publishingDays);
+        if (advancedChapter && advancedChapter.length > 0) {
+          // Base new date on the latest advanced chapter
+          const lastPublishDate = new Date(advancedChapter[0].publish_at);
+          publishAt = new Date(lastPublishDate.getTime() + novel.auto_release_interval * 24 * 60 * 60 * 1000);
+          publishAt = adjustToTargetHour(publishAt);
         } else {
-          // If no advanced chapters exist, use current date
-          publishAt = getNextPublishingDate(now, publishingDays);
+          // No advanced chapters, use current time
+          publishAt = new Date(now.getTime() + novel.auto_release_interval * 24 * 60 * 60 * 1000);
+          publishAt = adjustToTargetHour(publishAt);
         }
       }
     }
@@ -535,10 +538,10 @@ export async function applyAutoReleaseSchedule(
       publishAt = adjustToTargetHour(localBaseDate);
       publishAt.setDate(publishAt.getDate() + novel.auto_release_interval);
     } else {
-      // First, try to find the latest advanced chapter
-      const { data: advancedChapters, error: advancedError } = await supabase
+      // First check for advanced chapters
+      const { data: advancedChapter, error: advancedError } = await supabase
         .from('chapters')
-        .select('publish_at, chapter_number')
+        .select('publish_at')
         .eq('novel_id', novelId)
         .not('id', 'eq', chapterId)
         .gt('publish_at', now.toISOString())
@@ -547,17 +550,15 @@ export async function applyAutoReleaseSchedule(
 
       if (advancedError) throw advancedError;
 
-      if (advancedChapters && advancedChapters.length > 0) {
-        // Convert UTC database time to local time
-        const lastPublishDate = new Date(advancedChapters[0].publish_at);
-        
-        // Calculate next date while preserving 5 AM local time
-        publishAt = new Date(lastPublishDate);
-        publishAt.setDate(publishAt.getDate() + novel.auto_release_interval);
+      if (advancedChapter && advancedChapter.length > 0) {
+        // Base new date on the latest advanced chapter
+        const lastPublishDate = new Date(advancedChapter[0].publish_at);
+        publishAt = new Date(lastPublishDate.getTime() + novel.auto_release_interval * 24 * 60 * 60 * 1000);
         publishAt = adjustToTargetHour(publishAt);
       } else {
-        // If no advanced chapters exist, start from tomorrow at 5 AM local time
-        publishAt = adjustToTargetHour(new Date(now.getTime() + 24 * 60 * 60 * 1000));
+        // No advanced chapters, use current time
+        publishAt = new Date(now.getTime() + novel.auto_release_interval * 24 * 60 * 60 * 1000);
+        publishAt = adjustToTargetHour(publishAt);
       }
     }
   }

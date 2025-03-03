@@ -190,16 +190,25 @@ export function GlobalSettingsModal({
                       <div className="space-y-2">
                         <label className="text-sm text-muted-foreground">Release Interval (days)</label>
                         <input
-                          type="number"
-                          min="1"
-                          value={settings.releaseInterval}
-                          onChange={(e) =>
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          value={settings.releaseInterval === 0 ? '' : settings.releaseInterval}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/[^0-9]/g, '');
                             setSettings({
                               ...settings,
-                              releaseInterval: Math.max(1, parseInt(e.target.value) || 1),
-                            })
-                          }
-                          className="w-full p-2 text-sm border border-border rounded bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                              releaseInterval: value === '' ? 0 : parseInt(value),
+                            });
+                          }}
+                          onBlur={(e) => {
+                            const value = parseInt(e.target.value) || 1;
+                            setSettings({
+                              ...settings,
+                              releaseInterval: Math.max(1, value),
+                            });
+                          }}
+                          className="w-full p-2 text-sm border border-border rounded bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           title="Release interval in days"
                           aria-label="Release interval in days"
                         />
