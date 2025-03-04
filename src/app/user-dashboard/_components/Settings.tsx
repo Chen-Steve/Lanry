@@ -5,6 +5,49 @@ import type { UserProfile } from '@/types/database';
 import Image from 'next/image';
 import { Icon } from '@iconify/react';
 import { uploadImage } from '@/services/uploadService';
+import { AnimatePresence, motion } from 'framer-motion';
+
+interface ToastProps {
+  message: string;
+  type: 'success' | 'error';
+  onClose: () => void;
+}
+
+const Toast = ({ message, type, onClose }: ToastProps) => {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onClose();
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 50 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 50 }}
+      className={`fixed bottom-4 right-4 z-50 px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 ${
+        type === 'success' 
+          ? 'bg-emerald-500 text-white' 
+          : 'bg-red-500 text-white'
+      }`}
+    >
+      <Icon 
+        icon={type === 'success' ? 'mdi:check-circle' : 'mdi:alert-circle'} 
+        className="w-5 h-5"
+      />
+      <span className="text-sm font-medium">{message}</span>
+      <button 
+        onClick={onClose}
+        className="ml-2 hover:opacity-80 transition-opacity"
+        aria-label="Close notification"
+      >
+        <Icon icon="mdi:close" className="w-4 h-4" />
+      </button>
+    </motion.div>
+  );
+};
 
 const fetchProfile = async (): Promise<UserProfile> => {
   const { data: { user } } = await supabase.auth.getUser();
@@ -31,6 +74,7 @@ const Settings = ({ profile }: SettingsProps) => {
   const [isUploading, setIsUploading] = useState(false);
   const [isEditingUsername, setIsEditingUsername] = useState(false);
   const [tempUsername, setTempUsername] = useState(profile.username || '');
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const queryClient = useQueryClient();
 
   const { isLoading, data } = useQuery({
@@ -114,12 +158,12 @@ const Settings = ({ profile }: SettingsProps) => {
       setProfileState(result.updatedProfile);
       setAvatarPreview(result.avatarUrl || null);
       queryClient.invalidateQueries({ queryKey: ['profile'] });
-      alert('Settings saved successfully!');
+      setToast({ message: 'Settings saved successfully!', type: 'success' });
       setAvatarFile(null);
       setIsEditingUsername(false);
     },
     onError: () => {
-      alert('Failed to save settings');
+      setToast({ message: 'Failed to save settings', type: 'error' });
     },
   });
 
@@ -235,6 +279,15 @@ const Settings = ({ profile }: SettingsProps) => {
           )}
         </div>
       </form>
+      <AnimatePresence>
+        {toast && (
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            onClose={() => setToast(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
