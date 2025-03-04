@@ -192,20 +192,6 @@ export const ChapterListItem = memo(function ChapterListItem({
   // Add helper to check if chapter is advanced
   const isAdvancedChapter = chapter.publish_at && new Date(chapter.publish_at) > new Date() && (chapter.coins ?? 0) > 0;
 
-  // Add more detailed logging
-  console.log('ChapterListItem detailed render conditions:', {
-    isPublished,
-    hasPublishDate: !!chapter.publish_at,
-    publishDate: chapter.publish_at,
-    hasTranslatorAccess,
-    isUnlocked,
-    isFree,
-    chapterNumber: chapter.chapter_number,
-    coins: chapter.coins,
-    isAdvancedChapter,
-    showTranslatorAccess: isAdvancedChapter && hasTranslatorAccess
-  });
-
   const chapterContent = (
     <div className="flex items-center justify-between w-full">
       <div className="flex items-center gap-2 min-w-0">
