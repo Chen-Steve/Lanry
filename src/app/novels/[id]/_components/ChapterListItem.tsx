@@ -231,7 +231,7 @@ export const ChapterListItem = memo(function ChapterListItem({
               className="text-xs font-bold text-red-500 dark:text-red-400 relative group cursor-help"
               aria-label="18+ content"
             >
-              H
+              M
               <span className="absolute hidden group-hover:block top-full right-0 mt-1 px-2 py-1 text-xs font-medium bg-black/90 text-white rounded whitespace-nowrap">
                 18+
               </span>
