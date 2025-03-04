@@ -57,6 +57,15 @@ const Settings = ({ profile }: SettingsProps) => {
     }
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const updatedProfile = {
+      ...profileState,
+      username: isEditingUsername ? tempUsername : profileState.username
+    };
+    mutation.mutate(updatedProfile);
+  };
+
   const mutation = useMutation({
     mutationFn: async (updatedProfile: UserProfile) => {
       setIsUploading(true);
@@ -64,57 +73,55 @@ const Settings = ({ profile }: SettingsProps) => {
         let avatarUrl = updatedProfile.avatar_url;
 
         if (avatarFile) {
-          // console.log('Uploading new avatar file:', avatarFile.name);
           avatarUrl = await uploadImage(avatarFile, profileState.id);
-          // console.log('Got new avatar URL:', avatarUrl);
-          // Update preview with the new URL immediately
           setAvatarPreview(avatarUrl);
         }
 
-        // console.log('Updating profile with avatar URL:', avatarUrl);
-        const { error } = await supabase
+        // Get current profile data first
+        const { data: currentProfile, error: fetchError } = await supabase
           .from('profiles')
-          .upsert({
-            ...updatedProfile,
-            avatar_url: avatarUrl,
-            updated_at: new Date().toISOString(),
-          });
+          .select('*')
+          .eq('id', profileState.id)
+          .single();
+
+        if (fetchError) throw fetchError;
+
+        // Merge current profile with updates
+        const mergedProfile = {
+          ...currentProfile,
+          username: updatedProfile.username,
+          avatar_url: avatarUrl,
+          updated_at: new Date().toISOString(),
+        };
+
+        const { data, error } = await supabase
+          .from('profiles')
+          .upsert(mergedProfile)
+          .select()
+          .single();
 
         if (error) throw error;
-        return avatarUrl; // Return the URL for onSuccess handler
+        return { avatarUrl, updatedProfile: data };
       } finally {
         setIsUploading(false);
       }
     },
-    onSuccess: (newAvatarUrl) => {
-      // Clean up any object URLs
+    onSuccess: (result) => {
       if (avatarPreview && (avatarPreview.startsWith('blob:') || avatarPreview.startsWith('data:'))) {
         URL.revokeObjectURL(avatarPreview);
       }
       
-      // Update the preview with the final URL
-      if (newAvatarUrl) {
-        setAvatarPreview(newAvatarUrl);
-      }
-      
+      setProfileState(result.updatedProfile);
+      setAvatarPreview(result.avatarUrl || null);
       queryClient.invalidateQueries({ queryKey: ['profile'] });
       alert('Settings saved successfully!');
       setAvatarFile(null);
+      setIsEditingUsername(false);
     },
     onError: () => {
-      // console.error('Error saving settings:', error);
       alert('Failed to save settings');
     },
   });
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (isEditingUsername) {
-      setProfileState({ ...profileState, username: tempUsername });
-    }
-    setIsEditingUsername(false);
-    mutation.mutate(profileState);
-  };
 
   const handleUsernameEdit = () => {
     if (isEditingUsername) {
