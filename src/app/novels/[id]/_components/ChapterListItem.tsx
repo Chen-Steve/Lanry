@@ -189,6 +189,16 @@ export const ChapterListItem = memo(function ChapterListItem({
 
   const isFree = !chapter.coins || chapter.coins === 0;
 
+  console.log('ChapterListItem render conditions:', {
+    isPublished,
+    hasPublishDate: !!chapter.publish_at,
+    hasTranslatorAccess,
+    isUnlocked,
+    isFree,
+    chapterNumber: chapter.chapter_number,
+    coins: chapter.coins
+  });
+
   const chapterContent = (
     <div className="flex items-center justify-between w-full">
       <div className="flex items-center gap-2 min-w-0">
@@ -205,10 +215,14 @@ export const ChapterListItem = memo(function ChapterListItem({
         )}
       </div>
       <div className="flex items-center gap-1.5 text-xs whitespace-nowrap">
-        {!isPublished && chapter.publish_at ? (
-          isUnlocked || hasTranslatorAccess ? (
+        {hasTranslatorAccess ? (
+          <span className="text-emerald-600 dark:text-emerald-400">
+            Translator Access
+          </span>
+        ) : !isPublished && chapter.publish_at ? (
+          isUnlocked ? (
             <span className="text-emerald-600 dark:text-emerald-400">
-              {hasTranslatorAccess ? 'Translator Access' : 'Unlocked'}
+              Unlocked
             </span>
           ) : isFree ? (
             <span className="text-muted-foreground">Free</span>

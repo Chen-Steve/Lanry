@@ -40,6 +40,7 @@ function isChapterPublished(publishAt: string | null): boolean {
 export async function getChapter(novelId: string, chapterNumber: number, partNumber?: number | null): Promise<ChapterWithNovel | null> {
   try {
     const { data: { user } } = await supabase.auth.getUser();
+    console.log('Current user:', user?.id);
 
     // First get the novel to check if user is author
     const { data: novel, error: novelError } = await supabase
@@ -48,7 +49,11 @@ export async function getChapter(novelId: string, chapterNumber: number, partNum
       .or(`id.eq.${novelId},slug.eq.${novelId}`)
       .single();
 
-    if (novelError || !novel) return null;
+    if (novelError || !novel) {
+      console.log('Novel error or not found:', novelError);
+      return null;
+    }
+    console.log('Novel author_profile_id:', novel.author_profile_id);
 
     // Get the chapter
     let query = supabase
@@ -74,21 +79,38 @@ export async function getChapter(novelId: string, chapterNumber: number, partNum
 
     const { data: chapter, error } = await query.single();
 
-    if (error || !chapter) return null;
+    if (error || !chapter) {
+      console.log('Chapter error or not found:', error);
+      return null;
+    }
 
     // Get user's profile to check role
     let hasTranslatorAccess = false;
     if (user) {
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', user.id)
         .single();
 
+      if (profileError) {
+        console.log('Profile error:', profileError);
+      }
+      console.log('User profile:', profile);
+
       // Check if user is the author or a translator with matching author_profile_id
       const isAuthor = novel.author_profile_id === user.id;
       const isTranslator = profile?.role === 'TRANSLATOR' && novel.author_profile_id === user.id;
       hasTranslatorAccess = isAuthor || isTranslator;
+
+      console.log('Access check:', {
+        isAuthor,
+        isTranslator,
+        userRole: profile?.role,
+        hasTranslatorAccess,
+        userId: user.id,
+        authorId: novel.author_profile_id
+      });
     }
 
     // Add translator access information to the chapter data
@@ -388,23 +410,41 @@ export async function getChaptersForList({
       .single();
 
     if (novelError || !novel) {
+      console.log('Novel error or not found:', novelError);
       throw new Error('Novel not found');
     }
+    console.log('Novel author_profile_id:', novel.author_profile_id);
 
     // Check if user has translator access
     const { data: { user } } = await supabase.auth.getUser();
+    console.log('Current user:', user?.id);
+    
     let hasTranslatorAccess = false;
     if (user) {
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', user.id)
         .single();
 
+      if (profileError) {
+        console.log('Profile error:', profileError);
+      }
+      console.log('User profile:', profile);
+
       // Check if user is the author or a translator with matching author_profile_id
       const isAuthor = novel.author_profile_id === user.id;
       const isTranslator = profile?.role === 'TRANSLATOR' && novel.author_profile_id === user.id;
       hasTranslatorAccess = isAuthor || isTranslator;
+
+      console.log('Access check:', {
+        isAuthor,
+        isTranslator,
+        userRole: profile?.role,
+        hasTranslatorAccess,
+        userId: user.id,
+        authorId: novel.author_profile_id
+      });
     }
 
     // Get all chapters
