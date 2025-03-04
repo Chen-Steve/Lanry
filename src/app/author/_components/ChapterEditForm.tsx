@@ -89,8 +89,8 @@ export default function ChapterEditForm({
         part_number: formData.partNumber ? parseInt(formData.partNumber) : null,
         title: formData.title,
         content: formData.content,
-        publish_at: autoReleaseEnabled ? null : (formData.publishAt || null),
-        coins: autoReleaseEnabled ? Math.max(1, parseInt(formData.coins) || 1) : parseInt(formData.coins) || 0,
+        publish_at: formData.publishAt || null,
+        coins: parseInt(formData.coins) || 0,
         author_thoughts: formData.authorThoughts,
         age_rating: formData.ageRating,
       };
