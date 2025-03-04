@@ -189,6 +189,9 @@ export const ChapterListItem = memo(function ChapterListItem({
 
   const isFree = !chapter.coins || chapter.coins === 0;
 
+  // Add helper to check if chapter is advanced
+  const isAdvancedChapter = chapter.publish_at && new Date(chapter.publish_at) > new Date() && (chapter.coins ?? 0) > 0;
+
   // Add more detailed logging
   console.log('ChapterListItem detailed render conditions:', {
     isPublished,
@@ -199,7 +202,8 @@ export const ChapterListItem = memo(function ChapterListItem({
     isFree,
     chapterNumber: chapter.chapter_number,
     coins: chapter.coins,
-    showTranslatorAccess: !isPublished && hasTranslatorAccess && (chapter.coins ?? 0) > 0
+    isAdvancedChapter,
+    showTranslatorAccess: isAdvancedChapter && hasTranslatorAccess
   });
 
   const chapterContent = (
@@ -218,7 +222,7 @@ export const ChapterListItem = memo(function ChapterListItem({
         )}
       </div>
       <div className="flex items-center gap-1.5 text-xs whitespace-nowrap">
-        {!isPublished && hasTranslatorAccess && (chapter.coins ?? 0) > 0 ? (
+        {isAdvancedChapter && hasTranslatorAccess ? (
           <span className="text-emerald-600 dark:text-emerald-400">
             Translator Access
           </span>
