@@ -85,8 +85,10 @@ export async function getChapter(novelId: string, chapterNumber: number, partNum
         .eq('id', user.id)
         .single();
 
-      // Check if user is a translator and matches the author_profile_id
-      hasTranslatorAccess = profile?.role === 'TRANSLATOR' && novel.author_profile_id === user.id;
+      // Check if user is the author or a translator with matching author_profile_id
+      const isAuthor = novel.author_profile_id === user.id;
+      const isTranslator = profile?.role === 'TRANSLATOR' && novel.author_profile_id === user.id;
+      hasTranslatorAccess = isAuthor || isTranslator;
     }
 
     // Add translator access information to the chapter data
@@ -399,8 +401,10 @@ export async function getChaptersForList({
         .eq('id', user.id)
         .single();
 
-      // Check if user is a translator and matches the author_profile_id
-      hasTranslatorAccess = profile?.role === 'TRANSLATOR' && novel.author_profile_id === user.id;
+      // Check if user is the author or a translator with matching author_profile_id
+      const isAuthor = novel.author_profile_id === user.id;
+      const isTranslator = profile?.role === 'TRANSLATOR' && novel.author_profile_id === user.id;
+      hasTranslatorAccess = isAuthor || isTranslator;
     }
 
     // Get all chapters
