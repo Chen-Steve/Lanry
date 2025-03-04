@@ -215,12 +215,12 @@ export const ChapterListItem = memo(function ChapterListItem({
         )}
       </div>
       <div className="flex items-center gap-1.5 text-xs whitespace-nowrap">
-        {hasTranslatorAccess ? (
-          <span className="text-emerald-600 dark:text-emerald-400">
-            Translator Access
-          </span>
-        ) : !isPublished && chapter.publish_at ? (
-          isUnlocked ? (
+        {!isPublished && chapter.publish_at ? (
+          hasTranslatorAccess ? (
+            <span className="text-emerald-600 dark:text-emerald-400">
+              Translator Access
+            </span>
+          ) : isUnlocked ? (
             <span className="text-emerald-600 dark:text-emerald-400">
               Unlocked
             </span>
