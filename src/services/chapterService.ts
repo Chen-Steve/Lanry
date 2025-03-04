@@ -176,17 +176,25 @@ export async function getChapterNavigation(novelId: string, currentChapterNumber
       return { prevChapter: null, nextChapter: null, availableChapters: [], volumes: volumes || [] };
     }
 
-    // If user is authenticated, get their unlocks
-    let userUnlocks: number[] = [];
+    // If user is authenticated, get their unlocks with part numbers
+    let unlockedChapters: { chapter_number: number; part_number: number | null; }[] = [];
     if (user) {
       const { data: unlocks } = await supabase
         .from('chapter_unlocks')
-        .select('chapter_number')
+        .select('chapter_number, part_number')
         .eq('novel_id', novel.id)
         .eq('profile_id', user.id);
       
-      userUnlocks = unlocks?.map(u => u.chapter_number) || [];
+      unlockedChapters = unlocks || [];
     }
+
+    // Helper function to check if a chapter is unlocked
+    const isChapterUnlocked = (chapter: { chapter_number: number; part_number: number | null }) => {
+      return unlockedChapters.some(unlock => 
+        unlock.chapter_number === chapter.chapter_number && 
+        unlock.part_number === chapter.part_number // Exact match required for both chapter number and part number
+      );
+    };
 
     // Get current date in UTC for filtering
     const nowUTC = new Date().toISOString();
@@ -196,7 +204,7 @@ export async function getChapterNavigation(novelId: string, currentChapterNumber
     const accessibleChapters = chapters.map(chapter => {
       if (hasFullAccess) return { ...chapter, isAccessible: true };
 
-      const isUnlocked = userUnlocks.includes(chapter.chapter_number);
+      const isUnlocked = isChapterUnlocked(chapter);
       const isFree = !chapter.coins || chapter.coins === 0;
       const publishDate = chapter.publish_at;
       
@@ -258,7 +266,7 @@ export async function getTotalChapters(novelId: string): Promise<number> {
     // Get all chapters
     const { data: chapters } = await supabase
       .from('chapters')
-      .select('chapter_number, publish_at, coins')
+      .select('chapter_number, part_number, publish_at, coins')
       .eq('novel_id', novel.id)
       .order('chapter_number', { ascending: false });
 
@@ -269,22 +277,30 @@ export async function getTotalChapters(novelId: string): Promise<number> {
       return chapters.length;
     }
 
-    // If user is authenticated, get their unlocks
-    let userUnlocks: number[] = [];
+    // If user is authenticated, get their unlocks with part numbers
+    let unlockedChapters: { chapter_number: number; part_number: number | null; }[] = [];
     if (user) {
       const { data: unlocks } = await supabase
         .from('chapter_unlocks')
-        .select('chapter_number')
+        .select('chapter_number, part_number')
         .eq('novel_id', novel.id)
         .eq('profile_id', user.id);
       
-      userUnlocks = unlocks?.map(u => u.chapter_number) || [];
+      unlockedChapters = unlocks || [];
     }
+
+    // Helper function to check if a chapter is unlocked
+    const isChapterUnlocked = (chapter: { chapter_number: number; part_number: number | null }) => {
+      return unlockedChapters.some(unlock => 
+        unlock.chapter_number === chapter.chapter_number && 
+        unlock.part_number === chapter.part_number // Exact match required for both chapter number and part number
+      );
+    };
 
     // Count chapters that are either published or unlocked
     const accessibleChapters = chapters.filter(chapter => {
       const isPublished = !chapter.publish_at || chapter.publish_at <= new Date().toISOString();
-      const isUnlocked = userUnlocks.includes(chapter.chapter_number);
+      const isUnlocked = isChapterUnlocked(chapter);
       return isPublished || isUnlocked;
     });
 
@@ -400,15 +416,10 @@ export async function getChaptersForList({
 
     // Helper function to check if a chapter is unlocked
     const isChapterUnlocked = (chapter: { chapter_number: number; part_number: number | null }) => {
-      return unlockedChapters.some(unlock => {
-        const chapterNumberMatches = unlock.chapter_number === chapter.chapter_number;
-        const partNumberMatches = 
-          // If both are null, they match
-          (unlock.part_number === null && chapter.part_number === null) ||
-          // If both are numbers and equal, they match
-          (unlock.part_number === chapter.part_number);
-        return chapterNumberMatches && partNumberMatches;
-      });
+      return unlockedChapters.some(unlock => 
+        unlock.chapter_number === chapter.chapter_number && 
+        unlock.part_number === chapter.part_number // Exact match required for both chapter number and part number
+      );
     };
 
     // If user is not author/translator, filter based on advanced/regular and unlocks
