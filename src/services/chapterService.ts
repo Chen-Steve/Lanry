@@ -44,7 +44,7 @@ export async function getChapter(novelId: string, chapterNumber: number, partNum
     // First get the novel to check if user is author
     const { data: novel, error: novelError } = await supabase
       .from('novels')
-      .select('id, author_profile_id, translator_id, is_author_name_custom')
+      .select('id, author_profile_id')
       .or(`id.eq.${novelId},slug.eq.${novelId}`)
       .single();
 
@@ -59,9 +59,7 @@ export async function getChapter(novelId: string, chapterNumber: number, partNum
           id,
           title,
           author,
-          author_profile_id,
-          translator_id,
-          is_author_name_custom
+          author_profile_id
         )
       `)
       .eq('novel_id', novel.id)
@@ -78,11 +76,18 @@ export async function getChapter(novelId: string, chapterNumber: number, partNum
 
     if (error || !chapter) return null;
 
-    // Check if user is the author, translator, or created the novel as a translator
-    const isAuthor = user && novel.author_profile_id === user.id;
-    const isTranslator = user && novel.translator_id === user.id;
-    const isTranslatorCreated = user && novel.author_profile_id === user.id && novel.is_author_name_custom === true;
-    const hasTranslatorAccess = isAuthor || isTranslator || isTranslatorCreated;
+    // Get user's profile to check role
+    let hasTranslatorAccess = false;
+    if (user) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      // Check if user is a translator and matches the author_profile_id
+      hasTranslatorAccess = profile?.role === 'TRANSLATOR' && novel.author_profile_id === user.id;
+    }
 
     // Add translator access information to the chapter data
     const chapterWithAccess = {
@@ -376,7 +381,7 @@ export async function getChaptersForList({
   try {
     const { data: novel, error: novelError } = await supabase
       .from('novels')
-      .select('id, author_profile_id, translator_id, is_author_name_custom')
+      .select('id, author_profile_id')
       .or(`id.eq.${novelId},slug.eq.${novelId}`)
       .single();
 
@@ -384,12 +389,19 @@ export async function getChaptersForList({
       throw new Error('Novel not found');
     }
 
-    // Check if user is author, translator, or created the novel as a translator
+    // Check if user has translator access
     const { data: { user } } = await supabase.auth.getUser();
-    const isAuthor = user && novel.author_profile_id === user.id;
-    const isTranslator = user && novel.translator_id === user.id;
-    const isTranslatorCreated = user && novel.author_profile_id === user.id && novel.is_author_name_custom === true;
-    const hasTranslatorAccess = isAuthor || isTranslator || isTranslatorCreated;
+    let hasTranslatorAccess = false;
+    if (user) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      // Check if user is a translator and matches the author_profile_id
+      hasTranslatorAccess = profile?.role === 'TRANSLATOR' && novel.author_profile_id === user.id;
+    }
 
     // Get all chapters
     let query = supabase
@@ -418,11 +430,11 @@ export async function getChaptersForList({
     const isChapterUnlocked = (chapter: { chapter_number: number; part_number: number | null }) => {
       return unlockedChapters.some(unlock => 
         unlock.chapter_number === chapter.chapter_number && 
-        unlock.part_number === chapter.part_number // Exact match required for both chapter number and part number
+        unlock.part_number === chapter.part_number
       );
     };
 
-    // If user is not author/translator, filter based on advanced/regular and unlocks
+    // If user is not a translator, filter based on advanced/regular and unlocks
     if (!hasTranslatorAccess) {
       if (!showAdvanced) {
         // Get all chapters first for time comparison
@@ -437,10 +449,6 @@ export async function getChaptersForList({
               const isUnlocked = isChapterUnlocked(ch);
               const isFree = !ch.coins || ch.coins === 0;
               const isPublished = isChapterPublished(ch.publish_at);
-              // A chapter is accessible if:
-              // 1. User has unlocked it OR
-              // 2. It's free (no coins) OR
-              // 3. It's published (publish date has passed)
               return isUnlocked || isFree || isPublished;
             })
             .map(ch => ch.id);
@@ -448,7 +456,6 @@ export async function getChaptersForList({
           if (regularIds.length > 0) {
             query = query.in('id', regularIds);
           } else {
-            // No regular chapters found, return empty result
             query = query.eq('id', '-1');
           }
         }
