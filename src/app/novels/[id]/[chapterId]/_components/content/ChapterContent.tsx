@@ -203,6 +203,18 @@ export default function ChapterContent({
 
   return (
     <div className="max-w-2xl mx-auto">
+      {/* Top Ad Unit */}
+      {!isIndefinitelyLocked && (
+        <div className="mb-8 max-w-2xl mx-auto">
+          <div id="pf-13995-1">
+            <script dangerouslySetInnerHTML={{
+              __html: `window.pubfuturetag = window.pubfuturetag || [];
+              window.pubfuturetag.push({unit: "67c7cde504d811003cdb4e14", id: "pf-13995-1"})`
+            }} />
+          </div>
+        </div>
+      )}
+
       <div 
         className="prose dark:prose-invert max-w-none"
         style={{ 
@@ -343,6 +355,18 @@ export default function ChapterContent({
               </div>
             )}
           </>
+        )}
+
+        {/* Ad Unit */}
+        {!isIndefinitelyLocked && (
+          <div className="mt-8 max-w-2xl mx-auto">
+            <div id="pf-13998-1">
+              <script dangerouslySetInnerHTML={{
+                __html: `window.pubfuturetag = window.pubfuturetag || [];
+                window.pubfuturetag.push({unit: "67c7d9a804d811003cdb6267", id: "pf-13998-1"})`
+              }} />
+            </div>
+          </div>
         )}
 
         {/* Like Button Section */}
