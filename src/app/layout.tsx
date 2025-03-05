@@ -66,6 +66,12 @@ export default function RootLayout({
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7984663674761616"
           crossOrigin="anonymous"
         />
+        <Script
+          async
+          data-cfasync="false"
+          src="https://cdn.pubfuture-ad.com/v2/unit/pt.js"
+          strategy="afterInteractive"
+        />
       </head>
       <body className="min-h-screen relative">
         <Providers>
