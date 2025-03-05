@@ -86,6 +86,14 @@ export default function RootLayout({
               </div>
               <Toaster position="bottom-right" />
               <CookieConsent />
+              <div id="pf-13996-1">
+                <Script id="pubfuture-ad-unit">
+                  {`
+                    window.pubfuturetag = window.pubfuturetag || [];
+                    window.pubfuturetag.push({unit: "67c7cdf5b588da003cdb26a5", id: "pf-13996-1"})
+                  `}
+                </Script>
+              </div>
             </AnalyticsWrapper>
           </ThemeProvider>
         </Providers>
