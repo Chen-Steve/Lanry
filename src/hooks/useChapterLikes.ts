@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import supabase from '@/lib/supabaseClient';
 
 interface UseChapterLikesProps {
@@ -11,32 +11,44 @@ export function useChapterLikes({ chapterNumber, novelId }: UseChapterLikesProps
   const [isLiked, setIsLiked] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchLikes = async () => {
-      try {
-        const { data: session } = await supabase.auth.getSession();
-        const token = session?.session?.access_token;
+  const fetchLikes = useCallback(async () => {
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      const token = session?.session?.access_token;
 
-        const response = await fetch(`/api/chapters/${chapterNumber}/likes?novelId=${novelId}`, {
-          headers: token ? {
-            'Authorization': `Bearer ${token}`
-          } : {}
-        });
+      const response = await fetch(`/api/chapters/${chapterNumber}/likes?novelId=${novelId}`, {
+        headers: token ? {
+          'Authorization': `Bearer ${token}`
+        } : {},
+        // Add cache: 'no-store' to prevent caching
+        cache: 'no-store'
+      });
 
-        if (!response.ok) throw new Error('Failed to fetch likes');
+      if (!response.ok) throw new Error('Failed to fetch likes');
 
-        const data = await response.json();
-        setLikeCount(data.likeCount);
-        setIsLiked(data.isLiked);
-      } catch (error) {
-        console.error('Error fetching likes:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchLikes();
+      const data = await response.json();
+      setLikeCount(data.likeCount);
+      setIsLiked(data.isLiked);
+    } catch (error) {
+      console.error('Error fetching likes:', error);
+    } finally {
+      setIsLoading(false);
+    }
   }, [chapterNumber, novelId]);
+
+  // Fetch likes on mount and when auth state changes
+  useEffect(() => {
+    fetchLikes();
+
+    // Subscribe to auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      fetchLikes();
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [fetchLikes]);
 
   const toggleLike = async () => {
     try {
