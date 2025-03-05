@@ -1,7 +1,7 @@
 import { UserProfile } from '@/types/database';
 import { Volume } from '@/types/novel';
 import { ChapterListItem as ChapterListItemComponent } from './ChapterListItem';
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Icon } from '@iconify/react';
 import { getChaptersForList, ChapterListItem, ChapterCounts } from '@/services/chapterService';
 
@@ -24,6 +24,7 @@ export const ChapterList = ({
   novelAuthorId,
   volumes = []
 }: ChapterListProps) => {
+  const loadingRef = useRef(false);
   const [selectedVolumeId, setSelectedVolumeId] = useState<string | null>(volumes[0]?.id || null);
   const [showAllChapters, setShowAllChapters] = useState(true);
   const [showAdvancedChapters, setShowAdvancedChapters] = useState(false);
@@ -65,8 +66,9 @@ export const ChapterList = ({
   }, [volumes, initialChapters]);
 
   const loadChapters = useCallback(async (pageNum: number = 1) => {
-    if (isLoading) return;
+    if (loadingRef.current) return;
     
+    loadingRef.current = true;
     setIsLoading(true);
     setError(null);
 
@@ -87,9 +89,9 @@ export const ChapterList = ({
     } catch (error) {
       console.error('Error loading chapters:', error);
       setError('Failed to load chapters. Please try again.');
-      // Keep the previous chapters data on error
     } finally {
       setIsLoading(false);
+      loadingRef.current = false;
     }
   }, [novelId, userProfile?.id, showAdvancedChapters, selectedVolumeId, showAllChapters]);
 
