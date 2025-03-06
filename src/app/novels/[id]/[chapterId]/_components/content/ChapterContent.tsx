@@ -357,18 +357,6 @@ export default function ChapterContent({
           </>
         )}
 
-        {/* Ad Unit */}
-        {!isIndefinitelyLocked && (
-          <div className="mt-8 max-w-2xl mx-auto">
-            <div id="pf-13998-1">
-              <script dangerouslySetInnerHTML={{
-                __html: `window.pubfuturetag = window.pubfuturetag || [];
-                window.pubfuturetag.push({unit: "67c7d9a804d811003cdb6267", id: "pf-13998-1"})`
-              }} />
-            </div>
-          </div>
-        )}
-
         {/* Like Button Section */}
         {!isIndefinitelyLocked && (
           <div className="mt-8 max-w-2xl mx-auto flex justify-center">
