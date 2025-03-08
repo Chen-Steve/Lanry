@@ -126,141 +126,143 @@ export function GlobalSettingsModal({
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Auto Release Settings */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h4 className="text-sm font-medium text-foreground">Auto Chapter Release</h4>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={settings.autoReleaseEnabled}
-                    onChange={(e) =>
-                      setSettings({ ...settings, autoReleaseEnabled: e.target.checked })
-                    }
-                    className="sr-only peer"
-                    aria-label="Enable auto chapter release"
-                  />
-                  <div className="w-11 h-6 bg-muted rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                </label>
-              </div>
-              {settings.autoReleaseEnabled && (
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <h4 className="text-sm font-medium text-foreground">Publishing Schedule</h4>
-                      <label className="relative inline-flex items-center cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={settings.usePublishingDays}
-                          onChange={(e) =>
-                            setSettings({ ...settings, usePublishingDays: e.target.checked })
-                          }
-                          className="sr-only peer"
-                          aria-label="Use specific publishing days"
-                        />
-                        <div className="w-11 h-6 bg-muted rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                      </label>
-                    </div>
-                    {settings.usePublishingDays ? (
-                      <div className="space-y-2">
-                        <div className="grid grid-cols-2 gap-2">
-                          {DAYS_OF_WEEK.map((day) => (
-                            <button
-                              key={day.id}
-                              type="button"
-                              onClick={() => togglePublishingDay(day.id)}
-                              className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                                settings.publishingDays?.includes(day.id)
-                                  ? 'bg-primary text-primary-foreground'
-                                  : 'bg-accent text-muted-foreground hover:text-foreground'
-                              }`}
-                            >
-                              {day.label}
-                            </button>
-                          ))}
+            <div className="grid grid-cols-2 gap-6">
+              {/* Auto Release Settings */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-medium text-foreground">Auto Chapter Release</h4>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={settings.autoReleaseEnabled}
+                      onChange={(e) =>
+                        setSettings({ ...settings, autoReleaseEnabled: e.target.checked })
+                      }
+                      className="sr-only peer"
+                      aria-label="Enable auto chapter release"
+                    />
+                    <div className="w-11 h-6 bg-muted rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                  </label>
+                </div>
+                {settings.autoReleaseEnabled && (
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-sm font-medium text-foreground">Publishing Schedule</h4>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={settings.usePublishingDays}
+                            onChange={(e) =>
+                              setSettings({ ...settings, usePublishingDays: e.target.checked })
+                            }
+                            className="sr-only peer"
+                            aria-label="Use specific publishing days"
+                          />
+                          <div className="w-11 h-6 bg-muted rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                        </label>
+                      </div>
+                      {settings.usePublishingDays ? (
+                        <div className="space-y-2">
+                          <div className="grid grid-cols-2 gap-2">
+                            {DAYS_OF_WEEK.map((day) => (
+                              <button
+                                key={day.id}
+                                type="button"
+                                onClick={() => togglePublishingDay(day.id)}
+                                className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                                  settings.publishingDays?.includes(day.id)
+                                    ? 'bg-primary text-primary-foreground'
+                                    : 'bg-accent text-muted-foreground hover:text-foreground'
+                                }`}
+                              >
+                                {day.label}
+                              </button>
+                            ))}
+                          </div>
+                          {(!settings.publishingDays || settings.publishingDays.length === 0) && (
+                            <p className="text-xs text-red-500">Please select at least one day</p>
+                          )}
+                          <p className="text-xs text-muted-foreground">
+                            Chapters will be published on selected days only
+                          </p>
                         </div>
-                        {(!settings.publishingDays || settings.publishingDays.length === 0) && (
-                          <p className="text-xs text-red-500">Please select at least one day</p>
-                        )}
-                        <p className="text-xs text-muted-foreground">
-                          Chapters will be published on selected days only
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        <label className="text-sm text-muted-foreground">Release Interval (days)</label>
-                        <input
-                          type="text"
-                          inputMode="numeric"
-                          pattern="[0-9]*"
-                          value={settings.releaseInterval === 0 ? '' : settings.releaseInterval}
-                          onChange={(e) => {
-                            const value = e.target.value.replace(/[^0-9]/g, '');
-                            setSettings({
-                              ...settings,
-                              releaseInterval: value === '' ? 0 : parseInt(value),
-                            });
-                          }}
-                          onBlur={(e) => {
-                            const value = parseInt(e.target.value) || 1;
-                            setSettings({
-                              ...settings,
-                              releaseInterval: Math.max(1, value),
-                            });
-                          }}
-                          className="w-full p-2 text-sm border border-border rounded bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                          title="Release interval in days"
-                          aria-label="Release interval in days"
-                        />
-                        <p className="text-xs text-muted-foreground">
-                          Chapters will automatically unlock after this many days from the last release
-                        </p>
-                      </div>
-                    )}
+                      ) : (
+                        <div className="space-y-2">
+                          <label className="text-sm text-muted-foreground">Release Interval (days)</label>
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            value={settings.releaseInterval === 0 ? '' : settings.releaseInterval}
+                            onChange={(e) => {
+                              const value = e.target.value.replace(/[^0-9]/g, '');
+                              setSettings({
+                                ...settings,
+                                releaseInterval: value === '' ? 0 : parseInt(value),
+                              });
+                            }}
+                            onBlur={(e) => {
+                              const value = parseInt(e.target.value) || 1;
+                              setSettings({
+                                ...settings,
+                                releaseInterval: Math.max(1, value),
+                              });
+                            }}
+                            className="w-full p-2 text-sm border border-border rounded bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            title="Release interval in days"
+                            aria-label="Release interval in days"
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Chapters will automatically unlock after this many days from the last release
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-
-            {/* Fixed Price Settings */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h4 className="text-sm font-medium text-foreground">Fixed Chapter Pricing</h4>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={settings.fixedPriceEnabled}
-                    onChange={(e) =>
-                      setSettings({ ...settings, fixedPriceEnabled: e.target.checked })
-                    }
-                    className="sr-only peer"
-                    aria-label="Enable fixed chapter pricing"
-                  />
-                  <div className="w-11 h-6 bg-muted rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                </label>
+                )}
               </div>
-              {settings.fixedPriceEnabled && (
-                <div className="space-y-2">
-                  <label className="text-sm text-muted-foreground">Fixed Price (coins)</label>
-                  <input
-                    type="number"
-                    min="1"
-                    value={settings.fixedPrice}
-                    onChange={(e) =>
-                      setSettings({
-                        ...settings,
-                        fixedPrice: Math.max(1, parseInt(e.target.value) || 1),
-                      })
-                    }
-                    className="w-full p-2 text-sm border border-border rounded bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                    title="Fixed price in coins"
-                    aria-label="Fixed price in coins"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    All new locked chapters will use this price automatically
-                  </p>
+
+              {/* Fixed Price Settings */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-medium text-foreground">Fixed Chapter Pricing</h4>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={settings.fixedPriceEnabled}
+                      onChange={(e) =>
+                        setSettings({ ...settings, fixedPriceEnabled: e.target.checked })
+                      }
+                      className="sr-only peer"
+                      aria-label="Enable fixed chapter pricing"
+                    />
+                    <div className="w-11 h-6 bg-muted rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                  </label>
                 </div>
-              )}
+                {settings.fixedPriceEnabled && (
+                  <div className="space-y-2">
+                    <label className="text-sm text-muted-foreground">Fixed Price (coins)</label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={settings.fixedPrice}
+                      onChange={(e) =>
+                        setSettings({
+                          ...settings,
+                          fixedPrice: Math.max(1, parseInt(e.target.value) || 1),
+                        })
+                      }
+                      className="w-full p-2 text-sm border border-border rounded bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                      title="Fixed price in coins"
+                      aria-label="Fixed price in coins"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      All new locked chapters will use this price automatically
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="flex justify-end gap-2">
