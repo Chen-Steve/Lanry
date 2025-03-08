@@ -1,4 +1,3 @@
-import { Icon } from '@iconify/react';
 import Link from 'next/link';
 import { Novel } from '@/types/database';
 
@@ -12,7 +11,6 @@ const AdvancedChapters = ({ novels }: AdvancedChaptersProps) => {
   return (
     <div className="mb-8">
       <div className="flex items-center gap-2 p-3">
-        <Icon icon="mdi:lock" className="w-5 h-5 text-primary" />
         <h2 className="text-xl font-semibold border-b-2 border-primary pb-1">Advanced Chapters</h2>
       </div>
 

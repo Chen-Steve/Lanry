@@ -517,15 +517,15 @@ export async function applyAutoReleaseSchedule(
         if (advancedError) throw advancedError;
 
         if (advancedChapter && advancedChapter.length > 0) {
-          // Base new date on the latest advanced chapter
+          // Base new date on the latest advanced chapter, but use publishing days
           const lastPublishDate = new Date(advancedChapter[0].publish_at);
-          publishAt = new Date(lastPublishDate.getTime() + novel.auto_release_interval * 24 * 60 * 60 * 1000);
-          publishAt = adjustToTargetHour(publishAt);
+          publishAt = getNextPublishingDate(lastPublishDate, publishingDays);
         } else {
-          // No advanced chapters, use current time
-          publishAt = new Date(now.getTime() + novel.auto_release_interval * 24 * 60 * 60 * 1000);
-          publishAt = adjustToTargetHour(publishAt);
+          // No advanced chapters, use current time and find next publishing day
+          publishAt = getNextPublishingDate(now, publishingDays);
         }
+        // Always adjust to target hour after finding the next publishing day
+        publishAt = adjustToTargetHour(publishAt);
       }
     }
   }
