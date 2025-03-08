@@ -269,7 +269,7 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
   ] as const;
 
   return (
-    <main className="space-y-4">
+    <main className="space-y-4 overflow-x-auto">
       <button
         onClick={onCancel}
         className="flex items-center gap-2 text-foreground bg-background hover:bg-accent rounded-lg px-4 py-2 border border-border shadow-sm transition-colors"
@@ -278,8 +278,8 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
         <span className="font-medium">Novel List</span>
       </button>
 
-      <div className="bg-background rounded-lg shadow-sm p-6 border border-border">
-        <div className="space-y-4">
+      <div className="bg-background rounded-lg shadow-sm p-6 border border-border overflow-x-auto">
+        <div className="space-y-4 min-w-[800px]">
           <div className="flex justify-between items-start">
             <div className="flex gap-6 items-start">
               <NovelCoverImage 
