@@ -33,7 +33,7 @@ const MobileMenu = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
       
       {/* Menu with improved styling */}
       <div className={`
-        fixed right-0 top-0 h-full w-60 bg-background/95 backdrop-blur-sm
+        fixed right-0 top-0 h-full w-60 bg-background
         border-l border-border shadow-lg
         transform transition-all duration-300 ease-out z-50
         ${isOpen ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}
@@ -166,7 +166,7 @@ const Header = () => {
                 {/* Home Icon */}
                 <div className="flex-none">
                   <Link
-                    href="/"
+                    href="/novels"
                     className="bg-secondary/80 backdrop-blur-sm p-2 text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-secondary/90 inline-flex items-center"
                   >
                     <Icon icon="ph:house-bold" className="w-5 h-5" />
