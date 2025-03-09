@@ -21,14 +21,39 @@ const SearchSection: React.FC<SearchSectionProps> = ({
   const [showDropdown, setShowDropdown] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const blurTimeoutRef = useRef<NodeJS.Timeout>();
+  const closeTimeoutRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
     onExpandChange?.(isExpanded);
   }, [isExpanded, onExpandChange]);
+
+  useEffect(() => {
+    return () => {
+      if (closeTimeoutRef.current) {
+        clearTimeout(closeTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const handleClose = () => {
+    setIsClosing(true);
+    setIsExpanded(false);
+    setShowDropdown(false);
+    setIsFocused(false);
+    
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+    }
+    
+    closeTimeoutRef.current = setTimeout(() => {
+      setIsClosing(false);
+    }, 300); // Match the transition duration
+  };
 
   const debouncedSearch = useRef(
     debounce(async (query: string) => {
@@ -82,9 +107,7 @@ const SearchSection: React.FC<SearchSectionProps> = ({
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setShowDropdown(false);
-        setIsFocused(false);
-        setIsExpanded(false);
+        handleClose();
       }
     };
 
@@ -105,6 +128,7 @@ const SearchSection: React.FC<SearchSectionProps> = ({
     
     blurTimeoutRef.current = setTimeout(() => {
       setIsFocused(false);
+      setShowDropdown(false);
       if (!searchQuery) {
         setIsExpanded(false);
       }
@@ -116,7 +140,7 @@ const SearchSection: React.FC<SearchSectionProps> = ({
       clearTimeout(blurTimeoutRef.current);
     }
     setIsFocused(true);
-    setShowDropdown(true);
+    setShowDropdown(!!searchQuery);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -184,7 +208,7 @@ const SearchSection: React.FC<SearchSectionProps> = ({
         )}
         {isExpanded && (
           <button
-            onClick={() => setIsExpanded(false)}
+            onClick={handleClose}
             className="absolute right-2 top-1/2 -translate-y-1/2 sm:hidden p-2 text-muted-foreground hover:text-foreground"
             aria-label="Close search"
           >
@@ -193,7 +217,7 @@ const SearchSection: React.FC<SearchSectionProps> = ({
         )}
       </div>
 
-      {(showDropdown || (isFocused && !searchQuery)) && (
+      {!isClosing && (showDropdown || (isFocused && !searchQuery)) && (
         <div className="absolute w-full bg-background mt-1 rounded-lg shadow-lg border border-border max-h-60 overflow-y-auto z-50">
           {isLoading ? (
             <div className="px-4 py-2 text-center text-muted-foreground">
