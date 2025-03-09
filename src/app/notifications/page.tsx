@@ -306,33 +306,6 @@ const NotificationsPage = () => {
           </div>
         </div>
 
-        {/* Survey Notice */}
-        <div className="bg-primary/10 border border-primary/20 p-4 rounded-lg">
-          <div className="flex items-start gap-3">
-            <Icon 
-              icon="ph:coins" 
-              className="w-6 h-6 text-primary flex-shrink-0 mt-0.5"
-            />
-            <div className="space-y-2">
-              <p className="text-sm font-medium">
-                🎉 Participate in our Survey - Win Coins! 
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Share your feedback and get a chance to win coins! Your opinion helps us improve your reading experience.
-              </p>
-              <a 
-                href="https://docs.google.com/forms/d/1o1QwzvulTDSm0jZn0-vcUNjgAVVqAdSW0qBQgFFvUTg/edit"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-sm text-primary hover:text-primary/80 font-medium"
-              >
-                Take the Survey
-                <Icon icon="ph:arrow-right" className="w-4 h-4" />
-              </a>
-            </div>
-          </div>
-        </div>
-
         {isLoading ? (
           <div className="text-center py-12 text-muted-foreground">
             <Icon icon="ph:circle-notch" className="w-12 h-12 mx-auto mb-4 animate-spin" />
