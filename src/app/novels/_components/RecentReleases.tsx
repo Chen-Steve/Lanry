@@ -24,12 +24,12 @@ const NewReleases = ({ recentNovels }: NewReleasesProps) => {
   if (recentNovels.length === 0) return null;
 
   return (
-    <div className="mb-4 mt-6">
-      <div className="flex items-center gap-2.5 mb-4 px-4">
-        <h2 className="text-xl font-semibold border-b-2 border-primary pb-1">Recent Releases</h2>
+    <div className="mt-2 w-full max-w-[95%] mx-auto">
+      <div className="flex items-center gap-2.5 mb-2">
+        <h2 className="text-lg font-semibold border-b-2 border-primary">Recent Releases</h2>
       </div>
 
-      <div className="px-4">
+      <div>
         {/* Carousel Container */}
         <div 
           ref={scrollContainerRef}
@@ -42,7 +42,7 @@ const NewReleases = ({ recentNovels }: NewReleasesProps) => {
               <Link
                 key={novel.id}
                 href={`/novels/${novel.slug}`}
-                className="group/card flex-none w-[100px] sm:w-[130px] flex flex-col p-1.5 sm:p-2 bg-card hover:bg-accent/50 transition-colors"
+                className="group/card flex-none w-[120px] sm:w-[160px] flex flex-col p-1.5 sm:p-2 bg-card hover:bg-accent/50 transition-colors"
               >
                 <div className="w-full aspect-[2/3] relative rounded-sm overflow-hidden mb-1.5">
                   <NovelCover

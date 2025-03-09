@@ -121,8 +121,8 @@ const NovelCover = ({
       </div>
 
       {showRating && hasChapters && (
-        <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2">
-          <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-black/80 backdrop-blur-[2px]">
+        <div className="absolute top-0 right-0">
+          <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-bl-md bg-black/80 backdrop-blur-[2px]">
             <Icon icon="material-symbols:star" className="text-amber-400 text-[10px] sm:text-sm" />
             <span className="text-white text-[10px] sm:text-xs font-medium">
               {rating > 0 ? rating.toFixed(1) : 'N/A'}
