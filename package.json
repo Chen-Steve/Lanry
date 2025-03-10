@@ -7,8 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "postinstall": "prisma generate",
-    "fix-profiles": "ts-node src/scripts/fix-missing-profiles.ts"
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@hcaptcha/react-hcaptcha": "^1.11.1",
