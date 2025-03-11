@@ -22,7 +22,7 @@ interface ReplyData {
   profile: {
     username: string | null;
     avatar_url?: string;
-    role: 'USER' | 'AUTHOR' | 'TRANSLATOR' | 'ADMIN' | 'SUPER_ADMIN';
+    role: 'USER' | 'AUTHOR' | 'TRANSLATOR' | 'ADMIN';
   };
 }
 
@@ -33,7 +33,7 @@ interface CommentReply extends NovelComment {
   profile: {
     username: string | null;
     avatar_url?: string;
-    role: 'USER' | 'AUTHOR' | 'TRANSLATOR' | 'ADMIN' | 'SUPER_ADMIN';
+    role: 'USER' | 'AUTHOR' | 'TRANSLATOR' | 'ADMIN' | '';
   };
 }
 

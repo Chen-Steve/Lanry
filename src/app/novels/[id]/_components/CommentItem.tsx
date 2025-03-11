@@ -15,7 +15,7 @@ interface CommentItemProps {
     profile: {
       username: string | null;
       avatar_url?: string;
-      role: 'USER' | 'AUTHOR' | 'TRANSLATOR' | 'ADMIN' | 'SUPER_ADMIN';
+      role: 'USER' | 'AUTHOR' | 'TRANSLATOR' | 'ADMIN';
     };
     likeCount: number;
     isLiked?: boolean;

@@ -16,7 +16,7 @@ interface ChapterComment {
     id: string;
     username: string;
     avatar_url?: string;
-    role: 'USER' | 'AUTHOR' | 'TRANSLATOR' | 'ADMIN' | 'SUPER_ADMIN';
+    role: 'USER' | 'AUTHOR' | 'TRANSLATOR' | 'ADMIN';
   };
 }
 
@@ -28,7 +28,7 @@ interface SupabaseComment {
     id: string;
     username: string;
     avatar_url: string | null;
-    role: 'USER' | 'AUTHOR' | 'TRANSLATOR' | 'ADMIN' | 'SUPER_ADMIN';
+    role: 'USER' | 'AUTHOR' | 'TRANSLATOR' | 'ADMIN';
   };
 }
 

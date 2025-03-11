@@ -23,7 +23,7 @@ interface ChapterComment extends Omit<BaseChapterComment, 'profile'> {
     username: string | null;
     avatar_url?: string;
     id?: string;
-    role: 'USER' | 'AUTHOR' | 'TRANSLATOR' | 'ADMIN' | 'SUPER_ADMIN';
+    role: 'USER' | 'AUTHOR' | 'TRANSLATOR' | 'ADMIN';
   };
 }
 

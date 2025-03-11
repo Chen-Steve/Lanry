@@ -18,7 +18,7 @@ interface DatabaseComment {
   profile?: {
     username: string;
     avatar_url: string;
-    role: 'USER' | 'AUTHOR' | 'TRANSLATOR' | 'ADMIN' | 'SUPER_ADMIN';
+    role: 'USER' | 'AUTHOR' | 'TRANSLATOR' | 'ADMIN';
   };
 }
 

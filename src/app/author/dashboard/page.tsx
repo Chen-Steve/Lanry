@@ -34,7 +34,7 @@ export default function AuthorDashboard() {
         .eq('id', session.user.id)
         .single();
 
-      if (!profile || !['AUTHOR', 'TRANSLATOR', 'ADMIN', 'SUPER_ADMIN'].includes(profile.role)) {
+      if (!profile || !['AUTHOR', 'TRANSLATOR', 'ADMIN'].includes(profile.role)) {
         router.push('/');
         return;
       }

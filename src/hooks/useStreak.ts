@@ -7,7 +7,7 @@ interface UserProfile {
   last_visit: string | null;
   coins: number;
   avatar_url?: string;
-  role?: 'USER' | 'AUTHOR' | 'TRANSLATOR' | 'ADMIN' | 'SUPER_ADMIN';
+  role?: 'USER' | 'AUTHOR' | 'TRANSLATOR' | 'ADMIN';
 }
 
 export function useStreak(userId: string | null) {
