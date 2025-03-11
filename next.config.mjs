@@ -18,25 +18,79 @@ const nextConfig = {
       }
     ]
   },
-  headers: async () => [
-    {
-      source: '/:path*',
-      headers: [
+  headers: async () => {
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    
+    // In development, disable caching
+    if (isDevelopment) {
+      return [
         {
-          key: 'X-Frame-Options',
-          value: 'DENY',
+          source: '/:path*',
+          headers: [
+            {
+              key: 'X-Frame-Options',
+              value: 'DENY',
+            },
+            {
+              key: 'X-Content-Type-Options',
+              value: 'nosniff',
+            },
+            {
+              key: 'Cache-Control',
+              value: 'no-store, no-cache, must-revalidate, proxy-revalidate',
+            },
+            {
+              key: 'Pragma',
+              value: 'no-cache',
+            },
+            {
+              key: 'Expires',
+              value: '0',
+            },
+          ],
         },
-        {
-          key: 'X-Content-Type-Options',
-          value: 'nosniff',
-        },
-        {
-          key: 'Cache-Control',
-          value: 'public, max-age=31536000, immutable'
-        }
-      ],
-    },
-  ],
+      ];
+    }
+
+    // Production caching rules
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY',
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=3600, must-revalidate'
+          }
+        ],
+      },
+      {
+        source: '/static/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=604800, stale-while-revalidate=86400'
+          }
+        ],
+      },
+      {
+        source: '/_next/static/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable'
+          }
+        ],
+      }
+    ];
+  },
 };
 
 export default nextConfig;
