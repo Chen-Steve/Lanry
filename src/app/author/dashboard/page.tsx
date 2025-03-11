@@ -78,10 +78,10 @@ export default function AuthorDashboard() {
       )}
 
       {/* Left Sidebar */}
-      <div className={`w-64 bg-background border-r border-border fixed h-full z-40 transition-transform duration-300 lg:translate-x-0 ${
+      <div className={`w-64 bg-background border-r border-border fixed left-0 h-full z-40 transition-transform duration-300 lg:translate-x-0 ${
         isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
-        <div className="p-6 pt-16 lg:pt-6">
+        <div className="p-4 pt-16 lg:pt-4">
           <a href="https://lanry.space/" className="text-2xl font-bold mb-6 block text-center text-foreground">
             Lanry
           </a>

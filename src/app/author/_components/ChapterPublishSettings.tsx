@@ -155,7 +155,7 @@ export default function ChapterPublishSettings({
       {/* Schedule Settings Popup */}
       {showSchedulePopup && (
         <>
-          <div className="fixed inset-0 z-[60] bg-black/50" onClick={() => {
+          <div className="fixed inset-0 z-[60]" onClick={() => {
             setHasBeenTouched(true);
             onCloseSchedulePopup?.();
           }} />
