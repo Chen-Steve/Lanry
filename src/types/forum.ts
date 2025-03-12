@@ -15,26 +15,28 @@ export interface ForumDiscussion {
   title: string
   slug: string
   description: string
-  created_at: string
-  updated_at: string
-  is_pinned: boolean
-  is_locked: boolean
-  thread_count: number
-  message_count: number
-  last_message_at: string | null
+  createdAt: string
+  updatedAt: string
+  isPinned: boolean
+  isLocked: boolean
+  viewCount: number
+  threads: ForumThread[]
+  _count?: {
+    threads: number
+  }
 }
 
 export interface ForumThread {
   id: string
   title: string
-  created_at: string
-  updated_at: string
-  discussion_id: string
-  author_id: string
-  is_pinned: boolean
-  is_locked: boolean
-  view_count: number
-  last_message_at: string
+  createdAt: string
+  updatedAt: string
+  discussionId: string
+  authorId: string
+  isPinned: boolean
+  isLocked: boolean
+  viewCount: number
+  lastMessageAt: string
   discussion: {
     id: string
     title: string
@@ -43,7 +45,7 @@ export interface ForumThread {
   author: {
     id: string
     username: string
-    avatar_url: string | null
+    avatarUrl: string | null
   }
 }
 
