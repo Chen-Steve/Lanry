@@ -59,7 +59,49 @@ export function useThreadMutations() {
     }
   })
 
+  const deleteThread = useMutation({
+    mutationFn: async (threadId: string) => {
+      // Get current session first
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.user) throw new Error('Unauthorized')
+
+      // First get the thread to check ownership and get discussion info
+      const { data: thread, error: threadError } = await supabase
+        .from('forum_threads')
+        .select(`
+          *,
+          discussion:forum_discussions (
+            slug
+          )
+        `)
+        .eq('id', threadId)
+        .single()
+
+      if (threadError) throw new Error('Thread not found')
+      if (!thread) throw new Error('Thread not found')
+      if (thread.author_id !== session.user.id) throw new Error('Not authorized to delete this thread')
+
+      // Delete the thread
+      const { error: deleteError } = await supabase
+        .from('forum_threads')
+        .delete()
+        .eq('id', threadId)
+
+      if (deleteError) throw deleteError
+
+      return {
+        success: true,
+        discussionSlug: thread.discussion.slug
+      }
+    },
+    onSuccess: (data) => {
+      // Invalidate relevant queries to trigger refetch
+      queryClient.invalidateQueries({ queryKey: ['forum', 'threads', data.discussionSlug] })
+    }
+  })
+
   return {
-    createThread
+    createThread,
+    deleteThread
   }
 } 
