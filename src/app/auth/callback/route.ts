@@ -60,7 +60,8 @@ export async function GET(request: Request) {
               
               if (createError) {
                 console.error('[Auth Callback] Error creating profile:', createError);
-                // Continue to create-profile page for manual creation
+                // If profile creation fails, redirect to create-profile page
+                return NextResponse.redirect(new URL('/auth/create-profile', requestUrl.origin));
               } else {
                 // Try to create reading time record
                 try {
@@ -83,21 +84,23 @@ export async function GET(request: Request) {
                 } catch (readingTimeError) {
                   console.error('[Auth Callback] Exception creating reading time:', readingTimeError);
                 }
+                
+                // If profile was created successfully, redirect to home
+                console.log('[Auth Callback] Redirecting to home after successful profile creation');
+                return NextResponse.redirect(new URL('/', requestUrl.origin));
               }
             } catch (profileError) {
               console.error('[Auth Callback] Exception creating profile:', profileError);
+              return NextResponse.redirect(new URL('/auth/create-profile', requestUrl.origin));
             }
           } else {
             console.log('[Auth Callback] Profile already exists for user:', session.user.id);
+            // If profile exists, redirect to home
+            return NextResponse.redirect(new URL('/', requestUrl.origin));
           }
         } catch (checkError) {
           console.error('[Auth Callback] Error checking for existing profile:', checkError);
         }
-        
-        // Always redirect to create-profile page after Google sign-in
-        // This page will handle both cases: profile exists or needs to be created
-        console.log('[Auth Callback] Redirecting to create-profile page');
-        return NextResponse.redirect(new URL('/auth/create-profile', requestUrl.origin));
       } else {
         console.error('[Auth Callback] No user in session after authentication');
         return NextResponse.redirect(new URL('/auth?error=no_user', requestUrl.origin));
