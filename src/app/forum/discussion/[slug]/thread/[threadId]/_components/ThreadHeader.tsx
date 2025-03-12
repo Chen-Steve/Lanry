@@ -13,15 +13,56 @@ import { Button } from '@/components/ui/button'
 import { useState } from 'react'
 
 interface ThreadHeaderProps {
-  thread: ForumThread
+  thread: ForumThread | SupabaseThread
 }
 
-const formatDate = (dateString: string) => {
+// Interface to handle Supabase's snake_case properties
+interface SupabaseThread {
+  id: string
+  title: string
+  created_at?: string
+  createdAt?: string
+  updated_at?: string
+  view_count?: number
+  author: {
+    id: string
+    username: string
+    avatar_url?: string | null
+  }
+  discussion: {
+    id: string
+    title: string
+    slug: string
+  }
+}
+
+const formatDate = (thread: ForumThread | SupabaseThread) => {
   try {
-    const date = new Date(dateString)
-    if (isNaN(date.getTime())) {
+    // Get the date string, handling both created_at and createdAt
+    const dateString = 'created_at' in thread && thread.created_at
+      ? thread.created_at
+      : thread.createdAt
+    
+    if (!dateString) {
+      console.error('Date string is missing', thread)
       return 'Invalid date'
     }
+    
+    // Parse the date - ensure it's treated as UTC if it doesn't have timezone info
+    let date: Date
+    if (typeof dateString === 'string' && !dateString.endsWith('Z') && !dateString.includes('+')) {
+      // If the date string doesn't have timezone info, treat it as UTC
+      date = new Date(dateString + 'Z')
+    } else {
+      date = new Date(dateString)
+    }
+    
+    if (isNaN(date.getTime())) {
+      console.error('Invalid date format', dateString)
+      return 'Invalid date'
+    }
+
+    // Use the same formatting as ThreadList
     return formatDistanceToNow(date, { addSuffix: true })
   } catch (error) {
     console.error('Error formatting date:', error)
@@ -33,7 +74,10 @@ export default function ThreadHeader({ thread }: ThreadHeaderProps) {
   const { userId } = useAuth()
   const { deleteThread } = useThreadMutations()
   const router = useRouter()
-  const isOwner = userId === thread.author.id
+  
+  // Handle both camelCase and snake_case
+  const authorId = 'authorId' in thread ? thread.authorId : thread.author.id
+  const isOwner = userId === authorId
   const [showDeleteModal, setShowDeleteModal] = useState(false)
 
   const handleDelete = async () => {
@@ -49,6 +93,20 @@ export default function ThreadHeader({ thread }: ThreadHeaderProps) {
     }
   }
 
+  // Get the discussion slug
+  const discussionSlug = thread.discussion.slug
+  
+  // Get the discussion title
+  const discussionTitle = thread.discussion.title
+  
+  // Get the avatar URL
+  const avatarUrl = 'avatarUrl' in thread.author 
+    ? thread.author.avatarUrl 
+    : (thread.author as SupabaseThread['author']).avatar_url || null
+  
+  // Get the view count
+  const viewCount = 'viewCount' in thread ? thread.viewCount : thread.view_count
+
   return (
     <>
       <div className="space-y-4">
@@ -61,10 +119,10 @@ export default function ThreadHeader({ thread }: ThreadHeaderProps) {
           </Link>
           <Icon icon="ph:caret-right-bold" className="w-4 h-4" />
           <Link
-            href={`/forum/discussion/${thread.discussion.slug}`}
+            href={`/forum/discussion/${discussionSlug}`}
             className="hover:text-foreground transition-colors"
           >
-            {thread.discussion.title}
+            {discussionTitle}
           </Link>
           <Icon icon="ph:caret-right-bold" className="w-4 h-4" />
           <span className="text-foreground">{thread.title}</span>
@@ -88,7 +146,7 @@ export default function ThreadHeader({ thread }: ThreadHeaderProps) {
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
             <Avatar
-              src={thread.author.avatarUrl}
+              src={avatarUrl}
               username={thread.author.username}
               size={20}
               className="w-5 h-5"
@@ -96,13 +154,13 @@ export default function ThreadHeader({ thread }: ThreadHeaderProps) {
             <span>{thread.author.username}</span>
           </div>
           <span>•</span>
-          <time dateTime={thread.createdAt} className="text-muted-foreground">
-            {formatDate(thread.createdAt)}
+          <time dateTime={'created_at' in thread ? thread.created_at : thread.createdAt} className="text-muted-foreground">
+            {formatDate(thread)}
           </time>
           <span>•</span>
           <div className="flex items-center gap-1">
             <Icon icon="ph:eye" className="w-4 h-4" />
-            <span>{thread.viewCount}</span>
+            <span>{viewCount}</span>
           </div>
         </div>
       </div>
