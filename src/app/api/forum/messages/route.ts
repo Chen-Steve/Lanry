@@ -42,16 +42,6 @@ export async function GET(req: Request) {
       }
     })
 
-    // Update thread view count
-    await prisma.forumThread.update({
-      where: { id: threadId },
-      data: {
-        viewCount: {
-          increment: 1
-        }
-      }
-    })
-
     return NextResponse.json({
       messages,
       total,

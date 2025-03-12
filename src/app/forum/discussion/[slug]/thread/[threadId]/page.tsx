@@ -5,6 +5,7 @@ import { cookies } from 'next/headers'
 import { ForumThread } from '@/types/forum'
 import ThreadMessages from './_components/ThreadMessages'
 import ThreadHeader from './_components/ThreadHeader'
+import { prisma } from '@/lib/prisma'
 
 interface ThreadPageProps {
   params: {
@@ -63,11 +64,15 @@ export default async function ThreadPage({ params }: ThreadPageProps) {
     notFound()
   }
 
-  // Update view count
-  await supabase
-    .from('forum_threads')
-    .update({ view_count: (thread.view_count || 0) + 1 })
-    .eq('id', params.threadId)
+  // Update view count using Prisma instead of Supabase
+  await prisma.forumThread.update({
+    where: { id: params.threadId },
+    data: {
+      viewCount: {
+        increment: 1
+      }
+    }
+  })
 
   return (
     <main className="flex-1">
