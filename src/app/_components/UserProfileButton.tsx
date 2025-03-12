@@ -37,9 +37,9 @@ const UserProfileButton = ({
   isMobile = false,
   onMenuClose
 }: UserProfileButtonProps) => {
+  console.log('[DEBUG] UserProfileButton rendering at:', new Date().toISOString());
   const router = useRouter();
   const [isRandomizing, setIsRandomizing] = useState(false);
-  const [forumComingSoon, setForumComingSoon] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -321,13 +321,18 @@ const UserProfileButton = ({
           <span>View Profile</span>
         </Link>
 
-        <button
-          onClick={() => setForumComingSoon(true)}
+        <Link
+          href="/forum"
           className="flex w-full items-center gap-2 px-3 py-2 text-sm text-foreground rounded-md hover:bg-accent transition-colors"
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsProfileDropdownOpen(false);
+            onMenuClose?.();
+          }}
         >
           <Icon icon="ph:chats" className="text-lg" />
-          <span>{forumComingSoon ? "Coming Soon!" : "Forum"}</span>
-        </button>
+          <span>Forum</span>
+        </Link>
 
         {userProfile?.role && (userProfile.role === 'AUTHOR' || userProfile.role === 'TRANSLATOR') && (
           <Link

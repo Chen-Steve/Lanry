@@ -142,6 +142,8 @@ model Profile {
   receivedNotifications Notification[] @relation("ReceivedNotifications")
   sentNotifications     Notification[] @relation("SentNotifications")
   bookmarkFolders      BookmarkFolder[]
+  forumThreads         ForumThread[]
+  forumMessages        ForumMessage[]
 
   @@map("profiles")
 }
@@ -484,4 +486,56 @@ model Notification {
   @@index([commentId])
   @@index([createdAt])
   @@map("notifications")
+}
+
+model ForumDiscussion {
+  id          String    @id @default(uuid())
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  title       String
+  description String
+  slug        String    @unique
+  isPinned    Boolean   @default(false) @map("is_pinned")
+  isLocked    Boolean   @default(false) @map("is_locked")
+  viewCount   Int       @default(0) @map("view_count")
+  threads     ForumThread[]
+
+  @@map("forum_discussions")
+}
+
+model ForumThread {
+  id            String    @id @default(uuid())
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  title         String
+  discussion    ForumDiscussion @relation(fields: [discussionId], references: [id], onDelete: Cascade)
+  discussionId  String    @map("discussion_id")
+  author        Profile   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId      String    @map("author_id")
+  isPinned      Boolean   @default(false) @map("is_pinned")
+  isLocked      Boolean   @default(false) @map("is_locked")
+  viewCount     Int       @default(0) @map("view_count")
+  messages      ForumMessage[]
+  lastMessageAt DateTime  @default(now()) @map("last_message_at")
+
+  @@index([discussionId])
+  @@index([authorId])
+  @@index([lastMessageAt])
+  @@map("forum_threads")
+}
+
+model ForumMessage {
+  id        String    @id @default(uuid())
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  content   String    @db.Text
+  thread    ForumThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  threadId  String    @map("thread_id")
+  author    Profile   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId  String    @map("author_id")
+  isEdited  Boolean   @default(false) @map("is_edited")
+
+  @@index([threadId])
+  @@index([authorId])
+  @@map("forum_messages")
 }
