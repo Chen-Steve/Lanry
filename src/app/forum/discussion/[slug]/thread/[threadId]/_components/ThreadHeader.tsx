@@ -38,7 +38,7 @@ export default function ThreadHeader({ thread }: ThreadHeaderProps) {
       <div className="flex items-center gap-4 text-sm text-muted-foreground">
         <div className="flex items-center gap-2">
           <Avatar
-            src={thread.author.avatar_url}
+            src={thread.author.avatarUrl}
             username={thread.author.username}
             size={20}
             className="w-5 h-5"
@@ -46,13 +46,13 @@ export default function ThreadHeader({ thread }: ThreadHeaderProps) {
           <span>{thread.author.username}</span>
         </div>
         <span>•</span>
-        <time dateTime={thread.created_at} className="text-muted-foreground">
-          {formatDistanceToNow(new Date(thread.created_at), { addSuffix: true })}
+        <time dateTime={thread.createdAt} className="text-muted-foreground">
+          {formatDistanceToNow(new Date(thread.createdAt), { addSuffix: true })}
         </time>
         <span>•</span>
         <div className="flex items-center gap-1">
           <Icon icon="ph:eye" className="w-4 h-4" />
-          <span>{thread.view_count}</span>
+          <span>{thread.viewCount}</span>
         </div>
       </div>
     </div>
