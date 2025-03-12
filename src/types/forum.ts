@@ -47,6 +47,9 @@ export interface ForumThread {
     username: string
     avatarUrl: string | null
   }
+  _count?: {
+    messages: number
+  }
 }
 
 export interface ForumMessage {
