@@ -1,4 +1,4 @@
-import { nanoid } from 'nanoid';
+import { v4 as uuidv4 } from 'uuid';
 
 export const formatDate = (date: string | Date) => {
   const d = new Date(date);
@@ -102,7 +102,7 @@ export function generateNovelSlug(title: string): string {
 }
 
 export function generateUUID(): string {
-  return nanoid();
+  return uuidv4();
 }
 
 export const formatForumDateTime = (date: string | Date) => {
