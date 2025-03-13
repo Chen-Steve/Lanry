@@ -93,33 +93,77 @@ const MessageItem = forwardRef<HTMLDivElement, MessageItemProps>(
       <>
         <div
           ref={isLast ? ref : undefined}
-          className="flex flex-col sm:flex-row gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg bg-accent"
+          className="flex flex-col gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg bg-accent"
         >
-          <Avatar
-            src={message.author.avatar_url}
-            username={message.author.username}
-            size={32}
-            className="w-8 h-8 sm:w-10 sm:h-10"
-          />
-          <div className="flex-1 space-y-2">
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-              <span className="font-medium text-foreground">
-                {message.author.username}
-              </span>
-              <span className="text-xs sm:text-sm text-muted-foreground hidden sm:inline">•</span>
-              <span className="text-xs sm:text-sm text-muted-foreground">
-                {formatDate(message.created_at)}
-              </span>
-              {message.is_edited && (
-                <>
-                  <span className="text-xs sm:text-sm text-muted-foreground hidden sm:inline">•</span>
-                  <span className="text-xs sm:text-sm text-muted-foreground italic">
-                    edited
-                  </span>
-                </>
-              )}
+          <div className="flex items-start gap-3 sm:gap-4">
+            <Avatar
+              src={message.author.avatar_url}
+              username={message.author.username}
+              size={32}
+              className="w-8 h-8 sm:w-10 sm:h-10 shrink-0"
+            />
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <span className="font-medium text-foreground truncate">
+                  {message.author.username}
+                </span>
+                <span className="text-xs sm:text-sm text-muted-foreground">•</span>
+                <span className="text-xs sm:text-sm text-muted-foreground">
+                  {formatDate(message.created_at)}
+                </span>
+                {message.is_edited && (
+                  <>
+                    <span className="text-xs sm:text-sm text-muted-foreground">•</span>
+                    <span className="text-xs sm:text-sm text-muted-foreground italic">
+                      edited
+                    </span>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+          
+          {isEditing ? (
+            <div className="space-y-2">
+              <textarea
+                value={editContent}
+                onChange={(e) => setEditContent(e.target.value)}
+                className="w-full min-h-[100px] p-2 rounded-md bg-background border resize-none focus:outline-none focus:ring-2 focus:ring-primary text-sm sm:text-base"
+                placeholder="Edit your message..."
+              />
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => {
+                    setIsEditing(false)
+                    setEditContent(message.content)
+                  }}
+                  className="px-2.5 py-1.5 text-sm rounded-md hover:bg-accent/80 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleEdit}
+                  disabled={updateMessage.isPending}
+                  className="px-2.5 py-1.5 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-1.5"
+                >
+                  {updateMessage.isPending ? (
+                    <>
+                      <Icon icon="lucide:loader-2" className="w-3.5 h-3.5 animate-spin" />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    'Save'
+                  )}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="text-sm sm:text-base text-foreground whitespace-pre-wrap break-words">
+                {message.content}
+              </div>
               {isAuthor && (
-                <div className="ml-auto flex items-center gap-1 sm:gap-2">
+                <div className="flex items-center justify-end gap-1 sm:gap-2">
                   <button
                     type="button"
                     className="p-1.5 rounded-md flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -140,47 +184,8 @@ const MessageItem = forwardRef<HTMLDivElement, MessageItemProps>(
                   </button>
                 </div>
               )}
-            </div>
-            {isEditing ? (
-              <div className="space-y-2">
-                <textarea
-                  value={editContent}
-                  onChange={(e) => setEditContent(e.target.value)}
-                  className="w-full min-h-[100px] p-2 rounded-md bg-background border resize-none focus:outline-none focus:ring-2 focus:ring-primary text-sm sm:text-base"
-                  placeholder="Edit your message..."
-                />
-                <div className="flex justify-end gap-2">
-                  <button
-                    onClick={() => {
-                      setIsEditing(false)
-                      setEditContent(message.content)
-                    }}
-                    className="px-2.5 py-1.5 text-sm rounded-md hover:bg-accent/80 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleEdit}
-                    disabled={updateMessage.isPending}
-                    className="px-2.5 py-1.5 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-1.5"
-                  >
-                    {updateMessage.isPending ? (
-                      <>
-                        <Icon icon="lucide:loader-2" className="w-3.5 h-3.5 animate-spin" />
-                        <span>Saving...</span>
-                      </>
-                    ) : (
-                      'Save'
-                    )}
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="text-sm sm:text-base text-foreground whitespace-pre-wrap break-words">
-                {message.content}
-              </div>
-            )}
-          </div>
+            </>
+          )}
         </div>
 
         {/* Delete Confirmation Dialog */}
