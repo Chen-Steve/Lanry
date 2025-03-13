@@ -2,6 +2,8 @@ import { Metadata } from 'next'
 import { Suspense } from 'react'
 import ThreadList from '../../_components/ThreadList'
 import CreateThreadButton from '../../_components/CreateThreadButton'
+import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
 
 interface DiscussionPageProps {
   params: {
@@ -22,6 +24,29 @@ export const metadata: Metadata = {
   }
 }
 
+async function DiscussionHeader({ slug }: { slug: string }) {
+  const supabase = createServerComponentClient({ cookies })
+  
+  const { data: discussion } = await supabase
+    .from('forum_discussions')
+    .select('title, description')
+    .eq('slug', slug)
+    .single()
+
+  if (!discussion) return null
+
+  return (
+    <div className="mb-8">
+      <h1 className="text-2xl sm:text-3xl font-semibold text-foreground mb-2">
+        {discussion.title}
+      </h1>
+      <p className="text-muted-foreground">
+        {discussion.description}
+      </p>
+    </div>
+  )
+}
+
 export default function DiscussionPage({ params }: DiscussionPageProps) {
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
@@ -32,11 +57,14 @@ export default function DiscussionPage({ params }: DiscussionPageProps) {
       
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
         <Suspense fallback={null}>
-          <ThreadList slug={params.slug} />
+          <DiscussionHeader slug={params.slug} />
         </Suspense>
-        <div className="mt-8">
+        <div className="mb-8">
           <CreateThreadButton discussionSlug={params.slug} />
         </div>
+        <Suspense fallback={null}>
+          <ThreadList slug={params.slug} />
+        </Suspense>
       </main>
     </div>
   )

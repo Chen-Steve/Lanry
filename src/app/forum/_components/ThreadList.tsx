@@ -52,13 +52,6 @@ export default function ThreadList({ slug }: ThreadListProps) {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">{data.discussion.title}</h1>
-          <p className="text-muted-foreground mt-2">{data.discussion.description}</p>
-        </div>
-      </div>
-      
       {!data?.threads.length ? (
         <div className="bg-accent/80 backdrop-blur-sm shadow-sm rounded-lg border border-border p-8 text-center">
           <Icon icon="ph:chat-centered-dots" className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
