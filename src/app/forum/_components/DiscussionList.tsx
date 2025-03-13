@@ -5,9 +5,15 @@ import { useDiscussions } from '@/hooks/forum/useDiscussions'
 import { ForumDiscussion } from '@/types/forum'
 import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
+import { useState } from 'react'
 
 export default function DiscussionList() {
   const { data, isLoading, error } = useDiscussions()
+  const [searchTerm, setSearchTerm] = useState('')
+
+  const filteredDiscussions = data?.discussions.filter((discussion: ForumDiscussion) =>
+    discussion.title.toLowerCase().includes(searchTerm.toLowerCase())
+  )
 
   if (isLoading) {
     return (
@@ -73,15 +79,26 @@ export default function DiscussionList() {
           <input
             type="text"
             placeholder="Search discussions..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-11 pr-4 py-2 bg-secondary text-foreground placeholder:text-muted-foreground border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all"
           />
           <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
             <Icon icon="ph:magnifying-glass-bold" className="w-5 h-5" />
           </div>
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="Clear search"
+            >
+              <Icon icon="ph:x-bold" className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
       <div className="bg-accent/80 backdrop-blur-sm shadow-sm rounded-lg border border-border divide-y divide-border">
-        {data.discussions.map((discussion: ForumDiscussion) => (
+        {filteredDiscussions?.map((discussion: ForumDiscussion) => (
           <Link
             key={discussion.id}
             href={`/forum/discussion/${discussion.slug}`}
