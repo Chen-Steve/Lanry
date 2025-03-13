@@ -70,51 +70,51 @@ export default function ThreadList({ slug }: ThreadListProps) {
             <Link
               key={thread.id}
               href={`/forum/discussion/${slug}/thread/${thread.id}`}
-              className="block p-6 hover:bg-secondary/50 transition-colors"
+              className="block p-4 hover:bg-secondary/50 transition-colors"
             >
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   {thread.isPinned && (
-                    <Icon icon="ph:push-pin-fill" className="w-4 h-4 text-primary" />
+                    <Icon icon="ph:push-pin-fill" className="w-3.5 h-3.5 text-primary" />
                   )}
-                  <h3 className="text-lg font-medium text-foreground group-hover:text-primary transition-colors">
+                  <h3 className="text-base font-medium text-foreground group-hover:text-primary transition-colors">
                     {thread.title}
                   </h3>
                 </div>
-                <span className="text-sm text-muted-foreground">
+                <span className="text-xs text-muted-foreground">
                   {formatDistanceToNow(new Date(thread.lastMessageAt), { addSuffix: true })}
                 </span>
               </div>
-              <div className="mt-4 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <div className="w-6 h-6 rounded-full bg-secondary flex items-center justify-center mr-2">
+              <div className="mt-2 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center text-xs text-muted-foreground">
+                    <div className="w-5 h-5 rounded-full bg-secondary flex items-center justify-center mr-1.5">
                       {thread.author.avatarUrl ? (
                         <Image
                           src={thread.author.avatarUrl}
                           alt={thread.author.username}
-                          width={24}
-                          height={24}
-                          className="w-6 h-6 rounded-full"
+                          width={20}
+                          height={20}
+                          className="w-5 h-5 rounded-full"
                         />
                       ) : (
-                        <Icon icon="ph:user" className="w-4 h-4" />
+                        <Icon icon="ph:user" className="w-3.5 h-3.5" />
                       )}
                     </div>
                     <span>{thread.author.username}</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-2">
-                    <Icon icon="ph:chat-circle-dots" className="w-4 h-4" />
+                <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1.5">
+                    <Icon icon="ph:chat-circle-dots" className="w-3.5 h-3.5" />
                     <span>{thread._count?.messages || 0}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Icon icon="ph:eye" className="w-4 h-4" />
+                  <div className="flex items-center gap-1.5">
+                    <Icon icon="ph:eye" className="w-3.5 h-3.5" />
                     <span>{thread.viewCount}</span>
                   </div>
                   {thread.isLocked && (
-                    <Icon icon="ph:lock-simple-fill" className="w-4 h-4 text-destructive" />
+                    <Icon icon="ph:lock-simple-fill" className="w-3.5 h-3.5 text-destructive" />
                   )}
                 </div>
               </div>

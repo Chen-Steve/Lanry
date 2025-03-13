@@ -109,39 +109,40 @@ export default function ThreadHeader({ thread }: ThreadHeaderProps) {
   return (
     <>
       <div className="space-y-4">
-        <div className="flex items-center gap-2 text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-2 text-muted-foreground text-sm md:text-base">
           <Link
             href="/forum"
             className="hover:text-foreground transition-colors"
           >
             Forum
           </Link>
-          <Icon icon="ph:caret-right-bold" className="w-4 h-4" />
+          <Icon icon="ph:caret-right-bold" className="w-3 h-3 md:w-4 md:h-4 flex-shrink-0" />
           <Link
             href={`/forum/discussion/${discussionSlug}`}
-            className="hover:text-foreground transition-colors"
+            className="hover:text-foreground transition-colors line-clamp-1"
           >
             {discussionTitle}
           </Link>
-          <Icon icon="ph:caret-right-bold" className="w-4 h-4" />
-          <span className="text-foreground">{thread.title}</span>
+          <Icon icon="ph:caret-right-bold" className="w-3 h-3 md:w-4 md:h-4 flex-shrink-0" />
+          <span className="text-foreground line-clamp-1">{thread.title}</span>
         </div>
 
-        <div className="flex items-start justify-between gap-4">
-          <h1 className="text-2xl font-semibold text-foreground">
+        <div className="flex items-start justify-between gap-3">
+          <h1 className="text-xl sm:text-2xl font-semibold text-foreground flex-1 min-w-0">
             {thread.title}
           </h1>
+
           {isOwner && (
             <button 
               onClick={() => setShowDeleteModal(true)}
-              className="px-4 py-2 text-sm font-medium rounded-md text-white bg-red-400 dark:bg-red-600 hover:bg-red-700 dark:hover:bg-red-800 transition-colors"
+              className="px-3 py-1.5 sm:px-4 sm:py-2 text-sm font-medium rounded-md text-white bg-red-400 dark:bg-red-600 hover:bg-red-700 dark:hover:bg-red-800 transition-colors flex-shrink-0 whitespace-nowrap"
             >
               Delete Thread
             </button>
           )}
         </div>
 
-        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
             <Avatar
               src={avatarUrl}
@@ -149,13 +150,13 @@ export default function ThreadHeader({ thread }: ThreadHeaderProps) {
               size={20}
               className="w-5 h-5"
             />
-            <span>{thread.author.username}</span>
+            <span className="line-clamp-1">{thread.author.username}</span>
           </div>
-          <span>•</span>
+          <span className="hidden sm:inline">•</span>
           <time dateTime={'created_at' in thread ? thread.created_at : thread.createdAt} className="text-muted-foreground">
             {formatDate(thread)}
           </time>
-          <span>•</span>
+          <span className="hidden sm:inline">•</span>
           <div className="flex items-center gap-1">
             <Icon icon="ph:eye" className="w-4 h-4" />
             <span>{viewCount}</span>
