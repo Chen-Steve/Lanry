@@ -9,7 +9,6 @@ import { useAuth } from '@/hooks/useAuth'
 import { useThreadMutations } from '@/hooks/forum/useThreadMutations'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Button } from '@/components/ui/button'
 import { useState } from 'react'
 
 interface ThreadHeaderProps {
@@ -133,13 +132,12 @@ export default function ThreadHeader({ thread }: ThreadHeaderProps) {
             {thread.title}
           </h1>
           {isOwner && (
-            <Button 
-              variant="outline" 
+            <button 
               onClick={() => setShowDeleteModal(true)}
-              className="text-destructive border-destructive hover:bg-destructive/10"
+              className="px-4 py-2 text-sm font-medium rounded-md text-white bg-red-400 dark:bg-red-600 hover:bg-red-700 dark:hover:bg-red-800 transition-colors"
             >
               Delete Thread
-            </Button>
+            </button>
           )}
         </div>
 
@@ -167,27 +165,26 @@ export default function ThreadHeader({ thread }: ThreadHeaderProps) {
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-background p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
-            <h2 className="text-lg font-semibold mb-2">Delete Thread</h2>
-            <p className="text-muted-foreground mb-4">
+        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-lg max-w-md w-full mx-4 border border-gray-200 dark:border-gray-800">
+            <h2 className="text-lg font-semibold mb-2 text-gray-900 dark:text-gray-100">Delete Thread</h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
               Are you sure you want to delete this thread? This action cannot be undone and will delete all messages in this thread.
             </p>
             <div className="flex justify-end gap-2">
-              <Button
-                variant="outline"
+              <button
+                className="px-4 py-2 text-sm font-medium border rounded-md text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
                 onClick={() => setShowDeleteModal(false)}
               >
                 Cancel
-              </Button>
-              <Button
-                variant="outline"
-                className="text-destructive border-destructive hover:bg-destructive/10"
+              </button>
+              <button
+                className="px-4 py-2 text-sm font-medium rounded-md text-white dark:text-red-50 bg-red-600 dark:bg-red-600 hover:bg-red-700 dark:hover:bg-red-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 onClick={handleDelete}
                 disabled={deleteThread.isPending}
               >
                 {deleteThread.isPending ? 'Deleting...' : 'Delete'}
-              </Button>
+              </button>
             </div>
           </div>
         </div>
