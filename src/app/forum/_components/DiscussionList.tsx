@@ -18,9 +18,9 @@ export default function DiscussionList() {
   if (isLoading) {
     return (
       <div>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-semibold text-foreground">Forum Discussions</h2>
-          <div className="relative w-[24rem]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <h2 className="text-xl sm:text-2xl font-semibold text-foreground">Forum Discussions</h2>
+          <div className="relative w-full sm:w-[24rem]">
             <input
               type="text"
               placeholder="Search discussions..."
@@ -34,10 +34,10 @@ export default function DiscussionList() {
         </div>
         <div className="bg-accent/80 backdrop-blur-sm shadow-sm rounded-lg border border-border divide-y divide-border">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="p-6">
+            <div key={i} className="p-4 sm:p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="h-6 bg-secondary/50 animate-pulse rounded w-3/4" />
-                <div className="h-4 bg-secondary/50 animate-pulse rounded w-24" />
+                <div className="h-4 bg-secondary/50 animate-pulse rounded w-24 hidden sm:block" />
               </div>
               <div className="h-4 bg-secondary/50 animate-pulse rounded w-full mb-4" />
               <div className="flex items-center gap-4">
@@ -53,29 +53,29 @@ export default function DiscussionList() {
 
   if (error) {
     return (
-      <div className="text-center py-8">
-        <Icon icon="ph:warning-circle" className="w-12 h-12 text-destructive mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-foreground">Failed to load discussions</h3>
-        <p className="text-muted-foreground mt-2">Please try again later</p>
+      <div className="text-center py-6 sm:py-8">
+        <Icon icon="ph:warning-circle" className="w-10 h-10 sm:w-12 sm:h-12 text-destructive mx-auto mb-4" />
+        <h3 className="text-base sm:text-lg font-medium text-foreground">Failed to load discussions</h3>
+        <p className="text-sm sm:text-base text-muted-foreground mt-2">Please try again later</p>
       </div>
     )
   }
 
   if (!data?.discussions.length) {
     return (
-      <div className="text-center py-8">
-        <Icon icon="ph:chat-centered-dots" className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-foreground">No discussions yet</h3>
-        <p className="text-muted-foreground mt-2">Be the first to start a discussion!</p>
+      <div className="text-center py-6 sm:py-8">
+        <Icon icon="ph:chat-centered-dots" className="w-10 h-10 sm:w-12 sm:h-12 text-muted-foreground mx-auto mb-4" />
+        <h3 className="text-base sm:text-lg font-medium text-foreground">No discussions yet</h3>
+        <p className="text-sm sm:text-base text-muted-foreground mt-2">Be the first to start a discussion!</p>
       </div>
     )
   }
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-semibold text-foreground">Forum Discussions</h2>
-        <div className="relative w-[24rem]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <h2 className="text-xl sm:text-2xl font-semibold text-foreground">Forum Discussions</h2>
+        <div className="relative w-full sm:w-[24rem]">
           <input
             type="text"
             placeholder="Search discussions..."
@@ -102,24 +102,24 @@ export default function DiscussionList() {
           <Link
             key={discussion.id}
             href={`/forum/discussion/${discussion.slug}`}
-            className="block p-6 hover:bg-secondary/50 transition-colors"
+            className="block p-4 sm:p-6 hover:bg-secondary/50 transition-colors"
           >
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0">
               <div className="flex items-center gap-3">
                 {discussion.isPinned && (
                   <Icon icon="ph:push-pin-fill" className="w-4 h-4 text-primary" />
                 )}
-                <h3 className="text-lg font-medium text-foreground group-hover:text-primary transition-colors">
+                <h3 className="text-base sm:text-lg font-medium text-foreground group-hover:text-primary transition-colors line-clamp-2 sm:line-clamp-1">
                   {discussion.title}
                 </h3>
               </div>
-              <span className="text-sm text-muted-foreground">
+              <span className="text-xs sm:text-sm text-muted-foreground order-first sm:order-none">
                 {formatDistanceToNow(new Date(discussion.updatedAt), { addSuffix: true })}
               </span>
             </div>
-            <p className="mt-2 text-muted-foreground line-clamp-2">{discussion.description}</p>
+            <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{discussion.description}</p>
             <div className="mt-4 flex items-center justify-end">
-              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+              <div className="flex items-center gap-4 text-xs sm:text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <Icon icon="ph:chat-circle-dots" className="w-4 h-4" />
                   <span>{discussion._count?.threads || 0}</span>
