@@ -45,9 +45,11 @@ interface MessageItemProps {
 const MessageItem = forwardRef<HTMLDivElement, MessageItemProps>(
   ({ message, isLast }, ref) => {
     const { userId } = useAuth()
-    const { deleteMessage } = useForumMutations()
+    const { deleteMessage, updateMessage } = useForumMutations()
     const isAuthor = userId === message.author_id
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+    const [isEditing, setIsEditing] = useState(false)
+    const [editContent, setEditContent] = useState(message.content)
 
     const handleDelete = async () => {
       try {
@@ -60,6 +62,29 @@ const MessageItem = forwardRef<HTMLDivElement, MessageItemProps>(
           toast.error('Please sign in to delete this message')
         } else {
           toast.error('Failed to delete message')
+        }
+      }
+    }
+
+    const handleEdit = async () => {
+      if (!editContent.trim()) {
+        toast.error('Message cannot be empty')
+        return
+      }
+
+      try {
+        await updateMessage.mutateAsync({
+          id: message.id,
+          content: editContent.trim()
+        })
+        setIsEditing(false)
+        toast.success('Message updated successfully')
+      } catch (error) {
+        console.error('[UPDATE_MESSAGE_ERROR]', error)
+        if (error instanceof Error && error.message === 'Unauthorized') {
+          toast.error('Please sign in to edit this message')
+        } else {
+          toast.error('Failed to update message')
         }
       }
     }
@@ -85,21 +110,69 @@ const MessageItem = forwardRef<HTMLDivElement, MessageItemProps>(
               <span className="text-sm text-muted-foreground">
                 {formatDate(message.created_at)}
               </span>
+              {message.is_edited && (
+                <>
+                  <span className="text-sm text-muted-foreground">•</span>
+                  <span className="text-sm text-muted-foreground italic">
+                    edited
+                  </span>
+                </>
+              )}
               {isAuthor && (
-                <button
-                  type="button"
-                  className="ml-auto flex items-center justify-center text-muted-foreground hover:text-destructive disabled:opacity-50 disabled:cursor-not-allowed"
-                  onClick={() => setShowDeleteConfirm(true)}
-                  disabled={deleteMessage.isPending}
-                >
-                  <Icon icon="lucide:trash-2" className="h-4 w-4" />
-                  <span className="sr-only">Delete message</span>
-                </button>
+                <div className="ml-auto flex items-center gap-2">
+                  <button
+                    type="button"
+                    className="flex items-center justify-center text-muted-foreground hover:text-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={() => setIsEditing(true)}
+                    disabled={isEditing || deleteMessage.isPending}
+                  >
+                    <Icon icon="lucide:edit-2" className="h-4 w-4" />
+                    <span className="sr-only">Edit message</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="flex items-center justify-center text-muted-foreground hover:text-destructive disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={() => setShowDeleteConfirm(true)}
+                    disabled={deleteMessage.isPending}
+                  >
+                    <Icon icon="lucide:trash-2" className="h-4 w-4" />
+                    <span className="sr-only">Delete message</span>
+                  </button>
+                </div>
               )}
             </div>
-            <div className="text-foreground whitespace-pre-wrap">
-              {message.content}
-            </div>
+            {isEditing ? (
+              <div className="space-y-2">
+                <textarea
+                  value={editContent}
+                  onChange={(e) => setEditContent(e.target.value)}
+                  className="w-full min-h-[100px] p-2 rounded-md bg-background border resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="Edit your message..."
+                />
+                <div className="flex justify-end gap-2">
+                  <button
+                    onClick={() => {
+                      setIsEditing(false)
+                      setEditContent(message.content)
+                    }}
+                    className="px-3 py-1.5 rounded-md hover:bg-accent transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleEdit}
+                    disabled={updateMessage.isPending}
+                    className="px-3 py-1.5 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors disabled:opacity-50"
+                  >
+                    Save
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="text-foreground whitespace-pre-wrap">
+                {message.content}
+              </div>
+            )}
           </div>
         </div>
 

@@ -4,7 +4,6 @@ import { Icon } from '@iconify/react'
 import { useDiscussions } from '@/hooks/forum/useDiscussions'
 import { ForumDiscussion } from '@/types/forum'
 import Link from 'next/link'
-import Image from 'next/image'
 import { formatDistanceToNow } from 'date-fns'
 
 export default function DiscussionList() {
@@ -102,27 +101,7 @@ export default function DiscussionList() {
               </span>
             </div>
             <p className="mt-2 text-muted-foreground line-clamp-2">{discussion.description}</p>
-            <div className="mt-4 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                {discussion.threads[0]?.author && (
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <div className="w-6 h-6 rounded-full bg-secondary flex items-center justify-center mr-2">
-                      {discussion.threads[0].author.avatarUrl ? (
-                        <Image
-                          src={discussion.threads[0].author.avatarUrl}
-                          alt={discussion.threads[0].author.username}
-                          width={24}
-                          height={24}
-                          className="rounded-full"
-                        />
-                      ) : (
-                        <Icon icon="ph:user" className="w-4 h-4" />
-                      )}
-                    </div>
-                    <span>{discussion.threads[0].author.username}</span>
-                  </div>
-                )}
-              </div>
+            <div className="mt-4 flex items-center justify-end">
               <div className="flex items-center gap-4 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <Icon icon="ph:chat-circle-dots" className="w-4 h-4" />

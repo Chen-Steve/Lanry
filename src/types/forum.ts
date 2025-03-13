@@ -59,6 +59,7 @@ export interface ForumMessage {
   updated_at: string
   thread_id: string
   author_id: string
+  is_edited: boolean
   author: {
     id: string
     username: string
