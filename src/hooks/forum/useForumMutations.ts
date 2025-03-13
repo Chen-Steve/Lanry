@@ -54,7 +54,30 @@ export function useForumMutations() {
     }
   })
 
+  const deleteMessage = useMutation({
+    mutationFn: async (messageId: string) => {
+      // Get current session first
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.user) throw new Error('Unauthorized')
+
+      const { error } = await supabase
+        .from('forum_messages')
+        .delete()
+        .eq('id', messageId)
+        .eq('author_id', session.user.id)
+
+      if (error) throw error
+
+      return { success: true }
+    },
+    onSuccess: () => {
+      // Invalidate relevant queries to trigger refetch
+      queryClient.invalidateQueries({ queryKey: ['forum', 'messages'] })
+    }
+  })
+
   return {
-    createMessage
+    createMessage,
+    deleteMessage
   }
 } 
