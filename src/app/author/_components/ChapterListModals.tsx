@@ -143,6 +143,27 @@ export function AssignChaptersModal({
 }: AssignChaptersModalProps) {
   if (!isOpen) return null;
 
+  // Sort chapters to show extras first
+  const sortedChapters = [...chapters].sort((a, b) => {
+    // If one is an extra chapter and the other isn't, sort extra chapter first
+    if (a.part_number === -1 && b.part_number !== -1) return -1;
+    if (a.part_number !== -1 && b.part_number === -1) return 1;
+    
+    // If both are extra chapters or both are regular chapters, sort by chapter number
+    if (a.chapter_number !== b.chapter_number) {
+      return a.chapter_number - b.chapter_number;
+    }
+    
+    // If chapter numbers are equal and neither is an extra chapter, sort by part number
+    if (a.part_number !== -1 && b.part_number !== -1) {
+      const partA = a.part_number ?? 0;
+      const partB = b.part_number ?? 0;
+      return partA - partB;
+    }
+    
+    return 0;
+  });
+
   return (
     <div className="fixed inset-0 bg-foreground/50 backdrop-blur-sm flex items-center justify-center z-50">
       <div className="bg-background rounded-lg p-6 w-full max-w-2xl border border-border shadow-lg">
@@ -166,12 +187,15 @@ export function AssignChaptersModal({
           />
         </div>
         <div className="max-h-[400px] overflow-y-auto border border-border rounded-md divide-y divide-border">
-          {chapters
-            .sort((a, b) => a.chapter_number - b.chapter_number)
-            .filter(chapter => 
-              chapter.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-              `Chapter ${chapter.chapter_number}${chapter.part_number ? ` Part ${chapter.part_number}` : ''}`.toLowerCase().includes(searchQuery.toLowerCase())
-            )
+          {sortedChapters
+            .filter(chapter => {
+              const searchLower = searchQuery.toLowerCase();
+              return (
+                chapter.title?.toLowerCase().includes(searchLower) ||
+                chapter.chapter_number.toString().includes(searchLower) ||
+                (chapter.part_number && chapter.part_number.toString().includes(searchLower))
+              );
+            })
             .map(chapter => (
               <div
                 key={chapter.id}
@@ -189,14 +213,26 @@ export function AssignChaptersModal({
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-foreground">
-                    Chapter {chapter.chapter_number}
-                    {chapter.part_number && (
-                      <span className="text-muted-foreground">
-                        {" "}Part {chapter.part_number}
+                    {chapter.part_number === -1 ? (
+                      <span className="inline-flex items-center gap-1.5">
+                        <Icon icon="solar:star-bold" className="w-4 h-4 text-purple-500" />
+                        <span className="font-medium text-purple-500">
+                          Ch. {chapter.chapter_number} · Extra:
+                        </span>
+                        <span className="text-purple-500">{chapter.title}</span>
                       </span>
-                    )}
-                    {chapter.title && (
-                      <span className="text-muted-foreground ml-1">: {chapter.title}</span>
+                    ) : (
+                      <>
+                        Chapter {chapter.chapter_number}
+                        {chapter.part_number && chapter.part_number !== -1 && (
+                          <span className="text-muted-foreground">
+                            {" "}Part {chapter.part_number}
+                          </span>
+                        )}
+                        {chapter.title && (
+                          <span className="text-muted-foreground ml-1">: {chapter.title}</span>
+                        )}
+                      </>
                     )}
                   </h4>
                 </div>

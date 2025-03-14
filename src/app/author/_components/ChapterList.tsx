@@ -19,6 +19,10 @@ const isAdvancedChapter = (chapter: ChapterListChapter): boolean => {
          (chapter.coins !== undefined && chapter.coins > 0);
 };
 
+const isExtraChapter = (chapter: ChapterListChapter): boolean => {
+  return chapter.part_number === -1;
+};
+
 export default function ChapterList({
   chapters,
   volumes,
@@ -338,11 +342,20 @@ export default function ChapterList({
               >
                 Edit
               </button>
-              Chapter {chapter.chapter_number}
-              {chapter.part_number && (
-                <span className="text-muted-foreground">
-                  {" "}Part {chapter.part_number}
+              {isExtraChapter(chapter) ? (
+                <span className="inline-flex items-center gap-1">
+                  <Icon icon="material-symbols:star-rounded" className="w-4 h-4 text-purple-500" />
+                  Extra
                 </span>
+              ) : (
+                <>
+                  Chapter {chapter.chapter_number}
+                  {chapter.part_number && chapter.part_number !== -1 && (
+                    <span className="text-muted-foreground">
+                      {" "}Part {chapter.part_number}
+                    </span>
+                  )}
+                </>
               )}
               {chapter.title && (
                 <span className="text-muted-foreground ml-1">: {chapter.title}</span>
@@ -457,6 +470,27 @@ export default function ChapterList({
     );
   };
 
+  // Sort function that puts extra chapters first
+  const sortChapters = useCallback((a: ChapterListChapter, b: ChapterListChapter) => {
+    // If one is an extra chapter and the other isn't, sort extra chapter first
+    if (a.part_number === -1 && b.part_number !== -1) return -1;
+    if (a.part_number !== -1 && b.part_number === -1) return 1;
+    
+    // If both are extra chapters or both are regular chapters, sort by chapter number
+    if (a.chapter_number !== b.chapter_number) {
+      return a.chapter_number - b.chapter_number;
+    }
+    
+    // If chapter numbers are equal and neither is an extra chapter, sort by part number
+    if (a.part_number !== -1 && b.part_number !== -1) {
+      const partA = a.part_number ?? 0;
+      const partB = b.part_number ?? 0;
+      return partA - partB;
+    }
+    
+    return 0;
+  }, []);
+
   return (
     <div className="border border-border rounded-lg overflow-hidden flex flex-col h-[calc(100vh-16rem)]">
       {showChapterForm ? (
@@ -503,7 +537,7 @@ export default function ChapterList({
                 />
               </div>
               <div className="flex items-center gap-4 flex-1">
-                <div className="relative flex-1 max-w-md">
+                <div className="relative w-64">
                   <input
                     type="text"
                     value={searchQuery}
@@ -557,15 +591,7 @@ export default function ChapterList({
                 </div>
                 <div className="divide-y divide-border mt-2">
                   {chaptersGroupedByVolume.noVolumeChapters
-                    .sort((a, b) => {
-                      if (a.chapter_number !== b.chapter_number) {
-                        return a.chapter_number - b.chapter_number;
-                      }
-                      // If chapter numbers are equal, sort by part number
-                      const partA = a.part_number || 0;
-                      const partB = b.part_number || 0;
-                      return partA - partB;
-                    })
+                    .sort(sortChapters)
                     .map(renderChapter)}
                 </div>
               </div>

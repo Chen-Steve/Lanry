@@ -34,14 +34,15 @@ export const ChapterList = ({
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [volumeCounts, setVolumeCounts] = useState(new Map<string, { total: number; regular: number; advanced: number }>());
 
   // Calculate volume-specific counts for all chapters (both regular and advanced)
-  const volumeCounts = useMemo(() => {
-    const counts = new Map<string, { total: number, regular: number, advanced: number }>();
-    const now = new Date().toISOString();
+  useEffect(() => {
+    const counts = new Map<string, { total: number; regular: number; advanced: number }>();
     
     volumes.forEach(volume => {
       const volumeChapters = initialChapters.filter(ch => ch.volume_id === volume.id);
+      const now = new Date().toISOString();
       
       counts.set(volume.id, {
         total: volumeChapters.length,
@@ -62,8 +63,30 @@ export const ChapterList = ({
         }).length
       });
     });
-    return counts;
+
+    setVolumeCounts(counts);
   }, [volumes, initialChapters]);
+
+  // Sort function that puts extra chapters last
+  const sortChapters = useCallback((a: ChapterListItem, b: ChapterListItem) => {
+    // If one is an extra chapter and the other isn't, sort extra chapter last
+    if (a.part_number === -1 && b.part_number !== -1) return 1;
+    if (a.part_number !== -1 && b.part_number === -1) return -1;
+    
+    // If both are extra chapters or both are regular chapters, sort by chapter number
+    if (a.chapter_number !== b.chapter_number) {
+      return a.chapter_number - b.chapter_number;
+    }
+    
+    // If chapter numbers are equal and neither is an extra chapter, sort by part number
+    if (a.part_number !== -1 && b.part_number !== -1) {
+      const partA = a.part_number ?? 0;
+      const partB = b.part_number ?? 0;
+      return partA - partB;
+    }
+    
+    return 0;
+  }, []);
 
   const loadChapters = useCallback(async (pageNum: number = 1) => {
     if (loadingRef.current) return;
@@ -266,6 +289,28 @@ export const ChapterList = ({
 
   const selectedVolume = volumes.find(v => v.id === selectedVolumeId);
 
+  const chaptersGroupedByVolume = useMemo(() => {
+    const noVolumeChapters = chapters.filter(chapter => !chapter.volume_id);
+    const volumeChapters = new Map<string, ChapterListItem[]>();
+    
+    volumes.forEach(volume => {
+      volumeChapters.set(volume.id, chapters.filter(chapter => chapter.volume_id === volume.id));
+    });
+
+    // Sort chapters in each volume
+    volumeChapters.forEach((chapters, volumeId) => {
+      volumeChapters.set(volumeId, [...chapters].sort(sortChapters));
+    });
+
+    // Sort no volume chapters
+    const sortedNoVolumeChapters = [...noVolumeChapters].sort(sortChapters);
+
+    return {
+      noVolumeChapters: sortedNoVolumeChapters,
+      volumeChapters
+    };
+  }, [chapters, volumes, sortChapters]);
+
   return (
     <div className="max-w-5xl mx-auto">
       <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
@@ -388,7 +433,10 @@ export const ChapterList = ({
           ) : chapters.length > 0 ? (
             <>
               <div className="col-span-2 grid grid-cols-1 md:grid-cols-2 md:divide-x divide-border">
-                {chapters.map(renderChapter)}
+                {(selectedVolumeId && !showAllChapters
+                  ? chaptersGroupedByVolume.volumeChapters.get(selectedVolumeId)?.map(renderChapter)
+                  : chaptersGroupedByVolume.noVolumeChapters.map(renderChapter)
+                )}
               </div>
               {renderPagination()}
             </>

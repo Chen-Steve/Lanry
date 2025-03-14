@@ -192,6 +192,9 @@ export const ChapterListItem = memo(function ChapterListItem({
   // Add helper to check if chapter is advanced
   const isAdvancedChapter = chapter.publish_at && new Date(chapter.publish_at) > new Date() && (chapter.coins ?? 0) > 0;
 
+  // Add helper to check if chapter is extra
+  const isExtraChapter = chapter.part_number === -1;
+
   const chapterContent = (
     <div className="flex items-center justify-between w-full">
       <div className="flex items-center gap-2 min-w-0">
@@ -199,10 +202,18 @@ export const ChapterListItem = memo(function ChapterListItem({
           {!isPublished && !isFree && !isUnlocked && !hasTranslatorAccess && (
             <Icon icon="material-symbols:lock" className="text-xs" />
           )}
-          Ch. {chapter.chapter_number}{chapter.part_number ? `.${chapter.part_number}` : ''}
+          {isExtraChapter ? (
+            <div className="flex items-center gap-1.5 text-purple-500">
+              <Icon icon="solar:star-bold" className="w-4 h-4" />
+              <span className="font-medium">Ch. {chapter.chapter_number} · Extra:</span>
+              <span className="translate-y-[0px]">{chapter.title}</span>
+            </div>
+          ) : (
+            <>Ch. {chapter.chapter_number}{chapter.part_number ? `.${chapter.part_number}` : ''}</>
+          )}
         </span>
-        {chapter.title && (
-          <span className="text-sm text-muted-foreground truncate">
+        {chapter.title && !isExtraChapter && (
+          <span className="text-sm truncate text-muted-foreground">
             {chapter.title}
           </span>
         )}
