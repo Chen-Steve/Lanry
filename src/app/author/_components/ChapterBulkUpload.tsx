@@ -60,7 +60,7 @@ export default function ChapterBulkUpload({ novelId, userId, onUploadComplete }:
     const processableFiles: FileToProcess[] = [];
 
     for (const [path, zipEntry] of Object.entries(zipContent.files)) {
-      if (!zipEntry.dir && (path.toLowerCase().endsWith('.docx') || path.toLowerCase().endsWith('.txt'))) {
+      if (!zipEntry.dir && (path.toLowerCase().endsWith('.docx') || path.toLowerCase().endsWith('.txt') || path.toLowerCase().endsWith('.md'))) {
         const content = await zipEntry.async('arraybuffer');
         processableFiles.push({
           name: path.split('/').pop() || path,
@@ -70,7 +70,7 @@ export default function ChapterBulkUpload({ novelId, userId, onUploadComplete }:
     }
 
     if (processableFiles.length === 0) {
-      toast.error('No .docx or .txt files found in the zip archive');
+      toast.error('No .docx, .txt, or .md files found in the zip archive');
     }
 
     return processableFiles;
@@ -80,7 +80,7 @@ export default function ChapterBulkUpload({ novelId, userId, onUploadComplete }:
     const newFiles: FileToProcess[] = [];
     
     for (const file of acceptedFiles) {
-      if (file.name.endsWith('.docx') || file.name.endsWith('.txt')) {
+      if (file.name.endsWith('.docx') || file.name.endsWith('.txt') || file.name.endsWith('.md')) {
         const arrayBuffer = await file.arrayBuffer();
         newFiles.push({
           name: file.name,
@@ -90,7 +90,7 @@ export default function ChapterBulkUpload({ novelId, userId, onUploadComplete }:
         const zipFiles = await processZipFile(file);
         newFiles.push(...zipFiles);
       } else {
-        toast.error('Only .docx, .txt, and .zip files are allowed');
+        toast.error('Only .docx, .txt, .md, and .zip files are allowed');
       }
     }
 
@@ -102,6 +102,7 @@ export default function ChapterBulkUpload({ novelId, userId, onUploadComplete }:
     accept: {
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
       'text/plain': ['.txt'],
+      'text/markdown': ['.md'],
       'application/zip': ['.zip']
     }
   });
@@ -111,20 +112,20 @@ export default function ChapterBulkUpload({ novelId, userId, onUploadComplete }:
   };
 
   const getFileContent = async (file: FileToProcess): Promise<ProcessedContent> => {
-    if (file.name.endsWith('.txt')) {
+    if (file.name.endsWith('.txt') || file.name.endsWith('.md')) {
       const decoder = new TextDecoder('utf-8');
       const content = decoder.decode(file.content);
       const lines = content.split('\n').filter(line => line.trim());
-      return extractChapterInfo(lines);
+      return extractChapterInfo(lines, file.name);
     } else {
       // For docx files, extract all content
       const result = await mammoth.extractRawText({ arrayBuffer: file.content });
       const lines = result.value.split('\n').filter(line => line.trim());
-      return extractChapterInfo(lines);
+      return extractChapterInfo(lines, file.name);
     }
   };
 
-  const extractChapterInfo = (lines: string[]): ProcessedContent => {
+  const extractChapterInfo = (lines: string[], filename: string): ProcessedContent => {
     if (lines.length === 0) {
       return { content: '', title: null, chapterNumber: null, partNumber: null };
     }
@@ -151,6 +152,34 @@ export default function ChapterBulkUpload({ novelId, userId, onUploadComplete }:
         title,
         content,
         partNumber
+      };
+    }
+    
+    // If no chapter pattern found in content, try to extract from filename
+    // Match patterns like: 
+    // "chapter 10 - title.md"
+    // "chapter 10: title.md"
+    // "chapter 10_title.md"
+    // "chapter-10-title.md"
+    // "ch10 - title.md"
+    const filenameMatch = filename.match(/^(?:chapter|ch\.?)[-\s]*(\d+)(?:[-:\s_]+(.+?))?\.(?:md|txt|docx)$/i);
+    if (filenameMatch) {
+      return {
+        chapterNumber: parseInt(filenameMatch[1]),
+        title: filenameMatch[2]?.trim() || null,
+        content: lines.join('\n\n'),
+        partNumber: null
+      };
+    }
+    
+    // Direct number match with optional title (e.g., "10 - title.md", "10_title.md")
+    const numberMatch = filename.match(/^(\d+)(?:[-:\s_]+(.+?))?\.(?:md|txt|docx)$/i);
+    if (numberMatch) {
+      return {
+        chapterNumber: parseInt(numberMatch[1]),
+        title: numberMatch[2]?.trim() || null,
+        content: lines.join('\n\n'),
+        partNumber: null
       };
     }
     
@@ -341,23 +370,33 @@ export default function ChapterBulkUpload({ novelId, userId, onUploadComplete }:
                     {showHelp && (
                       <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 w-64 p-3 text-xs bg-background text-foreground rounded-lg shadow-lg border border-border z-50">
                         <h4 className="font-medium mb-1">File Format Requirements:</h4>
-                        <ul className="space-y-1 list-disc ml-4">
-                          <li>Accepts:
-                            <div className="mt-1 space-y-1">
-                              <span className="font-mono text-[10px] bg-accent px-1 rounded block">.docx files</span>
-                              <span className="font-mono text-[10px] bg-accent px-1 rounded block">.txt files</span>
-                              <span className="font-mono text-[10px] bg-accent px-1 rounded block">.zip containing .docx or .txt files</span>
+                        <ul className="space-y-2 list-disc ml-4">
+                          <li>
+                            <span className="block mb-1">Supported formats:</span>
+                            <div className="flex flex-wrap gap-1">
+                              <span className="font-mono text-[10px] bg-accent px-1.5 rounded">.md</span>
+                              <span className="font-mono text-[10px] bg-accent px-1.5 rounded">.txt</span>
+                              <span className="font-mono text-[10px] bg-accent px-1.5 rounded">.docx</span>
+                              <span className="font-mono text-[10px] bg-accent px-1.5 rounded">.zip</span>
                             </div>
                           </li>
-                          <li>File names must be in format: 
-                            <div className="mt-1 space-y-1">
-                              <span className="font-mono text-[10px] bg-accent px-1 rounded block">chapterX.docx</span>
-                              <span className="font-mono text-[10px] bg-accent px-1 rounded block">chapter X.docx</span>
-                              <span className="font-mono text-[10px] bg-accent px-1 rounded block">chapter X: title.docx</span>
-                              <span className="font-mono text-[10px] bg-accent px-1 rounded block">chapter X_title.docx</span>
+                          <li>
+                            <span className="block mb-1">Naming pattern:</span>
+                            <code className="font-mono text-[10px] bg-accent px-1.5 py-0.5 rounded block">
+                              chapter[X][-_: ][title]
+                            </code>
+                            <span className="text-muted-foreground block mt-1">
+                              Where X = chapter number, title is optional
+                            </span>
+                          </li>
+                          <li>
+                            <span className="block mb-1">Examples:</span>
+                            <div className="space-y-0.5 font-mono text-[10px]">
+                              <span className="block">chapter10.md</span>
+                              <span className="block">chapter 10 - epic battle.md</span>
+                              <span className="block">10_the final fight.md</span>
                             </div>
                           </li>
-                          <li>Where X is the chapter number</li>
                         </ul>
                       </div>
                     )}
@@ -428,7 +467,7 @@ export default function ChapterBulkUpload({ novelId, userId, onUploadComplete }:
                     className="w-6 h-6 text-muted-foreground" 
                   />
                   <span className="text-xs text-muted-foreground">
-                    {isDragActive ? 'Drop files here' : 'Drop .docx, .txt files or .zip archive'}
+                    {isDragActive ? 'Drop files here' : 'Drop .docx, .txt, .md files or .zip archive'}
                   </span>
                 </div>
               </div>
