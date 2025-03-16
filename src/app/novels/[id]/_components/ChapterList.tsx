@@ -435,7 +435,9 @@ export const ChapterList = ({
               <div className="col-span-2 grid grid-cols-1 md:grid-cols-2 md:divide-x divide-border">
                 {(selectedVolumeId && !showAllChapters
                   ? chaptersGroupedByVolume.volumeChapters.get(selectedVolumeId)?.map(renderChapter)
-                  : chaptersGroupedByVolume.noVolumeChapters.map(renderChapter)
+                  : [...chaptersGroupedByVolume.noVolumeChapters,
+                      ...Array.from(chaptersGroupedByVolume.volumeChapters.values()).flat()
+                    ].sort(sortChapters).map(renderChapter)
                 )}
               </div>
               {renderPagination()}
