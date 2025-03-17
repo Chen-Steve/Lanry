@@ -15,6 +15,7 @@ interface ChapterBulkUploadProps {
   novelId: string;
   userId: string;
   onUploadComplete: () => void;
+  volumeId?: string;
 }
 
 interface FileToProcess {
@@ -29,7 +30,7 @@ interface ProcessedContent {
   partNumber: number | null;
 }
 
-export default function ChapterBulkUpload({ novelId, userId, onUploadComplete }: ChapterBulkUploadProps) {
+export default function ChapterBulkUpload({ novelId, userId, onUploadComplete, volumeId }: ChapterBulkUploadProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [files, setFiles] = useState<FileToProcess[]>([]);
@@ -283,7 +284,7 @@ export default function ChapterBulkUpload({ novelId, userId, onUploadComplete }:
             finalTitle = contentTitle;
           }
 
-          // Create the chapter with publish_at based on settings
+          // Create the chapter with publish_at based on settings and include volumeId if provided
           const chapterId = await authorChapterService.createChapter(novelId, userId, {
             chapter_number: finalChapterNumber,
             part_number: finalPartNumber,
@@ -291,6 +292,7 @@ export default function ChapterBulkUpload({ novelId, userId, onUploadComplete }:
             content,
             publish_at: !useAutoRelease && bulkPublishDate ? bulkPublishDate : null,
             coins: 0,
+            volume_id: volumeId
           });
 
           // Only apply auto-release schedule if useAutoRelease is true
@@ -339,9 +341,14 @@ export default function ChapterBulkUpload({ novelId, userId, onUploadComplete }:
     <>
       <button 
         onClick={() => setIsOpen(true)}
-        className="inline-flex items-center gap-2 px-2.5 py-1.5 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-accent focus:outline-none focus:ring-2 focus:ring-primary/50"
+        className={volumeId ? (
+          "inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-primary hover:text-primary/90 bg-primary/10 hover:bg-primary/20 rounded transition-colors"
+        ) : (
+          "inline-flex items-center gap-2 px-2.5 py-1.5 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors"
+        )}
       >
-        Upload
+        <Icon icon="mdi:file-upload" className={volumeId ? "w-3.5 h-3.5" : "w-4 h-4"} />
+        {volumeId ? 'Upload to Volume' : 'Upload'}
       </button>
 
       {mounted && isOpen && createPortal(

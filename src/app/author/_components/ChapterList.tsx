@@ -444,6 +444,16 @@ export default function ChapterList({
               <Icon icon="mdi:file-move" className="w-3.5 h-3.5" />
               Assign Chapters
             </button>
+            <ChapterBulkUpload
+              novelId={novelId}
+              userId={userId}
+              volumeId={volume.id}
+              onUploadComplete={() => {
+                if (onLoadChapters) {
+                  onLoadChapters();
+                }
+              }}
+            />
             <button
               onClick={() => handleCreateChapter(volume.id)}
               className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-primary hover:text-primary/90 bg-primary/10 hover:bg-primary/20 rounded transition-colors"
