@@ -6,6 +6,10 @@ import { ForumThread } from '@/types/forum'
 import Link from 'next/link'
 import Image from 'next/image'
 import { formatDistanceToNow } from 'date-fns'
+import { useAuth } from '@/hooks/useAuth'
+import { useThreadMutations } from '@/hooks/forum/useThreadMutations'
+import { toast } from 'sonner'
+import { useState } from 'react'
 
 interface ThreadListProps {
   slug: string
@@ -13,6 +17,29 @@ interface ThreadListProps {
 
 export default function ThreadList({ slug }: ThreadListProps) {
   const { data, isLoading, error } = useThreads(slug)
+  const { userId } = useAuth()
+  const { deleteThread } = useThreadMutations()
+  const [deletingThreadId, setDeletingThreadId] = useState<string | null>(null)
+
+  const handleDelete = async (e: React.MouseEvent, threadId: string) => {
+    e.preventDefault() // Prevent navigation
+    if (deletingThreadId) return // Prevent multiple clicks
+
+    try {
+      setDeletingThreadId(threadId)
+      await deleteThread.mutateAsync(threadId)
+      toast.success('Thread deleted successfully')
+    } catch (error) {
+      console.error('[DELETE_THREAD_ERROR]', error)
+      if (error instanceof Error && error.message === 'Unauthorized') {
+        toast.error('Please sign in to delete this thread')
+      } else {
+        toast.error('Failed to delete thread')
+      }
+    } finally {
+      setDeletingThreadId(null)
+    }
+  }
 
   if (isLoading) {
     return (
@@ -60,58 +87,75 @@ export default function ThreadList({ slug }: ThreadListProps) {
       ) : (
         <div className="bg-accent/80 backdrop-blur-sm shadow-sm rounded-lg border border-border divide-y divide-border">
           {data.threads.map((thread: ForumThread) => (
-            <Link
-              key={thread.id}
-              href={`/forum/discussion/${slug}/thread/${thread.id}`}
-              className="block p-4 hover:bg-secondary/50 transition-colors"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  {thread.isPinned && (
-                    <Icon icon="ph:push-pin-fill" className="w-3.5 h-3.5 text-primary" />
-                  )}
-                  <h3 className="text-base font-medium text-foreground group-hover:text-primary transition-colors">
-                    {thread.title}
-                  </h3>
+            <div key={thread.id} className="block p-4 hover:bg-secondary/50 transition-colors relative">
+              <Link
+                href={`/forum/discussion/${slug}/thread/${thread.id}`}
+                className="block"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {thread.isPinned && (
+                      <Icon icon="ph:push-pin-fill" className="w-3.5 h-3.5 text-primary" />
+                    )}
+                    <h3 className="text-base font-medium text-foreground group-hover:text-primary transition-colors">
+                      {thread.title}
+                    </h3>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-muted-foreground">
+                      {formatDistanceToNow(new Date(thread.lastMessageAt), { addSuffix: true })}
+                    </span>
+                    {userId === thread.author.id && (
+                      <button
+                        onClick={(e) => handleDelete(e, thread.id)}
+                        disabled={deletingThreadId === thread.id}
+                        className="p-1.5 text-destructive hover:bg-destructive/10 rounded-md transition-colors"
+                        title="Delete thread"
+                      >
+                        {deletingThreadId === thread.id ? (
+                          <Icon icon="ph:spinner" className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Icon icon="ph:trash" className="w-4 h-4" />
+                        )}
+                      </button>
+                    )}
+                  </div>
                 </div>
-                <span className="text-xs text-muted-foreground">
-                  {formatDistanceToNow(new Date(thread.lastMessageAt), { addSuffix: true })}
-                </span>
-              </div>
-              <div className="mt-2 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center text-xs text-muted-foreground">
-                    <div className="w-5 h-5 rounded-full bg-secondary flex items-center justify-center mr-1.5">
-                      {thread.author.avatarUrl ? (
-                        <Image
-                          src={thread.author.avatarUrl}
-                          alt={thread.author.username}
-                          width={20}
-                          height={20}
-                          className="w-5 h-5 rounded-full"
-                        />
-                      ) : (
-                        <Icon icon="ph:user" className="w-3.5 h-3.5" />
-                      )}
+                <div className="mt-2 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center text-xs text-muted-foreground">
+                      <div className="w-5 h-5 rounded-full bg-secondary flex items-center justify-center mr-1.5">
+                        {thread.author.avatarUrl ? (
+                          <Image
+                            src={thread.author.avatarUrl}
+                            alt={thread.author.username}
+                            width={20}
+                            height={20}
+                            className="w-5 h-5 rounded-full"
+                          />
+                        ) : (
+                          <Icon icon="ph:user" className="w-3.5 h-3.5" />
+                        )}
+                      </div>
+                      <span>{thread.author.username}</span>
                     </div>
-                    <span>{thread.author.username}</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-1.5">
+                      <Icon icon="ph:chat-circle-dots" className="w-3.5 h-3.5" />
+                      <span>{thread._count?.messages || 0}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Icon icon="ph:eye" className="w-3.5 h-3.5" />
+                      <span>{thread.viewCount}</span>
+                    </div>
+                    {thread.isLocked && (
+                      <Icon icon="ph:lock-simple-fill" className="w-3.5 h-3.5 text-destructive" />
+                    )}
                   </div>
                 </div>
-                <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-1.5">
-                    <Icon icon="ph:chat-circle-dots" className="w-3.5 h-3.5" />
-                    <span>{thread._count?.messages || 0}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <Icon icon="ph:eye" className="w-3.5 h-3.5" />
-                    <span>{thread.viewCount}</span>
-                  </div>
-                  {thread.isLocked && (
-                    <Icon icon="ph:lock-simple-fill" className="w-3.5 h-3.5 text-destructive" />
-                  )}
-                </div>
-              </div>
-            </Link>
+              </Link>
+            </div>
           ))}
         </div>
       )}
