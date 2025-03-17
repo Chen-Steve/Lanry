@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Icon } from '@iconify/react';
-import { formatLocalDateTime, toLocalDatetimeValue, isFutureDate } from '@/utils/dateUtils';
+import { toLocalDatetimeValue, isFutureDate } from '@/utils/dateUtils';
+import Calendar from './Calendar';
 
 interface ChapterPublishSettingsProps {
   publishAt: string;
@@ -24,6 +25,7 @@ export default function ChapterPublishSettings({
   autoReleaseEnabled = false,
 }: ChapterPublishSettingsProps) {
   const [hasBeenTouched, setHasBeenTouched] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
   const [isIndefinitelyLocked, setIsIndefinitelyLocked] = useState(() => {
     // Check if publishAt is set to a far future date (e.g., > 50 years from now)
     if (!publishAt) return false;
@@ -226,16 +228,31 @@ export default function ChapterPublishSettings({
                       <div className="space-y-2">
                         <div className="flex flex-col gap-2">
                           <div className="flex items-center gap-2">
-                            <input
-                              type="date"
-                              value={!isIndefinitelyLocked && publishAt ? toLocalDatetimeValue(publishAt).split('T')[0] : ''}
-                              onChange={(e) => handleDateTimeChange('date', e.target.value)}
-                              min={new Date().toISOString().split('T')[0]}
-                              className="flex-1 p-2 text-sm border border-border rounded bg-background text-foreground focus:ring-primary relative hover:cursor-pointer"
-                              style={{ colorScheme: 'dark' }}
-                              aria-label="Publication date"
-                              disabled={isIndefinitelyLocked}
-                            />
+                            <div className="relative flex-1">
+                              <input
+                                type="date"
+                                value={!isIndefinitelyLocked && publishAt ? toLocalDatetimeValue(publishAt).split('T')[0] : ''}
+                                onChange={(e) => handleDateTimeChange('date', e.target.value)}
+                                min={new Date().toISOString().split('T')[0]}
+                                className="flex-1 w-full p-2 text-sm border border-border rounded bg-background text-foreground focus:ring-primary relative hover:cursor-pointer"
+                                style={{ colorScheme: 'dark' }}
+                                aria-label="Publication date"
+                                disabled={isIndefinitelyLocked}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  setShowCalendar(true);
+                                }}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setShowCalendar(true)}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                                disabled={isIndefinitelyLocked}
+                                title="Open calendar"
+                              >
+                                <Icon icon="mdi:calendar" className="w-5 h-5" />
+                              </button>
+                            </div>
                             
                             <select
                               value={getCurrentTimeValue(publishAt)}
@@ -253,15 +270,7 @@ export default function ChapterPublishSettings({
                               ))}
                             </select>
                           </div>
-                          {publishAt && !isIndefinitelyLocked && (
-                            <p className="text-xs text-muted-foreground pl-7">
-                              Will be released at: {formatLocalDateTime(publishAt)}
-                              <br />
-                              <span className="text-xs text-primary">
-                                (Releases at this local time for all readers in their timezone)
-                              </span>
-                            </p>
-                          )}
+                        
                         </div>
                       </div>
                     </div>
@@ -270,16 +279,13 @@ export default function ChapterPublishSettings({
 
                 {/* Early Access Section - Only show if not indefinitely locked */}
                 {!isIndefinitelyLocked && (
-                  <div className="space-y-3">
+                  <div>
                     <div className="flex items-center gap-2">
                       <Icon icon="ph:coins" className="w-5 h-5 text-primary" />
-                      <h4 className="text-sm font-medium text-foreground">Early Access</h4>
+                      <h4 className="text-sm font-medium text-foreground">Cost</h4>
                     </div>
 
                     <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <label className="text-sm text-muted-foreground">Cost in Coins</label>
-                      </div>
                       {autoReleaseEnabled && (
                         <div className="p-3 bg-primary/10 rounded-lg mb-2">
                           <div className="flex items-start gap-2">
@@ -357,6 +363,40 @@ export default function ChapterPublishSettings({
                   )}
                   {isSaving ? 'Saving...' : 'Save Changes'}
                 </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Calendar Modal */}
+      {showCalendar && (
+        <>
+          <div 
+            className="fixed inset-0 bg-black/50 z-[70]" 
+            onClick={() => setShowCalendar(false)}
+          />
+          <div className="fixed inset-0 z-[71] flex items-center justify-center pointer-events-none">
+            <div className="bg-background rounded-lg shadow-lg pointer-events-auto">
+              <div className="flex items-center justify-between p-4 border-b border-border">
+                <h3 className="text-lg font-semibold text-foreground">Select Date</h3>
+                <button
+                  type="button"
+                  onClick={() => setShowCalendar(false)}
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label="Close calendar"
+                >
+                  <Icon icon="mdi:close" className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="p-4">
+                <Calendar
+                  onDateSelect={(date) => {
+                    const isoString = date.toISOString();
+                    handleDateTimeChange('date', isoString.split('T')[0]);
+                    setShowCalendar(false);
+                  }}
+                />
               </div>
             </div>
           </div>
