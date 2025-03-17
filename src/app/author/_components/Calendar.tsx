@@ -17,13 +17,21 @@ const Calendar = ({ onDateSelect, advancedDates = [] }: CalendarProps) => {
   const daysInMonth = lastDayOfMonth.getDate();
   const startingDayIndex = firstDayOfMonth.getDay(); // 0 = Sunday, 1 = Monday, etc.
 
-  // Helper function to check if a date has an advanced chapter
-  const isAdvancedDate = (date: Date) => {
-    return advancedDates.some(advDate => 
-      advDate.getDate() === date.getDate() &&
-      advDate.getMonth() === date.getMonth() &&
-      advDate.getFullYear() === date.getFullYear()
-    );
+  // Helper function to check if a date has advanced chapters and get their indices
+  const getAdvancedDateInfo = (date: Date) => {
+    const advancedOnDate = advancedDates.map((advDate, index) => {
+      if (advDate.getDate() === date.getDate() &&
+          advDate.getMonth() === date.getMonth() &&
+          advDate.getFullYear() === date.getFullYear()) {
+        return index + 1; // Adding 1 to make it 1-based instead of 0-based
+      }
+      return null;
+    }).filter((index): index is number => index !== null);
+
+    return {
+      hasAdvanced: advancedOnDate.length > 0,
+      indices: advancedOnDate
+    };
   };
 
   // Navigation functions
@@ -50,19 +58,28 @@ const Calendar = ({ onDateSelect, advancedDates = [] }: CalendarProps) => {
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
       const isToday = new Date().toDateString() === date.toDateString();
-      const hasAdvancedChapter = isAdvancedDate(date);
+      const { hasAdvanced, indices } = getAdvancedDateInfo(date);
       
       days.push(
         <button
           key={day}
           onClick={() => onDateSelect?.(date)}
-          className={`h-12 w-12 text-base hover:bg-accent transition-colors border-t border-border flex items-center justify-center relative
+          className={`group h-12 w-12 text-base hover:bg-accent transition-colors border-t border-border flex items-center justify-center relative
             ${isToday ? 'bg-primary/10 font-semibold text-primary' : ''}
-            ${hasAdvancedChapter ? 'text-orange-500 font-medium' : ''}`}
+            ${hasAdvanced ? 'text-orange-500 font-medium' : ''}`}
         >
           {day}
-          {hasAdvancedChapter && (
-            <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-orange-500" />
+          {hasAdvanced && (
+            <>
+              <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-orange-500" />
+              <div className="absolute opacity-0 group-hover:opacity-100 bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-normal bg-background border border-border rounded shadow-lg whitespace-nowrap pointer-events-none transition-opacity">
+                <div className="flex flex-col gap-0.5">
+                  {indices.map((index) => (
+                    <div key={index}>Advanced Chapter {index}</div>
+                  ))}
+                </div>
+              </div>
+            </>
           )}
         </button>
       );
