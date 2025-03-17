@@ -32,6 +32,7 @@ export default function ChapterEditForm({
   const [isExpanded, setIsExpanded] = useState(false);
   const [showSchedulePopup, setShowSchedulePopup] = useState(false);
   const [isExtraChapter, setIsExtraChapter] = useState(false);
+  const [advancedDates, setAdvancedDates] = useState<Date[]>([]);
   const [formData, setFormData] = useState({
     chapterNumber: '',
     partNumber: '',
@@ -79,6 +80,32 @@ export default function ChapterEditForm({
       setIsLoading(false);
     }
   }, [chapterId, fetchChapterDetails]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        // Fetch all chapters to get advanced dates
+        const allChapters = await authorChapterService.fetchNovelChapters(novelId, userId, true);
+        const advancedChapterDates = allChapters
+          .filter(chapter => {
+            const publishDate = chapter.publish_at ? new Date(chapter.publish_at) : null;
+            const now = new Date();
+            return publishDate && publishDate > now && (chapter.coins || 0) > 0;
+          })
+          .map(chapter => new Date(chapter.publish_at!));
+        
+        setAdvancedDates(advancedChapterDates);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        toast.error('Failed to load chapter data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [chapterId, novelId, userId]);
 
   const handleSave = async (e?: React.FormEvent) => {
     if (e) {
@@ -259,6 +286,7 @@ export default function ChapterEditForm({
               onSave={handleSave}
               isSaving={isSaving}
               autoReleaseEnabled={autoReleaseEnabled}
+              advancedDates={advancedDates}
             />
           )}
         </div>

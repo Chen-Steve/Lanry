@@ -12,6 +12,7 @@ interface ChapterPublishSettingsProps {
   onSave?: () => void;
   isSaving?: boolean;
   autoReleaseEnabled?: boolean;
+  advancedDates?: Date[];
 }
 
 export default function ChapterPublishSettings({
@@ -23,6 +24,7 @@ export default function ChapterPublishSettings({
   onSave,
   isSaving = false,
   autoReleaseEnabled = false,
+  advancedDates = [],
 }: ChapterPublishSettingsProps) {
   const [hasBeenTouched, setHasBeenTouched] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
@@ -396,6 +398,7 @@ export default function ChapterPublishSettings({
                     handleDateTimeChange('date', isoString.split('T')[0]);
                     setShowCalendar(false);
                   }}
+                  advancedDates={advancedDates}
                 />
               </div>
             </div>

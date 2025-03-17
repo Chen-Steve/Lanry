@@ -5,9 +5,10 @@ import { Icon } from '@iconify/react';
 
 interface CalendarProps {
   onDateSelect?: (date: Date) => void;
+  advancedDates?: Date[]; // Array of dates that have advanced chapters
 }
 
-const Calendar = ({ onDateSelect }: CalendarProps) => {
+const Calendar = ({ onDateSelect, advancedDates = [] }: CalendarProps) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   
   // Get the first day of the month and the number of days in the month
@@ -15,6 +16,15 @@ const Calendar = ({ onDateSelect }: CalendarProps) => {
   const lastDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
   const daysInMonth = lastDayOfMonth.getDate();
   const startingDayIndex = firstDayOfMonth.getDay(); // 0 = Sunday, 1 = Monday, etc.
+
+  // Helper function to check if a date has an advanced chapter
+  const isAdvancedDate = (date: Date) => {
+    return advancedDates.some(advDate => 
+      advDate.getDate() === date.getDate() &&
+      advDate.getMonth() === date.getMonth() &&
+      advDate.getFullYear() === date.getFullYear()
+    );
+  };
 
   // Navigation functions
   const goToPreviousMonth = () => {
@@ -40,15 +50,20 @@ const Calendar = ({ onDateSelect }: CalendarProps) => {
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
       const isToday = new Date().toDateString() === date.toDateString();
+      const hasAdvancedChapter = isAdvancedDate(date);
       
       days.push(
         <button
           key={day}
           onClick={() => onDateSelect?.(date)}
-          className={`h-12 w-12 text-base hover:bg-accent transition-colors border-t border-border flex items-center justify-center
-            ${isToday ? 'bg-primary/10 font-semibold text-primary' : ''}`}
+          className={`h-12 w-12 text-base hover:bg-accent transition-colors border-t border-border flex items-center justify-center relative
+            ${isToday ? 'bg-primary/10 font-semibold text-primary' : ''}
+            ${hasAdvancedChapter ? 'text-orange-500 font-medium' : ''}`}
         >
           {day}
+          {hasAdvancedChapter && (
+            <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-orange-500" />
+          )}
         </button>
       );
     }
