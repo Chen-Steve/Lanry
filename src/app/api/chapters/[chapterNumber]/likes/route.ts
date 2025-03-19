@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
+import { revalidatePath } from 'next/cache';
 
 export async function POST(
   request: Request,
@@ -91,6 +92,9 @@ export async function POST(
         select: { likeCount: true }
       });
 
+      // Revalidate the cache for this chapter's likes
+      revalidatePath(`/api/chapters/${chapterNumber}/likes?novelId=${novelId}`);
+
       return NextResponse.json({ 
         likeCount: updatedChapter?.likeCount || 0,
         isLiked: false
@@ -118,6 +122,9 @@ export async function POST(
         select: { likeCount: true }
       });
 
+      // Revalidate the cache for this chapter's likes
+      revalidatePath(`/api/chapters/${chapterNumber}/likes?novelId=${novelId}`);
+
       return NextResponse.json({ 
         likeCount: updatedChapter?.likeCount || 0,
         isLiked: true
@@ -137,9 +144,6 @@ export async function GET(
   { params }: { params: { chapterNumber: string } }
 ) {
   try {
-    const cookieStore = cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
-    
     const chapterNumber = parseInt(params.chapterNumber);
     if (isNaN(chapterNumber)) {
       return NextResponse.json(
@@ -157,46 +161,20 @@ export async function GET(
       );
     }
 
-    // Get the chapter to get its ID
-    const chapter = await prisma.chapter.findFirst({
-      where: { 
-        chapterNumber,
-        novelId 
-      },
-      select: { id: true, likeCount: true }
-    });
-
-    if (!chapter) {
-      return NextResponse.json(
-        { error: 'Chapter not found' },
-        { status: 404 }
-      );
-    }
-
     const authHeader = request.headers.get('Authorization');
-    let isLiked = false;
+    let response;
 
     if (authHeader?.startsWith('Bearer ')) {
-      const token = authHeader.split(' ')[1];
-      const { data: { user } } = await supabase.auth.getUser(token);
-
-      if (user) {
-        const existingLike = await prisma.chapterLike.findUnique({
-          where: {
-            profileId_chapterId: {
-              profileId: user.id,
-              chapterId: chapter.id
-            }
-          }
-        });
-        isLiked = !!existingLike;
-      }
+      // For authenticated users - shorter cache due to personalized isLiked field
+      response = await handleAuthenticatedGet(authHeader, novelId, chapterNumber);
+      response.headers.set('Cache-Control', 'private, s-maxage=30');
+    } else {
+      // For anonymous users - longer cache since we only return likeCount
+      response = await handleAnonymousGet(novelId, chapterNumber);
+      response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
     }
 
-    return NextResponse.json({
-      likeCount: chapter.likeCount,
-      isLiked
-    });
+    return response;
   } catch (error) {
     console.error('Error fetching chapter likes:', error);
     return NextResponse.json(
@@ -204,4 +182,64 @@ export async function GET(
       { status: 500 }
     );
   }
+}
+
+async function handleAuthenticatedGet(authHeader: string, novelId: string, chapterNumber: number) {
+  const token = authHeader.split(' ')[1];
+  const { data: { user } } = await createRouteHandlerClient({ cookies }).auth.getUser(token);
+
+  const chapter = await prisma.chapter.findFirst({
+    where: { 
+      chapterNumber,
+      novelId 
+    },
+    select: { id: true, likeCount: true }
+  });
+
+  if (!chapter) {
+    return NextResponse.json(
+      { error: 'Chapter not found' },
+      { status: 404 }
+    );
+  }
+
+  let isLiked = false;
+  if (user) {
+    const existingLike = await prisma.chapterLike.findUnique({
+      where: {
+        profileId_chapterId: {
+          profileId: user.id,
+          chapterId: chapter.id
+        }
+      }
+    });
+    isLiked = !!existingLike;
+  }
+
+  return NextResponse.json({
+    likeCount: chapter.likeCount,
+    isLiked
+  });
+}
+
+async function handleAnonymousGet(novelId: string, chapterNumber: number) {
+  const chapter = await prisma.chapter.findFirst({
+    where: { 
+      chapterNumber,
+      novelId 
+    },
+    select: { likeCount: true }
+  });
+
+  if (!chapter) {
+    return NextResponse.json(
+      { error: 'Chapter not found' },
+      { status: 404 }
+    );
+  }
+
+  return NextResponse.json({
+    likeCount: chapter.likeCount,
+    isLiked: false
+  });
 } 
