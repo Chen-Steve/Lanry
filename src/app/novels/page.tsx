@@ -2,6 +2,9 @@ import NovelListing from '@/app/novels/_components/NovelListing';
 import CookieSettingsButton from '@/app/_components/CookieSettingsButton';
 import Script from 'next/script';
 
+// Cache the page for 5 minutes
+export const revalidate = 300;
+
 export const metadata = {
   title: 'Browse Novels | Lanry',
   description: 'Browse and read the latest translated light novels on Lanry.',

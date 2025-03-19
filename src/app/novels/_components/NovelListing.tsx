@@ -2,7 +2,7 @@
 
 import { Novel } from '@/types/database';
 import { useEffect, useState } from 'react';
-import { getNovels, getNovelsWithAdvancedChapters, getTopNovels } from '@/services/novelService';
+import { getCachedNovels, getNovelsWithAdvancedChapters, getTopNovels } from '@/services/novelService';
 import LoadingGrid from './LoadingGrid';
 import AdvancedChapters from './AdvancedChapters';
 import NewReleases from './RecentReleases';
@@ -18,9 +18,6 @@ const NovelListing = () => {
   const [featuredNovels, setFeaturedNovels] = useState<Novel[]>([]);
   const [advancedNovels, setAdvancedNovels] = useState<Novel[]>([]);
   const [recentAdvancedNovels, setRecentAdvancedNovels] = useState<Novel[]>([]);
-  const [totalChapters, setTotalChapters] = useState(0);
-  const [completedNovels, setCompletedNovels] = useState(0);
-  const [ongoingNovels, setOngoingNovels] = useState(0);
 
   const ITEMS_PER_PAGE = 12;
 
@@ -28,22 +25,13 @@ const NovelListing = () => {
     const fetchNovels = async () => {
       try {
         // Fetch all novels with pagination
-        const { novels: allNovels, total } = await getNovels({
+        const { novels: allNovels, total } = await getCachedNovels({
           limit: ITEMS_PER_PAGE,
           offset: (currentPage - 1) * ITEMS_PER_PAGE
         });
         
         setNovels(allNovels);
         setTotalNovels(total);
-        
-        // Calculate statistics
-        const completed = allNovels.filter(novel => novel.status?.toLowerCase() === 'completed').length;
-        const ongoing = allNovels.filter(novel => novel.status?.toLowerCase() === 'ongoing').length;
-        const chapters = allNovels.reduce((acc, novel) => acc + (novel.chapters?.length || 0), 0);
-        
-        setCompletedNovels(completed);
-        setOngoingNovels(ongoing);
-        setTotalChapters(chapters);
         
         // Only fetch featured novels on first page load
         if (currentPage === 1) {
@@ -121,12 +109,7 @@ const NovelListing = () => {
         onPageChange={handlePageChange}
       />
 
-      <NovelStatistics 
-        totalNovels={totalNovels}
-        totalChapters={totalChapters}
-        completedNovels={completedNovels}
-        ongoingNovels={ongoingNovels}
-      />
+      <NovelStatistics />
 
       <AdvancedChapters
         novels={advancedNovels}

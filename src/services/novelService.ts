@@ -1,6 +1,7 @@
 import { Novel, Chapter, ChapterUnlock, NovelCategory } from '@/types/database';
 import supabase from '@/lib/supabaseClient';
 import { generateUUID } from '@/lib/utils';
+import { cache } from 'react';
 
 interface NovelCharacterFromDB {
   id: string;
@@ -228,6 +229,10 @@ export async function toggleBookmark(novelId: string, userId: string, isCurrentl
     throw error;
   }
 }
+
+export const getCachedNovels = cache(async (options: GetNovelsOptions = {}): Promise<{ novels: Novel[]; total: number }> => {
+  return getNovels(options);
+});
 
 export async function getNovels(options: GetNovelsOptions = {}): Promise<{ novels: Novel[]; total: number }> {
   try {
