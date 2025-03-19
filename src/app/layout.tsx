@@ -8,7 +8,6 @@ import { Toaster } from 'react-hot-toast';
 import { ThemeProvider } from '@/lib/ThemeContext';
 import CookieConsent from './_components/CookieConsent';
 import { Analytics } from '@vercel/analytics/react';
-import { SpeedInsights } from '@vercel/speed-insights/next';
 import AnalyticsWrapper from './_components/AnalyticsWrapper';
 
 export const metadata: Metadata = {
@@ -121,7 +120,6 @@ export default function RootLayout({
           </ThemeProvider>
         </Providers>
         <Analytics />
-        <SpeedInsights />
       </body>
     </html>
   );
