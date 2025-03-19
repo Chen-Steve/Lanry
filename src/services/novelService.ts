@@ -233,8 +233,6 @@ export async function getNovels(options: GetNovelsOptions = {}): Promise<{ novel
   try {
     const { limit = 12, offset = 0, categories } = options;
     
-    console.log('Fetching novels with options:', { limit, offset, categories });
-    
     // First get all novels count and IDs
     const { data: allNovels, count: totalCount } = await supabase
       .from('novels')
@@ -293,12 +291,6 @@ export async function getNovels(options: GetNovelsOptions = {}): Promise<{ novel
     
     // Combine IDs, putting novels with activity first
     const allNovelIds = [...orderedNovelIds, ...novelsWithoutActivity];
-    
-    console.log('Novels distribution:', {
-      total: allNovelIds.length,
-      withActivity: orderedNovelIds.length,
-      withoutActivity: novelsWithoutActivity.length
-    });
 
     // Then fetch the full novel data in the correct order
     let query = supabase
@@ -352,8 +344,6 @@ export async function getNovels(options: GetNovelsOptions = {}): Promise<{ novel
 
     if (error) throw error;
 
-    console.log('Fetched novels count:', data?.length);
-
     // Sort the novels to match the order of allNovelIds
     const sortedNovels = data?.sort((a: Novel, b: Novel) => {
       const aIndex = allNovelIds.indexOf(a.id);
@@ -363,13 +353,6 @@ export async function getNovels(options: GetNovelsOptions = {}): Promise<{ novel
 
     // Apply pagination
     const paginatedNovels = sortedNovels?.slice(offset, offset + limit);
-
-    console.log('Returning paginated novels:', {
-      totalNovels: totalCount,
-      returnedNovels: paginatedNovels?.length,
-      page: Math.floor(offset / limit) + 1,
-      totalPages: Math.ceil((totalCount || 0) / limit)
-    });
 
     return {
       novels: paginatedNovels?.map(novel => ({
@@ -479,10 +462,7 @@ export async function getNovelsWithAdvancedChapters(): Promise<Novel[]> {
 
     if (error) throw error;
 
-    console.log('Advanced chapters response:', novels);
-
     return (novels || []).map((novel: DBNovel) => {
-      console.log('Processing novel:', novel.title, 'chapters:', novel.chapters);
       return {
         ...novel,
         coverImageUrl: novel.cover_image_url,

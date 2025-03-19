@@ -8,8 +8,7 @@ import AdvancedChapters from './AdvancedChapters';
 import NewReleases from './RecentReleases';
 import FeaturedNovel from './FeaturedNovel';
 import RegularNovels from './RegularNovels';
-import TranslatorProfiles from './TranslatorProfiles';
-import { getTranslators, Translator } from '@/services/translatorService';
+import NovelStatistics from './NovelStatistics';
 
 const NovelListing = () => {
   const [novels, setNovels] = useState<Novel[]>([]);
@@ -19,7 +18,9 @@ const NovelListing = () => {
   const [featuredNovels, setFeaturedNovels] = useState<Novel[]>([]);
   const [advancedNovels, setAdvancedNovels] = useState<Novel[]>([]);
   const [recentAdvancedNovels, setRecentAdvancedNovels] = useState<Novel[]>([]);
-  const [translators, setTranslators] = useState<Translator[]>([]);
+  const [totalChapters, setTotalChapters] = useState(0);
+  const [completedNovels, setCompletedNovels] = useState(0);
+  const [ongoingNovels, setOngoingNovels] = useState(0);
 
   const ITEMS_PER_PAGE = 12;
 
@@ -34,6 +35,15 @@ const NovelListing = () => {
         
         setNovels(allNovels);
         setTotalNovels(total);
+        
+        // Calculate statistics
+        const completed = allNovels.filter(novel => novel.status?.toLowerCase() === 'completed').length;
+        const ongoing = allNovels.filter(novel => novel.status?.toLowerCase() === 'ongoing').length;
+        const chapters = allNovels.reduce((acc, novel) => acc + (novel.chapters?.length || 0), 0);
+        
+        setCompletedNovels(completed);
+        setOngoingNovels(ongoing);
+        setTotalChapters(chapters);
         
         // Only fetch featured novels on first page load
         if (currentPage === 1) {
@@ -64,20 +74,6 @@ const NovelListing = () => {
     };
 
     fetchAdvancedNovels();
-  }, []);
-
-  useEffect(() => {
-    const fetchTranslators = async () => {
-      try {
-        const data = await getTranslators();
-        console.log('Fetched translators:', data);
-        setTranslators(data);
-      } catch (error) {
-        console.error('Error fetching translators:', error);
-      }
-    };
-
-    fetchTranslators();
   }, []);
 
   const totalPages = Math.ceil(totalNovels / ITEMS_PER_PAGE);
@@ -125,7 +121,12 @@ const NovelListing = () => {
         onPageChange={handlePageChange}
       />
 
-      <TranslatorProfiles translators={translators} />
+      <NovelStatistics 
+        totalNovels={totalNovels}
+        totalChapters={totalChapters}
+        completedNovels={completedNovels}
+        ongoingNovels={ongoingNovels}
+      />
 
       <AdvancedChapters
         novels={advancedNovels}

@@ -37,7 +37,6 @@ const UserProfileButton = ({
   isMobile = false,
   onMenuClose
 }: UserProfileButtonProps) => {
-  console.log('[DEBUG] UserProfileButton rendering at:', new Date().toISOString());
   const router = useRouter();
   const [isRandomizing, setIsRandomizing] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);

@@ -18,6 +18,7 @@ const MobileMenu = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
     { icon: "ph:house-bold", label: "Home", href: "/" },
     { icon: "ph:shopping-cart-simple-bold", label: "Shop", href: "/shop" },
     { icon: "mdi:bookmark-multiple", label: "Bookmarks", href: "/bookmarks" },
+    { icon: "ph:users-bold", label: "Translators", href: "/translators" },
     { icon: "ic:baseline-discord", label: "Discord", href: "https://discord.gg/DXHRpV3sxF", external: true },
   ];
 
@@ -208,6 +209,13 @@ const Header = () => {
                     className="bg-secondary/80 backdrop-blur-sm p-2 text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-secondary/90 inline-flex items-center"
                   >
                     <Icon icon="mdi:bookmark-multiple" className="w-5 h-5" />
+                  </Link>
+
+                  <Link 
+                    href="/translators"
+                    className="bg-secondary/80 backdrop-blur-sm p-2 text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-secondary/90 inline-flex items-center"
+                  >
+                    <Icon icon="ph:users-bold" className="w-5 h-5" />
                   </Link>
                 </div>
 
