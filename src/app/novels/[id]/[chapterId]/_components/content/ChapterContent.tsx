@@ -262,10 +262,11 @@ export default function ChapterContent({
               {isTranslator && !isIndefinitelyLocked && (
                 <button
                   onClick={() => setIsEditing(true)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                  className="flex items-center gap-1.5 px-2 py-1.5 sm:px-3 sm:py-1.5 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                  title="Edit Chapter"
                 >
                   <Icon icon="mdi:pencil" className="w-4 h-4" />
-                  Edit Chapter
+                  <span className="hidden sm:inline">Edit Chapter</span>
                 </button>
               )}
               {!isTranslator && !isMobile && !isIndefinitelyLocked && (
@@ -363,10 +364,10 @@ export default function ChapterContent({
           <div className="mt-8 max-w-2xl mx-auto flex justify-center">
             <button
               onClick={handleLikeClick}
-              className={`flex items-center gap-2 px-6 py-3 rounded-lg transition-colors ${
+              className={`flex items-center gap-2 px-2 py-1 rounded-lg transition-colors ${
                 isLiked 
-                  ? 'text-red-500 hover:text-red-600 bg-red-50 dark:bg-red-500/10' 
-                  : 'text-muted-foreground hover:text-red-500 bg-accent hover:bg-accent/80'
+                  ? 'text-red-500 hover:text-red-600' 
+                  : 'text-muted-foreground hover:text-red-500'
               }`}
               title={isLiked ? 'Unlike chapter' : 'Like chapter'}
             >

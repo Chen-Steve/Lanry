@@ -301,7 +301,7 @@ const NotificationsPage = () => {
               className="w-6 h-6 text-yellow-500 flex-shrink-0"
             />
             <p className="text-sm text-yellow-700">
-              Please do not share the website&apos;s link on social media or other websites except for NovelUpdates.
+              Please do not share the website&apos;s link anywhere except for NovelUpdates.
             </p>
           </div>
         </div>

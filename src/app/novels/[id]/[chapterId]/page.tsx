@@ -457,7 +457,7 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
       </div>
 
       {/* Chapter Comments */}
-      <div className="mt-8 border-t pt-8">
+      <div className="mt-2 border-t pt-2">
         <ChapterComments
           chapterId={chapter.id}
           authorId={chapter.novel.author_profile_id}

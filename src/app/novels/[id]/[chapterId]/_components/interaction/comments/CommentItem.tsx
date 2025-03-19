@@ -183,33 +183,6 @@ export function CommentItem({ comment, userId, authorId, onEdit, onDelete }: Com
               />
               <span>{likesCount}</span>
             </button>
-            {userId === comment.profile.id && (
-              <>
-                <button
-                  onClick={startEditing}
-                  className="text-blue-500 hover:text-blue-600 transition-colors"
-                  title="Edit comment"
-                >
-                  <Icon icon="mdi:pencil" className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => onDelete(comment.id)}
-                  className="text-red-500 hover:text-red-600 transition-colors"
-                  title="Delete comment"
-                >
-                  <Icon icon="mdi:delete" className="w-4 h-4" />
-                </button>
-              </>
-            )}
-            {userId === authorId && userId !== comment.profile.id && (
-              <button
-                onClick={() => onDelete(comment.id)}
-                className="text-red-500 hover:text-red-600 transition-colors"
-                title="Delete comment"
-              >
-                <Icon icon="mdi:delete" className="w-4 h-4" />
-              </button>
-            )}
           </div>
         </div>
         {editingCommentId === comment.id ? (
@@ -245,6 +218,35 @@ export function CommentItem({ comment, userId, authorId, onEdit, onDelete }: Com
         ) : (
           <div className="space-y-2">
             <p className="text-sm text-muted-foreground">{comment.content}</p>
+            <div className="flex justify-end gap-2">
+              {userId === comment.profile.id && (
+                <>
+                  <button
+                    onClick={startEditing}
+                    className="text-blue-500 hover:text-blue-600 transition-colors p-1 rounded-md hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                    title="Edit comment"
+                  >
+                    <Icon icon="lucide:edit-2" className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => onDelete(comment.id)}
+                    className="text-red-500 hover:text-red-600 transition-colors p-1 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20"
+                    title="Delete comment"
+                  >
+                    <Icon icon="lucide:trash-2" className="w-4 h-4" />
+                  </button>
+                </>
+              )}
+              {userId === authorId && userId !== comment.profile.id && (
+                <button
+                  onClick={() => onDelete(comment.id)}
+                  className="text-red-500 hover:text-red-600 transition-colors p-1 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20"
+                  title="Delete comment"
+                >
+                  <Icon icon="mdi:delete" className="w-4 h-4" />
+                </button>
+              )}
+            </div>
           </div>
         )}
       </div>
