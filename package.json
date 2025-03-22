@@ -23,6 +23,8 @@
     "@types/uuid": "^10.0.0",
     "@vercel/analytics": "^1.4.0",
     "autoprefixer": "^10.4.20",
+    "compression": "^1.8.0",
+    "compression-next": "^1.0.3",
     "date-fns": "^4.1.0",
     "framer-motion": "^11.18.2",
     "jszip": "^3.10.1",

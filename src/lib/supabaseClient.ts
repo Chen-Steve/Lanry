@@ -22,7 +22,8 @@ const supabase = createClient(
     global: {
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        'Accept': 'application/json',
+        'Accept-Encoding': 'gzip, deflate, br'
       }
     }
   }
