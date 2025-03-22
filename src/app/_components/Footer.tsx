@@ -2,8 +2,16 @@
 
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
+import { usePathname } from 'next/navigation';
 
 const Footer = () => {
+  const pathname = usePathname();
+  
+  // Don't render footer on chapter pages
+  if (pathname?.match(/^\/novels\/[^/]+\/c\d+/)) {
+    return null;
+  }
+
   return (
     <footer className="bg-background border-t border-border mt-8 sm:mt-16">
       <div className="px-3 py-4 sm:px-4 sm:py-6 max-w-5xl mx-auto">
@@ -82,7 +90,7 @@ const Footer = () => {
         </div>
 
         {/* Bottom Bar */}
-        <div className="border-t border-border mt-4 sm:mt-6 pt-4 sm:pt-6">
+        <div className="mt-8 pt-4 border-t border-border">
           <div className="flex flex-col items-center space-y-2 sm:flex-row sm:justify-between sm:space-y-0">
             <p className="text-xs sm:text-sm text-muted-foreground">
               © {new Date().getFullYear()} Lanry. All rights reserved.

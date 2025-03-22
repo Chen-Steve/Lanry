@@ -17,6 +17,7 @@ import ChapterNavigation from './_components/navigation/ChapterNavigation';
 import ChapterComments from './_components/interaction/comments/ChapterComments';
 import { useReadingTimeTracker } from '@/hooks/useReadingTimeTracker';
 import ChapterPurchaseButton from './_components/interaction/ChapterPurchaseButton';
+import PullToLoadNext from './_components/navigation/PullToLoadNext';
 
 function ScrollToTopButton() {
   const [isVisible, setIsVisible] = useState(false);
@@ -463,6 +464,13 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
           authorId={chapter.novel.author_profile_id}
         />
       </div>
+
+      {/* Pull to Load Next */}
+      <PullToLoadNext
+        nextChapter={navigation.nextChapter}
+        novelId={novelId}
+        isLoading={isLoading}
+      />
 
       <ScrollToTopButton />
       <ChapterProgressBar
