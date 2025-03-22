@@ -63,15 +63,11 @@ export async function GET(req: Request) {
     })
 
     // Update discussion view count
-    await prisma.forumDiscussion.update({
-      where: { id: discussionId },
-      data: {
-        viewCount: {
-          increment: 1
-        }
-      }
-    })
-
+    await prisma.$executeRaw`
+      UPDATE forum_discussions 
+      SET view_count = view_count + 1 
+      WHERE id = ${discussionId}
+    `
     return NextResponse.json({
       threads,
       total,
