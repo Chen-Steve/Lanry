@@ -31,7 +31,7 @@ const NovelStatistics = () => {
   ];
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 px-2 mb-4">
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 px-2 mb-4 mt-4">
       {stats.map((stat) => {
         const CardContent = (
           <div
