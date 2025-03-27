@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { Icon } from '@iconify/react'
 import { useRouter } from 'next/navigation'
-import { toast } from 'sonner'
 import { useAuth } from '@/hooks/useAuth'
 import { useThreadMutations } from '@/hooks/forum/useThreadMutations'
 
@@ -41,15 +40,11 @@ export default function CreateThreadButton({ discussionSlug }: CreateThreadButto
         discussionSlug
       })
       
-      toast.success('Thread created successfully')
       router.push(`/forum/discussion/${discussionSlug}/thread/${thread.id}`)
     } catch (error) {
       console.error('[CREATE_THREAD_ERROR]', error)
       if (error instanceof Error && error.message === 'Unauthorized') {
-        toast.error('Please sign in to create a thread')
         router.push('/auth')
-      } else {
-        toast.error('Failed to create thread. Please try again.')
       }
     } finally {
       setIsOpen(false)

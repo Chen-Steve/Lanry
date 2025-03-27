@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Icon } from '@iconify/react'
-import { toast } from 'sonner'
 import { useAuth } from '@/hooks/useAuth'
 import { useForumMutations } from '@/hooks/forum/useForumMutations'
 import { Button } from '@/components/ui/button'
@@ -35,14 +34,10 @@ export default function CreateMessage({ threadId }: CreateMessageProps) {
         content: content.trim()
       })
       setContent('')
-      toast.success('Message posted successfully')
     } catch (error) {
       console.error('[CREATE_MESSAGE_ERROR]', error)
       if (error instanceof Error && error.message === 'Unauthorized') {
-        toast.error('Please sign in to post a message')
         router.push('/auth')
-      } else {
-        toast.error('Failed to post message. Please try again.')
       }
     } finally {
       setIsSubmitting(false)

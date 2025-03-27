@@ -3,7 +3,6 @@
 import { forwardRef, useState } from 'react'
 import { formatDistanceToNow } from 'date-fns'
 import { Icon } from '@iconify/react'
-import { toast } from 'sonner'
 import { ForumMessage } from '@/types/forum'
 import { Avatar } from '@/components/ui/avatar'
 import { useAuth } from '@/hooks/useAuth'
@@ -54,23 +53,14 @@ const MessageItem = forwardRef<HTMLDivElement, MessageItemProps>(
     const handleDelete = async () => {
       try {
         await deleteMessage.mutateAsync(message.id)
-        toast.success('Message deleted successfully')
         setShowDeleteConfirm(false)
       } catch (error) {
         console.error('[DELETE_MESSAGE_ERROR]', error)
-        if (error instanceof Error && error.message === 'Unauthorized') {
-          toast.error('Please sign in to delete this message')
-        } else {
-          toast.error('Failed to delete message')
-        }
       }
     }
 
     const handleEdit = async () => {
-      if (!editContent.trim()) {
-        toast.error('Message cannot be empty')
-        return
-      }
+      if (!editContent.trim()) return
 
       try {
         await updateMessage.mutateAsync({
@@ -78,14 +68,8 @@ const MessageItem = forwardRef<HTMLDivElement, MessageItemProps>(
           content: editContent.trim()
         })
         setIsEditing(false)
-        toast.success('Message updated successfully')
       } catch (error) {
         console.error('[UPDATE_MESSAGE_ERROR]', error)
-        if (error instanceof Error && error.message === 'Unauthorized') {
-          toast.error('Please sign in to edit this message')
-        } else {
-          toast.error('Failed to update message')
-        }
       }
     }
 

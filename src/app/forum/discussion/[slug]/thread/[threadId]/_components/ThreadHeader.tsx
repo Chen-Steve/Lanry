@@ -8,7 +8,6 @@ import { Avatar } from '@/components/ui/avatar'
 import { useAuth } from '@/hooks/useAuth'
 import { useThreadMutations } from '@/hooks/forum/useThreadMutations'
 import { useRouter } from 'next/navigation'
-import { toast } from 'sonner'
 import { useState } from 'react'
 
 interface ThreadHeaderProps {
@@ -82,11 +81,9 @@ export default function ThreadHeader({ thread }: ThreadHeaderProps) {
   const handleDelete = async () => {
     try {
       const result = await deleteThread.mutateAsync(thread.id)
-      toast.success('Thread deleted successfully')
       router.push(`/forum/discussion/${result.discussionSlug}`)
     } catch (error) {
       console.error('[DELETE_THREAD_ERROR]', error)
-      toast.error('Failed to delete thread')
     } finally {
       setShowDeleteModal(false)
     }

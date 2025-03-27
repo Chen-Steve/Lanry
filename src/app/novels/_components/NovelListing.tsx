@@ -19,7 +19,7 @@ const NovelListing = () => {
   const [advancedNovels, setAdvancedNovels] = useState<Novel[]>([]);
   const [recentAdvancedNovels, setRecentAdvancedNovels] = useState<Novel[]>([]);
 
-  const ITEMS_PER_PAGE = 12;
+  const ITEMS_PER_PAGE = 14;
 
   useEffect(() => {
     const fetchNovels = async () => {

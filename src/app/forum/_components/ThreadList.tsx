@@ -8,7 +8,6 @@ import Image from 'next/image'
 import { formatDistanceToNow } from 'date-fns'
 import { useAuth } from '@/hooks/useAuth'
 import { useThreadMutations } from '@/hooks/forum/useThreadMutations'
-import { toast } from 'sonner'
 import { useState } from 'react'
 
 interface ThreadListProps {
@@ -28,14 +27,8 @@ export default function ThreadList({ slug }: ThreadListProps) {
     try {
       setDeletingThreadId(threadId)
       await deleteThread.mutateAsync(threadId)
-      toast.success('Thread deleted successfully')
     } catch (error) {
       console.error('[DELETE_THREAD_ERROR]', error)
-      if (error instanceof Error && error.message === 'Unauthorized') {
-        toast.error('Please sign in to delete this thread')
-      } else {
-        toast.error('Failed to delete thread')
-      }
     } finally {
       setDeletingThreadId(null)
     }
