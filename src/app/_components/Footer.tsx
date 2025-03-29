@@ -7,8 +7,8 @@ import { usePathname } from 'next/navigation';
 const Footer = () => {
   const pathname = usePathname();
   
-  // Don't render footer on chapter pages
-  if (pathname?.match(/^\/novels\/[^/]+\/c\d+/)) {
+  // Don't render footer on chapter pages or author dashboard
+  if (pathname?.match(/^\/novels\/[^/]+\/c\d+/) || pathname?.startsWith('/author/dashboard')) {
     return null;
   }
 
