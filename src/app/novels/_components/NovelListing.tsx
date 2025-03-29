@@ -82,10 +82,10 @@ const NovelListing = () => {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 -mt-4 sm:-mt-8">
+    <div className="max-w-5xl mx-auto px-4">
       {/* Featured Novels */}
       {featuredNovels.length > 0 && (
-        <div className="relative pt-4 sm:pt-0">
+        <div className="relative mb-4">
           <FeaturedNovel novels={featuredNovels} />
         </div>
       )}
@@ -100,6 +100,7 @@ const NovelListing = () => {
           status: novel.status,
           created_at: new Date(novel.created_at)
         }))}
+        className="mb-2"
       />
 
       <RegularNovels

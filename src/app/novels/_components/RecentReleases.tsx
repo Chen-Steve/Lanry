@@ -16,15 +16,16 @@ interface NewReleaseNovel {
 
 interface NewReleasesProps {
   recentNovels: NewReleaseNovel[];
+  className?: string;
 }
 
-const NewReleases = ({ recentNovels }: NewReleasesProps) => {
+const NewReleases = ({ recentNovels, className = '' }: NewReleasesProps) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   if (recentNovels.length === 0) return null;
 
   return (
-    <div className="mt-2 w-full max-w-[95%] mx-auto">
+    <div className={`mt-2 w-full max-w-[95%] mx-auto ${className}`}>
       <div className="flex items-center gap-2.5 mb-2">
         <h2 className="text-lg font-semibold border-b-2 border-primary">Recent Releases</h2>
       </div>

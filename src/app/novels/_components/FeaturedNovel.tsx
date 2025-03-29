@@ -6,6 +6,7 @@ import Link from 'next/link';
 import NovelCover from './NovelCover';
 import { useEffect, useState } from 'react';
 import { formatText } from '@/lib/textFormatting';
+import LavaBlobs from './blobs';
 
 interface FeaturedNovelProps {
   novels: Novel[];
@@ -77,7 +78,7 @@ const FeaturedNovel = ({ novels }: FeaturedNovelProps) => {
     <div className="col-span-2 sm:col-span-2 md:col-span-3 lg:col-span-3 flex flex-col">
       <Link
         href={`/novels/${novels[featuredIndex].slug}`}
-        className="group relative flex flex-row gap-4 p-6 sm:p-8 bg-card hover:bg-accent/50 rounded-lg transition-colors touch-pan-y overflow-hidden min-h-[200px] sm:min-h-[280px]"
+        className="group relative flex flex-row gap-4 p-6 bg-card hover:bg-accent/50 rounded-lg transition-colors touch-pan-y overflow-hidden min-h-[200px]"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -87,22 +88,13 @@ const FeaturedNovel = ({ novels }: FeaturedNovelProps) => {
           }
         }}
       >
-        {/* Background Cover Image */}
-        <div 
-          className="absolute inset-0"
-          style={{
-            backgroundImage: `url(${novels[featuredIndex].coverImageUrl})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            filter: 'blur(4px)',
-            transform: 'scale(1.05)',
-          }}
-        />
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-black/30 to-black/20" />
+        {/* Lava Blobs Background */}
+        <div className="absolute inset-0 overflow-hidden rounded-lg">
+          <LavaBlobs />
+        </div>
 
         {/* Content */}
-        <div className="relative z-10 flex flex-row gap-6 sm:gap-8 w-full items-center">
+        <div className="relative z-10 flex flex-row gap-6 w-full items-start">
           {/* Left Arrow */}
           <button 
             onClick={(e) => {
@@ -129,7 +121,7 @@ const FeaturedNovel = ({ novels }: FeaturedNovelProps) => {
             <Icon icon="mdi:chevron-right" className="text-xl" />
           </button>
 
-          <div className="w-32 sm:w-36 aspect-[3/4] relative rounded-md overflow-hidden shrink-0">
+          <div className="w-32 aspect-[3/4] relative rounded-md overflow-hidden shrink-0">
             <NovelCover
               coverUrl={novels[featuredIndex].coverImageUrl}
               title={novels[featuredIndex].title}
@@ -138,15 +130,15 @@ const FeaturedNovel = ({ novels }: FeaturedNovelProps) => {
             />
           </div>
           
-          <div className="flex-1 min-w-0 flex flex-col h-full max-w-2xl py-1">
-            <h3 className="text-lg sm:text-2xl font-semibold text-white transition-colors mb-3 sm:mb-4 line-clamp-2">
+          <div className="flex-1 min-w-0 flex flex-col h-full">
+            <h3 className="text-xl font-semibold text-black transition-colors mb-3 line-clamp-2">
               {novels[featuredIndex].title}
             </h3>
 
             {/* Synopsis */}
-            <div className="relative h-[64px] sm:h-[72px]">
+            <div className="relative h-[72px]">
               <div 
-                className="prose prose-sm max-w-none text-white/90 dark:prose-invert line-clamp-3 whitespace-pre-line"
+                className="prose prose-sm max-w-none text-black dark:prose-invert line-clamp-3 whitespace-pre-line"
                 dangerouslySetInnerHTML={{ 
                   __html: formatText(novels[featuredIndex].description) 
                 }}
@@ -155,7 +147,7 @@ const FeaturedNovel = ({ novels }: FeaturedNovelProps) => {
             </div>
 
             {/* Navigation Dots */}
-            <div className="flex justify-center gap-1.5 mt-auto pt-2">
+            <div className="flex justify-center gap-2 mt-auto pt-2">
               {novels.map((_, idx) => (
                 <button
                   key={idx}
@@ -164,10 +156,10 @@ const FeaturedNovel = ({ novels }: FeaturedNovelProps) => {
                     setIsAutoRotationPaused(true);
                     setFeaturedIndex(idx);
                   }}
-                  className={`w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 rounded-full transition-all duration-200 border sm:border-2 ${
+                  className={`w-2.5 h-2.5 rounded-full transition-all duration-200 border border-black ${
                     idx === featuredIndex 
-                      ? 'bg-primary border-black dark:border-white scale-110' 
-                      : 'bg-muted-foreground/40 hover:bg-muted-foreground/60 hover:scale-105 border-black dark:border-white'
+                      ? 'bg-primary scale-110' 
+                      : 'bg-muted-foreground/40 hover:bg-muted-foreground/60 hover:scale-105'
                   }`}
                   aria-label={`Show featured novel ${idx + 1}`}
                 />
