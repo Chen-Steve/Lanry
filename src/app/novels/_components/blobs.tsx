@@ -38,10 +38,10 @@ const LavaBlobs = () => {
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
 
-    const PARTICLE_COUNT = isMobile ? 500 : 1000; // Halve particles on mobile
-    const INTERACTION_RADIUS = 30;
-    const MOUSE_FORCE = 2000;
-    const MOUSE_RADIUS = 50;
+    const PARTICLE_COUNT = isMobile ? 300 : 600;
+    const INTERACTION_RADIUS = 20;
+    const MOUSE_FORCE = 1500;
+    const MOUSE_RADIUS = 40;
 
     const particles = initializeParticles(
       PARTICLE_COUNT,
@@ -50,7 +50,7 @@ const LavaBlobs = () => {
     );
 
     const dt = 0.016;
-    const GRAVITY = [0, 500];
+    const GRAVITY = [0, 150]; // Reduced from 300 for slower movement
 
     // Mouse event handlers
     const handleMouseMove = (e: MouseEvent) => {
@@ -170,48 +170,69 @@ function applyDoubleDensityRelaxation(
   particles: Particle[],
   interactionRadius: number,
 ) {
-  const REST_DENSITY = 10;
-  const STIFFNESS = 0.1;
-  const STIFFNESS_NEAR = 0.1;
+  const REST_DENSITY = 8;
+  const STIFFNESS = 0.12; // Increased from 0.08 for more bounce
+  const STIFFNESS_NEAR = 0.12; // Increased from 0.08 for more bounce
 
   const interactionRadiusSq = interactionRadius * interactionRadius;
 
+  // Use a spatial grid to optimize particle interactions
+  const gridSize = interactionRadius * 2;
+  const grid: { [key: string]: Particle[] } = {};
+  
+  // Assign particles to grid cells
+  for (const p of particles) {
+    const gridX = Math.floor(p.x / gridSize);
+    const gridY = Math.floor(p.y / gridSize);
+    const key = `${gridX},${gridY}`;
+    if (!grid[key]) grid[key] = [];
+    grid[key].push(p);
+  }
+
   for (let i = 0; i < particles.length; i++) {
     const p_i = particles[i];
+    const gridX = Math.floor(p_i.x / gridSize);
+    const gridY = Math.floor(p_i.y / gridSize);
 
     let density = 0;
     let nearDensity = 0;
 
-    for (let j = 0; j < particles.length; j++) {
-      if (i === j) continue;
+    // Only check particles in neighboring grid cells
+    for (let dx = -1; dx <= 1; dx++) {
+      for (let dy = -1; dy <= 1; dy++) {
+        const key = `${gridX + dx},${gridY + dy}`;
+        const cellParticles = grid[key] || [];
+        
+        for (const p_j of cellParticles) {
+          if (p_i === p_j) continue;
 
-      const p_j = particles[j];
-      const dx = p_j.x - p_i.x;
-      const dy = p_j.y - p_i.y;
-      const distanceSq = dx * dx + dy * dy;
+          const dx = p_j.x - p_i.x;
+          const dy = p_j.y - p_i.y;
+          const distanceSq = dx * dx + dy * dy;
 
-      if (distanceSq < interactionRadiusSq) {
-        const distance = Math.sqrt(distanceSq);
-        const q = 1 - distance / interactionRadius;
-        const qSq = q * q;
-        const qCube = qSq * q;
+          if (distanceSq < interactionRadiusSq) {
+            const distance = Math.sqrt(distanceSq);
+            const q = 1 - distance / interactionRadius;
+            const qSq = q * q;
+            const qCube = qSq * q;
 
-        density += qSq;
-        nearDensity += qCube;
+            density += qSq;
+            nearDensity += qCube;
 
-        const pressure = STIFFNESS * (density - REST_DENSITY);
-        const nearPressure = STIFFNESS_NEAR * nearDensity;
+            const pressure = STIFFNESS * (density - REST_DENSITY);
+            const nearPressure = STIFFNESS_NEAR * nearDensity;
 
-        const magnitude = (pressure + nearPressure) * q;
-        const nx = dx / distance || 0;
-        const ny = dy / distance || 0;
+            const magnitude = (pressure + nearPressure) * q;
+            const nx = dx / distance || 0;
+            const ny = dy / distance || 0;
 
-        // Apply displacements
-        const D = magnitude * 0.5;
-        p_i.x -= D * nx;
-        p_i.y -= D * ny;
-        p_j.x += D * nx;
-        p_j.y += D * ny;
+            const D = magnitude * 0.5;
+            p_i.x -= D * nx;
+            p_i.y -= D * ny;
+            p_j.x += D * nx;
+            p_j.y += D * ny;
+          }
+        }
       }
     }
   }
@@ -254,19 +275,19 @@ function containParticlesToRect(
     // Contain horizontally
     if (p.x < margin) {
       p.x = margin;
-      p.vx = Math.abs(p.vx) * 0.5;
+      p.vx = Math.abs(p.vx) * 0.7; // Increased from 0.5 for more bounce
     } else if (p.x > width - margin) {
       p.x = width - margin;
-      p.vx = -Math.abs(p.vx) * 0.5;
+      p.vx = -Math.abs(p.vx) * 0.7; // Increased from 0.5 for more bounce
     }
 
     // Contain vertically
     if (p.y < margin) {
       p.y = margin;
-      p.vy = Math.abs(p.vy) * 0.5;
+      p.vy = Math.abs(p.vy) * 0.7; // Increased from 0.5 for more bounce
     } else if (p.y > height - margin) {
       p.y = height - margin;
-      p.vy = -Math.abs(p.vy) * 0.5;
+      p.vy = -Math.abs(p.vy) * 0.7; // Increased from 0.5 for more bounce
     }
 
     // Anti-stick correction
@@ -289,7 +310,7 @@ function drawMetaballs(ctx: CanvasRenderingContext2D, particles: Particle[]) {
   const canvasWidth = ctx.canvas.width;
   const canvasHeight = ctx.canvas.height;
 
-  // Create an offscreen canvas
+  // Create offscreen canvas at full resolution
   const offscreenCanvas = document.createElement('canvas');
   offscreenCanvas.width = canvasWidth;
   offscreenCanvas.height = canvasHeight;
@@ -304,14 +325,14 @@ function drawMetaballs(ctx: CanvasRenderingContext2D, particles: Particle[]) {
       0,
       p.x,
       p.y,
-      50, // Control the influence radius
+      40, // Reduced from 50
     );
     gradient.addColorStop(0, 'rgba(255, 100, 0, 0.5)');
     gradient.addColorStop(1, 'rgba(255, 100, 0, 0)');
 
     offscreenCtx.fillStyle = gradient;
     offscreenCtx.beginPath();
-    offscreenCtx.arc(p.x, p.y, 50, 0, Math.PI * 2);
+    offscreenCtx.arc(p.x, p.y, 40, 0, Math.PI * 2);
     offscreenCtx.fill();
   }
 
@@ -331,5 +352,6 @@ function drawMetaballs(ctx: CanvasRenderingContext2D, particles: Particle[]) {
     }
   }
 
+  // Draw the result at full resolution
   ctx.putImageData(imageData, 0, 0);
 } 
