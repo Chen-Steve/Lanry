@@ -461,8 +461,8 @@ model ChapterThreadCommentLike {
 
 model Notification {
   id            String   @id @default(uuid())
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz
   type          String   // 'comment_reply', 'like', 'follow', 'system'
   content       String   @db.Text
   link          String

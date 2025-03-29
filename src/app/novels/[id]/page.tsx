@@ -7,7 +7,6 @@ import { useEffect, useState } from 'react';
 import supabase from '@/lib/supabaseClient';
 import toast from 'react-hot-toast';
 import { getNovel, toggleBookmark } from '@/services/novelService';
-import { track } from '@vercel/analytics';
 import { NovelContent } from '@/app/novels/[id]/_components/NovelContent';
 import AdultContentWarning from './_components/AdultContentWarning';
 import { generateUUID } from '@/lib/utils';
@@ -68,12 +67,6 @@ export default function NovelPage({ params }: { params: { id: string } }) {
         if (data) {
           setNovel(data);
           setIsBookmarked(data.isBookmarked || false);
-          
-          // Track view in Vercel Analytics
-          track('novel-view', {
-            novelId: id,
-            novelTitle: data.title
-          });
           
           // Track view in Google Analytics
           gaEvent({
