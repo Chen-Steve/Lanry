@@ -6,9 +6,10 @@ import { Icon } from '@iconify/react';
 interface CalendarProps {
   onDateSelect?: (date: Date) => void;
   advancedDates?: Date[]; // Array of dates that have advanced chapters
+  minDate?: Date; // Minimum selectable date
 }
 
-const Calendar = ({ onDateSelect, advancedDates = [] }: CalendarProps) => {
+const Calendar = ({ onDateSelect, advancedDates = [], minDate = new Date() }: CalendarProps) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   
   // Get the first day of the month and the number of days in the month
@@ -59,14 +60,17 @@ const Calendar = ({ onDateSelect, advancedDates = [] }: CalendarProps) => {
       const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
       const isToday = new Date().toDateString() === date.toDateString();
       const { hasAdvanced, indices } = getAdvancedDateInfo(date);
+      const isPastDate = date < new Date(minDate.setHours(0, 0, 0, 0));
       
       days.push(
         <button
           key={day}
-          onClick={() => onDateSelect?.(date)}
+          onClick={() => !isPastDate && onDateSelect?.(date)}
+          disabled={isPastDate}
           className={`group h-12 w-12 text-base hover:bg-accent transition-colors border-t border-border flex items-center justify-center relative
             ${isToday ? 'bg-primary/10 font-semibold text-primary' : ''}
-            ${hasAdvanced ? 'text-orange-500 font-medium' : ''}`}
+            ${hasAdvanced ? 'text-orange-500 font-medium' : ''}
+            ${isPastDate ? 'opacity-50 cursor-not-allowed hover:bg-transparent' : ''}`}
         >
           {day}
           {hasAdvanced && (
@@ -89,7 +93,12 @@ const Calendar = ({ onDateSelect, advancedDates = [] }: CalendarProps) => {
       <div className="space-y-4">
         <div className="flex items-center justify-between px-4">
           <button
-            onClick={goToPreviousMonth}
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              goToPreviousMonth();
+            }}
             className="p-2 hover:bg-accent rounded-full transition-colors"
             aria-label="Previous month"
           >
@@ -99,7 +108,12 @@ const Calendar = ({ onDateSelect, advancedDates = [] }: CalendarProps) => {
             {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
           </h2>
           <button
-            onClick={goToNextMonth}
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              goToNextMonth();
+            }}
             className="p-2 hover:bg-accent rounded-full transition-colors"
             aria-label="Next month"
           >

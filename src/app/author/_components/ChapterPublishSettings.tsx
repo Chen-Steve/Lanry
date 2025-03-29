@@ -399,6 +399,7 @@ export default function ChapterPublishSettings({
                     setShowCalendar(false);
                   }}
                   advancedDates={advancedDates}
+                  minDate={new Date()}
                 />
               </div>
             </div>
