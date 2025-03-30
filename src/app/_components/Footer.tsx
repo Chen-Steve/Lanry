@@ -93,7 +93,7 @@ const Footer = () => {
         <div className="mt-8 pt-4 border-t border-border">
           <div className="flex flex-col items-center space-y-2 sm:flex-row sm:justify-between sm:space-y-0">
             <p className="text-xs sm:text-sm text-muted-foreground">
-              © {new Date().getFullYear()} Lanry. All rights reserved.
+              © {new Date().getFullYear()} Lanry. v3.6.0 All rights reserved.
             </p>
             <div className="flex space-x-4">
               <Link href="/policies/privacy" className="text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors">
