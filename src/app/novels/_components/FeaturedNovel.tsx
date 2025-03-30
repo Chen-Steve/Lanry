@@ -125,7 +125,6 @@ const FeaturedNovel = ({ novels }: FeaturedNovelProps) => {
             <NovelCover
               coverUrl={novels[featuredIndex].coverImageUrl}
               title={novels[featuredIndex].title}
-              isPriority={true}
               size="medium"
             />
           </div>

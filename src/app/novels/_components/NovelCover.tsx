@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Image from 'next/image';
 import { Icon } from '@iconify/react';
 import { getResponsiveImageUrl } from '@/services/imageService';
 import { cacheImage, clearExpiredCache } from '@/services/imageCacheService';
@@ -9,7 +8,6 @@ import { cacheImage, clearExpiredCache } from '@/services/imageCacheService';
 interface NovelCoverProps {
   coverUrl?: string;
   title: string;
-  isPriority?: boolean;
   rating?: number;
   showRating?: boolean;
   status?: string;
@@ -19,12 +17,12 @@ interface NovelCoverProps {
   category?: 'yaoi' | 'yuri';
   size?: 'thumbnail' | 'small' | 'medium' | 'large';
   chapterCount?: number;
+  isPriority?: boolean;
 }
 
 const NovelCover = ({ 
   coverUrl, 
   title, 
-  isPriority = false,
   rating = 0,
   showRating = false,
   status = '',
@@ -33,7 +31,8 @@ const NovelCover = ({
   contentType,
   category,
   size = 'small',
-  chapterCount
+  chapterCount,
+  isPriority = false
 }: NovelCoverProps) => {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
 
@@ -65,14 +64,17 @@ const NovelCover = ({
   return (
     <div className="relative aspect-[2/3] w-full rounded overflow-hidden bg-muted group">
       {imageUrl ? (
-        <Image
+        <img
           src={imageUrl}
+          srcSet={`
+            ${getResponsiveImageUrl(imageUrl, 'small')} 300w,
+            ${getResponsiveImageUrl(imageUrl, 'medium')} 600w,
+            ${getResponsiveImageUrl(imageUrl, 'large')} 900w
+          `}
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           alt={`Cover for ${title}`}
-          fill
-          priority={isPriority}
-          loading={isPriority ? 'eager' : 'lazy'}
-          className="object-cover transition-transform group-hover:scale-105"
-          sizes="(max-width: 640px) 33vw, (max-width: 768px) 25vw, 16vw"
+          loading={isPriority ? "eager" : "lazy"}
+          className="absolute inset-0 w-full h-full object-cover transition-transform group-hover:scale-105"
         />
       ) : (
         <div className="w-full h-full flex items-center justify-center bg-muted">

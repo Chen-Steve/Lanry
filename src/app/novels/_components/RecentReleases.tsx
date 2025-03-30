@@ -49,7 +49,6 @@ const NewReleases = ({ recentNovels, className = '' }: NewReleasesProps) => {
                   <NovelCover
                     coverUrl={novel.coverImageUrl || undefined}
                     title={novel.title}
-                    isPriority={true}
                   />
                 </div>
                 
