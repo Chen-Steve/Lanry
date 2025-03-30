@@ -57,13 +57,13 @@ export default function UserDashboard() {
   });
 
   if (isLoading || !profile) {
-    return <div className="container mx-auto px-4 py-6">Loading...</div>;
+    return <div className="container mx-auto px-4 py-6 max-w-5xl">Loading...</div>;
   }
 
   // If viewing another user's profile
   if (userId) {
     return (
-      <div className="container mx-auto px-4 py-6">
+      <div className="container mx-auto px-4 py-6 max-w-5xl">
         <div className="flex flex-col items-center">
           {profile.avatar_url ? (
             <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-primary/20 mb-4">
@@ -97,7 +97,7 @@ export default function UserDashboard() {
 
   // Current user's dashboard
   return (
-    <div className="container mx-auto px-4 py-6">
+    <div className="container mx-auto px-4 py-6 max-w-5xl">
       <div className="flex flex-col gap-6">
         <button 
           className="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-yellow-500 text-white px-4 py-2.5 rounded-lg hover:opacity-90 transition-opacity shadow-md hover:shadow-lg w-fit"

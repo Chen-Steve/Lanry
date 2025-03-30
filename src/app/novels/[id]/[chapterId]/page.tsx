@@ -5,7 +5,6 @@ import { getChapter, getChapterNavigation, getTotalChapters } from '@/services/c
 import { Icon } from '@iconify/react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { generateUUID } from '@/lib/utils';
 import { ChapterWithNovel } from '@/types/database';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import ChapterHeader from './_components/content/ChapterHeader';
@@ -15,7 +14,6 @@ import ChapterProgressBar from './_components/navigation/ChapterBar';
 import ChapterSidebar from './_components/navigation/ChapterSidebar';
 import ChapterNavigation from './_components/navigation/ChapterNavigation';
 import ChapterComments from './_components/interaction/comments/ChapterComments';
-import { useReadingTimeTracker } from '@/hooks/useReadingTimeTracker';
 import ChapterPurchaseButton from './_components/interaction/ChapterPurchaseButton';
 import PullToLoadNext from './_components/navigation/PullToLoadNext';
 
@@ -59,51 +57,6 @@ function ScrollToTopButton() {
   );
 }
 
-// Add this function near the top of the file
-const updateReadingHistory = async (
-  novelId: string, 
-  chapterNumber: number,
-  partNumber?: number | null
-) => {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    // First, get the actual novel ID if we're using a slug
-    const { data: novel, error: novelError } = await supabase
-      .from('novels')
-      .select('id')
-      .or(`id.eq.${novelId},slug.eq.${novelId}`)
-      .single();
-
-    if (novelError || !novel) {
-      console.error('Error getting novel:', novelError);
-      return;
-    }
-
-    const now = new Date().toISOString();
-
-    const { error } = await supabase
-      .from('reading_history')
-      .upsert({
-        id: generateUUID(),
-        profile_id: user.id,
-        novel_id: novel.id,
-        last_chapter: chapterNumber,
-        last_part_number: partNumber,
-        last_read: now,
-        created_at: now,
-        updated_at: now
-      }, {
-        onConflict: 'profile_id,novel_id'
-      });
-
-    if (error) throw error;
-  } catch (error) {
-    console.error('Error updating reading history:', error);
-  }
-};
-
 interface ChapterNavigation {
   prevChapter: { id: string; chapter_number: number; part_number?: number | null; title: string } | null;
   nextChapter: { id: string; chapter_number: number; part_number?: number | null; title: string } | null;
@@ -132,9 +85,6 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
   );
   const [fontSize, setFontSize] = useLocalStorage('chapter-font-size', 16);
   const [user, setUser] = useState<{ id: string } | null>(null);
-
-  // Add the reading time tracker
-  useReadingTimeTracker();
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -186,12 +136,6 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
 
     loadChapterData();
   }, [novelId, chapterId]);
-
-  useEffect(() => {
-    if (chapter) {
-      updateReadingHistory(novelId, chapter.chapter_number, chapter.part_number);
-    }
-  }, [novelId, chapter]);
 
   const handleChapterSelect = (chapterNum: number, partNum?: number | null) => {
     const partSuffix = partNum ? `-p${partNum}` : '';

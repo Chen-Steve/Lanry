@@ -56,19 +56,6 @@ export async function POST() {
         console.error('[Ensure Profile] Error creating profile:', createError);
         return NextResponse.json({ error: 'Failed to create profile' }, { status: 500 });
       }
-
-      // Create reading time record
-      const { error: readingTimeError } = await supabase
-        .from('reading_time')
-        .insert([{
-          profile_id: session.user.id,
-          total_minutes: 0
-        }]);
-
-      if (readingTimeError) {
-        console.error('[Ensure Profile] Error creating reading time:', readingTimeError);
-        // Continue anyway since the profile was created
-      }
       
       console.log('[Ensure Profile] Successfully created profile for:', session.user.id);
       

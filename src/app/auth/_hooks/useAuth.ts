@@ -50,19 +50,6 @@ export function useAuth() {
       throw new Error('Failed to create user profile');
     }
 
-    // Create reading time record
-    const { error: readingTimeError } = await supabase
-      .from('reading_time')
-      .insert([{
-        profile_id: userId,
-        total_minutes: 0
-      }]);
-
-    if (readingTimeError) {
-      console.error('[Profile] Error creating reading time:', readingTimeError);
-      // Don't throw here as reading time is not critical
-    }
-
     console.log('[Profile] Successfully created profile for:', userId);
   };
 

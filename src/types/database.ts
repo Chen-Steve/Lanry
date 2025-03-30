@@ -82,19 +82,6 @@ export interface Bookmark {
   created_at: string;
   novel: Novel;
 }
-
-export type ReadingHistory = {
-  id: string;
-  createdAt: string;
-  updatedAt: string;
-  profileId: string;
-  novelId: string;
-  lastChapter: number;
-  lastPartNumber?: number | null;
-  lastRead: string;
-  novel: Novel;
-}
-
 export interface UserProfile {
   id: string;
   username: string | null;

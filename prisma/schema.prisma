@@ -37,7 +37,6 @@ model Novel {
   chapters       Chapter[]
   volumes        Volume[]
   bookmarks      Bookmark[]
-  readingHistory ReadingHistory[]
   chapterUnlocks ChapterUnlock[]
   comments       ChapterComment[]
   novelComments  NovelComment[]
@@ -125,8 +124,6 @@ model Profile {
   authorBio          String?   @map("author_bio") @db.Text
   avatarUrl          String?   @map("avatar_url")
   bookmarks          Bookmark[]
-  readingHistory     ReadingHistory[]
-  readingTime        ReadingTime?
   chapterComments    ChapterComment[]
   chapterThreadComments ChapterThreadComment[]
   novelComments      NovelComment[]
@@ -182,25 +179,6 @@ model Bookmark {
   @@unique([profileId, novelId])
   @@index([folderId])
   @@map("bookmarks")
-}
-
-model ReadingHistory {
-  id           String   @id @default(uuid())
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
-  profile      Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  profileId    String   @map("profile_id")
-  novel        Novel    @relation(fields: [novelId], references: [id], onDelete: Cascade)
-  novelId      String   @map("novel_id")
-  lastChapter  Int      @map("last_chapter")
-  lastPartNumber Int?   @map("last_part_number")
-  lastRead     DateTime @default(now()) @map("last_read")
-
-  @@unique([profileId, novelId])
-  @@index([profileId, lastRead])
-  @@index([novelId])
-  @@index([lastRead])
-  @@map("reading_history")
 }
 
 model ChapterComment {
@@ -289,17 +267,6 @@ model NovelComment {
   @@index([novelId])
   @@index([parentId])
   @@map("novel_comments")
-}
-
-model ReadingTime {
-  id              String   @id @default(uuid())
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
-  totalMinutes    Int      @default(0) @map("total_minutes")
-  profile         Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  profileId       String   @unique @map("profile_id")
-
-  @@map("reading_time")
 }
 
 model NovelRating {

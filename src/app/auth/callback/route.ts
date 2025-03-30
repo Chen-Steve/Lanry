@@ -63,28 +63,6 @@ export async function GET(request: Request) {
                 // If profile creation fails, redirect to create-profile page
                 return NextResponse.redirect(new URL('/auth/create-profile', requestUrl.origin));
               } else {
-                // Try to create reading time record
-                try {
-                  const readingTimeId = crypto.randomUUID();
-                  const { error: readingTimeError } = await supabase
-                    .from('reading_time')
-                    .insert([{
-                      id: readingTimeId,
-                      profile_id: session.user.id,
-                      total_minutes: 0,
-                      created_at: new Date().toISOString(),
-                      updated_at: new Date().toISOString()
-                    }]);
-                  
-                  if (readingTimeError) {
-                    console.error('[Auth Callback] Error creating reading time:', readingTimeError);
-                  } else {
-                    console.log('[Auth Callback] Profile and reading time created successfully');
-                  }
-                } catch (readingTimeError) {
-                  console.error('[Auth Callback] Exception creating reading time:', readingTimeError);
-                }
-                
                 // If profile was created successfully, redirect to home
                 console.log('[Auth Callback] Redirecting to home after successful profile creation');
                 return NextResponse.redirect(new URL('/', requestUrl.origin));

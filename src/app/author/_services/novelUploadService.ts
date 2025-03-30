@@ -202,14 +202,6 @@ export const deleteNovel = async (novelId: string) => {
 
     if (bookmarkError) throw bookmarkError;
 
-    // Delete all reading history
-    const { error: historyError } = await supabase
-      .from('reading_history')
-      .delete()
-      .eq('novel_id', novelId);
-
-    if (historyError) throw historyError;
-
     // Delete all novel ratings
     const { error: ratingError } = await supabase
       .from('novel_ratings')
