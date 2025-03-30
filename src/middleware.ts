@@ -90,6 +90,8 @@ export async function middleware(req: NextRequest) {
     }
   } catch (error) {
     console.error('[Middleware] Compression error:', error);
+    // Return original response if compression fails
+    return res;
   }
 
   return res;
