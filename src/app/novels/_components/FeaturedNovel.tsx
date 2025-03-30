@@ -130,14 +130,14 @@ const FeaturedNovel = ({ novels }: FeaturedNovelProps) => {
           </div>
           
           <div className="flex-1 min-w-0 flex flex-col h-full">
-            <h3 className="text-xl font-semibold text-black transition-colors mb-3 line-clamp-2">
+            <h3 className="text-xl font-semibold text-black dark:text-white transition-colors mb-3 line-clamp-2">
               {novels[featuredIndex].title}
             </h3>
 
             {/* Synopsis */}
             <div className="relative h-[72px]">
               <div 
-                className="prose prose-sm max-w-none text-black dark:prose-invert line-clamp-3 whitespace-pre-line"
+                className="prose prose-sm max-w-none text-black dark:text-white dark:prose-invert line-clamp-3 whitespace-pre-line"
                 dangerouslySetInnerHTML={{ 
                   __html: formatText(novels[featuredIndex].description) 
                 }}
