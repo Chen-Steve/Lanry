@@ -135,10 +135,12 @@ function initializeParticles(
 ) {
   const particles: Particle[] = [];
   const margin = 50; // Keep particles away from edges
+  const bottomMargin = 20; // Smaller margin for bottom positioning
 
   for (let i = 0; i < count; i++) {
+    // Position particles near the bottom with some random spread
     const x = margin + Math.random() * (width - 2 * margin);
-    const y = margin + Math.random() * (height - 2 * margin);
+    const y = height - bottomMargin - Math.random() * 100; // Random height within 100px from bottom
     particles.push({
       x,
       y,
