@@ -22,7 +22,6 @@
     "@types/react-query": "^1.2.8",
     "@types/uuid": "^10.0.0",
     "autoprefixer": "^10.4.20",
-    "compression-next": "^1.0.3",
     "date-fns": "^4.1.0",
     "framer-motion": "^11.18.2",
     "jszip": "^3.10.1",

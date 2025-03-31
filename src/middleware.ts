@@ -1,19 +1,6 @@
 import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import compression from 'compression-next';
-
-// Initialize compression middleware
-const compressionMiddleware = compression({
-  level: 6, // Compression level (1-9, where 9 is best compression but slowest)
-  threshold: 1024, // Only compress responses that are larger than 1KB
-  filter: (req: NextRequest) => {
-    // Don't compress responses with this header
-    if (req.headers.get('x-no-compression')) return false;
-    // Use compression for text-based responses
-    return /text|javascript|json|xml|html/.test(req.headers.get('content-type') || '');
-  }
-});
 
 export async function middleware(req: NextRequest) {
   // Check country restriction first
@@ -75,23 +62,6 @@ export async function middleware(req: NextRequest) {
         }
       }
     }
-  }
-
-  // Apply compression to the final response
-  try {
-    const compressedResponse = await compressionMiddleware(req);
-    if (compressedResponse) {
-      // Copy headers from the original response
-      const headers = new Headers(res.headers);
-      headers.forEach((value, key) => {
-        compressedResponse.headers.set(key, value);
-      });
-      return compressedResponse;
-    }
-  } catch (error) {
-    console.error('[Middleware] Compression error:', error);
-    // Return original response if compression fails
-    return res;
   }
 
   return res;
