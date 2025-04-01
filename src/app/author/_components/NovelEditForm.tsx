@@ -288,7 +288,7 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        <div className="p-6">
+        <div className="p-4">
           <div className="flex gap-6 items-start">
             <NovelCoverImage 
               coverImageUrl={coverImageUrl}
@@ -379,7 +379,7 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
                   </div>
                 </div>
               </div>
-              <div className="h-[100px] mt-8">
+              <div className="mt-2">
                 <div className="relative group flex items-start gap-2 w-full">
                   <div className="flex-grow min-h-[100px] max-h-[100px] text-sm text-muted-foreground whitespace-pre-wrap overflow-y-auto">
                     {description.length > 50 
