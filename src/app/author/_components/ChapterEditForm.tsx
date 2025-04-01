@@ -263,11 +263,11 @@ export default function ChapterEditForm({
 
       <div className={`${isExpanded ? 'fixed inset-0 z-50 bg-background overflow-hidden' : 'flex-1 overflow-y-auto px-4 py-4'}`}>
         <div className={`${isExpanded ? 'h-full p-4 flex flex-col' : 'space-y-4'}`}>
-          <div className={`relative ${isExpanded ? 'flex-1 flex flex-col' : ''}`}>
+          <div className={`relative ${isExpanded ? 'flex-1 flex flex-col overflow-hidden' : ''}`}>
             <button
               type="button"
               onClick={() => setIsExpanded(!isExpanded)}
-              className="absolute right-2 top-2 p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors"
+              className="absolute right-2 top-2 p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors z-10"
               title={isExpanded ? "Exit fullscreen" : "Enter fullscreen"}
             >
               <Icon icon={isExpanded ? "mdi:fullscreen-exit" : "mdi:fullscreen"} className="w-4 h-4 md:w-5 md:h-5" />
@@ -277,7 +277,7 @@ export default function ChapterEditForm({
               onChange={(value) => setFormData(prev => ({ ...prev, content: value }))}
               authorThoughts={formData.authorThoughts}
               onAuthorThoughtsChange={(thoughts) => setFormData(prev => ({ ...prev, authorThoughts: thoughts }))}
-              className={isExpanded ? 'flex-1' : ''}
+              className={isExpanded ? 'flex-1 overflow-hidden' : ''}
               userId={userId}
             />
           </div>

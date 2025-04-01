@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Icon } from '@iconify/react';
 import FootnoteImageUploader from './FootnoteImageUploader';
+import MarkdownPreview from './MarkdownPreview';
 
 interface ChapterEditorProps {
   value: string;
@@ -34,6 +35,7 @@ export default function ChapterEditor({
   userId
 }: ChapterEditorProps) {
   const [textareaRef, setTextareaRef] = useState<HTMLTextAreaElement | null>(null);
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
 
   type FormatType = 'bold' | 'italic' | 'underline' | 'footnote' | 'link' | 'divider';
   
@@ -188,60 +190,86 @@ export default function ChapterEditor({
     }, 0);
   };
 
+  const togglePreviewMode = () => {
+    setIsPreviewMode(!isPreviewMode);
+  };
+
   return (
     <div className={`${className.includes('flex-1') ? 'flex flex-col h-full' : 'space-y-2'} w-full`}>
       {/* Formatting Toolbar */}
       <div className="flex flex-wrap items-center gap-1 p-1 bg-muted border border-border rounded-lg">
-        <button
-          onClick={() => applyFormatting('bold')}
-          className="p-1.5 md:p-2 hover:bg-accent/50 rounded-lg transition-colors"
-          title="Bold (Ctrl+B)"
-          type="button"
-        >
-          <Icon icon="mdi:format-bold" className="w-4 h-4 md:w-5 md:h-5 text-foreground" />
-        </button>
-        <button
-          onClick={() => applyFormatting('italic')}
-          className="p-1.5 md:p-2 hover:bg-accent/50 rounded-lg transition-colors"
-          title="Italic (Ctrl+I)"
-          type="button"
-        >
-          <Icon icon="mdi:format-italic" className="w-4 h-4 md:w-5 md:h-5 text-foreground" />
-        </button>
-        <button
-          onClick={() => applyFormatting('underline')}
-          className="p-1.5 md:p-2 hover:bg-accent/50 rounded-lg transition-colors"
-          title="Underline (Ctrl+U)"
-          type="button"
-        >
-          <Icon icon="mdi:format-underline" className="w-4 h-4 md:w-5 md:h-5 text-foreground" />
-        </button>
-        <button
-          onClick={() => applyFormatting('footnote')}
-          className="p-1.5 md:p-2 hover:bg-accent/50 rounded-lg transition-colors"
-          title="Add Footnote (Ctrl+F)"
-          type="button"
-        >
-          <Icon icon="mdi:format-superscript" className="w-4 h-4 md:w-5 md:h-5 text-foreground" />
-        </button>
-        <button
-          onClick={() => applyFormatting('link')}
-          className="p-1.5 md:p-2 hover:bg-accent/50 rounded-lg transition-colors"
-          title="Add Link (Ctrl+K)"
-          type="button"
-        >
-          <Icon icon="mdi:link" className="w-4 h-4 md:w-5 md:h-5 text-foreground" />
-        </button>
-        <FootnoteImageUploader userId={userId} onImageUploaded={handleImageUploaded} />
+        {!isPreviewMode && (
+          <>
+            <button
+              onClick={() => applyFormatting('bold')}
+              className="p-1.5 md:p-2 hover:bg-accent/50 rounded-lg transition-colors"
+              title="Bold (Ctrl+B)"
+              type="button"
+            >
+              <Icon icon="mdi:format-bold" className="w-4 h-4 md:w-5 md:h-5 text-foreground" />
+            </button>
+            <button
+              onClick={() => applyFormatting('italic')}
+              className="p-1.5 md:p-2 hover:bg-accent/50 rounded-lg transition-colors"
+              title="Italic (Ctrl+I)"
+              type="button"
+            >
+              <Icon icon="mdi:format-italic" className="w-4 h-4 md:w-5 md:h-5 text-foreground" />
+            </button>
+            <button
+              onClick={() => applyFormatting('underline')}
+              className="p-1.5 md:p-2 hover:bg-accent/50 rounded-lg transition-colors"
+              title="Underline (Ctrl+U)"
+              type="button"
+            >
+              <Icon icon="mdi:format-underline" className="w-4 h-4 md:w-5 md:h-5 text-foreground" />
+            </button>
+            <button
+              onClick={() => applyFormatting('footnote')}
+              className="p-1.5 md:p-2 hover:bg-accent/50 rounded-lg transition-colors"
+              title="Add Footnote (Ctrl+F)"
+              type="button"
+            >
+              <Icon icon="mdi:format-superscript" className="w-4 h-4 md:w-5 md:h-5 text-foreground" />
+            </button>
+            <button
+              onClick={() => applyFormatting('link')}
+              className="p-1.5 md:p-2 hover:bg-accent/50 rounded-lg transition-colors"
+              title="Add Link (Ctrl+K)"
+              type="button"
+            >
+              <Icon icon="mdi:link" className="w-4 h-4 md:w-5 md:h-5 text-foreground" />
+            </button>
+            <FootnoteImageUploader userId={userId} onImageUploaded={handleImageUploaded} />
+            <div className="w-px h-4 md:h-5 bg-border mx-1" /> {/* Separator */}
+            <button
+              onClick={() => applyFormatting('divider')}
+              className="p-1.5 md:p-2 hover:bg-accent/50 rounded-lg transition-colors"
+              title="Insert Horizontal Line"
+              type="button"
+            >
+              <Icon icon="mdi:minus" className="w-4 h-4 md:w-5 md:h-5 text-foreground" />
+            </button>
+          </>
+        )}
+        
+        {/* Preview toggle button - always visible */}
         <div className="w-px h-4 md:h-5 bg-border mx-1" /> {/* Separator */}
         <button
-          onClick={() => applyFormatting('divider')}
-          className="p-1.5 md:p-2 hover:bg-accent/50 rounded-lg transition-colors"
-          title="Insert Horizontal Line"
+          onClick={togglePreviewMode}
+          className={`p-1.5 md:p-2 ${isPreviewMode ? 'bg-primary/20 text-primary' : 'hover:bg-accent/50'} rounded-lg transition-colors flex items-center gap-1`}
+          title={isPreviewMode ? "Switch to Editor" : "Preview Chapter"}
           type="button"
         >
-          <Icon icon="mdi:minus" className="w-4 h-4 md:w-5 md:h-5 text-foreground" />
+          <Icon 
+            icon={isPreviewMode ? "mdi:pencil" : "mdi:eye"} 
+            className="w-4 h-4 md:w-5 md:h-5" 
+          />
+          <span className="text-xs md:text-sm font-medium hidden sm:inline-block">
+            {isPreviewMode ? "Edit" : "Preview"}
+          </span>
         </button>
+        
         <div className="flex-1 text-right px-2 mr-8">
           <span className="text-xs md:text-sm text-muted-foreground">
             {getWordCount(value)} words
@@ -249,35 +277,50 @@ export default function ChapterEditor({
         </div>
       </div>
 
-      {/* Editor Area */}
-      <textarea
-        ref={setTextareaRef}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        onKeyDown={handleKeyDown}
-        onPaste={handlePaste}
-        className={`w-full p-3 md:p-4 border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary bg-background placeholder:text-muted-foreground ${
-          className.includes('flex-1') ? 'flex-1' : 'min-h-[400px] resize-y'
-        }`}
-        placeholder="Write your chapter here... (Ctrl or ⌘+B: Bold, Ctrl or ⌘+I: Italic, Ctrl or ⌘+U: Underline, Ctrl or ⌘+F: Footnote, Ctrl or ⌘+K: Link)"
-        style={className.includes('flex-1') ? { resize: 'none' } : undefined}
-      />
-
-      {/* Author's Thoughts Section */}
-      {authorThoughts !== undefined && onAuthorThoughtsChange && !className.includes('flex-1') && (
-        <div className="mt-4 md:mt-6 space-y-2">
-          <div className="flex items-center gap-2">
-            <Icon icon="mdi:thought-bubble" className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
-            <h3 className="text-base md:text-lg font-medium text-foreground">Author&apos;s Thoughts</h3>
+      {/* Content Area - Editor or Preview */}
+      <div className={`${className.includes('flex-1') ? 'flex-1 relative' : ''}`}>
+        {isPreviewMode ? (
+          <div className={`border border-border rounded-lg bg-background ${className.includes('flex-1') ? 'absolute inset-0 overflow-auto' : 'min-h-[300px] overflow-auto'}`}>
+            <div className="p-6 max-w-2xl mx-auto">
+              <h2 className="text-lg md:text-xl font-semibold text-black dark:text-white mb-6">
+                Chapter Preview
+              </h2>
+              <MarkdownPreview content={value} />
+            </div>
           </div>
-          <textarea
-            value={authorThoughts}
-            onChange={(e) => onAuthorThoughtsChange(e.target.value)}
-            className="w-full p-3 md:p-4 border border-border rounded-lg text-foreground min-h-[150px] focus:outline-none focus:ring-2 focus:ring-primary resize-y bg-background placeholder:text-muted-foreground"
-            placeholder="Share your thoughts about this chapter (it will be visible at the bottom of the chapter)"
-          />
-        </div>
-      )}
+        ) : (
+          <>
+            <textarea
+              ref={ref => setTextareaRef(ref)}
+              value={value}
+              onChange={e => onChange(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onPaste={handlePaste}
+              className={`w-full p-3 md:p-4 border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary bg-background placeholder:text-muted-foreground ${
+                className.includes('flex-1') ? 'flex-1 absolute inset-0' : 'min-h-[400px] resize-y'
+              }`}
+              placeholder="Write your chapter here... (Ctrl or ⌘+B: Bold, Ctrl or ⌘+I: Italic, Ctrl or ⌘+U: Underline, Ctrl or ⌘+F: Footnote, Ctrl or ⌘+K: Link)"
+              style={className.includes('flex-1') ? { resize: 'none' } : undefined}
+            />
+
+            {/* Author's Thoughts Section */}
+            {authorThoughts !== undefined && onAuthorThoughtsChange && !className.includes('flex-1') && (
+              <div className="mt-4 md:mt-6 space-y-2">
+                <div className="flex items-center gap-2">
+                  <Icon icon="mdi:thought-bubble" className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
+                  <h3 className="text-base md:text-lg font-medium text-foreground">Author&apos;s Thoughts</h3>
+                </div>
+                <textarea
+                  value={authorThoughts}
+                  onChange={(e) => onAuthorThoughtsChange(e.target.value)}
+                  className="w-full p-3 md:p-4 border border-border rounded-lg text-foreground min-h-[150px] focus:outline-none focus:ring-2 focus:ring-primary resize-y bg-background placeholder:text-muted-foreground"
+                  placeholder="Share your thoughts about this chapter (it will be visible at the bottom of the chapter)"
+                />
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 } 
