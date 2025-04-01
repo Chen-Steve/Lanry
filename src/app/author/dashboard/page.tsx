@@ -169,8 +169,7 @@ export default function AuthorDashboard() {
 
       {/* Main Content */}
       <div className="lg:ml-64 flex-1 min-w-0">
-        <div className="p-4 sm:p-8 pt-16 lg:pt-8">
-          <div className="max-w-5xl mx-auto min-w-0">
+        <div className="pt-10 h-full">
             {activeTab === 'manage-novels' && (
               <NovelManagement />
             )}
@@ -186,7 +185,6 @@ export default function AuthorDashboard() {
             {activeTab === 'links' && (
               <TranslatorLinks />
             )}
-          </div>
         </div>
       </div>
     </div>

@@ -269,136 +269,136 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
   ] as const;
 
   return (
-    <main className="space-y-4 overflow-x-auto">
-      <button
-        onClick={onCancel}
-        className="flex items-center gap-2 text-foreground bg-background hover:bg-accent rounded-lg px-4 py-2 border border-border shadow-sm transition-colors"
-      >
-        <Icon icon="mdi:arrow-left" className="w-4 h-4" />
-        <span className="font-medium">Novel List</span>
-      </button>
+    <main className="h-full w-full flex flex-col">
+      <div className="flex justify-between items-start p-4 border-b border-border sticky top-0 bg-background z-10">
+        <button
+          onClick={onCancel}
+          className="p-2 hover:bg-accent rounded-lg transition-colors"
+          aria-label="Go back"
+        >
+          <Icon icon="mdi:arrow-left" className="w-5 h-5" />
+        </button>
+        <button
+          disabled={isSubmitting}
+          onClick={handleSave}
+          className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isSubmitting ? 'Saving...' : novel.id ? 'Save Changes' : 'Create Novel'}
+        </button>
+      </div>
 
-      <div className="bg-background rounded-lg shadow-sm p-6 border border-border overflow-x-auto">
-        <div className="space-y-4 min-w-[800px]">
-          <div className="flex justify-between items-start">
-            <div className="flex gap-6 items-start">
-              <NovelCoverImage 
-                coverImageUrl={coverImageUrl}
-                onUpdate={handleCoverUpdate}
-                onDelete={handleCoverDelete}
-              />
-              <div className="flex flex-col flex-grow h-[270px]">
-                <div>
-                  <div className="flex items-center gap-2 max-w-[500px]">
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-6">
+          <div className="flex gap-6 items-start">
+            <NovelCoverImage 
+              coverImageUrl={coverImageUrl}
+              onUpdate={handleCoverUpdate}
+              onDelete={handleCoverDelete}
+            />
+            <div className="flex flex-col flex-grow">
+              <div>
+                <div className="flex items-center gap-2 w-full">
+                  <input
+                    type="text"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="text-xl font-semibold text-foreground px-2 py-1 border-b border-border hover:border-muted-foreground focus:border-primary focus:ring-0 focus:outline-none w-full truncate bg-background placeholder:text-muted-foreground"
+                    placeholder="Enter your novel title"
+                    title={title}
+                  />
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="relative">
                     <input
                       type="text"
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      className="text-xl font-semibold text-foreground px-2 py-1 border-b border-border hover:border-muted-foreground focus:border-primary focus:ring-0 focus:outline-none w-fit min-w-[200px] truncate bg-background placeholder:text-muted-foreground"
-                      placeholder="Enter your novel title"
-                      title={title}
+                      value={author}
+                      onChange={(e) => setAuthor(e.target.value)}
+                      placeholder="Enter original author name"
+                      className="px-3 py-1 text-sm border-b border-border hover:border-muted-foreground focus:border-primary focus:ring-0 focus:outline-none w-fit min-w-[150px] bg-background text-foreground placeholder:text-muted-foreground"
                     />
                   </div>
-                  <div className="flex items-center gap-4">
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={author}
-                        onChange={(e) => setAuthor(e.target.value)}
-                        placeholder="Enter original author name"
-                        className="px-3 py-1 text-sm border-b border-border hover:border-muted-foreground focus:border-primary focus:ring-0 focus:outline-none w-fit min-w-[150px] bg-background text-foreground placeholder:text-muted-foreground"
-                      />
-                    </div>
-                  </div>
-                  <div className="mt-3 flex gap-2">
-                    <button
-                      type="button"
-                      className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-muted-foreground bg-accent hover:bg-accent/80 rounded transition-colors"
-                      onClick={() => setIsCategoryModalOpen(true)}
-                    >
-                      <Icon icon="mdi:tag-multiple" className="w-3.5 h-3.5" />
-                      {selectedCategories.length > 0 ? `${selectedCategories.length} Categories` : 'Add Categories'}
-                    </button>
-                    <button
-                      type="button"
-                      className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-muted-foreground bg-accent hover:bg-accent/80 rounded transition-colors"
-                      onClick={() => setIsTagModalOpen(true)}
-                    >
-                      <Icon icon="mdi:tag" className="w-3.5 h-3.5" />
-                      {selectedTags.length > 0 ? `${selectedTags.length} Tags` : 'Add Tags'}
-                    </button>
-                  </div>
-                  <div className="mt-2">
-                    <div className="flex flex-col gap-2">
-                      <div className="flex flex-wrap gap-1.5">
-                        {statusOptions.map(option => (
-                          <button
-                            key={option.value}
-                            type="button"
-                            className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition-colors ${
-                              status === option.value
-                                ? 'bg-primary text-primary-foreground'
-                                : 'bg-accent text-muted-foreground hover:text-foreground'
-                            }`}
-                            onClick={() => setStatus(option.value)}
-                          >
-                            <Icon icon={option.icon} className="w-3.5 h-3.5" />
-                            {option.label}
-                          </button>
-                        ))}
-                      </div>
-
-                      <div className="flex flex-wrap gap-1.5">
-                        {ageRatingOptions.map(option => (
-                          <button
-                            key={option.value}
-                            type="button"
-                            className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition-colors group relative ${
-                              ageRating === option.value
-                                ? 'bg-primary text-primary-foreground'
-                                : 'bg-accent text-muted-foreground hover:text-foreground'
-                            }`}
-                            onClick={() => setAgeRating(option.value)}
-                          >
-                            <Icon icon={option.icon} className="w-3.5 h-3.5" />
-                            {option.label}
-                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-0.5 bg-background border border-border text-foreground text-[10px] rounded shadow-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
-                              {option.description}
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
                 </div>
-                <div className="h-[100px] mt-8">
-                  <div className="relative group flex items-start gap-2 max-w-[600px]">
-                    <div className="flex-grow min-h-[100px] max-h-[100px] text-sm text-muted-foreground whitespace-pre-wrap overflow-y-auto">
-                      {description.length > 50 
-                        ? `${description.slice(0, 50)}...`
-                        : description || 'Enter your novel description here...'}
+                <div className="mt-3 flex gap-2">
+                  <button
+                    type="button"
+                    className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-muted-foreground bg-accent hover:bg-accent/80 rounded transition-colors"
+                    onClick={() => setIsCategoryModalOpen(true)}
+                  >
+                    <Icon icon="mdi:tag-multiple" className="w-3.5 h-3.5" />
+                    {selectedCategories.length > 0 ? `${selectedCategories.length} Categories` : 'Add Categories'}
+                  </button>
+                  <button
+                    type="button"
+                    className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-muted-foreground bg-accent hover:bg-accent/80 rounded transition-colors"
+                    onClick={() => setIsTagModalOpen(true)}
+                  >
+                    <Icon icon="mdi:tag" className="w-3.5 h-3.5" />
+                    {selectedTags.length > 0 ? `${selectedTags.length} Tags` : 'Add Tags'}
+                  </button>
+                </div>
+                <div className="mt-2">
+                  <div className="flex flex-col gap-2">
+                    <div className="flex flex-wrap gap-1.5">
+                      {statusOptions.map(option => (
+                        <button
+                          key={option.value}
+                          type="button"
+                          className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition-colors ${
+                            status === option.value
+                              ? 'bg-primary text-primary-foreground'
+                              : 'bg-accent text-muted-foreground hover:text-foreground'
+                          }`}
+                          onClick={() => setStatus(option.value)}
+                        >
+                          <Icon icon={option.icon} className="w-3.5 h-3.5" />
+                          {option.label}
+                        </button>
+                      ))}
                     </div>
-                    <button
-                      onClick={() => {
-                        setEditingDescription(description);
-                        setIsDescriptionModalOpen(true);
-                      }}
-                      aria-label="Edit Synopsis"
-                      className="flex-shrink-0 p-1.5 text-primary-foreground bg-primary hover:bg-primary/90 rounded-md transition-all shadow-sm border border-primary"
-                    >
-                      <Icon icon="mdi:pencil" className="w-4 h-4" />
-                    </button>
+
+                    <div className="flex flex-wrap gap-1.5">
+                      {ageRatingOptions.map(option => (
+                        <button
+                          key={option.value}
+                          type="button"
+                          className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition-colors group relative ${
+                            ageRating === option.value
+                              ? 'bg-primary text-primary-foreground'
+                              : 'bg-accent text-muted-foreground hover:text-foreground'
+                          }`}
+                          onClick={() => setAgeRating(option.value)}
+                        >
+                          <Icon icon={option.icon} className="w-3.5 h-3.5" />
+                          {option.label}
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-0.5 bg-background border border-border text-foreground text-[10px] rounded shadow-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+                            {option.description}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
+              <div className="h-[100px] mt-8">
+                <div className="relative group flex items-start gap-2 w-full">
+                  <div className="flex-grow min-h-[100px] max-h-[100px] text-sm text-muted-foreground whitespace-pre-wrap overflow-y-auto">
+                    {description.length > 50 
+                      ? `${description.slice(0, 50)}...`
+                      : description || 'Enter your novel description here...'}
+                  </div>
+                  <button
+                    onClick={() => {
+                      setEditingDescription(description);
+                      setIsDescriptionModalOpen(true);
+                    }}
+                    aria-label="Edit Synopsis"
+                    className="flex-shrink-0 p-1.5 text-primary-foreground bg-primary hover:bg-primary/90 rounded-md transition-all shadow-sm border border-primary"
+                  >
+                    <Icon icon="mdi:pencil" className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
             </div>
-            <button
-              disabled={isSubmitting}
-              onClick={handleSave}
-              className="px-2 py-2 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-            >
-              {isSubmitting ? 'Saving...' : novel.id ? 'Save Changes' : 'Create Novel'}
-            </button>
           </div>
 
           {/* Description Edit Modal */}
@@ -447,7 +447,7 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
 
           {/* Chapter List */}
           {novel.id && (
-            <div className="space-y-4">
+            <div className="mt-6">
               {isLoadingChapters ? (
                 <div className="text-center py-8">
                   <Icon icon="mdi:loading" className="w-6 h-6 animate-spin mx-auto text-primary/60" />
@@ -469,7 +469,7 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
             </div>
           )}
 
-          <div className="mt-8">
+          <div className="mt-6 pb-6">
             <CharacterManagement
               novelId={novel.id}
               characters={characters}
