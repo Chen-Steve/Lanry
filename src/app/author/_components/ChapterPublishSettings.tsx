@@ -12,7 +12,7 @@ interface ChapterPublishSettingsProps {
   onSave?: () => void;
   isSaving?: boolean;
   autoReleaseEnabled?: boolean;
-  advancedDates?: Date[];
+  advancedDates?: { date: Date; chapterNumber: number }[];
 }
 
 export default function ChapterPublishSettings({

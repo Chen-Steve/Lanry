@@ -55,6 +55,7 @@ export default function NovelManagement() {
   const [novelToDelete, setNovelToDelete] = useState<NovelWithChapters | null>(null);
   const [novelToEdit, setNovelToEdit] = useState<NovelWithChapters | null>(null);
   const [view, setView] = useState<'list' | 'edit'>('list');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   useEffect(() => {
     loadNovels();
@@ -155,16 +156,34 @@ export default function NovelManagement() {
             className="w-full pl-10 pr-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 bg-background text-foreground placeholder:text-muted-foreground text-sm sm:text-base"
           />
         </div>
+        <div className="flex border border-border rounded-lg overflow-hidden">
+          <button
+            className={`p-2 flex items-center justify-center ${viewMode === 'grid' ? 'bg-primary text-primary-foreground' : 'bg-background text-foreground hover:bg-accent/50'}`}
+            onClick={() => setViewMode('grid')}
+            aria-label="Grid view"
+          >
+            <Icon icon="mdi:grid" className="w-5 h-5" />
+          </button>
+          <button
+            className={`p-2 flex items-center justify-center ${viewMode === 'list' ? 'bg-primary text-primary-foreground' : 'bg-background text-foreground hover:bg-accent/50'}`}
+            onClick={() => setViewMode('list')}
+            aria-label="List view"
+          >
+            <Icon icon="mdi:format-list-bulleted" className="w-5 h-5" />
+          </button>
+        </div>
       </section>
 
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
+      <section className={`${viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3' : 'flex flex-col gap-0 divide-y divide-border'}`}>
         {isLoading ? (
           <div className="col-span-full py-12 text-center">
             <Icon icon="mdi:loading" className="animate-spin text-3xl text-primary/60" />
           </div>
         ) : filteredNovels.length > 0 ? (
           filteredNovels.map((novel) => (
-            <article key={novel.id} className="relative flex gap-3 bg-background hover:bg-accent/50 p-2 xs:p-2.5 sm:p-3 border border-border rounded-lg">
+            <article key={novel.id} className={`relative ${viewMode === 'grid' 
+              ? 'flex gap-3 bg-background hover:bg-accent/50 p-2 xs:p-2.5 sm:p-3 border border-border rounded-lg' 
+              : 'flex flex-row gap-2 bg-background hover:bg-accent/50 p-1.5 xs:p-2 sm:p-2.5 border-0 first:rounded-t-lg last:rounded-b-lg'}`}>
               <button 
                 className="absolute top-1 xs:top-1.5 right-1 xs:right-1.5 p-0.5 xs:p-1 text-muted-foreground hover:text-red-600 dark:hover:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-full transition-colors"
                 aria-label="Delete novel"
@@ -173,7 +192,9 @@ export default function NovelManagement() {
                 <Icon icon="mdi:delete" className="w-3 xs:w-3.5 sm:w-4 h-3 xs:h-3.5 sm:h-4" />
               </button>
 
-              <div className="w-[45px] xs:w-[50px] sm:w-[60px] h-[68px] xs:h-[75px] sm:h-[90px] flex-shrink-0">
+              <div className={`${viewMode === 'grid' 
+                ? 'w-[45px] xs:w-[50px] sm:w-[60px] h-[68px] xs:h-[75px] sm:h-[90px]' 
+                : 'w-[40px] xs:w-[45px] sm:w-[50px] h-[60px] xs:h-[68px] sm:h-[75px]'} flex-shrink-0`}>
                 <Image
                   src={novel.coverImageUrl || '/images/default-cover.jpg'}
                   alt={novel.title}
@@ -184,11 +205,11 @@ export default function NovelManagement() {
                 />
               </div>
 
-              <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
+              <div className={`flex-1 min-w-0 flex flex-col ${viewMode === 'grid' ? 'justify-between py-0.5' : 'justify-center py-0'}`}>
                 <div>
-                  <h2 className="font-medium text-sm xs:text-base text-foreground mb-1 xs:mb-1.5 pr-4 xs:pr-5 sm:pr-6 line-clamp-1">{novel.title}</h2>
+                  <h2 className={`font-medium text-sm xs:text-base text-foreground ${viewMode === 'grid' ? 'mb-1 xs:mb-1.5' : 'mb-0.5 xs:mb-1'} pr-4 xs:pr-5 sm:pr-6 line-clamp-1`}>{novel.title}</h2>
 
-                  <div className="flex flex-wrap items-center gap-1 xs:gap-1.5">
+                  <div className={`flex flex-wrap items-center gap-1 ${viewMode === 'list' ? 'max-w-[650px]' : ''}`}>
                     <span className="text-[10px] xs:text-xs text-muted-foreground">
                       {novel.chapterCount} Chapters
                     </span>
@@ -216,9 +237,11 @@ export default function NovelManagement() {
                   </div>
                 </div>
 
-                <div className="flex gap-2 mt-2 xs:mt-2.5">
+                <div className={`${viewMode === 'grid' ? 'flex gap-2 mt-2 xs:mt-2.5' : 'flex gap-2 mt-1 xs:mt-1.5'}`}>
                   <button 
-                    className="w-full px-3 xs:px-4 py-2 xs:py-2.5 text-sm sm:text-base font-medium text-primary bg-primary/10 hover:bg-primary/20 rounded-md transition-colors"
+                    className={`${viewMode === 'grid' 
+                      ? 'w-full px-3 xs:px-4 py-2 xs:py-2.5 text-sm sm:text-base' 
+                      : 'w-auto px-2 xs:px-3 py-1 xs:py-1.5 text-xs sm:text-sm'} font-medium text-primary bg-primary/10 hover:bg-primary/20 rounded-md transition-colors`}
                     aria-label="Edit novel"
                     onClick={() => handleEditClick(novel)}
                   >

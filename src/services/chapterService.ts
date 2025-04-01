@@ -8,7 +8,7 @@ type ChapterWithNovel = Chapter & {
 };
 
 // Helper function to check if a chapter is published based on user's local timezone
-function isChapterPublished(publishAt: string | null): boolean {
+export function isChapterPublished(publishAt: string | null): boolean {
   if (!publishAt) return true; // No publish date means it's published immediately
   
   // Convert both dates to UTC for comparison

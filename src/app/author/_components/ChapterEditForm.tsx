@@ -7,6 +7,7 @@ import ChapterEditor from './ChapterEditor';
 import ChapterPublishSettings from './ChapterPublishSettings';
 import * as authorChapterService from '../_services/authorChapterService';
 import { toLocalDatetimeValue } from '@/utils/dateUtils';
+import { isChapterPublished } from '@/services/chapterService';
 
 interface ChapterEditFormProps {
   novelId: string;
@@ -32,7 +33,8 @@ export default function ChapterEditForm({
   const [isExpanded, setIsExpanded] = useState(false);
   const [showSchedulePopup, setShowSchedulePopup] = useState(false);
   const [isExtraChapter, setIsExtraChapter] = useState(false);
-  const [advancedDates, setAdvancedDates] = useState<Date[]>([]);
+  const [isAlreadyPublished, setIsAlreadyPublished] = useState(false);
+  const [advancedDates, setAdvancedDates] = useState<{ date: Date; chapterNumber: number }[]>([]);
   const [formData, setFormData] = useState({
     chapterNumber: '',
     partNumber: '',
@@ -53,6 +55,7 @@ export default function ChapterEditForm({
       
       if (chapter) {
         setIsExtraChapter(chapter.part_number === -1);
+        setIsAlreadyPublished(isChapterPublished(chapter.publish_at));
         setFormData({
           chapterNumber: chapter.chapter_number.toString(),
           partNumber: chapter.part_number === -1 ? '' : (chapter.part_number?.toString() || ''),
@@ -93,7 +96,10 @@ export default function ChapterEditForm({
             const now = new Date();
             return publishDate && publishDate > now && (chapter.coins || 0) > 0;
           })
-          .map(chapter => new Date(chapter.publish_at!));
+          .map(chapter => ({
+            date: new Date(chapter.publish_at!),
+            chapterNumber: chapter.chapter_number
+          }));
         
         setAdvancedDates(advancedChapterDates);
       } catch (error) {
@@ -308,7 +314,7 @@ export default function ChapterEditForm({
             ) : (
               <span className="inline-flex items-center gap-2">
                 <Icon icon="mdi:content-save" className="w-5 h-5" />
-                Save Chapter
+                {isAlreadyPublished ? 'Save Chapter' : 'Publish Chapter'}
               </span>
             )}
           </button>

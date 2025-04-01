@@ -5,7 +5,7 @@ import { Icon } from '@iconify/react';
 
 interface CalendarProps {
   onDateSelect?: (date: Date) => void;
-  advancedDates?: Date[]; // Array of dates that have advanced chapters
+  advancedDates?: { date: Date; chapterNumber: number }[]; // Array of dates that have advanced chapters with their chapter numbers
   minDate?: Date; // Minimum selectable date
 }
 
@@ -18,20 +18,20 @@ const Calendar = ({ onDateSelect, advancedDates = [], minDate = new Date() }: Ca
   const daysInMonth = lastDayOfMonth.getDate();
   const startingDayIndex = firstDayOfMonth.getDay(); // 0 = Sunday, 1 = Monday, etc.
 
-  // Helper function to check if a date has advanced chapters and get their indices
+  // Helper function to check if a date has advanced chapters and get their chapter numbers
   const getAdvancedDateInfo = (date: Date) => {
-    const advancedOnDate = advancedDates.map((advDate, index) => {
-      if (advDate.getDate() === date.getDate() &&
-          advDate.getMonth() === date.getMonth() &&
-          advDate.getFullYear() === date.getFullYear()) {
-        return index + 1; // Adding 1 to make it 1-based instead of 0-based
-      }
-      return null;
-    }).filter((index): index is number => index !== null);
+    const advancedOnDate = advancedDates
+      .filter(adv => {
+        if (!adv?.date) return false;
+        return adv.date.getDate() === date.getDate() &&
+               adv.date.getMonth() === date.getMonth() &&
+               adv.date.getFullYear() === date.getFullYear();
+      })
+      .map(adv => adv.chapterNumber);
 
     return {
       hasAdvanced: advancedOnDate.length > 0,
-      indices: advancedOnDate
+      chapterNumbers: advancedOnDate
     };
   };
 
@@ -59,7 +59,7 @@ const Calendar = ({ onDateSelect, advancedDates = [], minDate = new Date() }: Ca
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
       const isToday = new Date().toDateString() === date.toDateString();
-      const { hasAdvanced, indices } = getAdvancedDateInfo(date);
+      const { hasAdvanced, chapterNumbers } = getAdvancedDateInfo(date);
       const isPastDate = date < new Date(minDate.setHours(0, 0, 0, 0));
       
       days.push(
@@ -78,8 +78,8 @@ const Calendar = ({ onDateSelect, advancedDates = [], minDate = new Date() }: Ca
               <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-orange-500" />
               <div className="absolute opacity-0 group-hover:opacity-100 bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-normal bg-background border border-border rounded shadow-lg whitespace-nowrap pointer-events-none transition-opacity">
                 <div className="flex flex-col gap-0.5">
-                  {indices.map((index) => (
-                    <div key={index}>Advanced Chapter {index}</div>
+                  {chapterNumbers.map((chapterNumber) => (
+                    <div key={chapterNumber}>Advanced Chapter {chapterNumber}</div>
                   ))}
                 </div>
               </div>
