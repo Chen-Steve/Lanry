@@ -78,7 +78,7 @@ const FeaturedNovel = ({ novels }: FeaturedNovelProps) => {
     <div className="col-span-2 sm:col-span-2 md:col-span-3 lg:col-span-3 flex flex-col">
       <Link
         href={`/novels/${novels[featuredIndex].slug}`}
-        className="group relative flex flex-row gap-4 p-6 bg-card hover:bg-accent/50 rounded-lg transition-colors touch-pan-y overflow-hidden min-h-[200px]"
+        className="group relative flex flex-row gap-4 p-4 sm:p-8 bg-card hover:bg-accent/50 rounded-lg transition-colors touch-pan-y overflow-hidden min-h-[200px] sm:min-h-[300px]"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -94,7 +94,7 @@ const FeaturedNovel = ({ novels }: FeaturedNovelProps) => {
         </div>
 
         {/* Content */}
-        <div className="relative z-10 flex flex-row gap-6 w-full items-start">
+        <div className="relative z-10 flex flex-row gap-4 w-full items-start">
           {/* Left Arrow */}
           <button 
             onClick={(e) => {
@@ -102,10 +102,10 @@ const FeaturedNovel = ({ novels }: FeaturedNovelProps) => {
               setIsAutoRotationPaused(true);
               setFeaturedIndex(prev => prev === 0 ? novels.length - 1 : prev - 1);
             }}
-            className="hidden sm:flex absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 items-center justify-center bg-black/50 hover:bg-black/70 text-white rounded-full"
+            className="hidden sm:flex absolute left-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 items-center justify-center bg-black/50 hover:bg-black/70 text-white rounded-full"
             aria-label="Previous novel"
           >
-            <Icon icon="mdi:chevron-left" className="text-xl" />
+            <Icon icon="mdi:chevron-left" className="text-2xl" />
           </button>
 
           {/* Right Arrow */}
@@ -115,13 +115,13 @@ const FeaturedNovel = ({ novels }: FeaturedNovelProps) => {
               setIsAutoRotationPaused(true);
               setFeaturedIndex(prev => prev === novels.length - 1 ? 0 : prev + 1);
             }}
-            className="hidden sm:flex absolute right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 items-center justify-center bg-black/50 hover:bg-black/70 text-white rounded-full"
+            className="hidden sm:flex absolute right-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 items-center justify-center bg-black/50 hover:bg-black/70 text-white rounded-full"
             aria-label="Next novel"
           >
-            <Icon icon="mdi:chevron-right" className="text-xl" />
+            <Icon icon="mdi:chevron-right" className="text-2xl" />
           </button>
 
-          <div className="w-32 aspect-[3/4] relative rounded-md overflow-hidden shrink-0">
+          <div className="w-24 sm:w-40 aspect-[3/4] relative rounded-md overflow-hidden shrink-0">
             <NovelCover
               coverUrl={novels[featuredIndex].coverImageUrl}
               title={novels[featuredIndex].title}
@@ -130,23 +130,23 @@ const FeaturedNovel = ({ novels }: FeaturedNovelProps) => {
           </div>
           
           <div className="flex-1 min-w-0 flex flex-col h-full">
-            <h3 className="text-xl font-semibold text-black dark:text-white transition-colors mb-3 line-clamp-2">
+            <h3 className="text-lg sm:text-2xl font-semibold text-black dark:text-white transition-colors mb-2 sm:mb-4 line-clamp-2">
               {novels[featuredIndex].title}
             </h3>
 
             {/* Synopsis */}
-            <div className="relative h-[72px]">
+            <div className="relative h-[80px] sm:h-[120px]">
               <div 
-                className="prose prose-sm max-w-none text-black dark:text-white dark:prose-invert line-clamp-3 whitespace-pre-line"
+                className="prose prose-sm sm:prose-lg max-w-none text-black dark:text-white dark:prose-invert line-clamp-3 sm:line-clamp-4 whitespace-pre-line"
                 dangerouslySetInnerHTML={{ 
                   __html: formatText(novels[featuredIndex].description) 
                 }}
               />
-              <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-card to-transparent" />
+              <div className="absolute bottom-0 left-0 right-0 h-8 sm:h-12 bg-gradient-to-t from-card to-transparent" />
             </div>
 
             {/* Navigation Dots */}
-            <div className="flex justify-center gap-2 mt-auto pt-2">
+            <div className="flex justify-center gap-2 sm:gap-3 mt-auto pt-2 sm:pt-4">
               {novels.map((_, idx) => (
                 <button
                   key={idx}
@@ -155,7 +155,7 @@ const FeaturedNovel = ({ novels }: FeaturedNovelProps) => {
                     setIsAutoRotationPaused(true);
                     setFeaturedIndex(idx);
                   }}
-                  className={`w-2.5 h-2.5 rounded-full transition-all duration-200 border border-black ${
+                  className={`w-2 sm:w-3 h-2 sm:h-3 rounded-full transition-all duration-200 border border-black ${
                     idx === featuredIndex 
                       ? 'bg-primary scale-110' 
                       : 'bg-muted-foreground/40 hover:bg-muted-foreground/60 hover:scale-105'
