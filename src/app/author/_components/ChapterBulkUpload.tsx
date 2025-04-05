@@ -113,11 +113,22 @@ export default function ChapterBulkUpload({ novelId, userId, onUploadComplete, v
   };
 
   const getFileContent = async (file: FileToProcess): Promise<ProcessedContent> => {
-    if (file.name.endsWith('.txt') || file.name.endsWith('.md')) {
+    if (file.name.endsWith('.txt')) {
       const decoder = new TextDecoder('utf-8');
       const content = decoder.decode(file.content);
       const lines = content.split('\n').filter(line => line.trim());
       return extractChapterInfo(lines, file.name);
+    } else if (file.name.endsWith('.md')) {
+      // For markdown files, preserve the original content
+      const decoder = new TextDecoder('utf-8');
+      const content = decoder.decode(file.content);
+      const lines = content.split('\n');
+      const chapterInfo = extractChapterInfo(lines, file.name);
+      // Return the original content without filtering out empty lines
+      return {
+        ...chapterInfo,
+        content: content
+      };
     } else {
       // For docx files, extract all content
       const result = await mammoth.extractRawText({ arrayBuffer: file.content });
