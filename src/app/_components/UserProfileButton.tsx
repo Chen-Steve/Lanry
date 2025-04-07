@@ -2,7 +2,6 @@
 
 import React, { useRef, useEffect, useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { Icon } from '@iconify/react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -171,12 +170,9 @@ const UserProfileButton = ({
     if (userProfile?.avatar_url) {
       return (
         <div className="relative">
-          <Image
+          <img
             src={userProfile.avatar_url}
             alt={userProfile.username}
-            width={32}
-            height={32}
-            unoptimized
             className="w-8 h-8 rounded-full object-cover"
             onError={() => {
               const target = document.querySelector(`img[alt="${userProfile.username}"]`) as HTMLImageElement;

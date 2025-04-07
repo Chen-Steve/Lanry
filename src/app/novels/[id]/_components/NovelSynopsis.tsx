@@ -1,5 +1,4 @@
 import { formatText } from '@/lib/textFormatting';
-import Image from 'next/image';
 import { Icon } from '@iconify/react';
 import { useState, useEffect } from 'react';
 
@@ -126,13 +125,11 @@ export const NovelSynopsis = ({
                       className="relative bg-white dark:bg-gray-800 overflow-hidden rounded-lg border border-border"
                     >
                       <div className="aspect-[3/4] relative">
-                        <Image
+                        <img
                           src={getOptimizedImageUrl(character.imageUrl)}
                           alt={character.name}
-                          fill
-                          className="object-cover"
-                          sizes="(max-width: 640px) 80px, (max-width: 768px) 100px, 120px"
-                          quality={80}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
                         />
                         <div className="absolute inset-x-0 bottom-0 bg-black/60 p-1">
                           <p className="text-xs font-medium text-white leading-tight truncate">

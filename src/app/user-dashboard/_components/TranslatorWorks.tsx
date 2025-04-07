@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
 import supabase from '@/lib/supabaseClient';
-import Image from 'next/image';
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
 
@@ -76,12 +75,10 @@ export default function TranslatorWorks({ profileId }: { profileId: string }) {
           >
             <div className="relative aspect-[2/3] mb-2 bg-gray-100 dark:bg-gray-700 rounded-md overflow-hidden">
               {novel.cover_image_url ? (
-                <Image
+                <img
                   src={novel.cover_image_url}
                   alt={novel.title}
-                  fill
-                  sizes="(min-width: 768px) 25vw, (min-width: 640px) 33vw, 50vw"
-                  className="object-cover transition-transform group-hover:scale-105"
+                  className="w-full h-full object-cover transition-transform group-hover:scale-105"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-accent">
