@@ -1,36 +1,37 @@
 /** @type {import('next').NextConfig} */
-import JavaScriptObfuscator from 'javascript-obfuscator';
+// import JavaScriptObfuscator from 'javascript-obfuscator';
 
 const nextConfig = {
   compress: true,
   reactStrictMode: true,
   swcMinify: true,
-  webpack: (config, { dev, isServer }) => {
-    if (!dev && !isServer) {
-      config.optimization.minimizer.push(
-        new JavaScriptObfuscator({
-          compact: true,
-          controlFlowFlattening: true,
-          deadCodeInjection: true,
-          debugProtection: true,
-          debugProtectionInterval: true,
-          disableConsoleOutput: true,
-          identifierNamesGenerator: 'hexadecimal',
-          log: false,
-          numbersToExpressions: true,
-          renameGlobals: false,
-          rotateStringArray: true,
-          selfDefending: true,
-          shuffleStringArray: true,
-          splitStrings: true,
-          stringArray: true,
-          stringArrayEncoding: ['base64'],
-          stringArrayThreshold: 0.75,
-          transformObjectKeys: true,
-          unicodeEscapeSequence: false
-        })
-      );
-    }
+  webpack: (config, { }) => {
+    // Temporarily disabled obfuscation
+    // if (!dev && !isServer) {
+    //   config.optimization.minimizer.push(
+    //     new JavaScriptObfuscator({
+    //       compact: true,
+    //       controlFlowFlattening: true,
+    //       deadCodeInjection: true,
+    //       debugProtection: true,
+    //       debugProtectionInterval: true,
+    //       disableConsoleOutput: true,
+    //       identifierNamesGenerator: 'hexadecimal',
+    //       log: false,
+    //       numbersToExpressions: true,
+    //       renameGlobals: false,
+    //       rotateStringArray: true,
+    //       selfDefending: true,
+    //       shuffleStringArray: true,
+    //       splitStrings: true,
+    //       stringArray: true,
+    //       stringArrayEncoding: ['base64'],
+    //       stringArrayThreshold: 0.75,
+    //       transformObjectKeys: true,
+    //       unicodeEscapeSequence: false
+    //     })
+    //   );
+    // }
     return config;
   },
   images: {
