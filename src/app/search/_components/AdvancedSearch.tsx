@@ -166,7 +166,7 @@ export default function AdvancedSearch() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [filters]);
 
   // Effect to trigger search when filters change
   useEffect(() => {
