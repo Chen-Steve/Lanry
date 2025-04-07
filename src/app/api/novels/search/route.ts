@@ -3,6 +3,10 @@ import { prisma } from '@/lib/prisma';
 import { Prisma, NovelStatus } from '@prisma/client';
 import { type NextRequest } from 'next/server';
 
+// Mark this route as dynamic
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 const ITEMS_PER_PAGE = 6;
 
 type MinimalNovel = {
