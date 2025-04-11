@@ -422,9 +422,27 @@ export default function ChapterContent({
                     </div>
                   )}
                   <div className="min-w-0">
-                    <h3 className="text-lg font-medium text-gray-700 dark:text-gray-200 truncate">
-                      {authorProfile?.username}&apos;s words
-                    </h3>
+                    <div className="relative">
+                      <h3 
+                        className="text-lg font-medium text-gray-700 dark:text-gray-200 whitespace-nowrap overflow-hidden hover:overflow-x-auto scrollbar-none group"
+                        style={{
+                          maxWidth: 'calc(100% - 8px)',
+                          scrollbarWidth: 'none',
+                          msOverflowStyle: 'none',
+                          WebkitOverflowScrolling: 'touch'
+                        }}
+                      >
+                        <span className="inline-block min-w-fit">
+                          {authorProfile?.username}&apos;s words
+                        </span>
+                      </h3>
+                      {/* Gradient fade effect */}
+                      <div className="absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-gray-50 dark:from-gray-800/50 pointer-events-none group-hover:opacity-0 transition-opacity" />
+                      {/* Scroll indicator */}
+                      <div className="absolute -right-1 top-1/2 -translate-y-1/2 text-muted-foreground/50 group-hover:opacity-0 transition-opacity">
+                        <Icon icon="mdi:chevron-right" className="w-4 h-4" />
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
