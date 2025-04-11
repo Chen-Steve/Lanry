@@ -371,67 +371,70 @@ export default function ChapterContent({
           </>
         )}
 
-        {/* Like Button Section */}
-        {!isIndefinitelyLocked && (
-          <div className="mt-8 max-w-2xl mx-auto flex justify-center">
-            <button
-              onClick={handleLikeClick}
-              className={`flex items-center gap-2 px-2 py-1 rounded-lg transition-colors ${
-                isLiked 
-                  ? 'text-red-500 hover:text-red-600' 
-                  : 'text-muted-foreground hover:text-red-500'
-              }`}
-              title={isLiked ? 'Unlike chapter' : 'Like chapter'}
-            >
-              <Icon 
-                icon={isLiked ? "mdi:heart" : "mdi:heart-outline"} 
-                className="w-6 h-6" 
-              />
-              <span className="font-medium">{likeCount}</span>
-            </button>
-          </div>
-        )}
-
         {/* Author's Thoughts Section - Only show if not indefinitely locked */}
         {!isIndefinitelyLocked && authorThoughts && authorThoughts.trim() !== '' && (
           <div className="mt-8 max-w-2xl mx-auto">
-            <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-6">
-              <div className="flex items-center gap-3 mb-4">
-                {authorProfile && (
-                  <div className="flex-shrink-0">
-                    {authorProfile.avatar_url ? (
-                      <img
-                        src={authorProfile.avatar_url}
-                        alt={authorProfile.username}
-                        className="w-10 h-10 rounded-full object-cover"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = 'none';
-                          const parent = target.parentElement;
-                          if (parent) {
-                            parent.innerHTML = authorProfile.username[0]?.toUpperCase() || '?';
-                            parent.className = "w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-medium text-lg";
-                          }
-                        }}
-                      />
-                    ) : (
-                      <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-medium text-lg">
-                        {authorProfile.username[0]?.toUpperCase() || '?'}
-                      </div>
-                    )}
+            <div className="relative bg-gray-50 dark:bg-gray-800/50 rounded-lg p-6 border border-primary/20 shadow-sm before:absolute before:inset-0 before:p-[2px] before:bg-gradient-to-r before:from-primary/40 before:via-primary/20 before:to-primary/40 before:rounded-lg before:-z-10 before:pointer-events-none">
+              <div className="relative mb-4">
+                {/* Like Button - Absolute positioned */}
+                <div className="absolute right-0 top-0">
+                  <button
+                    onClick={handleLikeClick}
+                    className={`flex-shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors ${
+                      isLiked 
+                        ? 'text-red-500 hover:text-red-600' 
+                        : 'text-muted-foreground hover:text-red-500'
+                    }`}
+                    title={isLiked ? 'Unlike chapter' : 'Like chapter'}
+                  >
+                    <Icon 
+                      icon={isLiked ? "mdi:heart" : "mdi:heart-outline"} 
+                      className="w-5 h-5" 
+                    />
+                    <span className="font-medium">{likeCount}</span>
+                  </button>
+                </div>
+
+                {/* Author info with max-width to prevent overlap */}
+                <div className="flex items-center gap-3 min-w-0 pr-24">
+                  {authorProfile && (
+                    <div className="flex-shrink-0">
+                      {authorProfile.avatar_url ? (
+                        <img
+                          src={authorProfile.avatar_url}
+                          alt={authorProfile.username}
+                          className="w-10 h-10 rounded-full object-cover"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            const parent = target.parentElement;
+                            if (parent) {
+                              parent.innerHTML = authorProfile.username[0]?.toUpperCase() || '?';
+                              parent.className = "w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-medium text-lg";
+                            }
+                          }}
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-medium text-lg">
+                          {authorProfile.username[0]?.toUpperCase() || '?'}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <h3 className="text-lg font-medium text-gray-700 dark:text-gray-200 truncate">
+                      {authorProfile?.username}&apos;s words
+                    </h3>
                   </div>
-                )}
-                <div>
-                  <h3 className="text-lg font-medium text-gray-700 dark:text-gray-200">
-                    {authorProfile?.username}&apos;s words
-                  </h3>
                 </div>
               </div>
+
               <div 
                 className="prose prose-sm md:prose-base text-gray-700 dark:text-gray-300 dark:prose-invert mb-6"
                 style={getTextStyles(fontFamily, fontSize - 1)}
                 dangerouslySetInnerHTML={{ __html: formatText(filterExplicitContent(authorThoughts)) }}
               />
+
               {authorProfile && (
                 <TranslatorLinks
                   translator={{
