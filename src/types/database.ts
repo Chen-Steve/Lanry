@@ -115,6 +115,16 @@ export interface CommentsByParagraph {
 export type ChapterWithNovel = Chapter & {
   novel: Novel;
   hasTranslatorAccess?: boolean;
+  authorProfile?: {
+    username: string;
+    avatar_url?: string;
+    role: 'AUTHOR' | 'TRANSLATOR' | 'ADMIN' | 'USER';
+    kofiUrl?: string;
+    patreonUrl?: string;
+    customUrl?: string;
+    customUrlLabel?: string;
+    author_bio?: string;
+  };
 };
 
 export interface CoinTransaction {

@@ -25,7 +25,7 @@ export const TranslatorLinks = ({ translator }: TranslatorLinksProps) => {
   if (!translator.kofiUrl && !translator.patreonUrl && !translator.customUrl && !translator.author_bio) return null;
   
   return (
-    <div className="w-full max-w-2xl mx-auto space-y-6">
+    <div className="w-full max-w-2xl mx-auto space-y-2">
       {translator.author_bio && (
         <div className="space-y-2">
           <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">

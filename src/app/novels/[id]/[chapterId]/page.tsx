@@ -123,7 +123,39 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
           return;
         }
 
-        setChapter(chapterData);
+        // Fetch author's profile information
+        const { data: authorProfile, error: authorError } = await supabase
+          .from('profiles')
+          .select(`
+            username,
+            avatar_url,
+            role,
+            kofi_url,
+            patreon_url,
+            custom_url,
+            custom_url_label,
+            author_bio
+          `)
+          .eq('id', chapterData.novel.author_profile_id)
+          .single();
+
+        if (authorError) {
+          console.error('Error fetching author profile:', authorError);
+        }
+
+        setChapter({
+          ...chapterData,
+          authorProfile: authorProfile ? {
+            username: authorProfile.username,
+            avatar_url: authorProfile.avatar_url,
+            role: authorProfile.role,
+            kofiUrl: authorProfile.kofi_url,
+            patreonUrl: authorProfile.patreon_url,
+            customUrl: authorProfile.custom_url,
+            customUrlLabel: authorProfile.custom_url_label,
+            author_bio: authorProfile.author_bio
+          } : undefined
+        });
         setNavigation(navigationData);
         setTotalChapters(totalChaptersCount);
       } catch (error) {
@@ -384,6 +416,7 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
         chapterId={chapter.id}
         isTranslator={chapter.hasTranslatorAccess}
         publishAt={chapter.publish_at}
+        authorProfile={chapter.authorProfile}
       />
 
       {/* Bottom Navigation */}

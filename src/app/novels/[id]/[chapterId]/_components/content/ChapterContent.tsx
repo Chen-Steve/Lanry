@@ -16,6 +16,7 @@ import ScreenshotProtection from '../ScreenshotProtection';
 import ChapterParagraph from './ChapterParagraph';
 import TranslatorChapterEdit from './TranslatorChapterEdit';
 import Script from 'next/script';
+import { TranslatorLinks } from '@/app/novels/[id]/_components/TranslatorLinks';
 
 // Extend the base type to include avatar_url
 interface ChapterComment extends Omit<BaseChapterComment, 'profile'> {
@@ -43,6 +44,16 @@ interface ChapterContentProps {
   chapterId: string;
   isTranslator?: boolean;
   publishAt?: string;
+  authorProfile?: {
+    username: string;
+    avatar_url?: string;
+    role: 'AUTHOR' | 'TRANSLATOR' | 'ADMIN' | 'USER';
+    kofiUrl?: string;
+    patreonUrl?: string;
+    customUrl?: string;
+    customUrlLabel?: string;
+    author_bio?: string;
+  };
 }
 
 export default function ChapterContent({
@@ -60,7 +71,8 @@ export default function ChapterContent({
   ageRating,
   chapterId,
   isTranslator = false,
-  publishAt
+  publishAt,
+  authorProfile
 }: ChapterContentProps) {
   const [selectedParagraphId, setSelectedParagraphId] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -384,15 +396,55 @@ export default function ChapterContent({
         {!isIndefinitelyLocked && authorThoughts && authorThoughts.trim() !== '' && (
           <div className="mt-8 max-w-2xl mx-auto">
             <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Icon icon="mdi:thought-bubble" className="w-6 h-6 text-gray-600 dark:text-gray-400" />
-                <h3 className="text-lg font-medium text-gray-700 dark:text-gray-200">Author&apos;s Thoughts</h3>
+              <div className="flex items-center gap-3 mb-4">
+                {authorProfile && (
+                  <div className="flex-shrink-0">
+                    {authorProfile.avatar_url ? (
+                      <img
+                        src={authorProfile.avatar_url}
+                        alt={authorProfile.username}
+                        className="w-10 h-10 rounded-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          const parent = target.parentElement;
+                          if (parent) {
+                            parent.innerHTML = authorProfile.username[0]?.toUpperCase() || '?';
+                            parent.className = "w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-medium text-lg";
+                          }
+                        }}
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-medium text-lg">
+                        {authorProfile.username[0]?.toUpperCase() || '?'}
+                      </div>
+                    )}
+                  </div>
+                )}
+                <div>
+                  <h3 className="text-lg font-medium text-gray-700 dark:text-gray-200">
+                    {authorProfile?.username}&apos;s words
+                  </h3>
+                </div>
               </div>
               <div 
-                className="prose prose-sm md:prose-base text-gray-700 dark:text-gray-300 dark:prose-invert"
+                className="prose prose-sm md:prose-base text-gray-700 dark:text-gray-300 dark:prose-invert mb-6"
                 style={getTextStyles(fontFamily, fontSize - 1)}
                 dangerouslySetInnerHTML={{ __html: formatText(filterExplicitContent(authorThoughts)) }}
               />
+              {authorProfile && (
+                <TranslatorLinks
+                  translator={{
+                    username: authorProfile.username,
+                    profile_id: authorId,
+                    kofiUrl: authorProfile.kofiUrl,
+                    patreonUrl: authorProfile.patreonUrl,
+                    customUrl: authorProfile.customUrl,
+                    customUrlLabel: authorProfile.customUrlLabel,
+                    author_bio: authorProfile.author_bio
+                  }}
+                />
+              )}
             </div>
           </div>
         )}
