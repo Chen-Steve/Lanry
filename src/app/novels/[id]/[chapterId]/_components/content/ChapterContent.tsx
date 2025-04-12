@@ -424,7 +424,7 @@ export default function ChapterContent({
                   <div className="min-w-0">
                     <div className="relative">
                       <h3 
-                        className="text-lg font-medium text-gray-700 dark:text-gray-200 whitespace-nowrap overflow-hidden hover:overflow-x-auto scrollbar-none group"
+                        className="text-lg font-medium text-gray-700 dark:text-gray-200 whitespace-nowrap overflow-hidden hover:overflow-x-auto md:overflow-visible scrollbar-none group"
                         style={{
                           maxWidth: 'calc(100% - 8px)',
                           scrollbarWidth: 'none',
@@ -432,14 +432,23 @@ export default function ChapterContent({
                           WebkitOverflowScrolling: 'touch'
                         }}
                       >
-                        <span className="inline-block min-w-fit">
+                        <span className="inline-block min-w-fit touch-pan-x">
                           {authorProfile?.username}&apos;s words
                         </span>
                       </h3>
                       {/* Gradient fade effect */}
-                      <div className="absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-gray-50 dark:from-gray-800/50 pointer-events-none group-hover:opacity-0 transition-opacity" />
+                      <div className="absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-gray-50 dark:from-gray-800/50 pointer-events-none group-hover:opacity-0 transition-opacity md:hidden" />
                       {/* Scroll indicator */}
-                      <div className="absolute -right-1 top-1/2 -translate-y-1/2 text-muted-foreground/50 group-hover:opacity-0 transition-opacity">
+                      <div 
+                        className="absolute -right-1 top-1/2 -translate-y-1/2 text-muted-foreground/50 cursor-pointer hover:text-muted-foreground transition-colors md:hidden"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const nameElement = e.currentTarget.parentElement?.querySelector('span');
+                          if (nameElement) {
+                            nameElement.scrollTo({ left: nameElement.scrollWidth, behavior: 'smooth' });
+                          }
+                        }}
+                      >
                         <Icon icon="mdi:chevron-right" className="w-4 h-4" />
                       </div>
                     </div>

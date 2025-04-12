@@ -7,34 +7,22 @@ type ChapterWithNovel = Chapter & {
   hasTranslatorAccess?: boolean;
 };
 
-// Helper function to check if a chapter is published based on user's local timezone
-export function isChapterPublished(publishAt: string | null): boolean {
+// Helper function to check if a chapter is published based on server time
+export async function isChapterPublished(publishAt: string | null): Promise<boolean> {
   if (!publishAt) return true; // No publish date means it's published immediately
   
-  // Convert both dates to UTC for comparison
-  const publishDate = new Date(publishAt);
-  const now = new Date();
-  
-  // Convert both to UTC timestamps for accurate comparison
-  const publishTimestamp = Date.UTC(
-    publishDate.getUTCFullYear(),
-    publishDate.getUTCMonth(),
-    publishDate.getUTCDate(),
-    publishDate.getUTCHours(),
-    publishDate.getUTCMinutes(),
-    publishDate.getUTCSeconds()
-  );
-  
-  const nowTimestamp = Date.UTC(
-    now.getUTCFullYear(),
-    now.getUTCMonth(),
-    now.getUTCDate(),
-    now.getUTCHours(),
-    now.getUTCMinutes(),
-    now.getUTCSeconds()
-  );
+  // Get server time from Supabase
+  const { data: serverTime, error } = await supabase.rpc('get_server_time');
+  if (error) {
+    console.error('Error getting server time:', error);
+    return false;
+  }
 
-  return publishTimestamp <= nowTimestamp;
+  // Compare server time with publish date
+  const publishDate = new Date(publishAt);
+  const serverDate = new Date(serverTime);
+  
+  return publishDate <= serverDate;
 }
 
 export async function getChapter(novelId: string, chapterNumber: number, partNumber?: number | null): Promise<ChapterWithNovel | null> {
@@ -127,11 +115,11 @@ export async function getChapter(novelId: string, chapterNumber: number, partNum
     }
 
     // Check if chapter is published or free
-    const isPublished = isChapterPublished(chapter.publish_at);
+    const isPublished = await isChapterPublished(chapter.publish_at);
     const isFree = !chapter.coins || chapter.coins === 0;
     
     // Chapter is accessible if:
-    // 1. It's published (publish date has passed) OR
+    // 1. It's published (server time has passed publish date) OR
     // 2. It has no coins (free chapter) OR
     // 3. It has no publish date (immediately available)
     if (isPublished || isFree || !chapter.publish_at) {
@@ -305,13 +293,13 @@ export async function getTotalChapters(novelId: string): Promise<number> {
     };
 
     // Count chapters that are either published or unlocked
-    const accessibleChapters = chapters.filter(chapter => {
-      const isPublished = !chapter.publish_at || chapter.publish_at <= new Date().toISOString();
+    const accessibleChapters = await Promise.all(chapters.map(async chapter => {
+      const isPublished = !chapter.publish_at || await isChapterPublished(chapter.publish_at);
       const isUnlocked = isChapterUnlocked(chapter);
       return isPublished || isUnlocked;
-    });
+    }));
 
-    return accessibleChapters.length;
+    return accessibleChapters.filter(Boolean).length;
   } catch (error) {
     console.error('Error getting total chapters:', error);
     return 0;
@@ -448,17 +436,16 @@ export async function getChaptersForList({
           .eq('novel_id', novel.id);
 
         if (regularChapters) {
-          const regularIds = regularChapters
-            .filter(ch => {
-              const isUnlocked = isChapterUnlocked(ch);
-              const isFree = !ch.coins || ch.coins === 0;
-              const isPublished = isChapterPublished(ch.publish_at);
-              return isUnlocked || isFree || isPublished;
-            })
-            .map(ch => ch.id);
+          const regularIds = await Promise.all(regularChapters.map(async ch => {
+            const isUnlocked = isChapterUnlocked(ch);
+            const isFree = !ch.coins || ch.coins === 0;
+            const isPublished = await isChapterPublished(ch.publish_at);
+            return isUnlocked || isFree || isPublished ? ch.id : null;
+          }));
 
-          if (regularIds.length > 0) {
-            query = query.in('id', regularIds);
+          const validIds = regularIds.filter(id => id !== null);
+          if (validIds.length > 0) {
+            query = query.in('id', validIds);
           } else {
             query = query.eq('id', '-1');
           }
@@ -476,16 +463,15 @@ export async function getChaptersForList({
         .gt('coins', 0);
 
       if (advancedChapters) {
-        const advancedIds = advancedChapters
-          .filter(ch => {
-            const isNotPublished = !isChapterPublished(ch.publish_at);
-            const isNotUnlocked = !isChapterUnlocked(ch);
-            return isNotPublished && isNotUnlocked;
-          })
-          .map(ch => ch.id);
+        const advancedIds = await Promise.all(advancedChapters.map(async ch => {
+          const isNotPublished = !(await isChapterPublished(ch.publish_at));
+          const isNotUnlocked = !isChapterUnlocked(ch);
+          return isNotPublished && isNotUnlocked ? ch.id : null;
+        }));
 
-        if (advancedIds.length > 0) {
-          query = query.in('id', advancedIds);
+        const validIds = advancedIds.filter(id => id !== null);
+        if (validIds.length > 0) {
+          query = query.in('id', validIds);
         } else {
           query = query.eq('id', '-1');
         }
@@ -508,18 +494,32 @@ export async function getChaptersForList({
       .select('chapter_number, publish_at, coins, part_number')
       .eq('novel_id', novel.id);
 
-    const counts = {
-      regularCount: allChapters?.filter(ch => {
-        const isUnlocked = isChapterUnlocked(ch);
-        const isFree = !ch.coins || ch.coins === 0;
-        const isPublished = isChapterPublished(ch.publish_at);
-        return isUnlocked || isFree || isPublished;
-      }).length || 0,
-      advancedCount: allChapters?.filter(ch => {
-        return !isChapterPublished(ch.publish_at) && ch.coins > 0;
-      }).length || 0,
+    let chapterCounts: ChapterCounts = {
+      regularCount: 0,
+      advancedCount: 0,
       total: allChapters?.length || 0
     };
+
+    if (allChapters) {
+      const [regularCount, advancedCount] = await Promise.all([
+        Promise.all(allChapters.map(async ch => {
+          const isUnlocked = isChapterUnlocked(ch);
+          const isFree = !ch.coins || ch.coins === 0;
+          const isPublished = await isChapterPublished(ch.publish_at);
+          return isUnlocked || isFree || isPublished;
+        })).then(results => results.filter(Boolean).length),
+        Promise.all(allChapters.map(async ch => {
+          const isNotPublished = !(await isChapterPublished(ch.publish_at));
+          return isNotPublished && ch.coins > 0;
+        })).then(results => results.filter(Boolean).length)
+      ]);
+
+      chapterCounts = {
+        regularCount,
+        advancedCount,
+        total: allChapters.length || 0
+      };
+    }
 
     // Add access information to chapters if requested
     const processedChapters = chapters?.map(chapter => ({
@@ -531,7 +531,7 @@ export async function getChaptersForList({
 
     return {
       chapters: processedChapters,
-      counts,
+      counts: chapterCounts,
       total: count || 0,
       currentPage: page,
       totalPages: Math.ceil((count || 0) / limit)
