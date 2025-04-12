@@ -45,6 +45,7 @@ export default function ChapterEditForm({
     coins: '0',
     authorThoughts: '',
     ageRating: 'EVERYONE' as 'EVERYONE' | 'TEEN' | 'MATURE',
+    volumeId: '',
   });
 
   const fetchChapterDetails = useCallback(async () => {
@@ -55,7 +56,8 @@ export default function ChapterEditForm({
       
       if (chapter) {
         setIsExtraChapter(chapter.part_number === -1);
-        setIsAlreadyPublished(isChapterPublished(chapter.publish_at));
+        const published = await isChapterPublished(chapter.publish_at);
+        setIsAlreadyPublished(published);
         setFormData({
           chapterNumber: chapter.chapter_number.toString(),
           partNumber: chapter.part_number === -1 ? '' : (chapter.part_number?.toString() || ''),
@@ -66,6 +68,7 @@ export default function ChapterEditForm({
           coins: chapter.coins?.toString() || '0',
           authorThoughts: chapter.author_thoughts || '',
           ageRating: chapter.age_rating || 'EVERYONE',
+          volumeId: chapter.volume_id || '',
         });
       }
     } catch (error) {
