@@ -76,6 +76,28 @@ export function GlobalSettingsModal({
     });
   }, [initialSettings, novelId]);
 
+  // Add state for default release hour
+  const [defaultReleaseHour, setDefaultReleaseHour] = useState(() => {
+    if (typeof window !== 'undefined' && novelId) {
+      return localStorage.getItem(`defaultReleaseHour_${novelId}`) || '05:00';
+    }
+    return '05:00';
+  });
+
+  // Keep defaultReleaseHour in sync with localStorage and novelId
+  useEffect(() => {
+    if (typeof window !== 'undefined' && novelId) {
+      setDefaultReleaseHour(localStorage.getItem(`defaultReleaseHour_${novelId}`) || '05:00');
+    }
+  }, [novelId]);
+
+  // Save to localStorage when changed
+  useEffect(() => {
+    if (typeof window !== 'undefined' && novelId && defaultReleaseHour) {
+      localStorage.setItem(`defaultReleaseHour_${novelId}`, defaultReleaseHour);
+    }
+  }, [defaultReleaseHour, novelId]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Save to localStorage with novel-specific keys
@@ -161,6 +183,30 @@ export function GlobalSettingsModal({
                           />
                           <div className="w-11 h-6 bg-muted rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                         </label>
+                      </div>
+                      {/* Default Release Hour Dropdown */}
+                      <div className="space-y-1">
+                        <label className="text-sm text-muted-foreground">Default Release Hour</label>
+                        <select
+                          value={defaultReleaseHour}
+                          onChange={e => setDefaultReleaseHour(e.target.value)}
+                          className="w-full p-2 text-sm border border-border rounded bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                          aria-label="Default release hour"
+                        >
+                          {[...Array(24)].map((_, hour) => {
+                            const value = `${hour.toString().padStart(2, '0')}:00`;
+                            // 12-hour format label
+                            const displayHour = hour % 12 === 0 ? 12 : hour % 12;
+                            const ampm = hour < 12 ? 'AM' : 'PM';
+                            const label = `${displayHour}:00 ${ampm}`;
+                            return (
+                              <option key={value} value={value}>
+                                {label}
+                              </option>
+                            );
+                          })}
+                        </select>
+                        <p className="text-xs text-muted-foreground">All auto-released chapters will use this hour unless you pick a specific time.</p>
                       </div>
                       {settings.usePublishingDays ? (
                         <div className="space-y-2">

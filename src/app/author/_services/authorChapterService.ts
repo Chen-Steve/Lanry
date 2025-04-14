@@ -477,8 +477,16 @@ export async function applyAutoReleaseSchedule(
   let publishAt: Date = new Date(); // Initialize with current date as fallback
   const now = new Date();
   
+  // Get the default release hour for this novel from localStorage (e.g., '13:00' for 1:00 PM)
+  let defaultReleaseHour = 5;
+  if (typeof window !== 'undefined') {
+    const hourStr = localStorage.getItem(`defaultReleaseHour_${novelId}`) || '05:00';
+    const parsed = parseInt(hourStr.split(':')[0], 10);
+    if (!isNaN(parsed)) defaultReleaseHour = parsed;
+  }
+
   // Function to adjust time to target hour (in local time)
-  const adjustToTargetHour = (date: Date, targetHour: number = 5) => {
+  const adjustToTargetHour = (date: Date, targetHour: number = defaultReleaseHour) => {
     const adjustedDate = new Date(date);
     adjustedDate.setHours(targetHour, 0, 0, 0);
     return adjustedDate;
@@ -525,7 +533,7 @@ export async function applyAutoReleaseSchedule(
           publishAt = getNextPublishingDate(now, publishingDays);
         }
         // Always adjust to target hour after finding the next publishing day
-        publishAt = adjustToTargetHour(publishAt);
+        publishAt = adjustToTargetHour(publishAt, defaultReleaseHour);
       }
     }
   }
@@ -535,7 +543,7 @@ export async function applyAutoReleaseSchedule(
     if (baseDate) {
       const localBaseDate = new Date(baseDate);
       // Ensure the time is set to 5 AM local time
-      publishAt = adjustToTargetHour(localBaseDate);
+      publishAt = adjustToTargetHour(localBaseDate, defaultReleaseHour);
       publishAt.setDate(publishAt.getDate() + novel.auto_release_interval);
     } else {
       // First check for advanced chapters
@@ -554,11 +562,11 @@ export async function applyAutoReleaseSchedule(
         // Base new date on the latest advanced chapter
         const lastPublishDate = new Date(advancedChapter[0].publish_at);
         publishAt = new Date(lastPublishDate.getTime() + novel.auto_release_interval * 24 * 60 * 60 * 1000);
-        publishAt = adjustToTargetHour(publishAt);
+        publishAt = adjustToTargetHour(publishAt, defaultReleaseHour);
       } else {
         // No advanced chapters, use current time
         publishAt = new Date(now.getTime() + novel.auto_release_interval * 24 * 60 * 60 * 1000);
-        publishAt = adjustToTargetHour(publishAt);
+        publishAt = adjustToTargetHour(publishAt, defaultReleaseHour);
       }
     }
   }
