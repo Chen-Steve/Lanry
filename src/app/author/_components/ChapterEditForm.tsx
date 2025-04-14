@@ -83,7 +83,18 @@ export default function ChapterEditForm({
     if (chapterId) {
       fetchChapterDetails();
     } else {
+      // Only set default if creating a new chapter and authorThoughts is empty
       setIsLoading(false);
+      setFormData(prev => {
+        if (prev.authorThoughts) return prev;
+        if (typeof window !== 'undefined') {
+          const saved = localStorage.getItem('defaultAuthorThoughts');
+          if (saved) {
+            return { ...prev, authorThoughts: saved };
+          }
+        }
+        return prev;
+      });
     }
   }, [chapterId, fetchChapterDetails]);
 

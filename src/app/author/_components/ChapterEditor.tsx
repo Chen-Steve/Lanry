@@ -308,7 +308,7 @@ export default function ChapterEditor({
               <div className="mt-4 md:mt-6 space-y-2">
                 <div className="flex items-center gap-2">
                   <Icon icon="mdi:thought-bubble" className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
-                  <h3 className="text-base md:text-lg font-medium text-foreground">Author&apos;s Thoughts</h3>
+                  <h3 className="text-base md:text-lg font-medium text-foreground">Your Thoughts</h3>
                 </div>
                 <textarea
                   value={authorThoughts}
@@ -316,11 +316,47 @@ export default function ChapterEditor({
                   className="w-full p-3 md:p-4 border border-border rounded-lg text-foreground min-h-[150px] focus:outline-none focus:ring-2 focus:ring-primary resize-y bg-background placeholder:text-muted-foreground"
                   placeholder="Share your thoughts about this chapter (it will be visible at the bottom of the chapter)"
                 />
+                {/* Save as default checkbox */}
+                <SaveDefaultThoughtsCheckbox authorThoughts={authorThoughts} />
               </div>
             )}
           </>
         )}
       </div>
     </div>
+  );
+}
+
+function SaveDefaultThoughtsCheckbox({ authorThoughts }: { authorThoughts: string }) {
+  const [defaultThoughts, setDefaultThoughts] = React.useState<string | null>(null);
+  const isChecked = defaultThoughts === authorThoughts && authorThoughts !== '';
+
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setDefaultThoughts(localStorage.getItem('defaultAuthorThoughts'));
+    }
+  }, [authorThoughts]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (typeof window === 'undefined') return;
+    if (e.target.checked) {
+      localStorage.setItem('defaultAuthorThoughts', authorThoughts);
+      setDefaultThoughts(authorThoughts);
+    } else {
+      localStorage.removeItem('defaultAuthorThoughts');
+      setDefaultThoughts(null);
+    }
+  };
+
+  return (
+    <label className="flex items-center gap-2 mt-2 select-none cursor-pointer text-sm text-muted-foreground">
+      <input
+        type="checkbox"
+        checked={isChecked}
+        onChange={handleChange}
+        className="accent-primary"
+      />
+      Save as default for new chapters
+    </label>
   );
 } 
