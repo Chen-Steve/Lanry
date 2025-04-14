@@ -6,19 +6,19 @@ const NovelStatistics = () => {
     {
       icon: 'ph:books-duotone',
       label: 'Total Novels',
-      value: 110,
+      value: 116,
       color: 'emerald'
     },
     {
       icon: 'ph:book-bookmark-duotone',
       label: 'Total Chapters',
-      value: 8321,
+      value: 8811,
       color: 'violet'
     },
     {
       icon: 'ph:check-circle-duotone',
       label: 'Completed',
-      value: 18,
+      value: 21,
       color: 'rose'
     },
     {
