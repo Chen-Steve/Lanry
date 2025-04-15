@@ -16,6 +16,7 @@ import ChapterNavigation from './_components/navigation/ChapterNavigation';
 import ChapterComments from './_components/interaction/comments/ChapterComments';
 import ChapterPurchaseButton from './_components/interaction/ChapterPurchaseButton';
 import PullToLoadNext from './_components/navigation/PullToLoadNext';
+import { generateUUID } from '@/lib/utils';
 
 function ScrollToTopButton() {
   const [isVisible, setIsVisible] = useState(false);
@@ -168,6 +169,33 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
 
     loadChapterData();
   }, [novelId, chapterId]);
+
+  useEffect(() => {
+    if (!chapter || chapter.isLocked) return;
+    // Log the view in novel_view_logs and increment the views counter
+    const logView = async () => {
+      try {
+        const novelUUID = chapter.novel.id;
+        const [{ error: viewLogError }, { error: viewCountError }] = await Promise.all([
+          supabase
+            .from('novel_view_logs')
+            .insert({
+              id: generateUUID(),
+              novel_id: novelUUID,
+              created_at: new Date().toISOString(),
+              viewed_at: new Date().toISOString()
+            }),
+          supabase
+            .rpc('increment_novel_views', { novel_id: novelUUID })
+        ]);
+        if (viewLogError) console.error('ViewLog Insert Error:', viewLogError);
+        if (viewCountError) console.error('ViewCount RPC Error:', viewCountError);
+      } catch (error) {
+        console.error('Error logging/incrementing novel view from chapter page:', error);
+      }
+    };
+    logView();
+  }, [chapter]);
 
   const handleChapterSelect = (chapterNum: number, partNum?: number | null) => {
     const partSuffix = partNum ? `-p${partNum}` : '';

@@ -10,6 +10,7 @@ interface NovelStats {
   bookmarks: number;
   total_chapters: number;
   total_comments: number;
+  total_views: number;
 }
 
 // First, let's define the interface for the raw data from Supabase
@@ -17,6 +18,7 @@ interface NovelData {
   id: string;
   title: string;
   bookmark_count: number;
+  views: number;
   chapters_count: { count: number; }[];
   chapter_comments_count: { count: number; }[];
   novel_comments_count: { count: number; }[];
@@ -39,12 +41,13 @@ export default function NovelStatistics() {
         id,
         title,
         bookmark_count,
+        views,
         chapters_count:chapters(count),
         chapter_comments_count:chapter_comments(count),
         novel_comments_count:novel_comments(count),
         chapters_thread_comments:chapters(chapter_thread_comments(count))
       `)
-      .eq('author_profile_id', session.user.id);
+      .or(`author_profile_id.eq.${session.user.id},translator_id.eq.${session.user.id}`);
 
     if (error) {
       console.error('Error fetching stats:', error);
@@ -64,7 +67,8 @@ export default function NovelStatistics() {
         total_chapters: novel.chapters_count[0]?.count || 0,
         total_comments: (novel.chapter_comments_count[0]?.count || 0) + 
                        (novel.novel_comments_count[0]?.count || 0) + 
-                       totalThreadComments
+                       totalThreadComments,
+        total_views: novel.views || 0
       };
     });
 
@@ -95,7 +99,7 @@ export default function NovelStatistics() {
     <section className="p-4">      
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-semibold text-foreground">Novel Statistics</h2>
-        <p className="text-sm text-muted-foreground italic">Note: Our team is currently fixing an issue with view counts. They will be temporarily unavailable.</p>
+        <p className="text-sm text-muted-foreground italic">Note: Views counts are lower than they actually are.</p>
       </div>
 
       <div className="flex flex-col gap-6">
@@ -126,6 +130,10 @@ export default function NovelStatistics() {
                 <div className="flex items-center gap-1.5">
                   <Icon icon="mdi:comment-outline" className="text-muted-foreground" />
                   <span className="text-sm font-medium">{novel.total_comments}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Icon icon="mdi:eye-outline" className="text-muted-foreground" />
+                  <span className="text-sm font-medium">{novel.total_views}</span>
                 </div>
               </div>
             </div>
