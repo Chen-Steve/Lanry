@@ -13,6 +13,7 @@ type RawComment = {
   content: string;
   created_at: string;
   chapter_number?: number;
+  part_number?: number | null;
   novel_id: string;
   paragraph_id?: string;
   profile: {
@@ -27,6 +28,7 @@ type RawComment = {
   };
   chapter?: {
     chapter_number: number;
+    part_number?: number | null;
     novel_id: string;
     novel: {
       title: string;
@@ -77,6 +79,7 @@ export default function NovelComments() {
             content,
             created_at,
             chapter_number,
+            part_number,
             novel_id,
             paragraph_id,
             profile:profiles (
@@ -108,6 +111,7 @@ export default function NovelComments() {
             created_at,
             chapter:chapters!inner (
               chapter_number,
+              part_number,
               novel_id,
               novel:novels!inner (
                 title,
@@ -181,12 +185,13 @@ export default function NovelComments() {
                 created_at: comment.created_at,
                 novel_id: comment.chapter.novel_id,
                 chapter_number: comment.chapter.chapter_number,
+                part_number: comment.chapter.part_number,
                 user: {
                   username: comment.profile.username || 'Anonymous',
                   avatar_url: comment.profile.avatar_url || ''
                 },
                 chapter: {
-                  title: `Chapter ${comment.chapter.chapter_number} Thread`,
+                  title: `Chapter ${comment.chapter.chapter_number}${comment.chapter.part_number ? `.${comment.chapter.part_number}` : ''} Thread`,
                   novel: {
                     title: comment.chapter.novel.title,
                     slug: comment.chapter.novel.slug
@@ -202,13 +207,14 @@ export default function NovelComments() {
               created_at: comment.created_at,
               novel_id: comment.novel_id,
               chapter_number: comment.chapter_number,
+              part_number: comment.part_number,
               paragraph_id: comment.paragraph_id,
               user: {
                 username: comment.profile.username || 'Anonymous',
                 avatar_url: comment.profile.avatar_url || ''
               },
               chapter: {
-                title: comment.chapter_number ? `Chapter ${comment.chapter_number}` : 'Novel Comment',
+                title: comment.chapter_number ? `Chapter ${comment.chapter_number}${comment.part_number ? `.${comment.part_number}` : ''}` : 'Novel Comment',
                 novel: {
                   title: comment.novel.title,
                   slug: comment.novel.slug
@@ -309,7 +315,9 @@ export default function NovelComments() {
                       <Link 
                         href={comment.chapter.title === 'Novel Comment' 
                           ? `/novels/${comment.chapter.novel.slug}`
-                          : `/novels/${comment.chapter.novel.slug}/c${comment.chapter_number}`
+                          : `/novels/${comment.chapter.novel.slug}/c${comment.chapter_number}${
+                              comment.part_number ? `-p${comment.part_number}` : ''
+                            }`
                         }
                         className="text-sm text-muted-foreground hover:text-primary transition-colors"
                         target="_blank"
