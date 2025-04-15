@@ -64,118 +64,125 @@ export default function NovelComments() {
 
   useEffect(() => {
     const fetchComments = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-
-      const promises = [];
-
-      // Fetch chapter comments if needed
-      if (commentType === 'all' || commentType === 'chapter') {
-        // Fetch paragraph comments
-        const chapterQuery = supabase
-          .from('chapter_comments')
-          .select(`
-            id,
-            content,
-            created_at,
-            chapter_number,
-            part_number,
-            novel_id,
-            paragraph_id,
-            profile:profiles (
-              username,
-              avatar_url,
-              role
-            ),
-            novel:novels!inner (
-              title,
-              author_profile_id,
-              slug
-            )
-          `)
-          .eq('novel.author_profile_id', session.user.id)
-          .order('created_at', { ascending: false });
-
-        if (selectedNovel !== 'all') {
-          chapterQuery.eq('novel_id', selectedNovel);
+      try {
+        setIsLoading(true);
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          setIsLoading(false);
+          return;
         }
 
-        promises.push(chapterQuery);
+        const promises = [];
 
-        // Fetch chapter thread comments
-        const threadQuery = supabase
-          .from('chapter_thread_comments')
-          .select(`
-            id,
-            content,
-            created_at,
-            chapter:chapters!inner (
+        // Fetch chapter comments if needed
+        if (commentType === 'all' || commentType === 'chapter') {
+          // Fetch paragraph comments
+          const chapterQuery = supabase
+            .from('chapter_comments')
+            .select(`
+              id,
+              content,
+              created_at,
               chapter_number,
-              part_number,
               novel_id,
+              paragraph_id,
+              profile:profiles (
+                username,
+                avatar_url,
+                role
+              ),
               novel:novels!inner (
                 title,
                 author_profile_id,
                 slug
               )
-            ),
-            profile:profiles (
-              username,
-              avatar_url,
-              role
-            )
-          `)
-          .eq('chapter.novel.author_profile_id', session.user.id)
-          .order('created_at', { ascending: false });
+            `)
+            .eq('novel.author_profile_id', session.user.id)
+            .order('created_at', { ascending: false });
 
-        if (selectedNovel !== 'all') {
-          threadQuery.eq('chapter.novel_id', selectedNovel);
+          if (selectedNovel !== 'all') {
+            chapterQuery.eq('novel_id', selectedNovel);
+          }
+
+          promises.push(chapterQuery);
+
+          // Fetch chapter thread comments
+          const threadQuery = supabase
+            .from('chapter_thread_comments')
+            .select(`
+              id,
+              content,
+              created_at,
+              chapter:chapters!inner (
+                chapter_number,
+                part_number,
+                novel_id,
+                novel:novels!inner (
+                  title,
+                  author_profile_id,
+                  slug
+                )
+              ),
+              profile:profiles (
+                username,
+                avatar_url,
+                role
+              )
+            `)
+            .eq('chapter.novel.author_profile_id', session.user.id)
+            .order('created_at', { ascending: false });
+
+          if (selectedNovel !== 'all') {
+            threadQuery.eq('chapter.novel_id', selectedNovel);
+          }
+
+          promises.push(threadQuery);
         }
 
-        promises.push(threadQuery);
-      }
+        // Fetch novel comments if needed
+        if (commentType === 'all' || commentType === 'novel') {
+          const novelQuery = supabase
+            .from('novel_comments')
+            .select(`
+              id,
+              content,
+              created_at,
+              novel_id,
+              profile:profiles (
+                username,
+                avatar_url,
+                role
+              ),
+              novel:novels!inner (
+                title,
+                author_profile_id,
+                slug
+              )
+            `)
+            .eq('novel.author_profile_id', session.user.id)
+            .order('created_at', { ascending: false });
 
-      // Fetch novel comments if needed
-      if (commentType === 'all' || commentType === 'novel') {
-        const novelQuery = supabase
-          .from('novel_comments')
-          .select(`
-            id,
-            content,
-            created_at,
-            novel_id,
-            profile:profiles (
-              username,
-              avatar_url,
-              role
-            ),
-            novel:novels!inner (
-              title,
-              author_profile_id,
-              slug
-            )
-          `)
-          .eq('novel.author_profile_id', session.user.id)
-          .order('created_at', { ascending: false });
+          if (selectedNovel !== 'all') {
+            novelQuery.eq('novel_id', selectedNovel);
+          }
 
-        if (selectedNovel !== 'all') {
-          novelQuery.eq('novel_id', selectedNovel);
+          promises.push(novelQuery);
         }
 
-        promises.push(novelQuery);
-      }
-
-      try {
         const results = await Promise.all(promises);
         const errors = results.filter(r => r.error).map(r => r.error);
         if (errors.length > 0) {
           console.error('Error fetching comments:', errors);
+          setComments([]);
+          setIsLoading(false);
           return;
         }
 
         // Transform and combine the comments
         const allComments = results.flatMap((result, index) => {
-          const comments = (result.data || []) as unknown as RawComment[];
+          if (!result.data) return [];
+          
+          const comments = result.data as unknown as RawComment[];
           return comments.map(comment => {
             // For thread comments (index 1)
             if (index === 1 && comment.chapter && 'novel' in comment.chapter) {
@@ -207,14 +214,14 @@ export default function NovelComments() {
               created_at: comment.created_at,
               novel_id: comment.novel_id,
               chapter_number: comment.chapter_number,
-              part_number: comment.part_number,
+              part_number: comment.part_number || null,
               paragraph_id: comment.paragraph_id,
               user: {
                 username: comment.profile.username || 'Anonymous',
                 avatar_url: comment.profile.avatar_url || ''
               },
               chapter: {
-                title: comment.chapter_number ? `Chapter ${comment.chapter_number}${comment.part_number ? `.${comment.part_number}` : ''}` : 'Novel Comment',
+                title: comment.chapter_number ? `Chapter ${comment.chapter_number}` : 'Novel Comment',
                 novel: {
                   title: comment.novel.title,
                   slug: comment.novel.slug
@@ -231,10 +238,11 @@ export default function NovelComments() {
 
         setComments(sortedComments);
       } catch (error) {
-        console.error('Error processing comments:', error);
+        console.error('Error in fetchComments:', error);
+        setComments([]);
+      } finally {
+        setIsLoading(false);
       }
-
-      setIsLoading(false);
     };
 
     fetchComments();
