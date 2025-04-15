@@ -28,7 +28,9 @@ export const ChapterList = ({
   const [selectedVolumeId, setSelectedVolumeId] = useState<string | null>(volumes[0]?.id || null);
   const [showAllChapters, setShowAllChapters] = useState(true);
   const [showAdvancedChapters, setShowAdvancedChapters] = useState(false);
-  const [chapters, setChapters] = useState<ChapterListItem[]>(initialChapters || []);
+  // Filter out draft chapters (negative chapter_number) from initialChapters
+  const filteredInitialChapters = (initialChapters || []).filter(ch => ch.chapter_number >= 0);
+  const [chapters, setChapters] = useState<ChapterListItem[]>(filteredInitialChapters);
   const [chapterCounts, setChapterCounts] = useState<ChapterCounts>({ regularCount: 0, advancedCount: 0, total: 0 });
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -41,7 +43,7 @@ export const ChapterList = ({
     const counts = new Map<string, { total: number; regular: number; advanced: number }>();
     
     volumes.forEach(volume => {
-      const volumeChapters = initialChapters.filter(ch => ch.volume_id === volume.id);
+      const volumeChapters = filteredInitialChapters.filter(ch => ch.volume_id === volume.id);
       const now = new Date().toISOString();
       
       counts.set(volume.id, {
@@ -65,7 +67,7 @@ export const ChapterList = ({
     });
 
     setVolumeCounts(counts);
-  }, [volumes, initialChapters]);
+  }, [volumes, filteredInitialChapters]);
 
   // Sort function that puts extra chapters last
   const sortChapters = useCallback((a: ChapterListItem, b: ChapterListItem) => {
@@ -120,13 +122,13 @@ export const ChapterList = ({
 
   // Initial load
   useEffect(() => {
-    if (!initialChapters || initialChapters.length === 0) {
+    if (!filteredInitialChapters || filteredInitialChapters.length === 0) {
       loadChapters(1);
     } else {
       // Set initial counts from props
       const now = new Date().toISOString();
       setChapterCounts({
-        regularCount: initialChapters.filter(ch => {
+        regularCount: filteredInitialChapters.filter(ch => {
           return !ch.coins || 
                  ch.coins === 0 || // Free chapters
                  !ch.publish_at || 
@@ -134,17 +136,17 @@ export const ChapterList = ({
                  ch.isUnlocked || // Unlocked chapters
                  ch.hasTranslatorAccess; // Translator access
         }).length,
-        advancedCount: initialChapters.filter(ch => {
+        advancedCount: filteredInitialChapters.filter(ch => {
           const isAdvanced = ch.publish_at && 
                            ch.publish_at > now && // Future publish date
                            ch.coins > 0;
           const isAccessible = ch.isUnlocked || ch.hasTranslatorAccess;
           return isAdvanced && !isAccessible;
         }).length,
-        total: initialChapters.length
+        total: filteredInitialChapters.length
       });
     }
-  }, [initialChapters, loadChapters]);
+  }, [filteredInitialChapters, loadChapters]);
 
   // Handle volume or advanced chapter toggle
   useEffect(() => {
@@ -190,27 +192,29 @@ export const ChapterList = ({
   }, []);
 
   const renderChapter = useCallback((chapter: ChapterListItem) => (
-    <div key={chapter.id} className="w-full min-h-[2.5rem] flex items-center px-4 border-b border-border last:border-b-0 md:border-none">
-      <div className="w-full">
-        <ChapterListItemComponent
-          chapter={{
-            ...chapter,
-            novel_id: novelId,
-            content: '',
-            created_at: '',
-            slug: '',
-            author_profile_id: novelAuthorId
-          }}
-          novelSlug={novelSlug}
-          userProfile={userProfile}
-          isAuthenticated={isAuthenticated}
-          novelAuthorId={novelAuthorId}
-          hasTranslatorAccess={chapter.hasTranslatorAccess}
-          isUnlocked={chapter.isUnlocked}
-          isPublished={isChapterPublished(chapter)}
-        />
+    chapter.chapter_number >= 0 && (
+      <div key={chapter.id} className="w-full min-h-[2.5rem] flex items-center px-4 border-b border-border last:border-b-0 md:border-none">
+        <div className="w-full">
+          <ChapterListItemComponent
+            chapter={{
+              ...chapter,
+              novel_id: novelId,
+              content: '',
+              created_at: '',
+              slug: '',
+              author_profile_id: novelAuthorId
+            }}
+            novelSlug={novelSlug}
+            userProfile={userProfile}
+            isAuthenticated={isAuthenticated}
+            novelAuthorId={novelAuthorId}
+            hasTranslatorAccess={chapter.hasTranslatorAccess}
+            isUnlocked={chapter.isUnlocked}
+            isPublished={isChapterPublished(chapter)}
+          />
+        </div>
       </div>
-    </div>
+    )
   ), [novelId, novelSlug, userProfile, isAuthenticated, novelAuthorId, isChapterPublished]);
 
   const renderPagination = useCallback(() => {
@@ -290,11 +294,13 @@ export const ChapterList = ({
   const selectedVolume = volumes.find(v => v.id === selectedVolumeId);
 
   const chaptersGroupedByVolume = useMemo(() => {
-    const noVolumeChapters = chapters.filter(chapter => !chapter.volume_id);
+    // Always filter out draft chapters (negative chapter_number)
+    const visibleChapters = chapters.filter(ch => ch.chapter_number >= 0);
+    const noVolumeChapters = visibleChapters.filter(chapter => !chapter.volume_id);
     const volumeChapters = new Map<string, ChapterListItem[]>();
     
     volumes.forEach(volume => {
-      volumeChapters.set(volume.id, chapters.filter(chapter => chapter.volume_id === volume.id));
+      volumeChapters.set(volume.id, visibleChapters.filter(chapter => chapter.volume_id === volume.id));
     });
 
     // Sort chapters in each volume

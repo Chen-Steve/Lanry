@@ -47,6 +47,86 @@ export default function ChapterEditForm({
     ageRating: 'EVERYONE' as 'EVERYONE' | 'TEEN' | 'MATURE',
     volumeId: '',
   });
+  const [isDraft, setIsDraft] = useState(false);
+
+  const getDbChapterNumber = (isDraftSave: boolean) => {
+    const num = parseInt(formData.chapterNumber);
+    return isDraftSave ? -Math.abs(num) : Math.abs(num);
+  };
+
+  const handleSaveDraft = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setIsSaving(true);
+    setIsDraft(true);
+    try {
+      const chapterData = {
+        chapter_number: getDbChapterNumber(true),
+        part_number: isExtraChapter ? -1 : (formData.partNumber ? parseInt(formData.partNumber) : null),
+        title: formData.title,
+        content: formData.content,
+        publish_at: formData.publishAt || null,
+        coins: parseInt(formData.coins) || 0,
+        author_thoughts: formData.authorThoughts,
+        age_rating: formData.ageRating,
+      };
+      if (chapterId) {
+        await authorChapterService.updateChapter(chapterId, novelId, userId, chapterData);
+      } else {
+        await authorChapterService.createChapter(novelId, userId, {
+          ...chapterData,
+          volume_id: volumeId
+        });
+      }
+      toast.success('Draft saved successfully');
+      onSave();
+    } catch (error) {
+      console.error('Error saving draft:', error);
+      toast.error('Failed to save draft');
+    } finally {
+      setIsSaving(false);
+      setIsDraft(false);
+    }
+  };
+
+  const handleSave = async (e?: React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
+    }
+    setIsSaving(true);
+    setIsDraft(false);
+    try {
+      const chapterData = {
+        chapter_number: getDbChapterNumber(false),
+        part_number: isExtraChapter ? -1 : (formData.partNumber ? parseInt(formData.partNumber) : null),
+        title: formData.title,
+        content: formData.content,
+        publish_at: formData.publishAt || null,
+        coins: parseInt(formData.coins) || 0,
+        author_thoughts: formData.authorThoughts,
+        age_rating: formData.ageRating,
+      };
+
+      if (chapterId) {
+        await authorChapterService.updateChapter(chapterId, novelId, userId, chapterData);
+      } else {
+        await authorChapterService.createChapter(novelId, userId, {
+          ...chapterData,
+          volume_id: volumeId
+        });
+      }
+      toast.success(chapterId ? 'Chapter updated successfully' : 'Chapter published successfully');
+      onSave();
+    } catch (error) {
+      console.error('Error saving chapter:', error);
+      if (error instanceof Error && error.message.includes('already exists')) {
+        toast.error(error.message);
+      } else {
+        toast.error('Failed to save chapter');
+      }
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const fetchChapterDetails = useCallback(async () => {
     try {
@@ -59,7 +139,7 @@ export default function ChapterEditForm({
         const published = await isChapterPublished(chapter.publish_at);
         setIsAlreadyPublished(published);
         setFormData({
-          chapterNumber: chapter.chapter_number.toString(),
+          chapterNumber: Math.abs(chapter.chapter_number).toString(),
           partNumber: chapter.part_number === -1 ? '' : (chapter.part_number?.toString() || ''),
           title: chapter.title || '',
           content: chapter.content || '',
@@ -83,7 +163,6 @@ export default function ChapterEditForm({
     if (chapterId) {
       fetchChapterDetails();
     } else {
-      // Only set default if creating a new chapter and authorThoughts is empty
       setIsLoading(false);
       setFormData(prev => {
         if (prev.authorThoughts) return prev;
@@ -126,47 +205,6 @@ export default function ChapterEditForm({
 
     fetchData();
   }, [chapterId, novelId, userId]);
-
-  const handleSave = async (e?: React.FormEvent) => {
-    if (e) {
-      e.preventDefault();
-    }
-    setIsSaving(true);
-    try {
-      const chapterData = {
-        chapter_number: parseInt(formData.chapterNumber),
-        part_number: isExtraChapter ? -1 : (formData.partNumber ? parseInt(formData.partNumber) : null),
-        title: formData.title,
-        content: formData.content,
-        publish_at: formData.publishAt || null,
-        coins: parseInt(formData.coins) || 0,
-        author_thoughts: formData.authorThoughts,
-        age_rating: formData.ageRating,
-      };
-
-      console.log('Saving chapter with data:', chapterData);
-
-      if (chapterId) {
-        await authorChapterService.updateChapter(chapterId, novelId, userId, chapterData);
-      } else {
-        await authorChapterService.createChapter(novelId, userId, {
-          ...chapterData,
-          volume_id: volumeId
-        });
-      }
-      toast.success(chapterId ? 'Chapter updated successfully' : 'Chapter created successfully');
-      onSave();
-    } catch (error) {
-      console.error('Error saving chapter:', error);
-      if (error instanceof Error && error.message.includes('already exists')) {
-        toast.error(error.message);
-      } else {
-        toast.error('Failed to save chapter');
-      }
-    } finally {
-      setIsSaving(false);
-    }
-  };
 
   if (isLoading) {
     return (
@@ -320,7 +358,7 @@ export default function ChapterEditForm({
             disabled={isSaving}
             className="flex-1 bg-primary text-primary-foreground py-3 px-4 rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {isSaving ? (
+            {isSaving && !isDraft ? (
               <span className="inline-flex items-center gap-2">
                 <Icon icon="mdi:loading" className="w-5 h-5 animate-spin" />
                 Saving...
@@ -329,6 +367,24 @@ export default function ChapterEditForm({
               <span className="inline-flex items-center gap-2">
                 <Icon icon="mdi:content-save" className="w-5 h-5" />
                 {isAlreadyPublished ? 'Save Chapter' : 'Publish Chapter'}
+              </span>
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={handleSaveDraft}
+            disabled={isSaving}
+            className="flex-1 bg-muted text-foreground py-3 px-4 rounded-lg hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors border border-border"
+          >
+            {isSaving && isDraft ? (
+              <span className="inline-flex items-center gap-2">
+                <Icon icon="mdi:loading" className="w-5 h-5 animate-spin" />
+                Saving Draft...
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-2">
+                <Icon icon="mdi:content-save-edit" className="w-5 h-5" />
+                Save as Draft
               </span>
             )}
           </button>

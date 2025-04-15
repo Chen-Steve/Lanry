@@ -23,6 +23,9 @@ const isExtraChapter = (chapter: ChapterListChapter): boolean => {
   return chapter.part_number === -1;
 };
 
+// Utility to check if a chapter is a draft
+const isDraftChapter = (chapter: ChapterListChapter) => chapter.chapter_number < 0;
+
 export default function ChapterList({
   chapters,
   volumes,
@@ -349,7 +352,12 @@ export default function ChapterList({
                 </span>
               ) : (
                 <>
-                  Chapter {chapter.chapter_number}
+                  Chapter {Math.abs(chapter.chapter_number)}
+                  {isDraftChapter(chapter) && (
+                    <span className="inline-flex items-center gap-1 ml-2 px-2 py-0.5 text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-200 rounded">
+                      <Icon icon="mdi:pencil" className="w-3.5 h-3.5" /> Draft
+                    </span>
+                  )}
                   {chapter.part_number && chapter.part_number !== -1 && (
                     <span className="text-muted-foreground">
                       {" "}Part {chapter.part_number}
