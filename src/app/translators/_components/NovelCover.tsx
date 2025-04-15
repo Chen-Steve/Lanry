@@ -1,12 +1,24 @@
-import Image from "next/image"
 import { Icon } from "@iconify/react"
-import { ComponentProps } from "react"
 
-type NovelCoverProps = Omit<ComponentProps<typeof Image>, "src"> & {
+type NovelCoverProps = {
   src: string | null | undefined
+  alt: string
+  className?: string
+  fill?: boolean
+  sizes?: string
+  priority?: boolean
+  loading?: 'lazy' | 'eager'
 }
 
-export function NovelCover({ src, alt, className, fill, ...props }: NovelCoverProps) {
+export function NovelCover({ 
+  src, 
+  alt, 
+  className = '', 
+  fill = false,
+  sizes = '(max-width: 768px) 120px, 120px',
+  priority = false,
+  loading = 'lazy'
+}: NovelCoverProps) {
   if (!src) {
     return (
       <div className={`bg-gray-200 dark:bg-gray-700 flex items-center justify-center ${className}`}>
@@ -16,13 +28,12 @@ export function NovelCover({ src, alt, className, fill, ...props }: NovelCoverPr
   }
 
   return (
-    <Image
+    <img
       src={src}
       alt={alt}
-      className={className}
-      sizes="(max-width: 768px) 120px, 120px"
-      fill={fill}
-      {...props}
+      className={`${className} ${fill ? 'w-full h-full object-cover' : ''}`}
+      sizes={sizes}
+      loading={priority ? 'eager' : loading}
     />
   )
 } 

@@ -1,6 +1,5 @@
 import { Profile } from "@prisma/client"
 import { Icon } from "@iconify/react"
-import Image from "next/image"
 import Link from "next/link"
 import { NovelCover } from "./NovelCover"
 
@@ -28,13 +27,11 @@ export function TranslatorCard({ translator }: TranslatorCardProps) {
       <div className="flex items-center gap-3 mb-4">
         <div className="relative w-12 h-12 flex-shrink-0">
           {translator.avatarUrl ? (
-            <Image
+            <img
               src={translator.avatarUrl}
               alt={translator.username || "Translator"}
-              fill
-              sizes="48px"
-              className="rounded-full object-cover"
-              priority
+              className="w-full h-full rounded-full object-cover"
+              loading="eager"
             />
           ) : (
             <div className="w-full h-full rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
@@ -44,7 +41,7 @@ export function TranslatorCard({ translator }: TranslatorCardProps) {
         </div>
         <div className="flex-1 min-w-0">
           <Link 
-            href={`/profile/${translator.username}`}
+            href={`/user-dashboard?id=${translator.id}`}
             className="text-base font-semibold hover:text-primary transition-colors line-clamp-1"
           >
             {translator.username || "Anonymous Translator"}
