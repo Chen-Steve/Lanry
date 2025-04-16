@@ -1,7 +1,7 @@
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { nanoid } from 'nanoid';
+'use client';
 
-const supabase = createClientComponentClient();
+import supabase from '@/lib/supabaseClient';
+import { nanoid } from 'nanoid';
 
 type ImageBucket = 'novel-covers' | 'footnote-images';
 

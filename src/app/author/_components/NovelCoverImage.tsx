@@ -2,13 +2,8 @@ import { Icon } from '@iconify/react';
 import Image from 'next/image';
 import { useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { createClient } from '@supabase/supabase-js';
 import { nanoid } from 'nanoid';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { useSupabase } from '@/app/providers';
 
 // Add a helper function to get direct CDN URL
 function getDirectCDNUrl(publicUrl: string) {
@@ -25,6 +20,7 @@ interface NovelCoverImageProps {
 export default function NovelCoverImage({ coverImageUrl, onUpdate, onDelete }: NovelCoverImageProps) {
   const [isUploadingCover, setIsUploadingCover] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { supabase } = useSupabase();
 
   const handleCoverImageClick = () => {
     fileInputRef.current?.click();

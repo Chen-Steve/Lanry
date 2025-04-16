@@ -1,11 +1,6 @@
 import { NextResponse } from "next/server";
-import { createClient } from '@supabase/supabase-js';
+import supabaseAdmin from '@/lib/supabaseAdmin';
 import checkoutNodeJssdk from "@paypal/checkout-server-sdk";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
 
 // Initialize PayPal environment
 const environment = process.env.NODE_ENV === "production"
@@ -25,7 +20,7 @@ export async function POST(req: Request) {
     const { userId, coins, amount } = await req.json();
 
     // Verify user exists
-    const { data: user, error } = await supabase
+    const { data: user, error } = await supabaseAdmin
       .from('profiles')
       .select('id')
       .eq('id', userId)

@@ -1,11 +1,6 @@
 import { NextResponse } from "next/server";
-import { createClient } from '@supabase/supabase-js';
+import supabaseAdmin from '@/lib/supabaseAdmin';
 import { revalidatePath } from "next/cache";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
 
 // Helper function to generate UUID v4
 function uuidv4() {
@@ -22,7 +17,7 @@ export async function POST(req: Request) {
     const authorShare = Math.floor(amount * 0.5); // Calculate 50% share for author
 
     // Verify both users exist
-    const { data: users, error: userError } = await supabase
+    const { data: users, error: userError } = await supabaseAdmin
       .from('profiles')
       .select('id, coins')
       .in('id', [fromUserId, toUserId]);
@@ -44,7 +39,7 @@ export async function POST(req: Request) {
     }
 
     // Update sender's coins (deduct full amount)
-    const { error: senderError } = await supabase
+    const { error: senderError } = await supabaseAdmin
       .from('profiles')
       .update({ coins: sender.coins - amount })
       .eq('id', fromUserId);
@@ -52,7 +47,7 @@ export async function POST(req: Request) {
     if (senderError) throw senderError;
 
     // Update recipient's coins (author gets 50%)
-    const { error: recipientError } = await supabase
+    const { error: recipientError } = await supabaseAdmin
       .from('profiles')
       .update({ coins: recipient.coins + authorShare }) // Use calculated authorShare
       .eq('id', toUserId);
@@ -62,7 +57,7 @@ export async function POST(req: Request) {
     const donationId = `donation_${Date.now()}_${fromUserId}_to_${toUserId}`;
 
     // Create transaction records
-    const { error: transactionError } = await supabase
+    const { error: transactionError } = await supabaseAdmin
       .from('coin_transactions')
       .insert([
         {

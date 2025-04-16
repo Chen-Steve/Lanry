@@ -1,12 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { createClient } from '@supabase/supabase-js';
+import supabaseAdmin from '@/lib/supabaseAdmin';
 import checkoutNodeJssdk from "@paypal/checkout-server-sdk";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
 
 const environment = process.env.NODE_ENV === "production"
   ? new checkoutNodeJssdk.core.LiveEnvironment(
@@ -40,7 +35,7 @@ export async function POST(req: Request) {
     const { orderId, userId } = await req.json();
 
     // Verify user exists
-    const { data: user, error } = await supabase
+    const { data: user, error } = await supabaseAdmin
       .from('profiles')
       .select('id')
       .eq('id', userId)

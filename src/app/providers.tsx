@@ -2,9 +2,10 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState, useEffect, createContext, useContext } from 'react';
-import { createClientComponentClient, User } from '@supabase/auth-helpers-nextjs';
+import { User } from '@supabase/auth-helpers-nextjs';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { PayPalScriptProvider } from "@paypal/react-paypal-js";
+import supabase from '@/lib/supabaseClient';
 
 interface SupabaseContext {
   supabase: SupabaseClient;
@@ -33,7 +34,6 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 
   const [supabaseInitialized, setSupabaseInitialized] = useState(false);
   const [user, setUser] = useState<User | null>(null);
-  const supabase = createClientComponentClient();
 
   const paypalClientId = process.env.NODE_ENV === 'production'
     ? process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID
