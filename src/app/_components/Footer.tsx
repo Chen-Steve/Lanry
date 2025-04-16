@@ -27,7 +27,7 @@ const Footer = () => {
               </p>
               <div className="flex flex-wrap gap-2 mt-2">
                 <Link 
-                  href="https://forms.gle/DV9X9C5wQjUxKece7" 
+                  href="https://discord.gg/DXHRpV3sxF" 
                   className="text-xs sm:text-sm text-amber-800 dark:text-amber-100 hover:text-amber-900 dark:hover:text-amber-50 hover:underline bg-amber-100 dark:bg-amber-900 px-2 py-0.5 rounded transition-colors"
                   target="_blank"
                   rel="noopener noreferrer"

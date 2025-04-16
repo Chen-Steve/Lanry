@@ -25,11 +25,18 @@ export const ChapterList = ({
   volumes = []
 }: ChapterListProps) => {
   const loadingRef = useRef(false);
+  // Flag for initial mount
+  const isInitialMount = useRef(true);
+  
   const [selectedVolumeId, setSelectedVolumeId] = useState<string | null>(volumes[0]?.id || null);
   const [showAllChapters, setShowAllChapters] = useState(true);
   const [showAdvancedChapters, setShowAdvancedChapters] = useState(false);
+  
   // Filter out draft chapters (negative chapter_number) from initialChapters
-  const filteredInitialChapters = (initialChapters || []).filter(ch => ch.chapter_number >= 0);
+  const filteredInitialChapters = useMemo(() => {
+    return (initialChapters || []).filter(ch => ch.chapter_number >= 0);
+  }, [initialChapters]);
+  
   const [chapters, setChapters] = useState<ChapterListItem[]>(filteredInitialChapters);
   const [chapterCounts, setChapterCounts] = useState<ChapterCounts>({ regularCount: 0, advancedCount: 0, total: 0 });
   const [currentPage, setCurrentPage] = useState(1);
@@ -38,7 +45,7 @@ export const ChapterList = ({
   const [error, setError] = useState<string | null>(null);
   const [volumeCounts, setVolumeCounts] = useState(new Map<string, { total: number; regular: number; advanced: number }>());
 
-  // Calculate volume-specific counts for all chapters (both regular and advanced)
+  // Calculate volume-specific counts only once on initial render or when volumes/initialChapters change
   useEffect(() => {
     const counts = new Map<string, { total: number; regular: number; advanced: number }>();
     
@@ -69,7 +76,7 @@ export const ChapterList = ({
     setVolumeCounts(counts);
   }, [volumes, filteredInitialChapters]);
 
-  // Sort function that puts extra chapters last
+  // Sort function that puts extra chapters last - memoized with no dependencies
   const sortChapters = useCallback((a: ChapterListItem, b: ChapterListItem) => {
     // If one is an extra chapter and the other isn't, sort extra chapter last
     if (a.part_number === -1 && b.part_number !== -1) return 1;
@@ -90,7 +97,27 @@ export const ChapterList = ({
     return 0;
   }, []);
 
-  const loadChapters = useCallback(async (pageNum: number = 1) => {
+  // Create a stable fetchChapters function that doesn't change on re-renders
+  // This is the core function that makes API calls but doesn't update state
+  const fetchChapters = useCallback(async (
+    page: number,
+    showAdvanced: boolean,
+    allChapters: boolean,
+    volumeId: string | null
+  ) => {
+    return await getChaptersForList({
+      novelId,
+      page,
+      userId: userProfile?.id,
+      showAdvanced,
+      volumeId: allChapters ? null : volumeId,
+      includeAccess: true
+    });
+  }, [novelId, userProfile?.id]);
+
+  // Function to load chapters and update state
+  // Separated from fetchChapters to avoid circular dependencies
+  const loadChapters = useCallback(async (pageNum: number) => {
     if (loadingRef.current) return;
     
     loadingRef.current = true;
@@ -98,14 +125,12 @@ export const ChapterList = ({
     setError(null);
 
     try {
-      const result = await getChaptersForList({
-        novelId,
-        page: pageNum,
-        userId: userProfile?.id,
-        showAdvanced: showAdvancedChapters,
-        volumeId: showAllChapters ? null : selectedVolumeId,
-        includeAccess: true
-      });
+      const result = await fetchChapters(
+        pageNum,
+        showAdvancedChapters,
+        showAllChapters,
+        selectedVolumeId
+      );
 
       setChapters(result.chapters);
       setChapterCounts(result.counts);
@@ -118,14 +143,15 @@ export const ChapterList = ({
       setIsLoading(false);
       loadingRef.current = false;
     }
-  }, [novelId, userProfile?.id, showAdvancedChapters, selectedVolumeId, showAllChapters]);
+  }, [fetchChapters, showAdvancedChapters, showAllChapters, selectedVolumeId]);
 
-  // Initial load
+  // Initial load effect - only runs once after mount
   useEffect(() => {
-    if (!filteredInitialChapters || filteredInitialChapters.length === 0) {
-      loadChapters(1);
-    } else {
-      // Set initial counts from props
+    // Only run this effect once
+    if (!isInitialMount.current) return;
+    
+    // If we have initial chapters, set up initial counts
+    if (filteredInitialChapters && filteredInitialChapters.length > 0) {
       const now = new Date().toISOString();
       setChapterCounts({
         regularCount: filteredInitialChapters.filter(ch => {
@@ -145,36 +171,71 @@ export const ChapterList = ({
         }).length,
         total: filteredInitialChapters.length
       });
+    } else {
+      // If no initial chapters, load them
+      loadChapters(1);
     }
+    
+    // Mark initial mount complete
+    isInitialMount.current = false;
   }, [filteredInitialChapters, loadChapters]);
 
-  // Handle volume or advanced chapter toggle
+  // Effect to handle filter changes (volume, advanced toggle)
+  // This uses refs to track previous values to avoid unnecessary updates
+  const prevFiltersRef = useRef({
+    showAdvancedChapters,
+    selectedVolumeId,
+    showAllChapters
+  });
+  
   useEffect(() => {
-    let isMounted = true;
+    // Skip on first mount - that's handled by the initial load effect
+    if (isInitialMount.current) return;
     
-    const updateChapters = async () => {
-      if (!isMounted) return;
+    const prevFilters = prevFiltersRef.current;
+    
+    // Only update if filters actually changed
+    if (
+      prevFilters.showAdvancedChapters !== showAdvancedChapters ||
+      prevFilters.selectedVolumeId !== selectedVolumeId ||
+      prevFilters.showAllChapters !== showAllChapters
+    ) {
+      // Reset to page 1 when filters change
       setCurrentPage(1);
-      await loadChapters(1);
-    };
-
-    updateChapters();
-
-    return () => {
-      isMounted = false;
-    };
+      loadChapters(1);
+      
+      // Update ref with current values
+      prevFiltersRef.current = {
+        showAdvancedChapters,
+        selectedVolumeId,
+        showAllChapters
+      };
+    }
   }, [showAdvancedChapters, selectedVolumeId, showAllChapters, loadChapters]);
+
+  // Effect to handle page changes
+  const prevPageRef = useRef(currentPage);
+  useEffect(() => {
+    // Skip on first mount - that's handled by the initial load effect
+    if (isInitialMount.current) return;
+    
+    // Only load if page actually changed and it wasn't changed by a filter toggle
+    if (prevPageRef.current !== currentPage) {
+      loadChapters(currentPage);
+      prevPageRef.current = currentPage;
+    }
+  }, [currentPage, loadChapters]);
 
   const handlePageChange = useCallback((newPage: number) => {
     if (newPage >= 1 && newPage <= totalPages && newPage !== currentPage) {
-      loadChapters(newPage);
+      setCurrentPage(newPage);
       // Scroll to top of the list
       const listElement = document.querySelector('.chapter-list-grid');
       if (listElement) {
         listElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     }
-  }, [currentPage, totalPages, loadChapters]);
+  }, [currentPage, totalPages]);
 
   const isChapterPublished = useCallback((chapter: ChapterListItem): boolean => {
     // A chapter is considered "published" if:
