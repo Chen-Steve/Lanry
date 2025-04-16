@@ -37,7 +37,32 @@ export const ChapterList = ({
     return (initialChapters || []).filter(ch => ch.chapter_number >= 0);
   }, [initialChapters]);
   
-  const [chapters, setChapters] = useState<ChapterListItem[]>(filteredInitialChapters);
+  // Initially filter chapters based on showAdvancedChapters
+  const filteredChaptersByType = useMemo(() => {
+    const now = new Date().toISOString();
+    
+    if (showAdvancedChapters) {
+      // Show only advanced chapters (future publish date with coins)
+      return filteredInitialChapters.filter(ch => {
+        const isAdvanced = ch.publish_at && 
+                         ch.publish_at > now && // Future publish date
+                         ch.coins > 0;
+        const isAccessible = ch.isUnlocked || ch.hasTranslatorAccess;
+        return isAdvanced && !isAccessible;
+      });
+    } else {
+      // Show only regular chapters
+      return filteredInitialChapters.filter(ch => {
+        const isAdvanced = ch.publish_at && 
+                         ch.publish_at > now && // Future publish date
+                         ch.coins > 0;
+        const isAccessible = ch.isUnlocked || ch.hasTranslatorAccess;
+        return !isAdvanced || isAccessible;
+      });
+    }
+  }, [filteredInitialChapters, showAdvancedChapters]);
+  
+  const [chapters, setChapters] = useState<ChapterListItem[]>(filteredChaptersByType);
   const [chapterCounts, setChapterCounts] = useState<ChapterCounts>({ regularCount: 0, advancedCount: 0, total: 0 });
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -212,6 +237,15 @@ export const ChapterList = ({
       };
     }
   }, [showAdvancedChapters, selectedVolumeId, showAllChapters, loadChapters]);
+
+  // Update chapters when showAdvancedChapters changes and we're using initialChapters
+  useEffect(() => {
+    // When we're using the initial chapters directly, we need to filter them
+    // This handles the case where the API hasn't been called yet
+    if (isInitialMount.current || loadingRef.current) return;
+    
+    setChapters(filteredChaptersByType);
+  }, [filteredChaptersByType]);
 
   // Effect to handle page changes
   const prevPageRef = useRef(currentPage);
