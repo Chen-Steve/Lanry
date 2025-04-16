@@ -95,10 +95,7 @@ const NovelListing = () => {
           id: novel.id,
           slug: novel.slug,
           title: novel.title,
-          coverImageUrl: novel.coverImageUrl || null,
-          chaptersCount: novel.chapters?.length || 0,
-          status: novel.status,
-          created_at: new Date(novel.created_at)
+          coverImageUrl: novel.coverImageUrl || null
         }))}
         className="mb-2"
       />

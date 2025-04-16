@@ -7,11 +7,6 @@ interface NewReleaseNovel {
   slug: string;
   title: string;
   coverImageUrl: string | null;
-  chapters?: {
-    chapter_number: number;
-    part_number?: number | null;
-    publish_at: string;
-  }[];
 }
 
 interface NewReleasesProps {
@@ -26,7 +21,7 @@ const NewReleases = ({ recentNovels, className = '' }: NewReleasesProps) => {
 
   return (
     <div className={`mt-2 w-full max-w-[95%] mx-auto ${className}`}>
-      <div className="flex items-center gap-2.5 mb-2">
+      <div className="flex items-center mb-2">
         <h2 className="text-lg font-semibold border-b-2 border-primary">Recent Releases</h2>
       </div>
 
@@ -34,12 +29,9 @@ const NewReleases = ({ recentNovels, className = '' }: NewReleasesProps) => {
         {/* Carousel Container */}
         <div 
           ref={scrollContainerRef}
-          className="flex gap-1.5 sm:gap-2 overflow-x-auto scroll-smooth [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/60 [&::-webkit-scrollbar-track]:bg-accent/30 [&::-webkit-scrollbar-track]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-primary"
+          className="flex overflow-x-auto scroll-smooth [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/60 [&::-webkit-scrollbar-track]:bg-accent/30 [&::-webkit-scrollbar-track]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-primary"
         >
-          {recentNovels.map(novel => {
-            const latestChapter = novel.chapters?.[0];
-            
-            return (
+          {recentNovels.map(novel => (
               <Link
                 key={novel.id}
                 href={`/novels/${novel.slug}`}
@@ -55,16 +47,8 @@ const NewReleases = ({ recentNovels, className = '' }: NewReleasesProps) => {
                 <h3 className="text-xs sm:text-sm font-medium text-foreground line-clamp-2 group-hover/card:text-primary transition-colors text-center">
                   {novel.title}
                 </h3>
-                
-                {latestChapter && (
-                  <div className="mt-0.5 text-[10px] sm:text-xs text-center text-muted-foreground">
-                    Ch.{latestChapter.chapter_number}
-                    {latestChapter.part_number && `.${latestChapter.part_number}`}
-                  </div>
-                )}
               </Link>
-            );
-          })}
+            ))}
         </div>
       </div>
     </div>
