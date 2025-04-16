@@ -55,8 +55,6 @@ const NovelCard = ({ novel, isPriority = false, size = 'small', className = '' }
           coverUrl={novel.coverImageUrl} 
           title={novel.title}
           isPriority={isPriority}
-          rating={novel.rating}
-          showRating={totalChapters > 0}
           status={novel.status}
           showStatus={totalChapters > 0}
           hasChapters={totalChapters > 0}

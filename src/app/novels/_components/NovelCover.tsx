@@ -8,8 +8,6 @@ import { cacheImage, clearExpiredCache } from '@/services/imageCacheService';
 interface NovelCoverProps {
   coverUrl?: string;
   title: string;
-  rating?: number;
-  showRating?: boolean;
   status?: string;
   showStatus?: boolean;
   hasChapters?: boolean;
@@ -23,8 +21,6 @@ interface NovelCoverProps {
 const NovelCover = ({ 
   coverUrl, 
   title, 
-  rating = 0,
-  showRating = false,
   status = '',
   showStatus = false,
   hasChapters = true,
@@ -122,17 +118,6 @@ const NovelCover = ({
         )}
       </div>
 
-      {showRating && hasChapters && (
-        <div className="absolute top-0 right-0">
-          <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-bl-md bg-black/80 backdrop-blur-[2px]">
-            <Icon icon="material-symbols:star" className="text-amber-400 text-[10px] sm:text-sm" />
-            <span className="text-white text-[10px] sm:text-xs font-medium">
-              {rating > 0 ? rating.toFixed(1) : 'N/A'}
-            </span>
-          </div>
-        </div>
-      )}
-      
       {(showStatus || (typeof chapterCount === 'number' && chapterCount > 0)) && hasChapters && (
         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent pt-6 pb-1.5 px-1.5 sm:pt-8 sm:pb-2 sm:px-2">
           <div className="flex items-center justify-between">
