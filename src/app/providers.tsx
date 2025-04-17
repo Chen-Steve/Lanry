@@ -96,7 +96,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-  }, [supabase]);
+  }, []);
 
   if (!supabaseInitialized) {
     return null; // or a loading spinner
