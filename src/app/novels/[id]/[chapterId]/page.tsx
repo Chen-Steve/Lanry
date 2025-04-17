@@ -144,8 +144,27 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
           console.error('Error fetching author profile:', authorError);
         }
 
+        // Fetch complete novel data to get cover image URL (not included in chapter data)
+        const { data: novelData } = await supabase
+          .from('novels')
+          .select('cover_image_url')
+          .eq('id', chapterData.novel.id)
+          .single();
+
+        console.log("Fetched Novel Data for Cover:", {
+          novelId: chapterData.novel.id,
+          coverImageUrl: novelData?.cover_image_url
+        });
+
+        // Merge novel data with cover image URL
+        const novelWithCover = {
+          ...chapterData.novel,
+          coverImageUrl: novelData?.cover_image_url || null
+        };
+
         setChapter({
           ...chapterData,
+          novel: novelWithCover,
           authorProfile: authorProfile ? {
             username: authorProfile.username,
             avatar_url: authorProfile.avatar_url,
@@ -489,6 +508,8 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
         currentSize={fontSize}
         isCommentOpen={isCommentOpen}
         firstChapter={Math.min(...navigation.availableChapters.map(ch => ch.chapter_number))}
+        novelCoverUrl={chapter.novel.coverImageUrl}
+        novelTitle={chapter.novel.title}
       />
       
       <ChapterSidebar
