@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { formatDate } from '@/lib/utils';
 import { getTextStyles, formatText } from '@/lib/textFormatting';
 import { filterExplicitContent } from '@/lib/contentFiltering';
@@ -78,6 +78,11 @@ export default function ChapterContent({
   const [isEditing, setIsEditing] = useState(false);
   const { comments, addComment, deleteComment, updateComment, isAuthenticated, isLoading, userId } = useComments(novelId, chapterNumber);
   const isMobile = useMediaQuery('(max-width: 768px)');
+  const contentRef = useRef<HTMLDivElement>(null);
+  
+  // Double tap detection variables
+  const [lastTap, setLastTap] = useState<number>(0);
+  const [isSidebarVisible, setIsSidebarVisible] = useState<boolean>(false);
 
   // Check if the chapter is indefinitely locked
   const isIndefinitelyLocked = publishAt && new Date(publishAt).getFullYear() > new Date().getFullYear() + 50;
@@ -99,8 +104,34 @@ export default function ChapterContent({
     
     if (!isMobile) {
       handleCommentClick(e, paragraphId);
+    } else {
+      handleDoubleTap(e);
     }
   };
+
+  const handleDoubleTap = (event: React.MouseEvent<Element> | React.TouchEvent<Element>) => {
+    const currentTime = new Date().getTime();
+    const tapLength = currentTime - lastTap;
+    
+    // Define double tap threshold (300ms)
+    if (tapLength < 300 && tapLength > 0) {
+      // It's a double tap - toggle sidebar visibility
+      setIsSidebarVisible(!isSidebarVisible);
+      event.preventDefault();
+    }
+    
+    setLastTap(currentTime);
+  };
+
+  // Effect to update parent component when sidebar visibility changes
+  useEffect(() => {
+    // We need to update ChapterBar visibility from the parent component
+    // through a custom DOM event or by directly calling a method from props
+    const customEvent = new CustomEvent('toggleChapterBar', { 
+      detail: { isVisible: isSidebarVisible } 
+    });
+    document.dispatchEvent(customEvent);
+  }, [isSidebarVisible]);
 
   const handleParagraphLongPress = (
     event: React.TouchEvent<Element> | React.MouseEvent<Element>,
@@ -173,12 +204,36 @@ export default function ChapterContent({
     // Add event listeners
     document.addEventListener('mouseenter', handleInteractions, true);
     document.addEventListener('mouseleave', handleInteractions, true);
+
+    // Set up touch event listeners for double tap on mobile
+    const handleTouchStart = (e: TouchEvent) => {
+      if (isMobile) {
+        const currentTime = new Date().getTime();
+        const tapLength = currentTime - lastTap;
+        
+        if (tapLength < 300 && tapLength > 0) {
+          // It's a double tap
+          setIsSidebarVisible(!isSidebarVisible);
+          e.preventDefault();
+        }
+        
+        setLastTap(currentTime);
+      }
+    };
+
+    if (contentRef.current && isMobile) {
+      contentRef.current.addEventListener('touchstart', handleTouchStart);
+    }
     
     return () => {
       document.removeEventListener('mouseenter', handleInteractions, true);
       document.removeEventListener('mouseleave', handleInteractions, true);
+      
+      if (contentRef.current && isMobile) {
+        contentRef.current.removeEventListener('touchstart', handleTouchStart);
+      }
     };
-  }, []);
+  }, [isMobile, lastTap, isSidebarVisible]);
 
   const { likeCount, isLiked, toggleLike } = useChapterLikes({ 
     chapterNumber,
@@ -215,7 +270,7 @@ export default function ChapterContent({
   }, [fontFamily]);
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-2xl mx-auto" ref={contentRef}>
       {/* Ad Unit */}
       <div className="my-4">
         <div id="pf-13995-1">
@@ -285,6 +340,12 @@ export default function ChapterContent({
                 <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
                   <Icon icon="mdi:gesture-tap-hold" className="w-4 h-4" />
                   <span>Hold text to comment</span>
+                </div>
+              )}
+              {!isTranslator && isMobile && !isIndefinitelyLocked && (
+                <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                  <Icon icon="mdi:gesture-tap" className="w-4 h-4" />
+                  <span>Double-tap for options</span>
                 </div>
               )}
             </div>

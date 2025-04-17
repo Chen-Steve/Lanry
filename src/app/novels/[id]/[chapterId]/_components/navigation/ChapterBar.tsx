@@ -41,6 +41,25 @@ export default function ChapterProgressBar({
   const [touchStartY, setTouchStartY] = useState<number | null>(null);
   const [isTouching, setIsTouching] = useState(false);
 
+  // Listen for double tap custom event
+  useEffect(() => {
+    const handleToggleChapterBar = (event: CustomEvent) => {
+      if (event.detail && typeof event.detail.isVisible === 'boolean') {
+        setIsVisible(event.detail.isVisible);
+      } else {
+        // Toggle if no specific value is provided
+        setIsVisible(!isVisible);
+      }
+    };
+
+    // Add event listener for the custom event
+    document.addEventListener('toggleChapterBar', handleToggleChapterBar as EventListener);
+
+    return () => {
+      document.removeEventListener('toggleChapterBar', handleToggleChapterBar as EventListener);
+    };
+  }, [isVisible]);
+
   useEffect(() => {
     const handleScroll = () => {
       const windowHeight = window.innerHeight;
@@ -102,6 +121,27 @@ export default function ChapterProgressBar({
     }
   }, [isCommentOpen, isVisible]);
 
+  // Add a click handler to close the bar when clicking outside
+  useEffect(() => {
+    if (!isVisible || !isMobile) return;
+    
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        progressBarRef.current && 
+        !progressBarRef.current.contains(event.target as Node) &&
+        isVisible
+      ) {
+        setIsVisible(false);
+      }
+    };
+    
+    document.addEventListener('click', handleClickOutside);
+    
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [isVisible, isMobile]);
+
   if (!isMobile) return null;
 
   return (
@@ -114,6 +154,15 @@ export default function ChapterProgressBar({
       }`}
     >
       <div className="px-4 space-y-6">
+        {/* Close button for mobile */}
+        <button
+          onClick={() => setIsVisible(false)}
+          className="absolute top-2 right-4 text-gray-500 p-2"
+          aria-label="Close chapter options"
+        >
+          <Icon icon="mdi:close" className="text-xl" />
+        </button>
+
         {/* Progress Section */}
         <div className="bg-gray-50 dark:bg-gray-800 rounded-md p-4">
           {/* Chapter info - centered */}
