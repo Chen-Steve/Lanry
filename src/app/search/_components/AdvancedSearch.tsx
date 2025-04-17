@@ -14,7 +14,7 @@ interface SearchFilters {
   author: string;
   tags: Tag[];
   status?: NovelStatus;
-  category?: string;
+  categories: string[];
   page: number;
 }
 
@@ -23,6 +23,7 @@ export default function AdvancedSearch() {
     query: '',
     author: '',
     tags: [],
+    categories: [],
     page: 1
   });
   const [results, setResults] = useState<Novel[]>([]);
@@ -149,8 +150,10 @@ export default function AdvancedSearch() {
         queryParams.append('status', searchFilters.status);
       }
 
-      if (searchFilters.category) {
-        queryParams.append('category', searchFilters.category);
+      if (searchFilters.categories.length > 0) {
+        searchFilters.categories.forEach(category => {
+          queryParams.append('categories', category);
+        });
       }
 
       queryParams.append('page', newPage.toString());
@@ -202,14 +205,14 @@ export default function AdvancedSearch() {
   const handleCategorySelect = (categoryId: string) => {
     setFilters(prev => ({
       ...prev,
-      category: categoryId
+      categories: [...prev.categories, categoryId]
     }));
   };
 
-  const handleCategoryRemove = () => {
+  const handleCategoryRemove = (categoryId: string) => {
     setFilters(prev => ({
       ...prev,
-      category: undefined
+      categories: prev.categories.filter(id => id !== categoryId)
     }));
   };
 
@@ -219,7 +222,7 @@ export default function AdvancedSearch() {
            filters.author.trim() !== '' ||
            filters.tags.length > 0 ||
            filters.status !== undefined ||
-           filters.category !== undefined;
+           filters.categories.length > 0;
   };
 
   return (
@@ -251,50 +254,53 @@ export default function AdvancedSearch() {
             <div className="space-y-4">
               {/* Basic Filters */}
               <div className="space-y-2">
-                {/* Title Search */}
-                <div>
-                  <input
-                    type="text"
-                    value={filters.query}
-                    onChange={e => setFilters(prev => ({ ...prev, query: e.target.value }))}
-                    placeholder="Search by title..."
-                    className="w-full px-3 py-1.5 bg-background text-foreground placeholder:text-muted-foreground border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
-                  />
-                </div>
-
-                {/* Author Search */}
-                <div>
-                  <div className="relative" ref={authorDropdownRef}>
+                {/* Title and Author Search */}
+                <div className="flex gap-2">
+                  {/* Title Search */}
+                  <div className="flex-1">
                     <input
-                      ref={authorInputRef}
                       type="text"
-                      value={filters.author}
-                      onChange={handleAuthorChange}
-                      onFocus={() => {
-                        if (filters.author.trim()) {
-                          setShowAuthorDropdown(true);
-                          debouncedFetchAuthors(filters.author);
-                        }
-                      }}
-                      placeholder="Search by author..."
+                      value={filters.query}
+                      onChange={e => setFilters(prev => ({ ...prev, query: e.target.value }))}
+                      placeholder="Search by title..."
                       className="w-full px-3 py-1.5 bg-background text-foreground placeholder:text-muted-foreground border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
                     />
-                    {showAuthorDropdown && authorSuggestions.length > 0 && (
-                      <div className="absolute left-0 mt-1 bg-background border border-border rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto w-full">
-                        {authorSuggestions.map((author, index) => (
-                          <button
-                            key={index}
-                            onClick={() => handleAuthorSelect(author)}
-                            className="w-full px-3 py-1.5 text-left hover:bg-accent transition-colors text-sm flex items-center justify-between"
-                          >
-                            <span>{author.username}</span>
-                            <span className="text-xs text-muted-foreground capitalize">
-                              {author.role.toLowerCase()}
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
+                  </div>
+
+                  {/* Author Search */}
+                  <div className="flex-1">
+                    <div className="relative" ref={authorDropdownRef}>
+                      <input
+                        ref={authorInputRef}
+                        type="text"
+                        value={filters.author}
+                        onChange={handleAuthorChange}
+                        onFocus={() => {
+                          if (filters.author.trim()) {
+                            setShowAuthorDropdown(true);
+                            debouncedFetchAuthors(filters.author);
+                          }
+                        }}
+                        placeholder="Search by author..."
+                        className="w-full px-3 py-1.5 bg-background text-foreground placeholder:text-muted-foreground border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                      />
+                      {showAuthorDropdown && authorSuggestions.length > 0 && (
+                        <div className="absolute left-0 mt-1 bg-background border border-border rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto w-full">
+                          {authorSuggestions.map((author, index) => (
+                            <button
+                              key={index}
+                              onClick={() => handleAuthorSelect(author)}
+                              className="w-full px-3 py-1.5 text-left hover:bg-accent transition-colors text-sm flex items-center justify-between"
+                            >
+                              <span>{author.username}</span>
+                              <span className="text-xs text-muted-foreground capitalize">
+                                {author.role.toLowerCase()}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -319,7 +325,7 @@ export default function AdvancedSearch() {
                 {/* Category Filter */}
                 <div>
                   <CategorySelector
-                    selectedCategory={filters.category}
+                    selectedCategories={filters.categories}
                     onCategorySelect={handleCategorySelect}
                     onCategoryRemove={handleCategoryRemove}
                   />
@@ -359,6 +365,7 @@ export default function AdvancedSearch() {
                         query: '',
                         author: '',
                         tags: [],
+                        categories: [],
                         page: 1
                       });
                       handleSearch(true);

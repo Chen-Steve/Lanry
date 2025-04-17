@@ -90,9 +90,6 @@ export default function NovelList({
         </div>
       ) : (
         <>
-          <div className="text-sm text-muted-foreground">
-            Showing {novels.length} {novels.length === 1 ? 'novel' : 'novels'}
-          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {novels.map((novel) => (
               <Link

@@ -10,13 +10,13 @@ interface Category {
 }
 
 interface CategorySelectorProps {
-  selectedCategory?: string;
+  selectedCategories: string[];
   onCategorySelect: (categoryId: string) => void;
-  onCategoryRemove: () => void;
+  onCategoryRemove: (categoryId: string) => void;
 }
 
 export default function CategorySelector({
-  selectedCategory,
+  selectedCategories,
   onCategorySelect,
   onCategoryRemove,
 }: CategorySelectorProps) {
@@ -84,22 +84,27 @@ export default function CategorySelector({
 
   return (
     <div className="space-y-2">
-      {/* Selected Category */}
-      {selectedCategory && (
+      {/* Selected Categories */}
+      {selectedCategories.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mb-2">
-          <div className="group flex items-center gap-1 px-2 py-0.5 bg-primary/10 text-primary rounded-full text-sm hover:bg-primary/20 transition-colors">
-            <Icon icon="material-symbols:category" className="w-3.5 h-3.5" />
-            <span>
-              {categories.find(c => c.id === selectedCategory)?.name}
-            </span>
-            <button
-              onClick={onCategoryRemove}
-              className="opacity-75 group-hover:opacity-100 hover:text-primary/80 transition-all"
-              aria-label="Remove category filter"
-            >
-              <Icon icon="material-symbols:close" className="w-3.5 h-3.5" />
-            </button>
-          </div>
+          {selectedCategories.map(categoryId => {
+            const category = categories.find(c => c.id === categoryId);
+            if (!category) return null;
+            
+            return (
+              <div key={categoryId} className="group flex items-center gap-1 px-2 py-0.5 bg-primary/10 text-primary rounded-full text-sm hover:bg-primary/20 transition-colors">
+                <Icon icon="material-symbols:category" className="w-3.5 h-3.5" />
+                <span>{category.name}</span>
+                <button
+                  onClick={() => onCategoryRemove(categoryId)}
+                  className="opacity-75 group-hover:opacity-100 hover:text-primary/80 transition-all"
+                  aria-label="Remove category filter"
+                >
+                  <Icon icon="material-symbols:close" className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            );
+          })}
         </div>
       )}
 
@@ -109,7 +114,7 @@ export default function CategorySelector({
           <input
             ref={inputRef}
             type="text"
-            placeholder="Search and select category..."
+            placeholder="Search and select categories..."
             className="w-full pl-8 pr-3 py-1.5 bg-background text-foreground placeholder:text-muted-foreground border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -142,18 +147,17 @@ export default function CategorySelector({
                   key={category.id}
                   onClick={() => {
                     onCategorySelect(category.id);
-                    setShowDropdown(false);
                     setSearch('');
                   }}
-                  disabled={selectedCategory === category.id}
+                  disabled={selectedCategories.includes(category.id)}
                   className={`w-full px-3 py-2 text-left text-sm hover:bg-accent transition-colors flex items-center gap-2
-                    ${selectedCategory === category.id
+                    ${selectedCategories.includes(category.id)
                       ? 'opacity-50 cursor-not-allowed'
                       : ''
                     }`}
                 >
                   <Icon 
-                    icon={selectedCategory === category.id 
+                    icon={selectedCategories.includes(category.id)
                       ? "material-symbols:check-circle" 
                       : "material-symbols:radio-button-unchecked"
                     } 

@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     const author = searchParams.get('author')?.trim();
     const tags = searchParams.getAll('tags');
     const status = searchParams.get('status') as NovelStatus | null;
-    const category = searchParams.get('category')?.trim();
+    const categories = searchParams.getAll('categories');
     const page = parseInt(searchParams.get('page') || '1');
     const skip = (page - 1) * ITEMS_PER_PAGE;
     const isBasicSearch = searchParams.get('basic') === 'true';
@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
     if (author) {
       where = {
         ...where,
-        translator: {
+        authorProfile: {
           username: {
             mode: 'insensitive',
             equals: author
@@ -93,16 +93,21 @@ export async function GET(request: NextRequest) {
     }
 
     // Add category filtering
-    if (category) {
-      where = {
-        ...where,
+    if (categories.length > 0) {
+      const existingAnd = Array.isArray(where.AND) ? where.AND : [];
+      const categoryConditions = categories.map(categoryId => ({
         categories: {
           some: {
             category: {
-              id: category
+              id: categoryId
             }
           }
         }
+      }));
+
+      where = {
+        ...where,
+        AND: [...existingAnd, ...categoryConditions]
       };
     }
 
