@@ -12,7 +12,7 @@ const NovelStatistics = () => {
     {
       icon: 'ph:book-bookmark-duotone',
       label: 'Total Chapters',
-      value: 8811,
+      value: 8905,
       color: 'violet'
     },
     {
@@ -24,7 +24,7 @@ const NovelStatistics = () => {
     {
       icon: 'ph:users-duotone',
       label: 'Translators',
-      value: 36,
+      value: 38,
       color: 'amber',
       href: '/translators'
     }
