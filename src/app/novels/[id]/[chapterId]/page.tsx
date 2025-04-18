@@ -87,6 +87,24 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
   const [fontSize, setFontSize] = useLocalStorage('chapter-font-size', 16);
   const [user, setUser] = useState<{ id: string } | null>(null);
 
+  // Handle URL fragment scrolling after content loads
+  useEffect(() => {
+    if (isLoading || !chapter) return;
+    
+    // Check if there's a hash in the URL
+    if (window.location.hash) {
+      const hash = window.location.hash.substring(1); // Remove the # character
+      const element = document.getElementById(hash);
+      
+      if (element) {
+        // Add a longer delay to ensure DOM is fully rendered with all content
+        setTimeout(() => {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }, 500);
+      }
+    }
+  }, [isLoading, chapter]);
+
   useEffect(() => {
     const loadUserData = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -482,7 +500,7 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
       </div>
 
       {/* Chapter Comments */}
-      <div className="mt-2 border-t pt-2">
+      <div id="chapter-comments" className="mt-2 border-t pt-2">
         <ChapterComments
           chapterId={chapter.id}
           authorId={chapter.novel.author_profile_id}
