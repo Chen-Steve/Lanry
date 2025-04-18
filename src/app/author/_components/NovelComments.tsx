@@ -325,7 +325,7 @@ export default function NovelComments() {
                           ? `/novels/${comment.chapter.novel.slug}`
                           : `/novels/${comment.chapter.novel.slug}/c${comment.chapter_number}${
                               comment.part_number ? `-p${comment.part_number}` : ''
-                            }`
+                            }${comment.paragraph_id ? `#${comment.paragraph_id}` : ''}`
                         }
                         className="text-sm text-muted-foreground hover:text-primary transition-colors"
                         target="_blank"
