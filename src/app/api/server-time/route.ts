@@ -1,10 +1,14 @@
 import { NextResponse } from 'next/server';
-import supabase from '@/lib/supabaseClient';
+import { cookies } from 'next/headers';
+import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 
 export async function GET() {
   try {
-    // Try to get server time from Supabase
-    const { data: serverTime, error } = await supabase.rpc('get_server_time');
+    // Create server client with cookies (needed for auth-helpers-nextjs)
+    const supabaseServer = createServerComponentClient({ cookies });
+    
+    // Try to get server time from Supabase using the server client
+    const { data: serverTime, error } = await supabaseServer.rpc('get_server_time');
     
     // If there's an error with the RPC call or the function doesn't exist,
     // fallback to using the server's time directly
