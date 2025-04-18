@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { Icon } from '@iconify/react';
 import supabase from '@/lib/supabaseClient';
 import { toast } from 'react-hot-toast';
+import { CommentReplies } from './CommentReplies';
 
 interface CommentItemProps {
   comment: {
@@ -22,14 +23,17 @@ interface CommentItemProps {
   authorId: string;
   onEdit: (commentId: string, content: string) => Promise<void>;
   onDelete: (commentId: string) => Promise<void>;
+  chapterId: string;
 }
 
-export function CommentItem({ comment, userId, authorId, onEdit, onDelete }: CommentItemProps) {
+export function CommentItem({ comment, userId, authorId, onEdit, onDelete, chapterId }: CommentItemProps) {
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
   const [likesCount, setLikesCount] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
   const [isLikeLoading, setIsLikeLoading] = useState(false);
+  const [replyCount, setReplyCount] = useState(0);
+  const [isRepliesExpanded, setIsRepliesExpanded] = useState(false);
 
   useEffect(() => {
     // Fetch initial likes count and user's like status
@@ -63,6 +67,25 @@ export function CommentItem({ comment, userId, authorId, onEdit, onDelete }: Com
 
     fetchLikes();
   }, [comment.id, userId]);
+
+  // Fetch reply count
+  useEffect(() => {
+    const fetchReplyCount = async () => {
+      try {
+        const { count, error } = await supabase
+          .from('chapter_thread_comments')
+          .select('id', { count: 'exact', head: true })
+          .eq('parent_comment_id', comment.id);
+
+        if (error) throw error;
+        setReplyCount(count || 0);
+      } catch (err) {
+        console.error('Error fetching reply count:', err);
+      }
+    };
+
+    fetchReplyCount();
+  }, [comment.id]);
 
   const handleLikeToggle = async () => {
     if (!userId) {
@@ -113,6 +136,10 @@ export function CommentItem({ comment, userId, authorId, onEdit, onDelete }: Com
     setEditContent(comment.content);
   };
 
+  const handleReplyAdded = () => {
+    setReplyCount(prev => prev + 1);
+  };
+
   const renderAvatar = (username: string, avatarUrl?: string) => {
     if (avatarUrl) {
       return (
@@ -143,113 +170,148 @@ export function CommentItem({ comment, userId, authorId, onEdit, onDelete }: Com
   };
 
   return (
-    <div className="flex gap-3">
-      <div className="flex-shrink-0">
-        {renderAvatar(comment.profile.username, comment.profile.avatar_url)}
-      </div>
-      <div className="flex-grow space-y-1">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <span className="font-medium">{comment.profile.username}</span>
-            {comment.profile.role && comment.profile.role !== 'USER' && (
-              <span className={`px-1 py-0.5 text-xs font-medium rounded inline-flex items-center flex-shrink-0 ${
-                comment.profile.role === 'AUTHOR' ? 'bg-yellow-100 dark:bg-yellow-900/30' :
-                comment.profile.role === 'TRANSLATOR' ? 'bg-blue-100 dark:bg-blue-900/30' :
-                comment.profile.role === 'ADMIN' ? 'bg-red-100 dark:bg-red-900/30' :
-                comment.profile.role === '' ? 'bg-purple-100 dark:bg-purple-900/30' :
-                'bg-gray-100 dark:bg-gray-800'
-              } text-black dark:text-gray-200`}>
-                {comment.profile.role.charAt(0) + comment.profile.role.slice(1).toLowerCase()}
-              </span>
-            )}
-          </div>
-          <div className="flex items-center gap-2 text-sm">
-            <time dateTime={comment.createdAt} className="text-muted-foreground">
-              {new Date(comment.createdAt).toLocaleDateString()}
-            </time>
-            <button
-              onClick={handleLikeToggle}
-              disabled={isLikeLoading}
-              className={`flex items-center gap-1 transition-colors ${
-                isLiked 
-                  ? 'text-red-500 hover:text-red-600' 
-                  : 'text-muted-foreground hover:text-red-500'
-              }`}
-              title={isLiked ? 'Unlike' : 'Like'}
-            >
-              <Icon 
-                icon={isLiked ? "mdi:heart" : "mdi:heart-outline"} 
-                className={`w-4 h-4 ${isLikeLoading ? 'animate-pulse' : ''}`} 
-              />
-              <span>{likesCount}</span>
-            </button>
-          </div>
+    <div className="space-y-2">
+      <div className="flex gap-3">
+        <div className="flex-shrink-0">
+          {renderAvatar(comment.profile.username, comment.profile.avatar_url)}
         </div>
-        {editingCommentId === comment.id ? (
-          <div className="space-y-2">
-            <Textarea
-              value={editContent}
-              onChange={(e) => setEditContent(e.target.value)}
-              className="w-full min-h-[100px]"
-            />
-            <div className="flex gap-2">
-              <Button
-                onClick={() => {
-                  onEdit(comment.id, editContent);
-                  setEditingCommentId(null);
-                }}
-                disabled={!editContent.trim() || editContent.trim() === comment.content}
-                className="text-sm"
+        <div className="flex-grow space-y-1">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <span className="font-medium">{comment.profile.username}</span>
+              {comment.profile.role && comment.profile.role !== 'USER' && (
+                <span className={`px-1 py-0.5 text-xs font-medium rounded inline-flex items-center flex-shrink-0 ${
+                  comment.profile.role === 'AUTHOR' ? 'bg-yellow-100 dark:bg-yellow-900/30' :
+                  comment.profile.role === 'TRANSLATOR' ? 'bg-blue-100 dark:bg-blue-900/30' :
+                  comment.profile.role === 'ADMIN' ? 'bg-red-100 dark:bg-red-900/30' :
+                  comment.profile.role === '' ? 'bg-purple-100 dark:bg-purple-900/30' :
+                  'bg-gray-100 dark:bg-gray-800'
+                } text-black dark:text-gray-200`}>
+                  {comment.profile.role.charAt(0) + comment.profile.role.slice(1).toLowerCase()}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <time dateTime={comment.createdAt} className="text-muted-foreground">
+                {new Date(comment.createdAt).toLocaleDateString()}
+              </time>
+              <button
+                onClick={handleLikeToggle}
+                disabled={isLikeLoading}
+                className={`flex items-center gap-1 transition-colors ${
+                  isLiked 
+                    ? 'text-red-500 hover:text-red-600' 
+                    : 'text-muted-foreground hover:text-red-500'
+                }`}
+                title={isLiked ? 'Unlike' : 'Like'}
               >
-                Save
-              </Button>
-              <Button
-                onClick={() => {
-                  setEditingCommentId(null);
-                  setEditContent('');
-                }}
-                variant="outline"
-                className="text-sm"
-              >
-                Cancel
-              </Button>
+                <Icon 
+                  icon={isLiked ? "mdi:heart" : "mdi:heart-outline"} 
+                  className={`w-4 h-4 ${isLikeLoading ? 'animate-pulse' : ''}`} 
+                />
+                <span>{likesCount}</span>
+              </button>
             </div>
           </div>
-        ) : (
-          <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">{comment.content}</p>
-            <div className="flex justify-end gap-2">
-              {userId === comment.profile.id && (
-                <>
-                  <button
-                    onClick={startEditing}
-                    className="text-blue-500 hover:text-blue-600 transition-colors p-1 rounded-md hover:bg-blue-50 dark:hover:bg-blue-900/20"
-                    title="Edit comment"
-                  >
-                    <Icon icon="lucide:edit-2" className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => onDelete(comment.id)}
-                    className="text-red-500 hover:text-red-600 transition-colors p-1 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20"
-                    title="Delete comment"
-                  >
-                    <Icon icon="lucide:trash-2" className="w-4 h-4" />
-                  </button>
-                </>
-              )}
-              {userId === authorId && userId !== comment.profile.id && (
-                <button
-                  onClick={() => onDelete(comment.id)}
-                  className="text-red-500 hover:text-red-600 transition-colors p-1 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20"
-                  title="Delete comment"
+          {editingCommentId === comment.id ? (
+            <div className="space-y-2">
+              <Textarea
+                value={editContent}
+                onChange={(e) => setEditContent(e.target.value)}
+                className="w-full min-h-[100px] dark:text-black"
+              />
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => {
+                    onEdit(comment.id, editContent);
+                    setEditingCommentId(null);
+                  }}
+                  disabled={!editContent.trim() || editContent.trim() === comment.content}
+                  className="text-sm"
                 >
-                  <Icon icon="mdi:delete" className="w-4 h-4" />
-                </button>
-              )}
+                  Save
+                </Button>
+                <Button
+                  onClick={() => {
+                    setEditingCommentId(null);
+                    setEditContent('');
+                  }}
+                  variant="outline"
+                  className="text-sm"
+                >
+                  Cancel
+                </Button>
+              </div>
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">{comment.content}</p>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setIsRepliesExpanded(!isRepliesExpanded)}
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+                  >
+                    {replyCount > 0 ? (
+                      <>
+                        <Icon 
+                          icon={isRepliesExpanded ? "mdi:chevron-down" : "mdi:chevron-right"} 
+                          className="w-4 h-4" 
+                        />
+                        <span>{replyCount} {replyCount === 1 ? 'reply' : 'replies'}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Icon icon="mdi:reply" className="w-4 h-4" />
+                        <span>Reply</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+                <div className="flex justify-end gap-2">
+                  {userId === comment.profile.id && (
+                    <>
+                      <button
+                        onClick={startEditing}
+                        className="text-blue-500 hover:text-blue-600 transition-colors p-1 rounded-md hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                        title="Edit comment"
+                      >
+                        <Icon icon="lucide:edit-2" className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => onDelete(comment.id)}
+                        className="text-red-500 hover:text-red-600 transition-colors p-1 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20"
+                        title="Delete comment"
+                      >
+                        <Icon icon="lucide:trash-2" className="w-4 h-4" />
+                      </button>
+                    </>
+                  )}
+                  {userId === authorId && userId !== comment.profile.id && (
+                    <button
+                      onClick={() => onDelete(comment.id)}
+                      className="text-red-500 hover:text-red-600 transition-colors p-1 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20"
+                      title="Delete comment"
+                    >
+                      <Icon icon="mdi:delete" className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
+
+      {/* Replies section */}
+      <CommentReplies
+        parentCommentId={comment.id}
+        chapterId={chapterId}
+        isExpanded={isRepliesExpanded}
+        userId={userId}
+        authorId={authorId}
+        onReplyAdded={handleReplyAdded}
+      />
     </div>
   );
 } 

@@ -295,6 +295,7 @@ export function ChapterComments({ chapterId, authorId }: ChapterCommentsProps) {
             authorId={authorId}
             onEdit={handleEdit}
             onDelete={handleDelete}
+            chapterId={chapterId}
           />
         ))}
       </div>

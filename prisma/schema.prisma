@@ -210,10 +210,16 @@ model ChapterThreadComment {
   profileId     String   @map("profile_id")
   chapter       Chapter  @relation(fields: [chapterId], references: [id], onDelete: Cascade)
   likes         ChapterThreadCommentLike[]
+  
+  // Add parent-child relationship for replies
+  parent        ChapterThreadComment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  parentId      String?               @map("parent_comment_id")
+  replies       ChapterThreadComment[] @relation("CommentReplies")
 
   @@index([chapterId])
   @@index([profileId])
   @@index([createdAt])
+  @@index([parentId])
   @@map("chapter_thread_comments")
 }
 
