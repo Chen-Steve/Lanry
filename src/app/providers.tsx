@@ -6,6 +6,7 @@ import { User } from '@supabase/auth-helpers-nextjs';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { PayPalScriptProvider } from "@paypal/react-paypal-js";
 import supabase from '@/lib/supabaseClient';
+import { ServerTimeProvider } from '@/providers/ServerTimeProvider';
 
 interface SupabaseContext {
   supabase: SupabaseClient;
@@ -107,7 +108,9 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       <PayPalScriptProvider options={paypalInitialOptions}>
         <SupabaseContext.Provider value={{ supabase, user }}>
           <QueryClientProvider client={queryClient}>
-            {children}
+            <ServerTimeProvider>
+              {children}
+            </ServerTimeProvider>
           </QueryClientProvider>
         </SupabaseContext.Provider>
       </PayPalScriptProvider>

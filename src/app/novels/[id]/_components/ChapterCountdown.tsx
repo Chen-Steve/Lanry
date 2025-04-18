@@ -1,12 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useServerTimeContext } from '@/providers/ServerTimeProvider';
 
 interface ChapterCountdownProps {
   publishDate: string;
 }
 
 export function ChapterCountdown({ publishDate }: ChapterCountdownProps) {
+  const { getServerTime } = useServerTimeContext();
   const [timeLeft, setTimeLeft] = useState<{
     days: number;
     hours: number;
@@ -16,7 +18,8 @@ export function ChapterCountdown({ publishDate }: ChapterCountdownProps) {
 
   useEffect(() => {
     const calculateTimeLeft = () => {
-      const difference = new Date(publishDate).getTime() - new Date().getTime();
+      const serverNow = getServerTime();
+      const difference = new Date(publishDate).getTime() - serverNow.getTime();
       
       if (difference <= 0) {
         setTimeLeft(null);
@@ -38,7 +41,7 @@ export function ChapterCountdown({ publishDate }: ChapterCountdownProps) {
     const timer = setInterval(calculateTimeLeft, 1000);
 
     return () => clearInterval(timer);
-  }, [publishDate]);
+  }, [publishDate, getServerTime]);
 
   if (!timeLeft) {
     return null;

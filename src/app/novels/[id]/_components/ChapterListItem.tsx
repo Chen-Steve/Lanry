@@ -6,6 +6,7 @@ import { useState, useCallback, memo } from 'react';
 import { useRouter } from 'next/navigation';
 import supabase from '@/lib/supabaseClient';
 import { ChapterCountdown } from './ChapterCountdown';
+import { useServerTimeContext } from '@/providers/ServerTimeProvider';
 
 interface ChapterListItemProps {
   chapter: {
@@ -43,6 +44,7 @@ export const ChapterListItem = memo(function ChapterListItem({
 }: ChapterListItemProps) {
   const [isUnlocking, setIsUnlocking] = useState(false);
   const router = useRouter();
+  const { getServerTime } = useServerTimeContext();
 
   const unlockChapter = useCallback(async (
     novelId: string,
@@ -189,8 +191,10 @@ export const ChapterListItem = memo(function ChapterListItem({
 
   const isFree = !chapter.coins || chapter.coins === 0;
 
-  // Add helper to check if chapter is advanced
-  const isAdvancedChapter = chapter.publish_at && new Date(chapter.publish_at) > new Date() && (chapter.coins ?? 0) > 0;
+  // Updated helper to check if chapter is advanced using server time
+  const isAdvancedChapter = chapter.publish_at && 
+                          new Date(chapter.publish_at) > getServerTime() && 
+                          (chapter.coins ?? 0) > 0;
 
   // Add helper to check if chapter is extra
   const isExtraChapter = chapter.part_number === -1;
