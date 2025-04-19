@@ -41,7 +41,7 @@ const CuratedNovels = ({ novels, className = '' }: CuratedNovelsProps) => {
       <div className="relative px-4 py-2 bg-background">
         <h2 
           style={{ fontFamily: "'Dancing Script', cursive" }} 
-          className="text-indigo-600 dark:text-indigo-300 font-bold text-2xl md:text-3xl"
+          className="text-indigo-600 dark:text-indigo-300 font-bold text-2xl"
         >
           Curated For You
         </h2>
