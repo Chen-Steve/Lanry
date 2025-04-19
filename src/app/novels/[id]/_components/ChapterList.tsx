@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Icon } from '@iconify/react';
 import { getChaptersForList, ChapterListItem, ChapterCounts } from '@/services/chapterService';
 import { useServerTimeContext } from '@/providers/ServerTimeProvider';
+import { BulkPurchaseModal } from './BulkPurchaseModal';
 
 interface ChapterListProps {
   initialChapters: ChapterListItem[];
@@ -71,6 +72,7 @@ export const ChapterList = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [volumeCounts, setVolumeCounts] = useState(new Map<string, { total: number; regular: number; advanced: number }>());
+  const [isBulkPurchaseModalOpen, setIsBulkPurchaseModalOpen] = useState(false);
 
   // Calculate volume-specific counts only once on initial render or when volumes/initialChapters change
   useEffect(() => {
@@ -414,6 +416,19 @@ export const ChapterList = ({
     };
   }, [chapters, volumes, sortChapters]);
 
+  // Create a filtered list of advanced chapters that are not unlocked for the bulk purchase modal
+  const purchasableAdvancedChapters = useMemo(() => {
+    const serverNow = getServerTime().toISOString();
+    
+    return chapters.filter(ch => {
+      const isAdvanced = ch.publish_at && 
+                       ch.publish_at > serverNow && // Future publish date
+                       (ch.coins || 0) > 0;
+      const isAccessible = ch.isUnlocked || ch.hasTranslatorAccess;
+      return isAdvanced && !isAccessible;
+    });
+  }, [chapters, getServerTime]);
+
   return (
     <div className="max-w-5xl mx-auto">
       <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
@@ -450,6 +465,18 @@ export const ChapterList = ({
                 <span className="text-xs">
                   ({chapterCounts.advancedCount})
                 </span>
+              </button>
+            )}
+            
+            {/* Add Bulk Purchase Button */}
+            {isAuthenticated && showAdvancedChapters && purchasableAdvancedChapters.length > 1 && (
+              <button
+                onClick={() => setIsBulkPurchaseModalOpen(true)}
+                disabled={isLoading}
+                className="ml-auto px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Icon icon="solar:cart-3-linear" className="w-4 h-4" />
+                Bulk Purchase
               </button>
             )}
           </div>
@@ -553,6 +580,16 @@ export const ChapterList = ({
           )}
         </div>
       </div>
+      
+      {/* Bulk Purchase Modal */}
+      <BulkPurchaseModal
+        isOpen={isBulkPurchaseModalOpen}
+        onClose={() => setIsBulkPurchaseModalOpen(false)}
+        advancedChapters={purchasableAdvancedChapters}
+        userProfileId={userProfile?.id}
+        novelId={novelId}
+        novelAuthorId={novelAuthorId}
+      />
     </div>
   );
 }; 
