@@ -167,9 +167,6 @@ export default function BookmarksContent() {
           <Icon icon="mdi:bookmark-multiple" className="w-6 h-6" />
           My Bookmarks
         </h1>
-        <p className="text-muted-foreground mt-1">
-          Manage and organize your bookmarked novels
-        </p>
       </div>
 
       {/* Navigation and Actions */}

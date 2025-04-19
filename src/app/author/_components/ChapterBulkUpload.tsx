@@ -119,16 +119,11 @@ export default function ChapterBulkUpload({ novelId, userId, onUploadComplete, v
       const lines = content.split('\n').filter(line => line.trim());
       return extractChapterInfo(lines, file.name);
     } else if (file.name.endsWith('.md')) {
-      // For markdown files, preserve the original content
+      // For markdown files, filter empty lines and use extractChapterInfo for paragraph separation
       const decoder = new TextDecoder('utf-8');
-      const content = decoder.decode(file.content);
-      const lines = content.split('\n');
-      const chapterInfo = extractChapterInfo(lines, file.name);
-      // Return the original content without filtering out empty lines
-      return {
-        ...chapterInfo,
-        content: content
-      };
+      const contentStr = decoder.decode(file.content);
+      const lines = contentStr.split('\n').filter(line => line.trim());
+      return extractChapterInfo(lines, file.name);
     } else {
       // For docx files, extract all content
       const result = await mammoth.extractRawText({ arrayBuffer: file.content });
