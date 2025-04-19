@@ -15,10 +15,7 @@ import { toast } from 'react-hot-toast';
 import ScreenshotProtection from '../ScreenshotProtection';
 import ChapterParagraph from './ChapterParagraph';
 import TranslatorChapterEdit from './TranslatorChapterEdit';
-import Script from 'next/script';
 import { TranslatorLinks } from '@/app/novels/[id]/_components/TranslatorLinks';
-
-// Extend the base type to include avatar_url
 interface ChapterComment extends Omit<BaseChapterComment, 'profile'> {
   profile?: {
     username: string | null;
@@ -271,19 +268,6 @@ export default function ChapterContent({
 
   return (
     <div className="max-w-2xl mx-auto" ref={contentRef}>
-      {/* Ad Unit */}
-      <div className="my-4">
-        <div id="pf-13995-1">
-          <Script
-            id="pubfuture-ad"
-            dangerouslySetInnerHTML={{
-              __html: `window.pubfuturetag = window.pubfuturetag || [];
-              window.pubfuturetag.push({unit: "67c7cde504d811003cdb4e14", id: "pf-13995-1"})`
-            }}
-          />
-        </div>
-      </div>
-
       <div 
         className="prose dark:prose-invert max-w-none"
         style={{ 

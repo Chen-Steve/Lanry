@@ -63,12 +63,6 @@ export default function RootLayout({
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7984663674761616"
           crossOrigin="anonymous"
         />
-        <Script
-          async
-          data-cfasync="false"
-          src="https://cdn.pubfuture-ad.com/v2/unit/pt.js"
-          strategy="afterInteractive"
-        />
       </head>
       <body className="min-h-screen relative overflow-x-hidden">
         <Providers>
@@ -105,14 +99,6 @@ export default function RootLayout({
             </div>
             <Toaster position="bottom-right" />
             <CookieConsent />
-            <div id="pf-13996-1">
-              <Script id="pubfuture-ad-unit">
-                {`
-                  window.pubfuturetag = window.pubfuturetag || [];
-                  window.pubfuturetag.push({unit: "67c7cdf5b588da003cdb26a5", id: "pf-13996-1"})
-                `}
-              </Script>
-            </div>
           </ThemeProvider>
         </Providers>
       </body>
