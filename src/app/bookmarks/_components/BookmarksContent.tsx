@@ -8,7 +8,7 @@ import FolderGrid from './FolderGrid';
 import BulkDeleteDialog from './BulkDeleteDialog';
 import BulkMoveDialog from './BulkMoveDialog';
 import { Icon } from '@iconify/react';
-import { fetchFolders } from './BookmarkFolders';
+import { fetchFolders, CreateFolderDialog } from './BookmarkFolders';
 
 type Tab = 'bookmarks' | 'folders';
 type Mode = 'view' | 'select';
@@ -20,6 +20,7 @@ export default function BookmarksContent() {
   const [userId, setUserId] = useState<string>();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isMoveDialogOpen, setIsMoveDialogOpen] = useState(false);
+  const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(false);
   const queryClient = useQueryClient();
 
   // Get initial auth state
@@ -118,6 +119,47 @@ export default function BookmarksContent() {
     setIsMoveDialogOpen(true);
   };
 
+  const createFolderMutation = useMutation({
+    mutationFn: async (name: string) => {
+      if (!userId) throw new Error('Not authenticated');
+
+      const id = crypto.randomUUID();
+      const now = new Date().toISOString();
+      
+      const { data, error } = await supabase
+        .from('bookmark_folders')
+        .insert({
+          id,
+          name,
+          profile_id: userId,
+          icon: 'mdi:folder',
+          created_at: now,
+          updated_at: now,
+          description: null,
+          parent_folder_id: null
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Supabase error:', error);
+        if (error.code === '23505') {
+          throw new Error('A folder with this name already exists');
+        }
+        throw error;
+      }
+
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bookmarkFolders'] });
+      setIsCreateFolderOpen(false);
+    },
+    onError: (error: Error) => {
+      console.error('Error creating folder:', error);
+    }
+  });
+
   return (
     <main className="container max-w-5xl mx-auto px-4 py-6">
       <div className="mb-6">
@@ -156,6 +198,55 @@ export default function BookmarksContent() {
               Folders
             </button>
           </div>
+          
+          {/* Action Buttons - depends on active tab */}
+          {activeTab === 'bookmarks' && mode === 'view' && (
+            <button
+              onClick={() => handleModeChange('select')}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+            >
+              <Icon icon="mdi:pencil" className="w-4 h-4" />
+              <span>Edit</span>
+            </button>
+          )}
+          
+          {activeTab === 'bookmarks' && mode === 'select' && (
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleModeChange('view')}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md bg-background text-foreground hover:bg-accent/50 transition-colors"
+              >
+                <Icon icon="mdi:close" className="w-4 h-4" />
+                <span>Cancel</span>
+              </button>
+              <button
+                onClick={handleBulkDelete}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md bg-background text-red-500 hover:bg-accent/50 transition-colors"
+                disabled={selectedItems.length === 0}
+              >
+                <Icon icon="mdi:trash-can" className="w-4 h-4" />
+                <span>Delete {selectedItems.length > 0 ? `(${selectedItems.length})` : ''}</span>
+              </button>
+              <button
+                onClick={handleBulkMove}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                disabled={selectedItems.length === 0}
+              >
+                <Icon icon="mdi:folder-open" className="w-4 h-4" />
+                <span>Move {selectedItems.length > 0 ? `(${selectedItems.length})` : ''}</span>
+              </button>
+            </div>
+          )}
+          
+          {activeTab === 'folders' && (
+            <button
+              onClick={() => setIsCreateFolderOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+            >
+              <Icon icon="mdi:plus" className="w-4 h-4" />
+              <span>New Folder</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -169,16 +260,16 @@ export default function BookmarksContent() {
             setSelectedItems(items);
             if (items.length === 0 && mode === 'select') {
               handleModeChange('view');
-            } else if (mode === 'view') {
-              handleModeChange('select');
             }
           }}
-          onBulkDelete={handleBulkDelete}
-          onBulkMove={handleBulkMove}
         />
       )}
       {activeTab === 'folders' && (
-        <FolderGrid userId={userId} />
+        <FolderGrid 
+          userId={userId} 
+          showNewFolderButton={false}
+          onNewFolderRequest={() => setIsCreateFolderOpen(true)}
+        />
       )}
 
       <BulkDeleteDialog
@@ -194,6 +285,12 @@ export default function BookmarksContent() {
         onConfirm={(folderId) => bulkMoveMutation.mutate(folderId)}
         count={selectedItems.length}
         folders={folders}
+      />
+
+      <CreateFolderDialog
+        isOpen={isCreateFolderOpen}
+        onClose={() => setIsCreateFolderOpen(false)}
+        onConfirm={(name) => createFolderMutation.mutate(name)}
       />
     </main>
   );

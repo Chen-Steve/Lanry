@@ -22,8 +22,6 @@ interface BookmarkListProps {
   mode?: 'view' | 'select';
   selectedItems?: string[];
   onSelectionChange?: (items: string[]) => void;
-  onBulkDelete?: () => void;
-  onBulkMove?: () => void;
 }
 
 interface DeleteConfirmationProps {
@@ -74,9 +72,7 @@ const BookmarkList = ({
   isOwnProfile = false,
   mode = 'view',
   selectedItems = [],
-  onSelectionChange = () => {},
-  onBulkDelete,
-  onBulkMove
+  onSelectionChange = () => {}
 }: BookmarkListProps) => {
   const queryClient = useQueryClient();
   const [deleteConfirmation, setDeleteConfirmation] = useState<{ id: string; title: string } | null>(null);
@@ -311,48 +307,6 @@ const BookmarkList = ({
         {isFetchingNextPage && (
           <div className="py-4 text-center">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto" />
-          </div>
-        )}
-
-        {/* Selection Action Button */}
-        {isOwnProfile && (
-          <div className="fixed sm:absolute bottom-[7.5rem] sm:bottom-4 right-4 flex gap-2 z-50">
-            {mode === 'view' ? (
-              <button
-                onClick={() => {
-                  if (typeof onSelectionChange === 'function') {
-                    onSelectionChange([]);
-                  }
-                }}
-                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium shadow-lg hover:bg-primary/90 transition-colors backdrop-blur-sm"
-                aria-label="Select bookmarks"
-              >
-                Edit
-              </button>
-            ) : (
-              <>
-                <button
-                  onClick={() => onSelectionChange([])}
-                  className="px-4 py-2 bg-background/95 text-foreground rounded-lg text-sm font-medium shadow-lg hover:bg-accent transition-colors backdrop-blur-sm"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={onBulkDelete}
-                  className="px-4 py-2 bg-background/95 text-red-500 rounded-lg text-sm font-medium shadow-lg hover:bg-accent transition-colors backdrop-blur-sm"
-                  disabled={selectedItems.length === 0}
-                >
-                  Delete {selectedItems.length > 0 ? `(${selectedItems.length})` : ''}
-                </button>
-                <button
-                  onClick={onBulkMove}
-                  className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium shadow-lg hover:bg-primary/90 transition-colors"
-                  disabled={selectedItems.length === 0}
-                >
-                  Move {selectedItems.length > 0 ? `(${selectedItems.length})` : ''}
-                </button>
-              </>
-            )}
           </div>
         )}
       </div>
