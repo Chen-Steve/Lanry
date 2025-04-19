@@ -2,13 +2,15 @@
 
 import { Novel } from '@/types/database';
 import { useEffect, useState } from 'react';
-import { getCachedNovels, getNovelsWithAdvancedChapters, getTopNovels } from '@/services/novelService';
+import { getCachedNovels, getNovelsWithAdvancedChapters, getTopNovels, getCuratedNovels } from '@/services/novelService';
 import LoadingGrid from './LoadingGrid';
 import AdvancedChapters from './AdvancedChapters';
 import NewReleases from './RecentReleases';
 import FeaturedNovel from './FeaturedNovel';
 import RegularNovels from './RegularNovels';
 import NovelStatistics from './NovelStatistics';
+import CuratedNovels from './CuratedNovels';
+import supabase from '@/lib/supabaseClient';
 
 const NovelListing = () => {
   const [novels, setNovels] = useState<Novel[]>([]);
@@ -18,8 +20,20 @@ const NovelListing = () => {
   const [featuredNovels, setFeaturedNovels] = useState<Novel[]>([]);
   const [advancedNovels, setAdvancedNovels] = useState<Novel[]>([]);
   const [recentAdvancedNovels, setRecentAdvancedNovels] = useState<Novel[]>([]);
+  const [curatedNovels, setCuratedNovels] = useState<Novel[]>([]);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const ITEMS_PER_PAGE = 14;
+
+  useEffect(() => {
+    // Check if user is logged in
+    const checkUserSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsLoggedIn(!!session?.user);
+    };
+    
+    checkUserSession();
+  }, []);
 
   useEffect(() => {
     const fetchNovels = async () => {
@@ -37,6 +51,12 @@ const NovelListing = () => {
         if (currentPage === 1) {
           const topNovels = await getTopNovels();
           setFeaturedNovels(topNovels);
+          
+          // Only fetch curated novels if user is logged in
+          if (isLoggedIn) {
+            const personalizedNovels = await getCuratedNovels();
+            setCuratedNovels(personalizedNovels);
+          }
         }
       } catch (error) {
         console.error('Error fetching novels:', error);
@@ -46,7 +66,7 @@ const NovelListing = () => {
     };
 
     fetchNovels();
-  }, [currentPage]);
+  }, [currentPage, isLoggedIn]);
 
   useEffect(() => {
     const fetchAdvancedNovels = async () => {
@@ -99,6 +119,13 @@ const NovelListing = () => {
         }))}
         className="mb-2"
       />
+
+      {isLoggedIn && curatedNovels.length > 0 && (
+        <CuratedNovels 
+          novels={curatedNovels} 
+          className="mb-1"
+        />
+      )}
 
       <RegularNovels
         novels={novels}

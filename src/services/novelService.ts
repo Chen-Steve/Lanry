@@ -528,3 +528,159 @@ export async function getTopNovels(): Promise<Novel[]> {
     return [];
   }
 }
+
+export async function getCuratedNovels(limit: number = 10): Promise<Novel[]> {
+  try {
+    // Try to get the current user's session
+    const { data: { session } } = await supabase.auth.getSession();
+    const userId = session?.user?.id;
+
+    if (!userId) {
+      // If user is not logged in, return popular novels instead
+      return getTopNovels();
+    }
+
+    // Get user's bookmarks, ratings, and unlocked chapters to understand preferences
+    const [bookmarksResult, ratingsResult, unlocksResult] = await Promise.all([
+      supabase
+        .from('bookmarks')
+        .select('novel_id')
+        .eq('profile_id', userId),
+      supabase
+        .from('novel_ratings')
+        .select('novel_id, rating')
+        .eq('profile_id', userId)
+        .gte('rating', 4), // Only consider highly rated novels (4+ stars)
+      supabase
+        .from('chapter_unlocks')
+        .select('novel_id')
+        .eq('profile_id', userId)
+    ]);
+
+    // Extract novel IDs from user interactions
+    const bookmarkedNovelIds = (bookmarksResult.data || []).map(b => b.novel_id);
+    const highlyRatedNovelIds = (ratingsResult.data || []).map(r => r.novel_id);
+    const unlockedNovelIds = (unlocksResult.data || []).map(u => u.novel_id);
+
+    // Combine all novel IDs the user has interacted with
+    const userInteractedNovelIds = [...new Set([
+      ...bookmarkedNovelIds,
+      ...highlyRatedNovelIds,
+      ...unlockedNovelIds
+    ])];
+
+    if (userInteractedNovelIds.length === 0) {
+      // If user hasn't interacted with any novels, return popular novels
+      return getTopNovels();
+    }
+
+    // Get categories and tags from novels the user has interacted with
+    const { data: userNovelMetadata } = await supabase
+      .from('novels')
+      .select(`
+        id,
+        categories:categories_on_novels (
+          category_id
+        ),
+        tags:tags_on_novels (
+          tag_id
+        )
+      `)
+      .in('id', userInteractedNovelIds);
+
+    // Extract category and tag IDs
+    const userCategoryIds = new Set<string>();
+    const userTagIds = new Set<string>();
+
+    (userNovelMetadata || []).forEach(novel => {
+      novel.categories?.forEach((cat: { category_id: string }) => 
+        userCategoryIds.add(cat.category_id)
+      );
+      novel.tags?.forEach((tag: { tag_id: string }) => 
+        userTagIds.add(tag.tag_id)
+      );
+    });
+
+    // Find novels with similar categories or tags, excluding ones the user has already interacted with
+    const { data: recommendedNovels } = await supabase
+      .from('novels')
+      .select(`
+        *,
+        translator:author_profile_id (
+          id,
+          username,
+          kofi_url,
+          patreon_url,
+          custom_url,
+          custom_url_label,
+          author_bio
+        ),
+        categories:categories_on_novels (
+          category:category_id (
+            id,
+            name,
+            created_at,
+            updated_at
+          )
+        ),
+        tags:tags_on_novels (
+          tag:tag_id (
+            id,
+            name,
+            description
+          )
+        )
+      `)
+      .not('id', 'in', `(${userInteractedNovelIds.join(',')})`)
+      .order('rating', { ascending: false })
+      .limit(limit);
+
+    // If no recommendations found based on user preferences, return top novels
+    if (!recommendedNovels || recommendedNovels.length === 0) {
+      return getTopNovels();
+    }
+
+    // Score novels based on category and tag overlap with user preferences
+    const scoredNovels = recommendedNovels.map(novel => {
+      let score = 0;
+      
+      // Score based on categories
+      novel.categories?.forEach((cat: { category: { id: string } }) => {
+        if (userCategoryIds.has(cat.category.id)) {
+          score += 2; // Higher weight for categories
+        }
+      });
+      
+      // Score based on tags
+      novel.tags?.forEach((tag: { tag: { id: string } }) => {
+        if (userTagIds.has(tag.tag.id)) {
+          score += 1;
+        }
+      });
+      
+      return { novel, score };
+    });
+
+    // Sort by score and return top recommendations
+    return scoredNovels
+      .sort((a, b) => b.score - a.score)
+      .map(({ novel }) => ({
+        ...novel,
+        coverImageUrl: novel.cover_image_url,
+        translator: novel.translator ? {
+          username: novel.translator.username,
+          profile_id: novel.translator.id,
+          kofiUrl: novel.translator.kofi_url,
+          patreonUrl: novel.translator.patreon_url,
+          customUrl: novel.translator.custom_url,
+          customUrlLabel: novel.translator.custom_url_label,
+          author_bio: novel.translator.author_bio
+        } : null,
+        categories: novel.categories?.map((item: { category: NovelCategory }) => item.category) || [],
+        tags: novel.tags?.map((t: { tag: { id: string; name: string; description: string | null } }) => t.tag) || []
+      }));
+  } catch (error) {
+    console.error('Error fetching curated novels:', error);
+    return getTopNovels(); // Fallback to top novels on error
+  }
+}

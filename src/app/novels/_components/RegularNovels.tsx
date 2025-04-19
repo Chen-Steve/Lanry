@@ -3,6 +3,7 @@
 import { Novel } from '@/types/database';
 import NovelCard from './NovelCard';
 import { Icon } from '@iconify/react';
+import { useEffect } from 'react';
 
 interface RegularNovelsProps {
   novels: Novel[];
@@ -17,6 +18,21 @@ const RegularNovels = ({
   totalPages,
   onPageChange,
 }: RegularNovelsProps) => {
+  // Add Google Fonts link via useEffect
+  useEffect(() => {
+    // Create a link element for Google Fonts
+    const link = document.createElement('link');
+    link.href = 'https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap';
+    link.rel = 'stylesheet';
+    
+    // Add it to the document head if it doesn't already exist
+    if (!document.head.querySelector('link[href*="Dancing+Script"]')) {
+      document.head.appendChild(link);
+    }
+    
+    // No need to clean up as other components may still need it
+  }, []);
+
   if (novels.length === 0) {
     return (
       <div className="text-center py-12">
@@ -28,7 +44,12 @@ const RegularNovels = ({
   return (
     <>
       <div className="flex items-center p-3">
-        <h2 className="text-lg font-semibold border-b-2 border-primary">Recently Updated</h2>
+        <h2 
+          style={{ fontFamily: "'Dancing Script', cursive" }} 
+          className="text-indigo-600 dark:text-indigo-300 font-bold text-2xl"
+        >
+          Recently Updated
+        </h2>
       </div>
 
       <div className="grid grid-cols-3 xs:grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 gap-x-1.5 sm:gap-x-2">

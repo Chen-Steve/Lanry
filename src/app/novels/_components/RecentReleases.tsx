@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import NovelCover from './NovelCover';
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 
 interface NewReleaseNovel {
   id: string;
@@ -17,12 +17,32 @@ interface NewReleasesProps {
 const NewReleases = ({ recentNovels, className = '' }: NewReleasesProps) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+  // Add Google Fonts link via useEffect
+  useEffect(() => {
+    // Create a link element for Google Fonts
+    const link = document.createElement('link');
+    link.href = 'https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap';
+    link.rel = 'stylesheet';
+    
+    // Add it to the document head if it doesn't already exist
+    if (!document.head.querySelector('link[href*="Dancing+Script"]')) {
+      document.head.appendChild(link);
+    }
+    
+    // No need to clean up as other components may still need it
+  }, []);
+
   if (recentNovels.length === 0) return null;
 
   return (
     <div className={`mt-2 w-full max-w-[95%] mx-auto ${className}`}>
       <div className="flex items-center mb-2">
-        <h2 className="text-lg font-semibold border-b-2 border-primary">Recent Releases</h2>
+        <h2 
+          style={{ fontFamily: "'Dancing Script', cursive" }} 
+          className="text-indigo-600 dark:text-indigo-300 font-bold text-2xl"
+        >
+          Recent Releases
+        </h2>
       </div>
 
       <div>
