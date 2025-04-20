@@ -152,6 +152,14 @@ export default function UserDashboard() {
           <h2 className="text-lg font-semibold text-foreground">Account</h2>
           
           <div className="flex flex-col rounded-lg border border-border overflow-hidden">
+            <Link
+              href="/user-dashboard/inventory"
+              className="flex items-center gap-3 px-4 py-2.5 bg-card hover:bg-accent transition-colors w-full"
+            >
+              <Icon icon="ph:stack-fill" className="w-5 h-5" />
+              <span>Inventory</span>
+            </Link>
+
             <button 
               className="flex items-center gap-3 px-4 py-2.5 bg-card hover:bg-accent transition-colors w-full"
               onClick={() => setIsProfileModalOpen(true)}
