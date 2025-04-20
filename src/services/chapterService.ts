@@ -339,19 +339,24 @@ export interface ChapterListParams {
   includeAccess?: boolean;
 }
 
-export type ChapterListItem = Pick<Chapter, 
-  'id' | 
-  'chapter_number' | 
-  'part_number' | 
-  'title' | 
-  'publish_at' | 
-  'coins' | 
-  'age_rating'
-> & {
-  volume_id?: string;
+export interface ChapterListItem {
+  id: string;
+  chapter_number: number;
+  part_number?: number | null;
+  title: string;
+  publish_at?: string | null;
+  coins?: number;
+  age_rating?: string;
+  volume_id?: string | null;
   hasTranslatorAccess?: boolean;
   isUnlocked?: boolean;
-};
+}
+
+export interface ChapterCounts {
+  regularCount: number;
+  advancedCount: number;
+  total: number;
+}
 
 export async function getChaptersForList({
   novelId,
@@ -369,46 +374,39 @@ export async function getChaptersForList({
   totalPages: number;
 }> {
   try {
-    const { data: novel, error: novelError } = await supabase
-      .from('novels')
-      .select('id, author_profile_id')
-      .or(`id.eq.${novelId},slug.eq.${novelId}`)
-      .single();
+    // Get novel info and check translator access in parallel
+    const [novelResult, userResult] = await Promise.all([
+      supabase
+        .from('novels')
+        .select('id, author_profile_id')
+        .or(`id.eq.${novelId},slug.eq.${novelId}`)
+        .single(),
+      includeAccess && userId ? supabase.auth.getUser() : Promise.resolve({ data: { user: null } })
+    ]);
 
-    if (novelError || !novel) {
+    if (novelResult.error || !novelResult.data) {
       throw new Error('Novel not found');
     }
 
-    // Check if user has translator access
-    const { data: { user } } = await supabase.auth.getUser();
+    const novel = novelResult.data;
+
+    // Check translator access only if needed
     let hasTranslatorAccess = false;
-    if (user) {
+    if (includeAccess && userResult.data.user) {
       const { data: profile } = await supabase
         .from('profiles')
         .select('role')
-        .eq('id', user.id)
+        .eq('id', userResult.data.user.id)
         .single();
 
-      // Check if user is the author or a translator with matching author_profile_id
-      const isAuthor = novel.author_profile_id === user.id;
-      const isTranslator = profile?.role === 'TRANSLATOR' && novel.author_profile_id === user.id;
+      const isAuthor = novel.author_profile_id === userResult.data.user.id;
+      const isTranslator = profile?.role === 'TRANSLATOR' && novel.author_profile_id === userResult.data.user.id;
       hasTranslatorAccess = isAuthor || isTranslator;
     }
 
-    // Get all chapters
-    let query = supabase
-      .from('chapters')
-      .select('id, chapter_number, part_number, title, publish_at, coins, age_rating, volume_id', { count: 'exact' })
-      .eq('novel_id', novel.id);
-
-    // Apply volume filtering first, before any other filters
-    if (volumeId) {
-      query = query.eq('volume_id', volumeId);
-    }
-
-    // Get user's unlocks if authenticated
+    // Get user's unlocks if needed
     let unlockedChapters: { chapter_number: number; part_number: number | null; }[] = [];
-    if (userId) {
+    if (includeAccess && userId) {
       const { data: unlocks } = await supabase
         .from('chapter_unlocks')
         .select('chapter_number, part_number')
@@ -426,124 +424,79 @@ export async function getChaptersForList({
       );
     };
 
-    // If user is not a translator, filter based on advanced/regular and unlocks
-    if (!hasTranslatorAccess) {
-      if (!showAdvanced) {
-        // Get all chapters first for time comparison
-        const { data: regularChapters } = await supabase
-          .from('chapters')
-          .select('id, publish_at, coins, chapter_number, part_number')
-          .eq('novel_id', novel.id);
-
-        if (regularChapters) {
-          const regularIds = await Promise.all(regularChapters.map(async ch => {
-            const isUnlocked = isChapterUnlocked(ch);
-            const isFree = !ch.coins || ch.coins === 0;
-            const isPublished = await isChapterPublished(ch.publish_at);
-            return isUnlocked || isFree || isPublished ? ch.id : null;
-          }));
-
-          const validIds = regularIds.filter(id => id !== null);
-          if (validIds.length > 0) {
-            query = query.in('id', validIds);
-          } else {
-            query = query.eq('id', '-1');
-          }
-        }
-      }
-    }
-
-    // Handle advanced chapters filtering separately from user access
-    if (showAdvanced) {
-      // Get all chapters with coins that have future publish dates
-      const { data: advancedChapters } = await supabase
-        .from('chapters')
-        .select('id, publish_at, chapter_number, part_number')
-        .eq('novel_id', novel.id)
-        .gt('coins', 0);
-
-      if (advancedChapters) {
-        const advancedIds = await Promise.all(advancedChapters.map(async ch => {
-          const isNotPublished = !(await isChapterPublished(ch.publish_at));
-          const isNotUnlocked = !isChapterUnlocked(ch);
-          return isNotPublished && isNotUnlocked ? ch.id : null;
-        }));
-
-        const validIds = advancedIds.filter(id => id !== null);
-        if (validIds.length > 0) {
-          query = query.in('id', validIds);
-        } else {
-          query = query.eq('id', '-1');
-        }
-      }
-    }
-
-    // Calculate total pages and offset
-    const offset = (page - 1) * limit;
-    query = query.order('chapter_number').order('part_number', { nullsFirst: true }).range(offset, offset + limit - 1);
-
-    const { data: chapters, count, error } = await query;
-
-    if (error) {
-      throw error;
-    }
-
-    // Get counts for regular and advanced chapters
-    const { data: allChapters } = await supabase
+    // Build the main query
+    let query = supabase
       .from('chapters')
-      .select('chapter_number, publish_at, coins, part_number')
-      .eq('novel_id', novel.id);
+      .select('id, chapter_number, part_number, title, publish_at, coins, age_rating, volume_id', { count: 'exact' })
+      .eq('novel_id', novel.id)
+      .order('chapter_number')
+      .order('part_number', { nullsFirst: true });
 
-    let chapterCounts: ChapterCounts = {
-      regularCount: 0,
-      advancedCount: 0,
-      total: allChapters?.length || 0
+    // Apply volume filtering
+    if (volumeId) {
+      query = query.eq('volume_id', volumeId);
+    }
+
+    // Get all chapters for filtering
+    const { data: allChapters, error: chaptersError } = await query;
+    
+    if (chaptersError || !allChapters) {
+      throw chaptersError || new Error('Failed to fetch chapters');
+    }
+
+    // Filter chapters based on access and advanced status
+    const now = new Date().toISOString();
+    const filteredChapters = allChapters.filter(ch => {
+      const isUnlocked = includeAccess && isChapterUnlocked(ch);
+      const isFree = !ch.coins || ch.coins === 0;
+      const isPublished = !ch.publish_at || ch.publish_at <= now;
+      const isAdvancedChapter = ch.publish_at && ch.publish_at > now && (ch.coins || 0) > 0;
+
+      if (hasTranslatorAccess) return true;
+      if (showAdvanced) {
+        return isAdvancedChapter && !isUnlocked;
+      } else {
+        return isUnlocked || isFree || isPublished;
+      }
+    });
+
+    // Calculate counts
+    const counts: ChapterCounts = {
+      regularCount: allChapters.filter(ch => {
+        const isUnlocked = includeAccess && isChapterUnlocked(ch);
+        const isFree = !ch.coins || ch.coins === 0;
+        const isPublished = !ch.publish_at || ch.publish_at <= now;
+        return isUnlocked || isFree || isPublished;
+      }).length,
+      advancedCount: allChapters.filter(ch => {
+        const isUnlocked = includeAccess && isChapterUnlocked(ch);
+        const isAdvancedChapter = ch.publish_at && ch.publish_at > now && (ch.coins || 0) > 0;
+        return isAdvancedChapter && !isUnlocked;
+      }).length,
+      total: allChapters.length
     };
 
-    if (allChapters) {
-      const [regularCount, advancedCount] = await Promise.all([
-        Promise.all(allChapters.map(async ch => {
-          const isUnlocked = isChapterUnlocked(ch);
-          const isFree = !ch.coins || ch.coins === 0;
-          const isPublished = await isChapterPublished(ch.publish_at);
-          return isUnlocked || isFree || isPublished;
-        })).then(results => results.filter(Boolean).length),
-        Promise.all(allChapters.map(async ch => {
-          const isNotPublished = !(await isChapterPublished(ch.publish_at));
-          return isNotPublished && ch.coins > 0;
-        })).then(results => results.filter(Boolean).length)
-      ]);
+    // Apply pagination
+    const start = (page - 1) * limit;
+    const end = start + limit;
+    const paginatedChapters = filteredChapters.slice(start, end);
 
-      chapterCounts = {
-        regularCount,
-        advancedCount,
-        total: allChapters.length || 0
-      };
-    }
-
-    // Add access information to chapters if requested
-    const processedChapters = chapters?.map(chapter => ({
+    // Add access information if needed
+    const processedChapters = paginatedChapters.map(chapter => ({
       ...chapter,
       hasTranslatorAccess: includeAccess ? hasTranslatorAccess : undefined,
-      isUnlocked: includeAccess ? isChapterUnlocked(chapter) : undefined,
-      volume_id: chapter.volume_id
-    })) as ChapterListItem[] || [];
+      isUnlocked: includeAccess ? isChapterUnlocked(chapter) : undefined
+    }));
 
     return {
       chapters: processedChapters,
-      counts: chapterCounts,
-      total: count || 0,
+      counts,
+      total: filteredChapters.length,
       currentPage: page,
-      totalPages: Math.ceil((count || 0) / limit)
+      totalPages: Math.ceil(filteredChapters.length / limit)
     };
   } catch (error) {
     console.error('Error getting chapters:', error);
     throw error;
   }
-}
-
-export interface ChapterCounts {
-  regularCount: number;
-  advancedCount: number;
-  total: number;
 } 
