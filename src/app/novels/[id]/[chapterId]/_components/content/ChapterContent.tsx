@@ -21,7 +21,7 @@ interface ChapterComment extends Omit<BaseChapterComment, 'profile'> {
     username: string | null;
     avatar_url?: string;
     id?: string;
-    role: 'USER' | 'AUTHOR' | 'TRANSLATOR' | 'ADMIN';
+    role: 'USER' | 'AUTHOR' | 'TRANSLATOR';
   };
 }
 
@@ -44,7 +44,7 @@ interface ChapterContentProps {
   authorProfile?: {
     username: string;
     avatar_url?: string;
-    role: 'AUTHOR' | 'TRANSLATOR' | 'ADMIN' | 'USER';
+    role: 'AUTHOR' | 'TRANSLATOR' | 'USER';
     kofiUrl?: string;
     patreonUrl?: string;
     customUrl?: string;

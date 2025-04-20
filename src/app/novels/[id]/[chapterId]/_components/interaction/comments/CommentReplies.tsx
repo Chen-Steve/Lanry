@@ -11,7 +11,7 @@ interface ProfileData {
   id: string;
   username: string;
   avatar_url: string | null;
-  role: 'USER' | 'AUTHOR' | 'TRANSLATOR' | 'ADMIN';
+  role: 'USER' | 'AUTHOR' | 'TRANSLATOR';
 }
 
 interface ReplyData {
@@ -34,7 +34,7 @@ interface CommentReply {
     id: string;
     username: string;
     avatar_url?: string;
-    role: 'USER' | 'AUTHOR' | 'TRANSLATOR' | 'ADMIN';
+    role: 'USER' | 'AUTHOR' | 'TRANSLATOR';
   };
   likeCount?: number;
   isLiked?: boolean;
@@ -336,7 +336,6 @@ export function CommentReplies({
                       <span className={`px-1 py-0.5 text-xs font-medium rounded inline-flex items-center flex-shrink-0 ${
                         reply.profile.role === 'AUTHOR' ? 'bg-yellow-100 dark:bg-yellow-900/30' :
                         reply.profile.role === 'TRANSLATOR' ? 'bg-blue-100 dark:bg-blue-900/30' :
-                        reply.profile.role === 'ADMIN' ? 'bg-red-100 dark:bg-red-900/30' :
                         'bg-gray-100 dark:bg-gray-800'
                       } text-black dark:text-gray-200`}>
                         {reply.profile.role.charAt(0) + reply.profile.role.slice(1).toLowerCase()}

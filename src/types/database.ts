@@ -87,7 +87,7 @@ export interface UserProfile {
   username: string | null;
   current_streak: number;
   last_visit: string | null;
-  role: 'USER' | 'AUTHOR' | 'TRANSLATOR' | 'ADMIN';
+  role: 'USER' | 'AUTHOR' | 'TRANSLATOR';
   coins: number;
   avatar_url?: string;
   created_at: string;
@@ -118,7 +118,7 @@ export type ChapterWithNovel = Chapter & {
   authorProfile?: {
     username: string;
     avatar_url?: string;
-    role: 'AUTHOR' | 'TRANSLATOR' | 'ADMIN' | 'USER';
+    role: 'AUTHOR' | 'TRANSLATOR'| 'USER';
     kofiUrl?: string;
     patreonUrl?: string;
     customUrl?: string;

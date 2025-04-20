@@ -11,7 +11,7 @@ interface NovelComment extends Omit<BaseNovelComment, 'profile'> {
   profile: {
     username: string | null;
     avatar_url?: string;
-    role: 'USER' | 'AUTHOR' | 'TRANSLATOR' | 'ADMIN';
+    role: 'USER' | 'AUTHOR' | 'TRANSLATOR';
   };
   likeCount: number;
   isLiked?: boolean;
@@ -29,7 +29,7 @@ interface SupabaseComment {
     id: string;
     username: string | null;
     avatar_url?: string;
-    role: 'USER' | 'AUTHOR' | 'TRANSLATOR' | 'ADMIN';
+    role: 'USER' | 'AUTHOR' | 'TRANSLATOR';
   };
 }
 

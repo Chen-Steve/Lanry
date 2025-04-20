@@ -15,7 +15,7 @@ interface ChapterComment extends Omit<BaseChapterComment, 'profile'> {
     username: string | null;
     avatar_url?: string;
     id?: string;
-    role: 'USER' | 'AUTHOR' | 'TRANSLATOR' | 'ADMIN';
+    role: 'USER' | 'AUTHOR' | 'TRANSLATOR';
   };
 }
 
@@ -167,7 +167,6 @@ export default function CommentBar({
                               <span className={`px-1 py-0.5 text-xs font-medium rounded inline-flex items-center flex-shrink-0 ${
                                 comment.profile.role === 'AUTHOR' ? 'bg-yellow-100 dark:bg-yellow-900/30' :
                                 comment.profile.role === 'TRANSLATOR' ? 'bg-blue-100 dark:bg-blue-900/30' :
-                                comment.profile.role === 'ADMIN' ? 'bg-red-100 dark:bg-red-900/30' :
                                 comment.profile.role === '' ? 'bg-purple-100 dark:bg-purple-900/30' :
                                 'bg-gray-100 dark:bg-gray-800'
                               } text-black dark:text-gray-200`}>
