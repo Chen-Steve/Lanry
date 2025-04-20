@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     // Create server client with cookies (needed for auth-helpers-nextjs)
