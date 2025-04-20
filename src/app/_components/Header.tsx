@@ -9,7 +9,6 @@ import ThemeToggle from '@/app/_components/ThemeToggle';
 import { useStreak } from '@/hooks/useStreak';
 import { useAuth } from '@/hooks/useAuth';
 import { usePathname } from 'next/navigation';
-import { useScrollDirection } from '@/hooks/useScrollDirection';
 
 const MobileMenu = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
   const pathname = usePathname();
@@ -100,7 +99,24 @@ const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { isAuthenticated, userId, isLoading, handleSignOut } = useAuth();
   const { userProfile } = useStreak(userId);
-  const isVisible = useScrollDirection();
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+
+  useEffect(() => {
+    const controlNavbar = () => {
+      const currentScrollY = window.scrollY;
+      
+      if (currentScrollY < lastScrollY || currentScrollY < 10) {
+        setIsVisible(true);
+      } else if (currentScrollY > lastScrollY && currentScrollY > 10) {
+        setIsVisible(false);
+      }
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener('scroll', controlNavbar);
+    return () => window.removeEventListener('scroll', controlNavbar);
+  }, [lastScrollY]);
 
   useEffect(() => {
     const checkMobile = () => {
