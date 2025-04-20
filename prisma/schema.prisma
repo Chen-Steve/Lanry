@@ -6,6 +6,7 @@
 
 generator client {
   provider = "prisma-client-js"
+  output   = "./generated/client"
 }
 
 datasource db {
@@ -346,7 +347,6 @@ enum UserRole {
   USER
   AUTHOR
   TRANSLATOR
-  ADMIN
 }
 
 model ChapterLike {
