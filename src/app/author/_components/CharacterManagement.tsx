@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
 import { Icon } from '@iconify/react';
-import Image from 'next/image';
 import toast from 'react-hot-toast';
 import supabase from '@/lib/supabaseClient';
 
@@ -193,11 +192,10 @@ export const CharacterManagement = ({
             className="flex items-center gap-4 p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
           >
             <div className="w-16 h-16 relative rounded-lg overflow-hidden flex-shrink-0">
-              <Image
+              <img
                 src={character.imageUrl}
                 alt={character.name}
-                fill
-                className="object-cover"
+                className="w-full h-full object-cover"
               />
             </div>
             <div className="flex-grow">
@@ -337,11 +335,10 @@ export const CharacterManagement = ({
                   <div className="space-y-2">
                     {(previewImage || editingCharacter.imageUrl) && (
                       <div className="w-32 h-32 relative rounded-lg overflow-hidden mx-auto">
-                        <Image
+                        <img
                           src={previewImage || editingCharacter.imageUrl}
                           alt="Character preview"
-                          fill
-                          className="object-cover"
+                          className="w-full h-full object-cover"
                         />
                       </div>
                     )}

@@ -12,7 +12,6 @@ import { useQuery } from '@tanstack/react-query';
 import supabase from '@/lib/supabaseClient';
 import type { UserProfile } from '@/types/database';
 import { useSearchParams } from 'next/navigation';
-import Image from 'next/image';
 
 const fetchProfile = async (userId?: string): Promise<UserProfile> => {
   if (userId) {
@@ -67,12 +66,10 @@ export default function UserDashboard() {
         <div className="flex flex-col items-center">
           {profile.avatar_url ? (
             <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-primary/20 mb-4">
-              <Image
+              <img
                 src={profile.avatar_url}
                 alt={profile.username || 'User'}
-                fill
-                className="object-cover"
-                unoptimized
+                className="w-full h-full object-cover"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   target.style.display = 'none';

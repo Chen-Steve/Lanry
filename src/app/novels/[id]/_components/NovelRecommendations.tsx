@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react';
 import supabase from '@/lib/supabaseClient';
 import Link from 'next/link';
-import Image from 'next/image';
-import { Icon } from '@iconify/react';
 import type { Novel, NovelCategory, Tag } from '@/types/database';
 
 interface NovelRecommendationsProps {
@@ -144,7 +142,6 @@ export const NovelRecommendations = ({ novelId, categories = [], tags = [] }: No
     return (
       <div className="bg-card rounded-xl shadow-sm border border-border p-4">
         <div className="text-center text-muted-foreground py-6">
-          <Icon icon="pepicons-print:book" className="text-3xl sm:text-4xl mx-auto mb-2" />
           <p className="text-sm sm:text-base">No recommendations found</p>
         </div>
       </div>
@@ -152,32 +149,30 @@ export const NovelRecommendations = ({ novelId, categories = [], tags = [] }: No
   }
 
   return (
-    <div className="bg-card rounded-lg shadow-sm border border-border p-2 sm:p-3">
-      <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
+    <div className="bg-card rounded-lg shadow-sm border border-border p-1.5 sm:p-2">
+      <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8">
         {recommendations.map((novel) => (
           <Link
             key={novel.id}
             href={`/novels/${novel.slug}`}
             className="block hover:opacity-80 transition-opacity"
           >
-            <div className="relative aspect-[2/3] bg-muted rounded-sm">
+            <div className="relative aspect-[3/4] bg-muted rounded-sm">
               {novel.coverImageUrl ? (
-                <Image
+                <img
                   src={novel.coverImageUrl.startsWith('http') ? novel.coverImageUrl : `/novel-covers/${novel.coverImageUrl}`}
                   alt={`Cover for ${novel.title}`}
-                  fill
-                  className="object-cover rounded-sm"
-                  sizes="(max-width: 640px) 33vw, (max-width: 768px) 25vw, (max-width: 1024px) 20vw, 16.666vw"
+                  className="absolute inset-0 w-full h-full object-cover rounded-sm"
                   loading="lazy"
                 />
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center bg-muted rounded-sm">
-                  <Icon icon="pepicons-print:book" className="text-lg text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">No Cover</span>
                 </div>
               )}
             </div>
-            <div className="mt-1 px-0.5">
-              <h3 className="text-base sm:text-base font-bold text-foreground line-clamp-1">
+            <div className="mt-0.5 px-0.5">
+              <h3 className="text-xs font-medium text-foreground line-clamp-1">
                 {novel.title}
               </h3>
             </div>
