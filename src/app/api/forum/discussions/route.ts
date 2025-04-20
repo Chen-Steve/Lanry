@@ -77,16 +77,7 @@ export async function POST(req: Request) {
     if (!session?.user) {
       return new NextResponse('Unauthorized', { status: 401 })
     }
-
-    const profile = await prisma.profile.findUnique({
-      where: { id: session.user.id },
-      select: { role: true }
-    })
-
-    if (profile?.role !== 'ADMIN') {
-      return new NextResponse('Forbidden', { status: 403 })
-    }
-
+    
     const body = await req.json()
     const { title, description, slug } = body
 
