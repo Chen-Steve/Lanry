@@ -6,8 +6,10 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    console.log('Fetching free chapters for RSS feed...');
-    
+    // Get chapters that are currently available (publishAt <= now)
+    // These include both:
+    // 1. Regular published chapters
+    // 2. Advanced chapters that have naturally unlocked
     const chapters = await prisma.chapter.findMany({
       where: {
         publishAt: {
@@ -15,54 +17,43 @@ export async function GET() {
         }
       },
       orderBy: {
-        publishAt: 'desc'
+        publishAt: 'desc' // Most recently published first
       },
-      take: 50,
+      take: 50, // Limit to latest 50 chapters
       include: {
-        novel: true
+        novel: true // Include novel data for the feed
       }
     });
 
     if (!chapters.length) {
-      console.log('No free chapters found');
-      // Return empty feed with proper structure instead of error
+      console.log('No chapters found for NovelUpdates RSS feed');
+      // Return empty feed with proper structure
       const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.lanry.space';
       const xml = generateChapterFeedXML(null, [], baseUrl);
       return new NextResponse(xml, {
         headers: {
           'Content-Type': 'application/xml',
-          'Cache-Control': 'public, max-age=1800'
+          'Cache-Control': 'public, max-age=900' // Cache for 15 minutes
         }
       });
     }
 
-    console.log(`Found ${chapters.length} free chapters`);
-    console.log('First chapter:', {
-      title: chapters[0].title,
-      novelTitle: chapters[0].novel.title,
-      publishAt: chapters[0].publishAt,
-      coins: chapters[0].coins
-    });
-
+    console.log(`Found ${chapters.length} chapters for NovelUpdates RSS feed`);
+    
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.lanry.space';
     const xml = generateChapterFeedXML(null, chapters, baseUrl);
 
     return new NextResponse(xml, {
       headers: {
         'Content-Type': 'application/xml',
-        'Cache-Control': 'public, max-age=1800'
+        'Cache-Control': 'public, max-age=900' // Cache for 15 minutes
       }
     });
   } catch (error) {
-    console.error('Error generating free chapters RSS feed:', error);
-    // Return empty feed instead of error
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.lanry.space';
-    const xml = generateChapterFeedXML(null, [], baseUrl);
-    return new NextResponse(xml, {
-      headers: {
-        'Content-Type': 'application/xml',
-        'Cache-Control': 'public, max-age=1800'
-      }
-    });
+    console.error('Error generating NovelUpdates RSS feed:', error);
+    return NextResponse.json(
+      { error: 'Failed to generate RSS feed' },
+      { status: 500 }
+    );
   }
 } 
