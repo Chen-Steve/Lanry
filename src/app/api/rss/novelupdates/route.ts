@@ -6,15 +6,21 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    // Get chapters that are currently available (publishAt <= now)
-    // These include both:
-    // 1. Regular published chapters
-    // 2. Advanced chapters that have naturally unlocked
+    // Get only published and free chapters
     const chapters = await prisma.chapter.findMany({
       where: {
-        publishAt: {
-          lte: new Date()
-        }
+        AND: [
+          {
+            publishAt: {
+              lte: new Date()
+            }
+          },
+          {
+            coins: {
+              equals: 0
+            }
+          }
+        ]
       },
       orderBy: {
         publishAt: 'desc' // Most recently published first
