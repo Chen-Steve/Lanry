@@ -156,6 +156,7 @@ export const NovelContent = ({
           author={author}
           translator={translator}
           bookmarkCount={bookmarkCount}
+          chapterCount={chapters.length}
           coverImageUrl={coverImageUrl}
           novelAuthorId={novelAuthorId}
           isAuthorNameCustom={isAuthorNameCustom}

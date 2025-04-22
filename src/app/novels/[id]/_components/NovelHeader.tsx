@@ -20,6 +20,7 @@ interface NovelHeaderProps {
     profile_id: string;
   } | null;
   bookmarkCount: number;
+  chapterCount?: number;
   coverImageUrl?: string;
   novelAuthorId: string;
   isAuthorNameCustom?: boolean;
@@ -52,6 +53,7 @@ export const NovelHeader = ({
   author,
   translator,
   bookmarkCount,
+  chapterCount = 0,
   coverImageUrl,
   novelAuthorId,
   isAuthorNameCustom = true,
@@ -354,6 +356,7 @@ export const NovelHeader = ({
                 <div className="flex items-center gap-3 sm:ml-auto">
                   <div className="flex items-center gap-3 px-2 py-1.5 bg-gray-100 dark:bg-gray-800/50 rounded-lg text-sm">
                     <StatsItem icon="pepicons-print:bookmark" value={`${bookmarkCount}`} />
+                    <StatsItem icon="pepicons-print:book" value={`${chapterCount}`} withGap={true} />
                   </div>
                   <div className="relative flex items-center px-2 py-1.5 bg-gray-100 dark:bg-gray-800/50 rounded-lg">
                     <button
