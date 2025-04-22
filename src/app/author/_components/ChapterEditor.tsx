@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Icon } from '@iconify/react';
 import FootnoteImageUploader from './FootnoteImageUploader';
 import MarkdownPreview from './MarkdownPreview';
@@ -34,7 +34,7 @@ export default function ChapterEditor({
   className = '',
   userId
 }: ChapterEditorProps) {
-  const [textareaRef, setTextareaRef] = useState<HTMLTextAreaElement | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
 
   type FormatType = 'bold' | 'italic' | 'underline' | 'footnote' | 'link' | 'divider';
@@ -46,11 +46,11 @@ export default function ChapterEditor({
   }
 
   const applyFormatting = (format: FormatType) => {
-    if (!textareaRef) return;
+    if (!textareaRef.current) return;
 
-    const start = textareaRef.selectionStart;
-    const end = textareaRef.selectionEnd;
-    const selectedText = textareaRef.value.substring(start, end);
+    const start = textareaRef.current.selectionStart;
+    const end = textareaRef.current.selectionEnd;
+    const selectedText = textareaRef.current.value.substring(start, end);
     
     const formatMap: Record<FormatType, FormatConfig> = {
       bold: { mark: '**', check: (text: string) => text.startsWith('**') && text.endsWith('**') },
@@ -60,7 +60,8 @@ export default function ChapterEditor({
         mark: '', 
         check: (text: string) => /\[\^\d+:.*?\]/.test(text),
         apply: () => {
-          const footnotes = [...textareaRef.value.matchAll(/\[\^(\d+):/g)];
+          if (!textareaRef.current) return '';
+          const footnotes = [...textareaRef.current.value.matchAll(/\[\^(\d+):/g)];
           const highestNumber = footnotes.length > 0 
             ? Math.max(...footnotes.map(match => parseInt(match[1])))
             : 0;
@@ -90,28 +91,30 @@ export default function ChapterEditor({
 
     if (format === 'footnote' || format === 'link' || format === 'divider') {
       const formattedText = apply!();
-      newText = textareaRef.value.substring(0, start) + formattedText + textareaRef.value.substring(end);
+      newText = textareaRef.current.value.substring(0, start) + formattedText + textareaRef.current.value.substring(end);
       offset = formattedText.length;
     } else if (check(selectedText)) {
-      newText = textareaRef.value.substring(0, start) + selectedText.slice(mark.length, -mark.length) + textareaRef.value.substring(end);
+      newText = textareaRef.current.value.substring(0, start) + selectedText.slice(mark.length, -mark.length) + textareaRef.current.value.substring(end);
       offset = -mark.length * 2;
     } else {
-      newText = textareaRef.value.substring(0, start) + `${mark}${selectedText}${mark}` + textareaRef.value.substring(end);
+      newText = textareaRef.current.value.substring(0, start) + `${mark}${selectedText}${mark}` + textareaRef.current.value.substring(end);
       offset = mark.length * 2;
     }
 
     onChange(newText);
     
     setTimeout(() => {
+      if (!textareaRef.current) return;
+      
       if (selectedText && format !== 'footnote' && format !== 'link' && format !== 'divider') {
-        textareaRef.selectionStart = start;
-        textareaRef.selectionEnd = end + offset;
+        textareaRef.current.selectionStart = start;
+        textareaRef.current.selectionEnd = end + offset;
       } else {
         const cursorPos = start + Math.abs(offset) / 2;
-        textareaRef.selectionStart = cursorPos;
-        textareaRef.selectionEnd = cursorPos;
+        textareaRef.current.selectionStart = cursorPos;
+        textareaRef.current.selectionEnd = cursorPos;
       }
-      textareaRef.focus();
+      textareaRef.current.focus();
     }, 0);
   };
 
@@ -172,21 +175,23 @@ export default function ChapterEditor({
   };
 
   const handleImageUploaded = (imageUrl: string) => {
-    if (!textareaRef) return;
+    if (!textareaRef.current) return;
 
-    const start = textareaRef.selectionStart;
-    const end = textareaRef.selectionEnd;
+    const start = textareaRef.current.selectionStart;
+    const end = textareaRef.current.selectionEnd;
 
     // Insert the image URL directly
-    const newText = textareaRef.value.substring(0, start) + imageUrl + textareaRef.value.substring(end);
+    const newText = textareaRef.current.value.substring(0, start) + imageUrl + textareaRef.current.value.substring(end);
     onChange(newText);
 
     // Set cursor position after the inserted URL
     setTimeout(() => {
+      if (!textareaRef.current) return;
+      
       const newPosition = start + imageUrl.length;
-      textareaRef.selectionStart = newPosition;
-      textareaRef.selectionEnd = newPosition;
-      textareaRef.focus();
+      textareaRef.current.selectionStart = newPosition;
+      textareaRef.current.selectionEnd = newPosition;
+      textareaRef.current.focus();
     }, 0);
   };
 
@@ -291,7 +296,7 @@ export default function ChapterEditor({
         ) : (
           <>
             <textarea
-              ref={ref => setTextareaRef(ref)}
+              ref={textareaRef}
               value={value}
               onChange={e => onChange(e.target.value)}
               onKeyDown={handleKeyDown}

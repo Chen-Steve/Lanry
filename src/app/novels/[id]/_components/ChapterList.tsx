@@ -39,6 +39,15 @@ export const ChapterList = ({
   const [showVolumeDescription, setShowVolumeDescription] = useState(false);
   const [showChapterTypeDropdown, setShowChapterTypeDropdown] = useState(false);
   
+  // Utility to check if a chapter is locked indefinitely (50+ years in the future)
+  const isIndefinitelyLocked = useCallback((ch: ChapterListItem): boolean => {
+    if (!ch.publish_at) return false;
+    const publishDate = new Date(ch.publish_at);
+    const fiftyYearsFromNow = new Date();
+    fiftyYearsFromNow.setFullYear(fiftyYearsFromNow.getFullYear() + 50);
+    return publishDate > fiftyYearsFromNow;
+  }, []);
+  
   // Filter out draft chapters (negative chapter_number) from initialChapters
   const filteredInitialChapters = useMemo(() => {
     return (initialChapters || []).filter(ch => ch.chapter_number >= 0);
@@ -51,6 +60,9 @@ export const ChapterList = ({
     if (chapterTypeFilter === 'advanced') {
       // Show only advanced chapters (future publish date with coins)
       return filteredInitialChapters.filter(ch => {
+        // Check if chapter is indefinitely locked
+        if (isIndefinitelyLocked(ch)) return true;
+        
         const isAdvanced = ch.publish_at && 
                          ch.publish_at > serverNow && // Future publish date
                          (ch.coins ?? 0) > 0;
@@ -60,6 +72,9 @@ export const ChapterList = ({
     } else if (chapterTypeFilter === 'regular') {
       // Show only regular chapters (free or published)
       return filteredInitialChapters.filter(ch => {
+        // Don't show indefinitely locked chapters in regular view
+        if (isIndefinitelyLocked(ch)) return false;
+        
         const isAdvanced = ch.publish_at && 
                          ch.publish_at > serverNow && // Future publish date
                          (ch.coins ?? 0) > 0;
@@ -70,7 +85,7 @@ export const ChapterList = ({
       // Show all chapters
       return filteredInitialChapters;
     }
-  }, [filteredInitialChapters, chapterTypeFilter, getServerTime]);
+  }, [filteredInitialChapters, chapterTypeFilter, getServerTime, isIndefinitelyLocked]);
   
   const [chapters, setChapters] = useState<ChapterListItem[]>(filteredChaptersByType);
   const [chapterCounts, setChapterCounts] = useState<ChapterCounts>({ regularCount: 0, advancedCount: 0, total: 0 });
@@ -99,6 +114,9 @@ export const ChapterList = ({
       counts.set(volume.id, {
         total: volumeChapters.length,
         regular: volumeChapters.filter(ch => {
+          // Don't count indefinitely locked chapters as regular
+          if (isIndefinitelyLocked(ch)) return false;
+          
           return !ch.coins || 
                  ch.coins === 0 || // Free chapters
                  !ch.publish_at || 
@@ -107,6 +125,9 @@ export const ChapterList = ({
                  ch.hasTranslatorAccess; // Translator access
         }).length,
         advanced: volumeChapters.filter(ch => {
+          // Count indefinitely locked chapters as advanced
+          if (isIndefinitelyLocked(ch)) return true;
+          
           const isAdvanced = ch.publish_at && 
                            ch.publish_at > serverNow && // Future publish date
                            (ch.coins ?? 0) > 0;
@@ -123,6 +144,9 @@ export const ChapterList = ({
       counts.set('all', {
         ...allVolumes,
         regular: filteredInitialChapters.filter(ch => {
+          // Don't count indefinitely locked chapters as regular
+          if (isIndefinitelyLocked(ch)) return false;
+          
           return !ch.coins || 
                  ch.coins === 0 || // Free chapters
                  !ch.publish_at || 
@@ -131,6 +155,9 @@ export const ChapterList = ({
                  ch.hasTranslatorAccess; // Translator access
         }).length,
         advanced: filteredInitialChapters.filter(ch => {
+          // Count indefinitely locked chapters as advanced
+          if (isIndefinitelyLocked(ch)) return true;
+          
           const isAdvanced = ch.publish_at && 
                            ch.publish_at > serverNow && // Future publish date
                            (ch.coins ?? 0) > 0;
@@ -141,7 +168,7 @@ export const ChapterList = ({
     }
 
     setVolumeCounts(counts);
-  }, [volumes, filteredInitialChapters, getServerTime]);
+  }, [volumes, filteredInitialChapters, getServerTime, isIndefinitelyLocked]);
 
   // Sort function that puts extra chapters last
   const sortChapters = useCallback((a: ChapterListItem, b: ChapterListItem) => {
@@ -259,6 +286,9 @@ export const ChapterList = ({
       
       // Calculate regular chapters (free or published)
       const regularChapters = filteredInitialChapters.filter(ch => {
+        // Don't count indefinitely locked chapters as regular
+        if (isIndefinitelyLocked(ch)) return false;
+        
         const isFree = !ch.coins || ch.coins === 0;
         const isPublished = !ch.publish_at || ch.publish_at <= serverNow;
         const isAccessible = ch.isUnlocked || ch.hasTranslatorAccess;
@@ -267,6 +297,9 @@ export const ChapterList = ({
 
       // Calculate advanced chapters (future publish date with coins, not unlocked)
       const advancedChapters = filteredInitialChapters.filter(ch => {
+        // Count indefinitely locked chapters as advanced
+        if (isIndefinitelyLocked(ch)) return true;
+        
         const isAdvanced = ch.publish_at && 
                          ch.publish_at > serverNow && // Future publish date
                          (ch.coins ?? 0) > 0;
@@ -284,7 +317,7 @@ export const ChapterList = ({
     }
     
     isInitialMount.current = false;
-  }, [filteredInitialChapters, loadChapters, getServerTime]);
+  }, [filteredInitialChapters, loadChapters, getServerTime, isIndefinitelyLocked]);
 
   // Effect to handle filter changes
   const prevFiltersRef = useRef({
@@ -341,6 +374,18 @@ export const ChapterList = ({
   }, [currentPage, totalPages]);
 
   const isChapterPublished = useCallback((chapter: ChapterListItem): boolean => {
+    // Utility to check if a chapter is locked indefinitely (50+ years in the future)
+    const isIndefinitelyLocked = (ch: ChapterListItem): boolean => {
+      if (!ch.publish_at) return false;
+      const publishDate = new Date(ch.publish_at);
+      const fiftyYearsFromNow = new Date();
+      fiftyYearsFromNow.setFullYear(fiftyYearsFromNow.getFullYear() + 50);
+      return publishDate > fiftyYearsFromNow;
+    };
+    
+    // If the chapter is indefinitely locked, it's not considered published
+    if (isIndefinitelyLocked(chapter)) return false;
+    
     return !chapter.publish_at || 
            new Date(chapter.publish_at) <= getServerTime() ||
            !chapter.coins ||

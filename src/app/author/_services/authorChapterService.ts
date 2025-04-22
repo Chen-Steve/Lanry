@@ -485,6 +485,14 @@ export async function applyAutoReleaseSchedule(
     if (!isNaN(parsed)) defaultReleaseHour = parsed;
   }
 
+  // Function to check if a date is indefinitely locked (more than 50 years in the future)
+  const isIndefinitelyLocked = (dateStr: string): boolean => {
+    const publishDate = new Date(dateStr);
+    const fiftyYearsFromNow = new Date();
+    fiftyYearsFromNow.setFullYear(fiftyYearsFromNow.getFullYear() + 50);
+    return publishDate > fiftyYearsFromNow;
+  };
+
   // Function to adjust time to target hour (in local time)
   const adjustToTargetHour = (date: Date, targetHour: number = defaultReleaseHour) => {
     const adjustedDate = new Date(date);
@@ -512,21 +520,25 @@ export async function applyAutoReleaseSchedule(
       if (baseDate) {
         publishAt = getNextPublishingDate(new Date(baseDate), publishingDays);
       } else {
-        // First check for advanced chapters
-        const { data: advancedChapter, error: advancedError } = await supabase
+        // First check for advanced chapters - EXCLUDE indefinitely locked chapters
+        const { data: advancedChapters, error: advancedError } = await supabase
           .from('chapters')
           .select('publish_at')
           .eq('novel_id', novelId)
           .not('id', 'eq', chapterId)
           .gt('publish_at', now.toISOString())
-          .order('publish_at', { ascending: false })
-          .limit(1);
+          .order('publish_at', { ascending: false });
 
         if (advancedError) throw advancedError;
 
-        if (advancedChapter && advancedChapter.length > 0) {
+        // Filter out indefinitely locked chapters
+        const validAdvancedChapters = advancedChapters.filter(
+          ch => ch.publish_at && !isIndefinitelyLocked(ch.publish_at)
+        );
+
+        if (validAdvancedChapters.length > 0) {
           // Base new date on the latest advanced chapter, but use publishing days
-          const lastPublishDate = new Date(advancedChapter[0].publish_at);
+          const lastPublishDate = new Date(validAdvancedChapters[0].publish_at);
           publishAt = getNextPublishingDate(lastPublishDate, publishingDays);
         } else {
           // No advanced chapters, use current time and find next publishing day
@@ -546,21 +558,25 @@ export async function applyAutoReleaseSchedule(
       publishAt = adjustToTargetHour(localBaseDate, defaultReleaseHour);
       publishAt.setDate(publishAt.getDate() + novel.auto_release_interval);
     } else {
-      // First check for advanced chapters
-      const { data: advancedChapter, error: advancedError } = await supabase
+      // First check for advanced chapters - EXCLUDE indefinitely locked chapters
+      const { data: advancedChapters, error: advancedError } = await supabase
         .from('chapters')
         .select('publish_at')
         .eq('novel_id', novelId)
         .not('id', 'eq', chapterId)
         .gt('publish_at', now.toISOString())
-        .order('publish_at', { ascending: false })
-        .limit(1);
+        .order('publish_at', { ascending: false });
 
       if (advancedError) throw advancedError;
 
-      if (advancedChapter && advancedChapter.length > 0) {
+      // Filter out indefinitely locked chapters
+      const validAdvancedChapters = advancedChapters.filter(
+        ch => ch.publish_at && !isIndefinitelyLocked(ch.publish_at)
+      );
+
+      if (validAdvancedChapters.length > 0) {
         // Base new date on the latest advanced chapter
-        const lastPublishDate = new Date(advancedChapter[0].publish_at);
+        const lastPublishDate = new Date(validAdvancedChapters[0].publish_at);
         publishAt = new Date(lastPublishDate.getTime() + novel.auto_release_interval * 24 * 60 * 60 * 1000);
         publishAt = adjustToTargetHour(publishAt, defaultReleaseHour);
       } else {

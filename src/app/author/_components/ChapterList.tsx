@@ -26,6 +26,15 @@ const isExtraChapter = (chapter: ChapterListChapter): boolean => {
 // Utility to check if a chapter is a draft
 const isDraftChapter = (chapter: ChapterListChapter) => chapter.chapter_number < 0;
 
+// Utility to check if a chapter is locked indefinitely
+const isIndefinitelyLocked = (chapter: ChapterListChapter): boolean => {
+  if (!chapter.publish_at) return false;
+  const publishDate = new Date(chapter.publish_at);
+  const fiftyYearsFromNow = new Date();
+  fiftyYearsFromNow.setFullYear(fiftyYearsFromNow.getFullYear() + 50);
+  return publishDate > fiftyYearsFromNow;
+};
+
 export default function ChapterList({
   chapters,
   volumes,
@@ -370,11 +379,17 @@ export default function ChapterList({
               )}
             </h4>
             {chapter.publish_at && (
-              <p className="text-sm text-muted-foreground flex items-center gap-2">
-                {isFutureDate(chapter.publish_at)
-                  ? `Scheduled: ${formatLocalDateTime(chapter.publish_at)}`
-                  : `Published: ${formatLocalDateTime(chapter.publish_at)}`
-                }
+              <p className="text-sm text-muted-foreground flex items-center gap-2 flex-wrap">
+                {isIndefinitelyLocked(chapter) ? (
+                  <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-500">
+                    <Icon icon="mdi:lock-clock" className="w-4 h-4" />
+                    Locked Indefinitely
+                  </span>
+                ) : (
+                  isFutureDate(chapter.publish_at)
+                    ? `Scheduled: ${formatLocalDateTime(chapter.publish_at)}`
+                    : `Published: ${formatLocalDateTime(chapter.publish_at)}`
+                )}
                 {isAdvancedChapter(chapter) && (
                   <>
                     <span className="inline-flex items-center gap-1 text-primary">

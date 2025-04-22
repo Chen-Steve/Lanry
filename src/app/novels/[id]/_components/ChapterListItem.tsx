@@ -189,7 +189,16 @@ export const ChapterListItem = memo(function ChapterListItem({
     }
   }, [chapter.chapter_number, chapter.coins, chapter.novel_id, chapter.part_number, isAuthenticated, novelSlug, router, unlockChapter, userProfile?.id, novelAuthorId]);
 
-  const isFree = !chapter.coins || chapter.coins === 0;
+  // We need to check for indefinite lock first, before checking if it's free
+  const isIndefinitelyLocked = chapter.publish_at && (() => {
+    const publishDate = new Date(chapter.publish_at);
+    const fiftyYearsFromNow = new Date();
+    fiftyYearsFromNow.setFullYear(fiftyYearsFromNow.getFullYear() + 50);
+    return publishDate > fiftyYearsFromNow;
+  })();
+  
+  // Only check for free status if not indefinitely locked
+  const isFree = !isIndefinitelyLocked && (!chapter.coins || chapter.coins === 0);
 
   // Updated helper to check if chapter is advanced using server time
   const isAdvancedChapter = chapter.publish_at && 
@@ -203,8 +212,8 @@ export const ChapterListItem = memo(function ChapterListItem({
     <div className="flex items-center justify-between w-full">
       <div className="flex items-center gap-2 min-w-0">
         <span className="font-medium whitespace-nowrap flex items-center gap-1">
-          {!isPublished && !isFree && !isUnlocked && !hasTranslatorAccess && (
-            <Icon icon="material-symbols:lock" className="text-xs" />
+          {!isPublished && !isFree && !isUnlocked && !hasTranslatorAccess && !isIndefinitelyLocked && (
+            <Icon icon="material-symbols:lock" className="text-xs text-amber-500" />
           )}
           {isExtraChapter ? (
             <div className="flex items-center gap-1.5 text-purple-500">
@@ -247,14 +256,18 @@ export const ChapterListItem = memo(function ChapterListItem({
             </span>
           ) : isFree ? (
             <span className="text-muted-foreground">Free</span>
+          ) : isIndefinitelyLocked ? (
+            <span className="text-amber-600 dark:text-amber-500 flex items-center gap-1">
+              <Icon icon="mdi:lock-clock" className="w-4 h-4" />
+              Coming Soon
+            </span>
           ) : (
             <>
               {isUnlocking ? (
                 <Icon icon="material-symbols:progress-activity" className="text-foreground animate-spin" />
               ) : (
-                null
+                <span>{chapter.coins}c</span>
               )}
-              <span>{chapter.coins}c</span>
               <span className="text-muted-foreground flex items-center gap-1">
                 · <ChapterCountdown publishDate={chapter.publish_at} />
               </span>
@@ -319,6 +332,15 @@ export const ChapterListItem = memo(function ChapterListItem({
   }
 
   // For indefinitely locked chapters, render as non-interactive
+  if (isIndefinitelyLocked) {
+    return (
+      <div className="w-full opacity-75 cursor-default">
+        {chapterContent}
+      </div>
+    );
+  }
+
+  // For all other non-navigable chapters
   return (
     <div className="w-full opacity-50">
       {chapterContent}

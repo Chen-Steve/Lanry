@@ -35,6 +35,7 @@ export default function ChapterEditForm({
   const [isExtraChapter, setIsExtraChapter] = useState(false);
   const [isAlreadyPublished, setIsAlreadyPublished] = useState(false);
   const [advancedDates, setAdvancedDates] = useState<{ date: Date; chapterNumber: number }[]>([]);
+  const [currentChapterId, setCurrentChapterId] = useState<string | undefined>(chapterId);
   const [formData, setFormData] = useState({
     chapterNumber: '',
     partNumber: '',
@@ -54,6 +55,39 @@ export default function ChapterEditForm({
     return isDraftSave ? -Math.abs(num) : Math.abs(num);
   };
 
+  const handleScheduleSave = async () => {
+    try {
+      const chapterData = {
+        chapter_number: getDbChapterNumber(isDraft),
+        part_number: isExtraChapter ? -1 : (formData.partNumber ? parseInt(formData.partNumber) : null),
+        publish_at: formData.publishAt || null,
+        coins: parseInt(formData.coins) || 0,
+        title: formData.title,
+        content: formData.content,
+        author_thoughts: formData.authorThoughts,
+        age_rating: formData.ageRating,
+      };
+
+      if (currentChapterId) {
+        await authorChapterService.updateChapter(currentChapterId, novelId, userId, chapterData);
+        toast.success('Schedule settings saved');
+      } else {
+        const result = await authorChapterService.createChapter(novelId, userId, {
+          ...chapterData,
+          volume_id: volumeId
+        });
+        // If this is a new chapter, update the chapterId after creation
+        // The result from createChapter is a chapterId string
+        setCurrentChapterId(result);
+        window.history.replaceState(null, '', `?chapterId=${result}`);
+        toast.success('Chapter saved as draft with schedule settings');
+      }
+    } catch (error) {
+      console.error('Error saving schedule settings:', error);
+      toast.error('Failed to save schedule settings');
+    }
+  };
+
   const handleSaveDraft = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setIsSaving(true);
@@ -69,13 +103,14 @@ export default function ChapterEditForm({
         author_thoughts: formData.authorThoughts,
         age_rating: formData.ageRating,
       };
-      if (chapterId) {
-        await authorChapterService.updateChapter(chapterId, novelId, userId, chapterData);
+      if (currentChapterId) {
+        await authorChapterService.updateChapter(currentChapterId, novelId, userId, chapterData);
       } else {
-        await authorChapterService.createChapter(novelId, userId, {
+        const newChapterId = await authorChapterService.createChapter(novelId, userId, {
           ...chapterData,
           volume_id: volumeId
         });
+        setCurrentChapterId(newChapterId);
       }
       toast.success('Draft saved successfully');
       onSave();
@@ -106,15 +141,16 @@ export default function ChapterEditForm({
         age_rating: formData.ageRating,
       };
 
-      if (chapterId) {
-        await authorChapterService.updateChapter(chapterId, novelId, userId, chapterData);
+      if (currentChapterId) {
+        await authorChapterService.updateChapter(currentChapterId, novelId, userId, chapterData);
       } else {
-        await authorChapterService.createChapter(novelId, userId, {
+        const newChapterId = await authorChapterService.createChapter(novelId, userId, {
           ...chapterData,
           volume_id: volumeId
         });
+        setCurrentChapterId(newChapterId);
       }
-      toast.success(chapterId ? 'Chapter updated successfully' : 'Chapter published successfully');
+      toast.success(currentChapterId ? 'Chapter updated successfully' : 'Chapter published successfully');
       onSave();
     } catch (error) {
       console.error('Error saving chapter:', error);
@@ -132,7 +168,7 @@ export default function ChapterEditForm({
     try {
       setIsLoading(true);
       const chapters = await authorChapterService.fetchNovelChapters(novelId, userId, true);
-      const chapter = chapters.find(ch => ch.id === chapterId);
+      const chapter = chapters.find(ch => ch.id === currentChapterId);
       
       if (chapter) {
         setIsExtraChapter(chapter.part_number === -1);
@@ -157,10 +193,10 @@ export default function ChapterEditForm({
     } finally {
       setIsLoading(false);
     }
-  }, [novelId, userId, chapterId]);
+  }, [novelId, userId, currentChapterId]);
 
   useEffect(() => {
-    if (chapterId) {
+    if (currentChapterId) {
       fetchChapterDetails();
     } else {
       setIsLoading(false);
@@ -175,7 +211,7 @@ export default function ChapterEditForm({
         return prev;
       });
     }
-  }, [chapterId, fetchChapterDetails]);
+  }, [currentChapterId, fetchChapterDetails]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -204,7 +240,7 @@ export default function ChapterEditForm({
     };
 
     fetchData();
-  }, [chapterId, novelId, userId]);
+  }, [currentChapterId, novelId, userId]);
 
   if (isLoading) {
     return (
@@ -219,7 +255,7 @@ export default function ChapterEditForm({
       <div className="flex justify-between items-center bg-background py-2 sticky top-0 z-10 px-4 border-b border-border">
         <div className="flex items-center gap-3">
           <h3 className="text-lg font-semibold text-foreground">
-            {chapterId ? 'Edit Chapter' : 'Add New Chapter'}
+            {currentChapterId ? 'Edit Chapter' : 'Add New Chapter'}
           </h3>
           <button
             type="button"
@@ -336,12 +372,13 @@ export default function ChapterEditForm({
 
           {!isExpanded && (
             <ChapterPublishSettings
+              key={currentChapterId || 'new-chapter'}
               publishAt={formData.publishAt}
               coins={formData.coins}
               onSettingsChange={(settings) => setFormData(prev => ({ ...prev, ...settings }))}
               showSchedulePopup={showSchedulePopup}
               onCloseSchedulePopup={() => setShowSchedulePopup(false)}
-              onSave={handleSave}
+              onSave={handleScheduleSave}
               isSaving={isSaving}
               autoReleaseEnabled={autoReleaseEnabled}
               advancedDates={advancedDates}

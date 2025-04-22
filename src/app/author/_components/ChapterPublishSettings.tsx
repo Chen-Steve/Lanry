@@ -37,6 +37,14 @@ export default function ChapterPublishSettings({
     return date > fiftyYearsFromNow;
   });
 
+  // Reset isIndefinitelyLocked when publishAt changes and it's empty (new chapter)
+  useEffect(() => {
+    if (!publishAt && isIndefinitelyLocked) {
+      setIsIndefinitelyLocked(false);
+      setHasBeenTouched(false);
+    }
+  }, [publishAt, isIndefinitelyLocked]);
+
   // Generate time options in 30-minute intervals
   const timeOptions = useMemo(() => {
     const options = [];
@@ -118,19 +126,26 @@ export default function ChapterPublishSettings({
 
   // Effect to handle indefinite lock changes
   useEffect(() => {
+    // Skip if there's no change in lock status
+    if (!hasBeenTouched) return;
+
     if (isIndefinitelyLocked) {
-      setHasBeenTouched(true);
       // Set a far future date (e.g., 100 years from now) when indefinitely locked
       const farFutureDate = new Date();
       farFutureDate.setFullYear(farFutureDate.getFullYear() + 100);
-      onSettingsChange({
-        publishAt: farFutureDate.toISOString(),
-        coins: '0' // Set coins to 0 since it can't be purchased
-      });
-    } else if (hasBeenTouched && publishAt) {
-      // Only set default values if the settings have been touched AND there was a previous publish date
-      // This prevents setting a default date when creating a new chapter
-      const currentDate = new Date(publishAt);
+      // Only update if the date is not already far in the future
+      const currentDate = publishAt ? new Date(publishAt) : new Date();
+      const isFarFuture = currentDate.getFullYear() > new Date().getFullYear() + 50;
+      
+      if (!isFarFuture) {
+        onSettingsChange({
+          publishAt: farFutureDate.toISOString(),
+          coins: '0' // Set coins to 0 since it can't be purchased
+        });
+      }
+    } else {
+      // Only set default values if we're toggling off indefinite lock
+      const currentDate = publishAt ? new Date(publishAt) : new Date();
       const isFarFuture = currentDate.getFullYear() > new Date().getFullYear() + 50;
       
       if (isFarFuture) {
@@ -143,7 +158,7 @@ export default function ChapterPublishSettings({
         });
       }
     }
-  }, [isIndefinitelyLocked, onSettingsChange, publishAt, hasBeenTouched]);
+  }, [isIndefinitelyLocked, hasBeenTouched, publishAt, onSettingsChange]);
 
   // Effect to handle auto-release enabled state
   useEffect(() => {
