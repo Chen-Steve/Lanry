@@ -307,7 +307,7 @@ export default function ChapterEditor({
               placeholder="Write your chapter here... (Ctrl or ⌘+B: Bold, Ctrl or ⌘+I: Italic, Ctrl or ⌘+U: Underline, Ctrl or ⌘+F: Footnote, Ctrl or ⌘+K: Link)"
               style={className.includes('flex-1') ? { resize: 'none' } : undefined}
             />
-
+s
             {/* Author's Thoughts Section */}
             {authorThoughts !== undefined && onAuthorThoughtsChange && !className.includes('flex-1') && (
               <div className="mt-4 md:mt-6 space-y-2">

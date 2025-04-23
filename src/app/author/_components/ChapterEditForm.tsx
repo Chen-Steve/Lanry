@@ -282,6 +282,17 @@ export default function ChapterEditForm({
         </button>
       </div>
 
+      {autoReleaseEnabled && !currentChapterId && (
+        <div className="px-4 py-2 bg-primary/10 border-b border-border">
+          <div className="flex items-start gap-2">
+            <Icon icon="mdi:information" className="text-primary mt-0.5 flex-shrink-0" />
+            <p className="text-sm text-primary">
+              Auto-release is enabled. This chapter will be scheduled based on your global release settings after saving.
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="flex gap-3 sticky z-10 bg-background py-2 px-4 border-b border-border">
         <div className="w-32">
           <input

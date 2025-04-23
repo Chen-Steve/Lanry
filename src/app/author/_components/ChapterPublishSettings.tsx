@@ -28,22 +28,24 @@ export default function ChapterPublishSettings({
 }: ChapterPublishSettingsProps) {
   const [hasBeenTouched, setHasBeenTouched] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
-  const [isIndefinitelyLocked, setIsIndefinitelyLocked] = useState(() => {
-    // Check if publishAt is set to a far future date (e.g., > 50 years from now)
-    if (!publishAt) return false;
-    const date = new Date(publishAt);
+  
+  // More stable way to initialize isIndefinitelyLocked
+  const isIndefiniteLock = (date: string | null): boolean => {
+    if (!date) return false;
+    const publishDate = new Date(date);
     const fiftyYearsFromNow = new Date();
     fiftyYearsFromNow.setFullYear(fiftyYearsFromNow.getFullYear() + 50);
-    return date > fiftyYearsFromNow;
-  });
-
-  // Reset isIndefinitelyLocked when publishAt changes and it's empty (new chapter)
+    return publishDate > fiftyYearsFromNow;
+  };
+  
+  const [isIndefinitelyLocked, setIsIndefinitelyLocked] = useState(() => isIndefiniteLock(publishAt));
+  
+  // Update isIndefinitelyLocked if publishAt changes from outside
   useEffect(() => {
-    if (!publishAt && isIndefinitelyLocked) {
-      setIsIndefinitelyLocked(false);
-      setHasBeenTouched(false);
+    if (!hasBeenTouched) {
+      setIsIndefinitelyLocked(isIndefiniteLock(publishAt));
     }
-  }, [publishAt, isIndefinitelyLocked]);
+  }, [publishAt, hasBeenTouched]);
 
   // Generate time options in 30-minute intervals
   const timeOptions = useMemo(() => {
@@ -115,59 +117,37 @@ export default function ChapterPublishSettings({
     });
   };
 
+  // Effect to handle auto-release enabled state - only when that state changes
   useEffect(() => {
+    // Skip if no touch action yet or if indefinitely locked (handled by toggle)
+    if (!hasBeenTouched || isIndefinitelyLocked) return;
+
+    // If auto-release is enabled and no coins are set, set default coins
+    if (autoReleaseEnabled && (!coins || coins === '0')) {
+      const defaultCoins = localStorage.getItem('defaultChapterCoins') || '1';
+      onSettingsChange({ publishAt, coins: defaultCoins });
+    }
+  }, [autoReleaseEnabled, isIndefinitelyLocked, coins, publishAt, onSettingsChange, hasBeenTouched]);
+
+  // Effect to handle publishAt changes when it's set to a future date
+  useEffect(() => {
+    // Skip if changing to indefinite lock or no publish date
+    if (isIndefinitelyLocked || !publishAt || !hasBeenTouched) return;
+    
     // When publishAt is set to a future date and no coins are set, use default from localStorage
     // But don't override if coins were explicitly set to 0
-    if (publishAt && isFutureDate(publishAt) && !coins) {
+    if (isFutureDate(publishAt) && !coins) {
       const defaultCoins = localStorage.getItem('defaultChapterCoins') || '1';
       onSettingsChange({ publishAt, coins: defaultCoins });
     }
-  }, [publishAt, coins, onSettingsChange]);
+  }, [publishAt, coins, onSettingsChange, isIndefinitelyLocked, hasBeenTouched]);
 
-  // Effect to handle indefinite lock changes
+  // Safety effect to ensure indefinitely locked chapters always have zero coins
   useEffect(() => {
-    // Skip if there's no change in lock status
-    if (!hasBeenTouched) return;
-
-    if (isIndefinitelyLocked) {
-      // Set a far future date (e.g., 100 years from now) when indefinitely locked
-      const farFutureDate = new Date();
-      farFutureDate.setFullYear(farFutureDate.getFullYear() + 100);
-      // Only update if the date is not already far in the future
-      const currentDate = publishAt ? new Date(publishAt) : new Date();
-      const isFarFuture = currentDate.getFullYear() > new Date().getFullYear() + 50;
-      
-      if (!isFarFuture) {
-        onSettingsChange({
-          publishAt: farFutureDate.toISOString(),
-          coins: '0' // Set coins to 0 since it can't be purchased
-        });
-      }
-    } else {
-      // Only set default values if we're toggling off indefinite lock
-      const currentDate = publishAt ? new Date(publishAt) : new Date();
-      const isFarFuture = currentDate.getFullYear() > new Date().getFullYear() + 50;
-      
-      if (isFarFuture) {
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        tomorrow.setHours(0, 0, 0, 0);
-        onSettingsChange({
-          publishAt: tomorrow.toISOString(),
-          coins: localStorage.getItem('defaultChapterCoins') || '1'
-        });
-      }
+    if (isIndefinitelyLocked && coins !== '0' && hasBeenTouched) {
+      onSettingsChange({ publishAt, coins: '0' });
     }
-  }, [isIndefinitelyLocked, hasBeenTouched, publishAt, onSettingsChange]);
-
-  // Effect to handle auto-release enabled state
-  useEffect(() => {
-    if (autoReleaseEnabled && !isIndefinitelyLocked && (!coins || coins === '0')) {
-      // If auto-release is enabled and no coins are set, set default coins
-      const defaultCoins = localStorage.getItem('defaultChapterCoins') || '1';
-      onSettingsChange({ publishAt, coins: defaultCoins });
-    }
-  }, [autoReleaseEnabled, isIndefinitelyLocked, coins, publishAt, onSettingsChange]);
+  }, [isIndefinitelyLocked, coins, publishAt, onSettingsChange, hasBeenTouched]);
 
   return (
     <>
@@ -208,8 +188,40 @@ export default function ChapterPublishSettings({
                         type="checkbox"
                         checked={isIndefinitelyLocked}
                         onChange={(e) => {
+                          const newValue = e.target.checked;
+                          
+                          // Set touched first
                           setHasBeenTouched(true);
-                          setIsIndefinitelyLocked(e.target.checked);
+                          
+                          // Set the locked state immediately to update UI
+                          setIsIndefinitelyLocked(newValue);
+                          
+                          // Use setTimeout to ensure state updates complete first
+                          setTimeout(() => {
+                            if (newValue) {
+                              // Setting to indefinitely locked
+                              const farFutureDate = new Date();
+                              farFutureDate.setFullYear(farFutureDate.getFullYear() + 100);
+                              onSettingsChange({
+                                publishAt: farFutureDate.toISOString(),
+                                coins: '0'
+                              });
+                            } else {
+                              // Removing indefinite lock
+                              const currentDate = publishAt ? new Date(publishAt) : new Date();
+                              const isFarFuture = currentDate.getFullYear() > new Date().getFullYear() + 50;
+                              
+                              if (isFarFuture) {
+                                const tomorrow = new Date();
+                                tomorrow.setDate(tomorrow.getDate() + 1);
+                                tomorrow.setHours(0, 0, 0, 0);
+                                onSettingsChange({
+                                  publishAt: tomorrow.toISOString(),
+                                  coins: localStorage.getItem('defaultChapterCoins') || '1'
+                                });
+                              }
+                            }
+                          }, 0);
                         }}
                         className="sr-only peer"
                         aria-label="Keep chapter locked indefinitely"
@@ -242,6 +254,16 @@ export default function ChapterPublishSettings({
                     </div>
                     
                     <div className="space-y-4 p-4 bg-accent rounded-lg">
+                      {autoReleaseEnabled && (
+                        <div className="mb-3 p-2 bg-primary/10 rounded-lg">
+                          <div className="flex items-start gap-2">
+                            <Icon icon="mdi:information-outline" className="text-primary mt-0.5 flex-shrink-0" />
+                            <p className="text-xs text-primary">
+                              Auto-release is enabled. This date will be calculated based on your global settings when you save the chapter.
+                            </p>
+                          </div>
+                        </div>
+                      )}
                       <div className="space-y-2">
                         <div className="flex flex-col gap-2">
                           <div className="flex items-center gap-2">
@@ -319,14 +341,18 @@ export default function ChapterPublishSettings({
                         pattern="[0-9]*"
                         min={autoReleaseEnabled && !isIndefinitelyLocked ? "1" : "0"}
                         placeholder={autoReleaseEnabled ? "Minimum 1 coin" : "Set Cost"}
-                        value={coins}
+                        value={isIndefinitelyLocked ? '0' : coins}
                         onChange={(e) => {
+                          if (isIndefinitelyLocked) return; // Prevent changes when indefinitely locked
+                          
                           setHasBeenTouched(true);
                           // Only allow numeric input
                           const value = e.target.value.replace(/[^0-9]/g, '');
                           onSettingsChange({ publishAt, coins: value });
                         }}
                         onBlur={(e) => {
+                          if (isIndefinitelyLocked) return; // Prevent changes when indefinitely locked
+                          
                           setHasBeenTouched(true);
                           let value = parseInt(e.target.value) || 0;
                           // Enforce minimum 1 coin if auto-release is enabled
@@ -335,13 +361,20 @@ export default function ChapterPublishSettings({
                           }
                           onSettingsChange({ publishAt, coins: value.toString() });
                         }}
-                        className="w-full p-2 text-sm border border-border rounded bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                        title="Set coins required to access this chapter"
+                        className={`w-full p-2 text-sm border border-border rounded bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${isIndefinitelyLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        title={isIndefinitelyLocked ? "Indefinitely locked chapters are always free" : "Set coins required to access this chapter"}
+                        disabled={isIndefinitelyLocked}
                       />
-                      {coins !== '0' && (
+                      {coins !== '0' && !isIndefinitelyLocked && (
                         <p className="text-xs text-muted-foreground flex items-center gap-1">
                           <Icon icon="mdi:information" className="w-3.5 h-3.5" />
                           Readers will need coins for early access
+                        </p>
+                      )}
+                      {isIndefinitelyLocked && (
+                        <p className="text-xs text-amber-500 dark:text-amber-400 flex items-center gap-1">
+                          <Icon icon="mdi:information" className="w-3.5 h-3.5" />
+                          Indefinitely locked chapters cannot be purchased with coins
                         </p>
                       )}
                     </div>

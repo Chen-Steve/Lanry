@@ -303,7 +303,7 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
   if (!chapter) return notFound();
 
   // Show purchase button if chapter is locked and not indefinitely locked
-  if (chapter.isLocked && (!chapter.publish_at || new Date(chapter.publish_at).getFullYear() <= new Date().getFullYear() + 50)) {
+  if (chapter.isLocked && !isIndefinitelyLocked(chapter)) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-8">
         <Link 
@@ -538,4 +538,13 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
       />
     </div>
   );
-} 
+}
+
+// Function to check if a chapter is indefinitely locked
+const isIndefinitelyLocked = (chapter: { publish_at?: string | null }): boolean => {
+  if (!chapter.publish_at) return false;
+  const publishDate = new Date(chapter.publish_at);
+  const fiftyYearsFromNow = new Date();
+  fiftyYearsFromNow.setFullYear(fiftyYearsFromNow.getFullYear() + 50);
+  return publishDate > fiftyYearsFromNow;
+}; 

@@ -165,7 +165,7 @@ export async function createChapter(
     // Use specifically set publish date
     publishAt = chapterData.publish_at;
   } else if (novel.auto_release_enabled) {
-    // Let auto-release handle it
+    // For auto-release, we need to set this to null initially so the schedule can be applied later
     publishAt = null;
   } else {
     // Default to immediate release in local time
@@ -174,9 +174,9 @@ export async function createChapter(
   }
 
   // Determine if we should apply auto-release
-  const shouldApplyAutoRelease = novel.auto_release_enabled && 
-    !chapterData.publish_at && 
-    finalCoins !== 0;
+  // Changed condition: we should apply auto-release if auto_release is enabled and the user hasn't
+  // manually set a specific publish date (regardless of coin value at this point)
+  const shouldApplyAutoRelease = novel.auto_release_enabled && !chapterData.publish_at;
   
   // Prepare chapter data without publish_at and coins to prevent overriding
   const cleanChapterData = {
@@ -600,9 +600,32 @@ export async function applyAutoReleaseSchedule(
     publish_at: publishAtISO
   };
 
+  // Check if we need to update coins
+  // First get the current chapter to check its coin value
+  const { data: chapter, error: chapterError } = await supabase
+    .from('chapters')
+    .select('coins')
+    .eq('id', chapterId)
+    .single();
+
+  if (chapterError) throw chapterError;
+
   // Always apply fixed price if enabled
   if (novel.fixed_price_enabled) {
     updateData.coins = novel.fixed_price_amount;
+  } 
+  // If auto-release is enabled, ensure coins is at least 1
+  else if (novel.auto_release_enabled && (!chapter.coins || chapter.coins < 1)) {
+    // Get default coin value from localStorage or use 1 as fallback
+    let defaultCoins = 1;
+    if (typeof window !== 'undefined') {
+      const savedCoins = localStorage.getItem('defaultChapterCoins');
+      if (savedCoins) {
+        const parsedCoins = parseInt(savedCoins);
+        defaultCoins = !isNaN(parsedCoins) && parsedCoins > 0 ? parsedCoins : 1;
+      }
+    }
+    updateData.coins = defaultCoins;
   }
 
   const { error: updateError } = await supabase

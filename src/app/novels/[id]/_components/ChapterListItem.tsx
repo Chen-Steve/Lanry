@@ -319,7 +319,7 @@ export const ChapterListItem = memo(function ChapterListItem({
 
   // Show purchase button for:
   // 1. Unpublished chapters with coins that aren't unlocked
-  if (!isPublished && (chapter.coins ?? 0) > 0 && !isUnlocked) {
+  if (!isPublished && !isIndefinitelyLocked && (chapter.coins ?? 0) > 0 && !isUnlocked) {
     return (
       <button
         onClick={handleLockedChapterClick}
