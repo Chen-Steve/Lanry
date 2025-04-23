@@ -210,16 +210,16 @@ export const ChapterListItem = memo(function ChapterListItem({
 
   const chapterContent = (
     <div className="flex items-center justify-between w-full">
-      <div className="flex items-center gap-2 min-w-0">
+      <div className="flex items-center gap-2 min-w-0 overflow-hidden flex-1">
         <span className="font-medium whitespace-nowrap flex items-center gap-1">
           {!isPublished && !isFree && !isUnlocked && !hasTranslatorAccess && !isIndefinitelyLocked && (
             <Icon icon="material-symbols:lock" className="text-xs text-amber-500" />
           )}
           {isExtraChapter ? (
-            <div className="flex items-center gap-1.5 text-purple-500">
-              <Icon icon="solar:star-bold" className="w-4 h-4" />
-              <span className="font-medium">Ch. {chapter.chapter_number} · Extra:</span>
-              <span className="translate-y-[0px]">{chapter.title}</span>
+            <div className="flex items-center gap-1.5 text-purple-500 min-w-0">
+              <Icon icon="solar:star-bold" className="w-4 h-4 flex-shrink-0" />
+              <span className="font-medium flex-shrink-0">Ch. {chapter.chapter_number} · Extra:</span>
+              <span className="text-md truncate max-w-[120px]">{chapter.title}</span>
             </div>
           ) : (
             <>Ch. {chapter.chapter_number}{chapter.part_number ? `.${chapter.part_number}` : ''}</>
@@ -231,7 +231,7 @@ export const ChapterListItem = memo(function ChapterListItem({
           </span>
         )}
       </div>
-      <div className="flex items-center gap-1.5 text-xs whitespace-nowrap">
+      <div className="flex items-center gap-1.5 text-xs whitespace-nowrap flex-shrink-0 ml-2">
         {isAdvancedChapter && hasTranslatorAccess ? (
           <div className="flex items-center gap-1.5">
             <span className="text-emerald-600 dark:text-emerald-400">
