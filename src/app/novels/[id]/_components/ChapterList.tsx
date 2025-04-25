@@ -241,11 +241,21 @@ export const ChapterList = ({
           })
         ]);
 
-        // Combine the results
-        const combinedChapters = [
-          ...regularResult.chapters,
-          ...advancedResult.chapters
-        ].sort(sortChapters);
+        // Combine the results, ensuring no duplicates by ID
+        const uniqueChaptersMap = new Map();
+        
+        // First add all regular chapters
+        regularResult.chapters.forEach(chapter => {
+          uniqueChaptersMap.set(chapter.id, chapter);
+        });
+        
+        // Then add advanced chapters (will overwrite if same ID)
+        advancedResult.chapters.forEach(chapter => {
+          uniqueChaptersMap.set(chapter.id, chapter);
+        });
+        
+        // Convert map back to array and sort
+        const combinedChapters = Array.from(uniqueChaptersMap.values()).sort(sortChapters);
 
         setChapters(combinedChapters);
         setChapterCounts({
@@ -346,10 +356,15 @@ export const ChapterList = ({
 
   // Update chapters when filters change and we're using initialChapters
   useEffect(() => {
+    // Don't update chapters directly if we're loading from API
     if (isInitialMount.current || loadingRef.current) return;
     
-    setChapters(filteredChaptersByType);
-  }, [filteredChaptersByType]);
+    // Only update directly from filteredChaptersByType if we have initialChapters
+    // and we're not making an API request
+    if (initialChapters && initialChapters.length > 0 && !isLoading) {
+      setChapters(filteredChaptersByType);
+    }
+  }, [filteredChaptersByType, initialChapters, isLoading]);
 
   // Effect to handle page changes
   const prevPageRef = useRef(currentPage);
