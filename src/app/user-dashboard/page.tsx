@@ -137,14 +137,6 @@ export default function UserDashboard() {
               <Icon icon="mdi:key" className="w-5 h-5" />
               <span>Change Password</span>
             </button>
-
-            <Link 
-              href="/user-dashboard/additional-settings"
-              className="flex items-center gap-3 px-4 py-2.5 bg-card hover:bg-accent transition-colors w-full"
-            >
-              <Icon icon="ph:gear-six-fill" className="w-5 h-5" />
-              <span>Additional Settings</span>
-            </Link>
           </div>
         </div>
 
