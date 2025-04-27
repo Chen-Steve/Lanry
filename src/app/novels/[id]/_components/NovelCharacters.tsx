@@ -1,5 +1,3 @@
-import Image from 'next/image';
-
 interface NovelCharacter {
   id: string;
   name: string;
@@ -28,12 +26,10 @@ export const NovelCharacters = ({ characters }: NovelCharactersProps) => {
             className="relative group bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow"
           >
             <div className="aspect-[3/4] relative">
-              <Image
+              <img
                 src={character.imageUrl}
                 alt={character.name}
-                fill
-                className="object-cover"
-                sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
+                className="absolute inset-0 w-full h-full object-cover"
               />
             </div>
             <div className="p-2">

@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { Icon } from '@iconify/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import Image from 'next/image';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import supabase from '@/lib/supabaseClient';
 import { uploadImage } from '@/services/uploadService';
@@ -125,11 +124,10 @@ export function UpdateProfileModal({ isOpen, onClose, onSuccess, profile }: Upda
                 <div className="flex flex-col items-center gap-4">
                   <div className="relative w-24 h-24 rounded-full overflow-hidden bg-accent">
                     {previewUrl ? (
-                      <Image
+                      <img
                         src={previewUrl}
                         alt="Profile preview"
-                        fill
-                        className="object-cover"
+                        className="absolute inset-0 w-full h-full object-cover"
                         onError={() => setPreviewUrl(null)}
                       />
                     ) : (

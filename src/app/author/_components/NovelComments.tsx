@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { Icon } from '@iconify/react';
 import supabase from '@/lib/supabaseClient';
 import { formatRelativeDate } from '@/lib/utils';
-import Image from 'next/image';
 import type { Comment } from '@/app/author/_types/authorTypes';
 import Link from 'next/link';
 
@@ -302,13 +301,10 @@ export default function NovelComments() {
               <div className="flex items-start gap-3">
                 <div className="flex-shrink-0 w-10 h-10 rounded-full overflow-hidden bg-primary">
                   {comment.user.avatar_url ? (
-                    <Image
+                    <img
                       src={comment.user.avatar_url}
                       alt={comment.user.username}
-                      width={40}
-                      height={40}
                       className="w-full h-full object-cover"
-                      unoptimized
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-primary-foreground font-semibold">

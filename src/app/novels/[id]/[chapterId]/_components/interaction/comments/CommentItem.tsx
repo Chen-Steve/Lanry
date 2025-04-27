@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import Image from 'next/image';
 import { Icon } from '@iconify/react';
 import supabase from '@/lib/supabaseClient';
 import { toast } from 'react-hot-toast';
@@ -143,13 +142,10 @@ export function CommentItem({ comment, userId, authorId, onEdit, onDelete, chapt
   const renderAvatar = (username: string, avatarUrl?: string) => {
     if (avatarUrl) {
       return (
-        <Image
+        <img
           src={avatarUrl}
           alt={username}
-          width={32}
-          height={32}
           className="w-8 h-8 rounded-full object-cover"
-          unoptimized
           onError={(e) => {
             const target = e.target as HTMLImageElement;
             target.style.display = 'none';

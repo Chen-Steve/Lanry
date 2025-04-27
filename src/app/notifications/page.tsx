@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { Icon } from '@iconify/react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { notificationService, type Notification } from '@/services/notificationService';
 import { useAuth } from '@/hooks/useAuth';
 import { formatRelativeDate } from '@/lib/utils';
@@ -160,12 +159,10 @@ const NotificationsPage = () => {
             {notification.sender && (
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 {notification.sender.avatar_url && (
-                  <Image 
+                  <img 
                     src={notification.sender.avatar_url} 
                     alt={notification.sender.username || 'User'} 
-                    width={16}
-                    height={16}
-                    className="rounded-full"
+                    className="rounded-full w-4 h-4 object-cover"
                   />
                 )}
                 <span>{notification.sender.username || 'Unknown user'}</span>

@@ -1,6 +1,5 @@
 import { Icon } from '@iconify/react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { NovelCategory, Tag } from '@/types/database';
 import { useState, useRef, useEffect } from 'react';
 import toast from 'react-hot-toast';
@@ -206,13 +205,10 @@ export const NovelHeader = ({
               <div className="relative aspect-[2/3] rounded-lg overflow-hidden shadow-md">
                 {coverImageUrl ? (
                   <>
-                    <Image
+                    <img
                       src={coverImageUrl.startsWith('http') ? coverImageUrl : `/novel-covers/${coverImageUrl}`}
                       alt={title}
-                      fill
-                      priority
-                      className="object-cover"
-                      sizes="(max-width: 640px) 112px, (max-width: 768px) 144px, 176px"
+                      className="absolute inset-0 w-full h-full object-cover"
                     />
                     <div className="absolute top-1.5 left-1.5">
                       <NovelAgeRating rating={ageRating} />

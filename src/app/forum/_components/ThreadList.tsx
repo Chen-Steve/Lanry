@@ -4,7 +4,6 @@ import { Icon } from '@iconify/react'
 import { useThreads } from '@/hooks/forum/useThreads'
 import { ForumThread } from '@/types/forum'
 import Link from 'next/link'
-import Image from 'next/image'
 import { formatDistanceToNow } from 'date-fns'
 import { useAuth } from '@/hooks/useAuth'
 import { useThreadMutations } from '@/hooks/forum/useThreadMutations'
@@ -119,12 +118,10 @@ export default function ThreadList({ slug }: ThreadListProps) {
                     <div className="flex items-center text-xs text-muted-foreground">
                       <div className="w-5 h-5 rounded-full bg-secondary flex items-center justify-center mr-1.5">
                         {thread.author.avatarUrl ? (
-                          <Image
+                          <img
                             src={thread.author.avatarUrl}
                             alt={thread.author.username}
-                            width={20}
-                            height={20}
-                            className="w-5 h-5 rounded-full"
+                            className="w-5 h-5 rounded-full object-cover"
                           />
                         ) : (
                           <Icon icon="ph:user" className="w-3.5 h-3.5" />

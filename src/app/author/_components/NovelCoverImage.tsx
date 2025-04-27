@@ -1,5 +1,4 @@
 import { Icon } from '@iconify/react';
-import Image from 'next/image';
 import { useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { nanoid } from 'nanoid';
@@ -101,14 +100,10 @@ export default function NovelCoverImage({ coverImageUrl, onUpdate, onDelete }: N
         ) : (
           <>
             {coverImageUrl ? (
-              <Image
+              <img
                 src={getDirectCDNUrl(coverImageUrl)}
                 alt="Novel cover"
-                fill
-                sizes="180px"
-                className="object-cover"
-                priority
-                unoptimized
+                className="w-full h-full object-cover"
               />
             ) : (
               <div className="w-full h-full bg-accent flex items-center justify-center">

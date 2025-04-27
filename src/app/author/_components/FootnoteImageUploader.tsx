@@ -5,7 +5,6 @@ import { Icon } from '@iconify/react';
 import { toast } from 'react-hot-toast';
 import { uploadImage, listFootnoteImages } from '@/services/uploadService';
 import { createPortal } from 'react-dom';
-import Image from 'next/image';
 
 interface FootnoteImageUploaderProps {
   userId: string;
@@ -166,11 +165,10 @@ export default function FootnoteImageUploader({ userId, onImageUploaded }: Footn
                         title={`Insert image ${index + 1}`}
                         aria-label={`Insert image ${index + 1}`}
                       >
-                        <Image
+                        <img
                           src={imageUrl}
                           alt={`Previously uploaded image ${index + 1}`}
-                          fill
-                          className="object-cover"
+                          className="w-full h-full object-cover"
                         />
                         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                           <Icon icon="mdi:plus" className="w-6 h-6 text-white" />

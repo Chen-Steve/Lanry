@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { Icon } from '@iconify/react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import Image from 'next/image';
 import toast from 'react-hot-toast';
 import supabase from '@/lib/supabaseClient';
 import { formatRelativeDate, generateUUID } from '@/lib/utils';
@@ -420,18 +419,24 @@ export const CommentReplies = ({
 
           return (
             <div key={reply.id} className="flex gap-2">
-              <div className="flex-shrink-0 w-8 h-8 rounded-full overflow-hidden bg-primary">
+              <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-full overflow-hidden bg-primary">
                 {reply.profile.avatar_url ? (
-                  <Image
+                  <img
                     src={reply.profile.avatar_url}
                     alt={reply.profile.username || 'User avatar'}
-                    width={32}
-                    height={32}
-                    unoptimized
                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                      const parent = target.parentElement;
+                      if (parent) {
+                        parent.innerHTML = reply.profile.username?.[0]?.toUpperCase() || 'U';
+                        parent.className = "w-full h-full rounded-full bg-primary flex items-center justify-center text-primary-foreground font-semibold text-sm sm:text-base";
+                      }
+                    }}
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-primary-foreground font-semibold text-sm">
+                  <div className="w-full h-full flex items-center justify-center text-primary-foreground font-semibold text-sm sm:text-base">
                     {reply.profile.username?.[0]?.toUpperCase() || 'U'}
                   </div>
                 )}

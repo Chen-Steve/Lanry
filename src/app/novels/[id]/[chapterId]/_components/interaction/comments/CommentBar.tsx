@@ -7,7 +7,6 @@ import Link from 'next/link';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { ChapterComment as BaseChapterComment } from '@/types/database';
-import Image from 'next/image';
 
 // Extend the base type to include avatar_url
 interface ChapterComment extends Omit<BaseChapterComment, 'profile'> {
@@ -127,13 +126,10 @@ export default function CommentBar({
                   <Link href={`/user-dashboard?id=${comment.profile_id}`} className="flex-shrink-0">
                     <div className="w-8 h-8 rounded-full overflow-hidden bg-blue-500">
                       {comment.profile?.avatar_url ? (
-                        <Image
+                        <img
                           src={comment.profile.avatar_url}
                           alt={comment.profile.username || 'User avatar'}
-                          width={32}
-                          height={32}
                           className="w-full h-full object-cover"
-                          unoptimized
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
                             target.style.display = 'none';

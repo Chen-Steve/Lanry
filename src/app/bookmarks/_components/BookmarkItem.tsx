@@ -1,6 +1,5 @@
 import { Icon } from '@iconify/react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { memo, useState, useRef, useEffect } from 'react';
 
 interface Novel {
@@ -29,8 +28,6 @@ interface BookmarkFolder {
 interface BookmarkItemProps {
   bookmark: Bookmark;
   isOwnProfile: boolean;
-  isFirstPage: boolean;
-  index: number;
   folders?: BookmarkFolder[];
   onMoveToFolder?: (bookmarkId: string, folderId: string | null) => void;
   columnIndex?: number;
@@ -39,8 +36,6 @@ interface BookmarkItemProps {
 const BookmarkItem = memo(({ 
   bookmark, 
   isOwnProfile, 
-  isFirstPage,
-  index,
   folders = [],
   onMoveToFolder,
   columnIndex = 0
@@ -48,7 +43,6 @@ const BookmarkItem = memo(({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const isPriority = isFirstPage && index < 4;
   const shouldAlignRight = columnIndex >= 2;
 
   useEffect(() => {
@@ -82,18 +76,14 @@ const BookmarkItem = memo(({
         }}
       >
         <div className="aspect-[2/3] relative overflow-hidden rounded-md bg-accent/5">
-          <Image
+          <img
             src={bookmark.novel.cover_image_url 
               ? (bookmark.novel.cover_image_url.startsWith('http') 
                   ? bookmark.novel.cover_image_url 
                   : `/novel-covers/${bookmark.novel.cover_image_url}`)
               : '/images/default-cover.jpg'}
             alt={bookmark.novel.title}
-            fill
-            sizes="(max-width: 640px) 25vw, (max-width: 768px) 16.67vw, (max-width: 1024px) 12.5vw, 8.33vw"
-            loading={isPriority ? "eager" : "lazy"}
-            priority={isPriority}
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         </div>

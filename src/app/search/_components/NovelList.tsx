@@ -1,6 +1,5 @@
 import React from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { Icon } from '@iconify/react';
 import type { Novel } from '@/types/database';
 
@@ -101,14 +100,10 @@ export default function NovelList({
                   <div className="flex-shrink-0">
                     <div className="relative w-[100px] h-[140px] rounded-md overflow-hidden">
                       {novel.coverImageUrl ? (
-                        <Image
+                        <img
                           src={novel.coverImageUrl}
                           alt={`${novel.title} cover`}
-                          fill
-                          sizes="100px"
-                          className="object-cover"
-                          priority={false}
-                          quality={75}
+                          className="absolute inset-0 w-full h-full object-cover"
                         />
                       ) : (
                         <div className="w-full h-full bg-muted flex items-center justify-center">

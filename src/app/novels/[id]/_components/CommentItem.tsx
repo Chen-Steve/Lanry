@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Icon } from '@iconify/react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import Image from 'next/image';
 import toast from 'react-hot-toast';
 import supabase from '@/lib/supabaseClient';
 import { formatRelativeDate, generateUUID } from '@/lib/utils';
@@ -156,12 +155,9 @@ export const CommentItem = ({
       <div className="flex gap-3 p-3 sm:p-4 rounded-lg bg-card border border-border transition-all duration-300">
         <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-full overflow-hidden bg-primary">
           {comment.profile.avatar_url ? (
-            <Image
+            <img
               src={comment.profile.avatar_url}
               alt={comment.profile.username || 'User avatar'}
-              width={40}
-              height={40}
-              unoptimized
               className="w-full h-full object-cover"
               onError={(e) => {
                 const target = e.target as HTMLImageElement;

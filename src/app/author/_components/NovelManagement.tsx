@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { Icon } from '@iconify/react';
 import { Novel } from '@/types/database';
-import Image from 'next/image';
 import { fetchAuthorNovels, updateNovel } from '@/app/author/_services/novelManagementService';
 import { deleteNovel } from '@/app/author/_services/novelUploadService';
 import { toast } from 'react-hot-toast';
@@ -195,13 +194,10 @@ export default function NovelManagement() {
               <div className={`${viewMode === 'grid' 
                 ? 'w-[45px] xs:w-[50px] sm:w-[60px] h-[68px] xs:h-[75px] sm:h-[90px]' 
                 : 'w-[40px] xs:w-[45px] sm:w-[50px] h-[60px] xs:h-[68px] sm:h-[75px]'} flex-shrink-0`}>
-                <Image
+                <img
                   src={novel.coverImageUrl || '/images/default-cover.jpg'}
                   alt={novel.title}
-                  width={60}
-                  height={90}
                   className="object-cover w-full h-full rounded border border-border"
-                  priority
                 />
               </div>
 
