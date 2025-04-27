@@ -28,6 +28,8 @@ interface BookmarkFolder {
 interface BookmarkItemProps {
   bookmark: Bookmark;
   isOwnProfile: boolean;
+  index?: number;
+  isFirstPage?: boolean;
   folders?: BookmarkFolder[];
   onMoveToFolder?: (bookmarkId: string, folderId: string | null) => void;
   columnIndex?: number;
@@ -38,7 +40,7 @@ const BookmarkItem = memo(({
   isOwnProfile, 
   folders = [],
   onMoveToFolder,
-  columnIndex = 0
+  columnIndex = 0,
 }: BookmarkItemProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
