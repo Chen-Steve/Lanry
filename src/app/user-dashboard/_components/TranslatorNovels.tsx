@@ -64,7 +64,7 @@ export function TranslatorNovels({ translatorId }: { translatorId: string }) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
       {novels.map((novel) => (
-        <Link href={`/novel/${novel.slug}`} key={novel.id} className="group">
+        <Link href={`/novels/${novel.slug}`} key={novel.id} className="group">
           <div className="rounded-md overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-border bg-card">
             <div className="aspect-[2/3] relative w-full overflow-hidden bg-accent/10">
               {novel.cover_image_url ? (
