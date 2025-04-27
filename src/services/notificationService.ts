@@ -203,6 +203,17 @@ export const notificationService = {
     coins?: number;
   }) {
     try {
+      // Skip notifications for draft chapters (negative chapter numbers)
+      if (chapterNumber < 0) {
+        console.log('Skipping notification for draft chapter:', {
+          novelId,
+          chapterNumber,
+          chapterTitle,
+          timestamp: new Date().toISOString()
+        });
+        return [];
+      }
+
       const now = new Date();
       const nowTimestamp = now.getTime();
       const publishAtTimestamp = publishAt ? publishAt.getTime() : null;
