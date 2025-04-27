@@ -5,6 +5,7 @@ import { Icon } from '@iconify/react';
 import { useTheme } from '@/lib/ThemeContext';
 import { ChangePasswordModal } from './_components/ChangePasswordModal';
 import { UpdateProfileModal } from './_components/UpdateProfileModal';
+import { TranslatorNovels } from './_components/TranslatorNovels';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import Link from 'next/link';
@@ -87,6 +88,13 @@ export default function UserDashboard() {
             </div>
           )}
           <h1 className="text-2xl font-bold text-foreground">{profile.username || 'Anonymous User'}</h1>
+          
+          {profile.role === 'TRANSLATOR' && (
+            <div className="mt-8 w-full">
+              <h2 className="text-xl font-semibold mb-4">Translated Novels</h2>
+              <TranslatorNovels translatorId={profile.id} />
+            </div>
+          )}
         </div>
       </div>
     );
