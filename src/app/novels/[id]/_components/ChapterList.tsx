@@ -552,8 +552,8 @@ export const ChapterList = ({
       <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
         {/* Unified Filter Bar */}
         <div className="p-3 bg-accent/50 border-b border-border flex flex-col md:flex-row gap-3">
-          <div className="flex items-center gap-2">
-            <div className="relative inline-block" ref={volumeDropdownRef}>
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 no-scrollbar">
+            <div className="relative inline-block flex-shrink-0" ref={volumeDropdownRef}>
               <button 
                 className="px-3 py-1.5 bg-background border border-border rounded-lg text-sm font-medium flex items-center gap-2 whitespace-nowrap hover:border-primary/50 transition-colors"
                 onClick={() => {
@@ -614,7 +614,7 @@ export const ChapterList = ({
             </div>
             
             {/* Chapter Type Dropdown */}
-            <div className="relative inline-block" ref={chapterTypeDropdownRef}>
+            <div className="relative inline-block flex-shrink-0" ref={chapterTypeDropdownRef}>
               <button 
                 className="px-3 py-1.5 bg-background border border-border rounded-lg text-sm font-medium flex items-center gap-2 whitespace-nowrap hover:border-primary/50 transition-colors"
                 onClick={() => {
@@ -695,7 +695,7 @@ export const ChapterList = ({
             
             {/* Active filter indicator */}
             {activeFilterCount > 0 && (
-              <span className="bg-primary/20 text-primary text-xs font-medium px-2 py-0.5 rounded-full">
+              <span className="bg-primary/20 text-primary text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0">
                 {activeFilterCount} filter{activeFilterCount > 1 ? 's' : ''} active
               </span>
             )}
@@ -707,24 +707,24 @@ export const ChapterList = ({
                   setSelectedVolumeId(null);
                   setChapterTypeFilter('all');
                 }}
-                className="text-xs text-muted-foreground hover:text-foreground"
+                className="text-xs text-muted-foreground hover:text-foreground flex-shrink-0"
               >
                 Reset
               </button>
             )}
+            
+            {/* Bulk Purchase Button */}
+            {isAuthenticated && purchasableAdvancedChapters.length > 1 && (
+              <button
+                onClick={() => setIsBulkPurchaseModalOpen(true)}
+                disabled={isLoading}
+                className="px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+              >
+                <Icon icon="solar:cart-3-linear" className="w-4 h-4" />
+                Bulk Purchase
+              </button>
+            )}
           </div>
-          
-          {/* Bulk Purchase Button */}
-          {isAuthenticated && purchasableAdvancedChapters.length > 1 && (
-            <button
-              onClick={() => setIsBulkPurchaseModalOpen(true)}
-              disabled={isLoading}
-              className="ml-auto px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Icon icon="solar:cart-3-linear" className="w-4 h-4" />
-              Bulk Purchase
-            </button>
-          )}
         </div>
 
         {/* Volume Description (only show when a volume is selected) */}
