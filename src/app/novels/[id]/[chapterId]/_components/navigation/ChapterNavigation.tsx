@@ -167,7 +167,7 @@ export default function ChapterNavigation({
           </button>
 
           {isDropdownOpen && (
-            <div className={`absolute ${dropdownPosition} w-[280px] sm:w-[320px] -translate-x-1/2 left-1/2 max-h-[60vh] overflow-y-auto bg-background border-border border rounded-lg shadow-lg z-50`}>
+            <div className={`absolute ${dropdownPosition} w-full max-h-[60vh] overflow-y-auto bg-background border-border border rounded-lg shadow-lg z-50`}>
               {/* Chapters without volume - show these first if they exist */}
               {chaptersGroupedByVolume.noVolumeChapters.length > 0 && (
                 <div className="border-b border-border">

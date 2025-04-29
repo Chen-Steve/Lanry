@@ -552,8 +552,8 @@ export const ChapterList = ({
       <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
         {/* Unified Filter Bar */}
         <div className="p-3 bg-accent/50 border-b border-border flex flex-col md:flex-row gap-3">
-          <div className="flex items-center gap-2">
-            <div className="relative inline-block" ref={volumeDropdownRef}>
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
+            <div className="relative inline-block flex-shrink-0" ref={volumeDropdownRef}>
               <button 
                 className="px-3 py-1.5 bg-background border border-border rounded-lg text-sm font-medium flex items-center gap-2 whitespace-nowrap hover:border-primary/50 transition-colors"
                 onClick={() => {
@@ -574,47 +574,65 @@ export const ChapterList = ({
               
               {/* Volume Dropdown */}
               {showVolumeDescription && (
-                <div className="absolute z-10 mt-1 left-0 bg-background border border-border rounded-lg shadow-lg min-w-[200px] max-h-[400px] overflow-y-auto">
-                  <div className="p-1">
-                    <button
-                      onClick={() => {
-                        setSelectedVolumeId(null);
-                        setShowVolumeDescription(false);
-                      }}
-                      className={`w-full px-3 py-2 text-left rounded-md text-sm ${!selectedVolumeId ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'}`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span>All Volumes</span>
-                        <span className="text-xs opacity-70">{volumeCounts.get('all')?.total || 0}</span>
-                      </div>
-                    </button>
-                    
-                    {volumes.map(volume => (
+                <div className="fixed inset-0 z-50" onClick={() => setShowVolumeDescription(false)}>
+                  <div 
+                    className="absolute z-50 mt-1 bg-background border border-border rounded-lg shadow-lg min-w-[200px] max-h-[400px] overflow-y-auto"
+                    style={{
+                      top: Math.min(
+                        (volumeDropdownRef.current?.getBoundingClientRect().bottom || 0) + window.scrollY,
+                        window.innerHeight - 400 // Max height of dropdown
+                      ),
+                      left: Math.max(
+                        Math.min(
+                          (volumeDropdownRef.current?.getBoundingClientRect().left || 0),
+                          window.innerWidth - 200 // Min width of dropdown
+                        ),
+                        0 // Ensure it doesn't go off-screen to the left
+                      )
+                    }}
+                    onClick={e => e.stopPropagation()}
+                  >
+                    <div className="p-1">
                       <button
-                        key={volume.id}
                         onClick={() => {
-                          setSelectedVolumeId(volume.id);
+                          setSelectedVolumeId(null);
                           setShowVolumeDescription(false);
                         }}
-                        className={`w-full px-3 py-2 text-left rounded-md text-sm ${selectedVolumeId === volume.id ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'}`}
+                        className={`w-full px-3 py-2 text-left rounded-md text-sm ${!selectedVolumeId ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'}`}
                       >
                         <div className="flex items-center justify-between">
-                          <span>
-                            {volume.title 
-                              ? `Vol ${volume.volume_number}: ${volume.title}` 
-                              : `Volume ${volume.volume_number}`}
-                          </span>
-                          <span className="text-xs opacity-70">{volumeCounts.get(volume.id)?.total || 0}</span>
+                          <span>All Volumes</span>
+                          <span className="text-xs opacity-70">{volumeCounts.get('all')?.total || 0}</span>
                         </div>
                       </button>
-                    ))}
+                      
+                      {volumes.map(volume => (
+                        <button
+                          key={volume.id}
+                          onClick={() => {
+                            setSelectedVolumeId(volume.id);
+                            setShowVolumeDescription(false);
+                          }}
+                          className={`w-full px-3 py-2 text-left rounded-md text-sm ${selectedVolumeId === volume.id ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'}`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span>
+                              {volume.title 
+                                ? `Vol ${volume.volume_number}: ${volume.title}` 
+                                : `Volume ${volume.volume_number}`}
+                            </span>
+                            <span className="text-xs opacity-70">{volumeCounts.get(volume.id)?.total || 0}</span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}
             </div>
             
             {/* Chapter Type Dropdown */}
-            <div className="relative inline-block" ref={chapterTypeDropdownRef}>
+            <div className="relative inline-block flex-shrink-0" ref={chapterTypeDropdownRef}>
               <button 
                 className="px-3 py-1.5 bg-background border border-border rounded-lg text-sm font-medium flex items-center gap-2 whitespace-nowrap hover:border-primary/50 transition-colors"
                 onClick={() => {
@@ -645,74 +663,92 @@ export const ChapterList = ({
               </button>
               
               {showChapterTypeDropdown && (
-                <div className="absolute z-10 mt-1 left-0 bg-background border border-border rounded-lg shadow-lg min-w-[200px]">
-                  <div className="p-1">
-                    <button
-                      onClick={() => {
-                        setChapterTypeFilter('all');
-                        setShowChapterTypeDropdown(false);
-                      }}
-                      className={`w-full px-3 py-2 text-left rounded-md text-sm ${chapterTypeFilter === 'all' ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'}`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <Icon icon="solar:document-linear" className="w-4 h-4" />
-                        <span>All Chapter Types</span>
-                        <span className="text-xs opacity-70">({volumeCounts.get(selectedVolumeId || 'all')?.total || 0})</span>
-                      </div>
-                    </button>
-                    <button
-                      onClick={() => {
-                        setChapterTypeFilter('regular');
-                        setShowChapterTypeDropdown(false);
-                      }}
-                      className={`w-full px-3 py-2 text-left rounded-md text-sm ${chapterTypeFilter === 'regular' ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'}`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <Icon icon="solar:book-linear" className="w-4 h-4" />
-                        <span>Regular Chapters</span>
-                        <span className="text-xs opacity-70">({chapterCounts.regularCount})</span>
-                      </div>
-                    </button>
-                    {chapterCounts.advancedCount > 0 && (
+                <div className="fixed inset-0 z-50" onClick={() => setShowChapterTypeDropdown(false)}>
+                  <div 
+                    className="absolute z-50 mt-1 bg-background border border-border rounded-lg shadow-lg min-w-[200px]"
+                    style={{
+                      top: Math.min(
+                        (chapterTypeDropdownRef.current?.getBoundingClientRect().bottom || 0) + window.scrollY,
+                        window.innerHeight - 300 // Max height of dropdown
+                      ),
+                      left: Math.max(
+                        Math.min(
+                          (chapterTypeDropdownRef.current?.getBoundingClientRect().left || 0),
+                          window.innerWidth - 200 // Min width of dropdown
+                        ),
+                        0 // Ensure it doesn't go off-screen to the left
+                      )
+                    }}
+                    onClick={e => e.stopPropagation()}
+                  >
+                    <div className="p-1">
                       <button
                         onClick={() => {
-                          setChapterTypeFilter('advanced');
+                          setChapterTypeFilter('all');
                           setShowChapterTypeDropdown(false);
                         }}
-                        className={`w-full px-3 py-2 text-left rounded-md text-sm ${chapterTypeFilter === 'advanced' ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'}`}
+                        className={`w-full px-3 py-2 text-left rounded-md text-sm ${chapterTypeFilter === 'all' ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'}`}
                       >
                         <div className="flex items-center gap-2">
-                          <Icon icon="solar:crown-linear" className="w-4 h-4" />
-                          <span>Advanced Chapters</span>
-                          <span className="text-xs opacity-70">({chapterCounts.advancedCount})</span>
+                          <Icon icon="solar:document-linear" className="w-4 h-4" />
+                          <span>All Chapter Types</span>
+                          <span className="text-xs opacity-70">({volumeCounts.get(selectedVolumeId || 'all')?.total || 0})</span>
                         </div>
                       </button>
-                    )}
+                      <button
+                        onClick={() => {
+                          setChapterTypeFilter('regular');
+                          setShowChapterTypeDropdown(false);
+                        }}
+                        className={`w-full px-3 py-2 text-left rounded-md text-sm ${chapterTypeFilter === 'regular' ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'}`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Icon icon="solar:book-linear" className="w-4 h-4" />
+                          <span>Regular Chapters</span>
+                          <span className="text-xs opacity-70">({chapterCounts.regularCount})</span>
+                        </div>
+                      </button>
+                      {chapterCounts.advancedCount > 0 && (
+                        <button
+                          onClick={() => {
+                            setChapterTypeFilter('advanced');
+                            setShowChapterTypeDropdown(false);
+                          }}
+                          className={`w-full px-3 py-2 text-left rounded-md text-sm ${chapterTypeFilter === 'advanced' ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'}`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Icon icon="solar:crown-linear" className="w-4 h-4" />
+                            <span>Advanced Chapters</span>
+                            <span className="text-xs opacity-70">({chapterCounts.advancedCount})</span>
+                          </div>
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
             </div>
-            
-            {/* Active filter indicator */}
-            {activeFilterCount > 0 && (
-              <span className="bg-primary/20 text-primary text-xs font-medium px-2 py-0.5 rounded-full">
-                {activeFilterCount} filter{activeFilterCount > 1 ? 's' : ''} active
-              </span>
-            )}
-            
-            {/* Reset filters button */}
-            {activeFilterCount > 0 && (
-              <button 
-                onClick={() => {
-                  setSelectedVolumeId(null);
-                  setChapterTypeFilter('all');
-                }}
-                className="text-xs text-muted-foreground hover:text-foreground"
-              >
-                Reset
-              </button>
-            )}
           </div>
+          
+          {/* Active filter indicator */}
+          {activeFilterCount > 0 && (
+            <span className="bg-primary/20 text-primary text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0">
+              {activeFilterCount} filter{activeFilterCount > 1 ? 's' : ''} active
+            </span>
+          )}
+          
+          {/* Reset filters button */}
+          {activeFilterCount > 0 && (
+            <button 
+              onClick={() => {
+                setSelectedVolumeId(null);
+                setChapterTypeFilter('all');
+              }}
+              className="text-xs text-muted-foreground hover:text-foreground flex-shrink-0"
+            >
+              Reset
+            </button>
+          )}
           
           {/* Bulk Purchase Button */}
           {isAuthenticated && purchasableAdvancedChapters.length > 1 && (

@@ -12,8 +12,12 @@ interface ChapterSidebarProps {
 
 const fontOptions = [
   { label: 'System Default', value: 'ui-sans-serif, system-ui, sans-serif' },
-  { label: 'Serif', value: 'ui-serif, Georgia, Cambria, serif' },
   { label: 'Mono', value: 'ui-monospace, monospace' },
+  { label: 'Garamond', value: 'Garamond, EB Garamond, serif' },
+  { label: 'Comic Sans', value: '"Comic Sans MS", cursive' },
+  { label: 'Playfair Display', value: '"Playfair Display", serif' },
+  { label: 'Montserrat', value: 'Montserrat, sans-serif' },
+  { label: 'Courier New', value: '"Courier New", monospace' },
 ];
 
 // Local storage keys
