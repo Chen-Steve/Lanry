@@ -21,40 +21,28 @@ const isValidUrl = (url?: string): boolean => {
 
 interface ChapterProgressBarProps {
   novelId: string;
-  currentChapter: number;
-  totalChapters: number;
-  navigation: {
-    prevChapter: { chapter_number: number } | null;
-    nextChapter: { chapter_number: number } | null;
-  };
   onFontChange: (font: string) => void;
   onSizeChange: (size: number) => void;
   currentFont: string;
   currentSize: number;
   isCommentOpen: boolean;
-  firstChapter: number;
   novelCoverUrl?: string;
   novelTitle?: string;
 }
 
 export default function ChapterProgressBar({
   novelId,
-  currentChapter,
-  totalChapters,
-  navigation,
   onFontChange,
   onSizeChange,
   currentFont,
   currentSize,
   isCommentOpen,
-  firstChapter,
   novelCoverUrl,
   novelTitle,
 }: ChapterProgressBarProps) {
-  const [scrollProgress, setScrollProgress] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
   const isMobile = useMediaQuery('(max-width: 768px)');
-  const progressBarRef = useRef<HTMLDivElement>(null);
+  const barRef = useRef<HTMLDivElement>(null);
   const [touchStartY, setTouchStartY] = useState<number | null>(null);
   const [isTouching, setIsTouching] = useState(false);
 
@@ -65,6 +53,25 @@ export default function ChapterProgressBar({
     console.log("- Processed URL:", getProcessedCoverUrl(novelCoverUrl));
     console.log("- Novel Title:", novelTitle);
   }, [novelCoverUrl, novelTitle]);
+
+  // Handle clicks outside the bar
+  useEffect(() => {
+    if (!isMobile || !isVisible) return;
+
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      if (barRef.current && !barRef.current.contains(event.target as Node)) {
+        setIsVisible(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [isMobile, isVisible]);
 
   // Listen for double tap custom event
   useEffect(() => {
@@ -84,39 +91,6 @@ export default function ChapterProgressBar({
       document.removeEventListener('toggleChapterBar', handleToggleChapterBar as EventListener);
     };
   }, [isVisible]);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const windowHeight = window.innerHeight;
-      const documentHeight = document.documentElement.scrollHeight - windowHeight;
-      const scrolled = window.scrollY;
-      
-      // Calculate progress within current chapter (0 to 1)
-      const chapterProgress = Math.min(scrolled / documentHeight, 1);
-      
-      // Calculate total chapters in range
-      const totalChaptersInRange = (firstChapter + totalChapters - 1) - firstChapter + 1;
-      
-      // Calculate completed chapters
-      const completedChapters = currentChapter - firstChapter;
-      
-      // Calculate base progress percentage
-      const baseProgress = (completedChapters / totalChaptersInRange) * 100;
-      
-      // Add current chapter progress
-      const currentChapterContribution = (chapterProgress / totalChaptersInRange) * 100;
-      
-      // Calculate final progress
-      const finalProgress = baseProgress + currentChapterContribution;
-      
-      // Ensure progress stays within 0-100 range
-      setScrollProgress(Math.min(Math.max(finalProgress, 0), 100));
-    };
-
-    handleScroll();
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [currentChapter, totalChapters, firstChapter]);
 
   useEffect(() => {
     if (!isMobile) return;
@@ -146,32 +120,11 @@ export default function ChapterProgressBar({
     }
   }, [isCommentOpen, isVisible]);
 
-  // Add a click handler to close the bar when clicking outside
-  useEffect(() => {
-    if (!isVisible || !isMobile) return;
-    
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        progressBarRef.current && 
-        !progressBarRef.current.contains(event.target as Node) &&
-        isVisible
-      ) {
-        setIsVisible(false);
-      }
-    };
-    
-    document.addEventListener('click', handleClickOutside);
-    
-    return () => {
-      document.removeEventListener('click', handleClickOutside);
-    };
-  }, [isVisible, isMobile]);
-
   if (!isMobile) return null;
 
   return (
     <div
-      ref={progressBarRef}
+      ref={barRef}
       className={`fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t dark:border-gray-800 shadow-lg transition-all duration-300 rounded-t-2xl ${
         isVisible 
           ? 'translate-y-0 py-4 min-h-[220px]'
@@ -192,72 +145,6 @@ export default function ChapterProgressBar({
         >
           <Icon icon="mdi:close" className="text-lg" />
         </button>
-
-        {/* Progress Section */}
-        <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3">
-          {/* Chapter info - centered */}
-          <div className="mb-2 text-center">
-            <div className="text-sm font-medium text-gray-800 dark:text-gray-300">
-              Chapter {currentChapter} of {firstChapter + totalChapters - 1}
-            </div>
-            <div className="text-xs text-gray-600 dark:text-gray-400">
-              {Math.round(scrollProgress)}% complete
-            </div>
-          </div>
-
-          {/* Navigation with progress bar */}
-          <div className="flex items-center gap-2 h-8 mt-3">
-            {/* Previous button */}
-            <div className="w-8 h-8 flex-shrink-0">
-              {navigation.prevChapter ? (
-                <Link
-                  href={`/novels/${novelId}/c${navigation.prevChapter.chapter_number}`}
-                  className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors text-gray-700 dark:text-gray-300 h-full w-full flex items-center justify-center"
-                  aria-label="Previous chapter"
-                >
-                  <Icon icon="mdi:chevron-left" className="text-xl" />
-                </Link>
-              ) : (
-                <button
-                  disabled
-                  className="p-1.5 text-gray-300 dark:text-gray-600 cursor-not-allowed h-full w-full flex items-center justify-center"
-                  aria-label="No previous chapter"
-                >
-                  <Icon icon="mdi:chevron-left" className="text-xl" />
-                </button>
-              )}
-            </div>
-
-            {/* Progress bar */}
-            <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full">
-              <div
-                className="h-full bg-primary dark:bg-primary rounded-full transition-all duration-150"
-                style={{ width: `${scrollProgress}%` }}
-              />
-            </div>
-
-            {/* Next button */}
-            <div className="w-8 h-8 flex-shrink-0">
-              {navigation.nextChapter ? (
-                <Link
-                  href={`/novels/${novelId}/c${navigation.nextChapter.chapter_number}`}
-                  className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors text-gray-700 dark:text-gray-300 h-full w-full flex items-center justify-center"
-                  aria-label="Next chapter"
-                >
-                  <Icon icon="mdi:chevron-right" className="text-xl" />
-                </Link>
-              ) : (
-                <button
-                  disabled
-                  className="p-1.5 text-gray-300 dark:text-gray-600 cursor-not-allowed h-full w-full flex items-center justify-center"
-                  aria-label="No next chapter"
-                >
-                  <Icon icon="mdi:chevron-right" className="text-xl" />
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
 
         {/* Novel Details Section */}
         <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3">

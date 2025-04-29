@@ -28,21 +28,23 @@ export default function TextCustomization({
   return (
     <div className="flex items-center justify-between">
       {/* Font Family */}
-      <div className="flex items-center gap-3">
-        {fonts.map((font) => (
-          <button
-            key={font.name}
-            onClick={() => onFontChange(font.value)}
-            className={`px-3 py-1 rounded-md text-sm ${
-              currentFont === font.value
-                ? 'bg-blue-50 text-blue-700'
-                : 'text-gray-600 hover:bg-gray-100'
-            }`}
-            style={{ fontFamily: font.value }}
-          >
-            {font.name}
-          </button>
-        ))}
+      <div className="flex-1 overflow-x-auto no-scrollbar">
+        <div className="flex items-center gap-3 min-w-max pr-4">
+          {fonts.map((font) => (
+            <button
+              key={font.name}
+              onClick={() => onFontChange(font.value)}
+              className={`px-3 py-1 rounded-md text-sm whitespace-nowrap ${
+                currentFont === font.value
+                  ? 'bg-blue-50 text-blue-700'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+              style={{ fontFamily: font.value }}
+            >
+              {font.name}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Font Size */}
