@@ -127,7 +127,7 @@ export default function ShopPage() {
         <p className="text-sm">
           Questions or issues with your funds? Contact us on{' '}
           <a href="https://discord.gg/DXHRpV3sxF" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">
-            Discord
+            Discord. We answer within 24 hours and offer a 100% money back guarantee.
           </a>
           {' '}or email us at{' '}
           <a href="mailto:c.niasser@gmail.com" className="text-primary hover:underline">
