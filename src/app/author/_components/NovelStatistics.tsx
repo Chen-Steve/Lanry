@@ -98,7 +98,7 @@ export default function NovelStatistics() {
   return (
     <section className="p-4">      
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-semibold text-foreground">Novel Statistics</h2>
+        <h2 className="text-2xl font-semibold text-foreground">Novel Statistic</h2>
         <p className="text-sm text-muted-foreground italic">Note: Views counts are lower than they actually are.</p>
       </div>
 
