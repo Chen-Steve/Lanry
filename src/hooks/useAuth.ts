@@ -1,53 +1,11 @@
-import { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import supabase from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
+import { useSupabase } from '@/app/providers';
 
 export function useAuth() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { user, isAuthenticated, isLoading, supabase } = useSupabase();
   const queryClient = useQueryClient();
   const router = useRouter();
-
-  useEffect(() => {
-    let mounted = true;
-
-    const initAuth = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (mounted && session?.user) {
-          setIsAuthenticated(true);
-          setUserId(session.user.id);
-        }
-      } catch (error) {
-        console.error('[Init] Error:', error);
-      } finally {
-        if (mounted) setIsLoading(false);
-      }
-    };
-
-    initAuth();
-    
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!mounted) return;
-
-      if (event === 'SIGNED_OUT') {
-        setUserId(null);
-        setIsAuthenticated(false);
-      } else if (session?.user) {
-        setIsAuthenticated(true);
-        setUserId(session.user.id);
-      }
-      setIsLoading(false);
-    });
-
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, []);
 
   const handleSignOut = async () => {
     try {
@@ -60,12 +18,10 @@ export function useAuth() {
         });
       }
 
-      await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
       
-      setIsAuthenticated(false);
-      setUserId(null);
       queryClient.clear();
-
       router.push('/auth');
       router.refresh();
 
@@ -85,7 +41,7 @@ export function useAuth() {
 
   return {
     isAuthenticated,
-    userId,
+    userId: user?.id || null,
     isLoading,
     handleSignOut
   };

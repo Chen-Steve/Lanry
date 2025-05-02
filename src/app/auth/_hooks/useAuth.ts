@@ -171,31 +171,17 @@ export function useAuth() {
   };
 
   const handleSignin = async () => {
-    let retryCount = 0;
-    const maxRetries = 2;
-    
-    while (retryCount <= maxRetries) {
-      try {
-        const { error } = await supabase.auth.signInWithPassword({
-          email: credentials.email,
-          password: credentials.password,
-        });
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: credentials.email,
+        password: credentials.password,
+      });
 
-        if (error) throw error;
-        await checkAndRedirect();
-        return;
-      } catch (error) {
-        console.error(`Sign-in attempt ${retryCount + 1} failed:`, error);
-        retryCount++;
-        
-        if (retryCount <= maxRetries) {
-          await new Promise(resolve => 
-            setTimeout(resolve, Math.pow(2, retryCount) * 1000)
-          );
-        } else {
-          throw error;
-        }
-      }
+      if (error) throw error;
+      await checkAndRedirect();
+    } catch (error) {
+      console.error('Sign-in failed:', error);
+      throw error;
     }
   };
 

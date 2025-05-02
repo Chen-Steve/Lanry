@@ -4,12 +4,6 @@ import { toast } from 'react-hot-toast';
 import { nanoid } from 'nanoid';
 import { useSupabase } from '@/app/providers';
 
-// Add a helper function to get direct CDN URL
-function getDirectCDNUrl(publicUrl: string) {
-  // Convert Supabase storage URL to direct CDN URL
-  return publicUrl.replace('.supabase.co/storage/v1/object/public/', '.supabase.co/storage/v1/render/image/public/');
-}
-
 interface NovelCoverImageProps {
   coverImageUrl?: string;
   onUpdate: (url: string) => Promise<void>;
@@ -29,9 +23,9 @@ export default function NovelCoverImage({ coverImageUrl, onUpdate, onDelete }: N
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Only allow image files
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please select an image file');
+    // Only allow WebP files
+    if (file.type !== 'image/webp') {
+      toast.error('Please select a WebP image file');
       return;
     }
 
@@ -43,9 +37,8 @@ export default function NovelCoverImage({ coverImageUrl, onUpdate, onDelete }: N
 
     setIsUploadingCover(true);
     try {
-      // Generate a unique filename with original extension
-      const ext = file.name.split('.').pop();
-      const filename = `${nanoid()}.${ext}`;
+      // Generate a unique filename
+      const filename = `${nanoid()}.webp`;
 
       // Upload directly to Supabase Storage
       const { data, error } = await supabase.storage
@@ -101,13 +94,13 @@ export default function NovelCoverImage({ coverImageUrl, onUpdate, onDelete }: N
           <>
             {coverImageUrl ? (
               <img
-                src={getDirectCDNUrl(coverImageUrl)}
+                src={coverImageUrl}
                 alt="Novel cover"
                 className="w-full h-full object-cover"
               />
             ) : (
               <div className="w-full h-full bg-accent flex items-center justify-center">
-                <span className="text-muted-foreground text-sm font-medium">Cover image</span>
+                <span className="text-muted-foreground text-sm text-center font-medium">Only WebP images are supported</span>
               </div>
             )}
             <div className="absolute inset-0 bg-foreground/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -118,7 +111,7 @@ export default function NovelCoverImage({ coverImageUrl, onUpdate, onDelete }: N
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*"
+          accept="image/webp"
           onChange={handleFileChange}
           className="hidden"
           aria-label="Upload cover image"
