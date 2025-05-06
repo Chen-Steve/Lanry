@@ -1,8 +1,7 @@
 import { Icon } from '@iconify/react';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { nanoid } from 'nanoid';
-import { useSupabase } from '@/app/providers';
+import { uploadImage } from '@/services/uploadService';
 
 interface NovelCoverImageProps {
   coverImageUrl?: string;
@@ -13,7 +12,6 @@ interface NovelCoverImageProps {
 export default function NovelCoverImage({ coverImageUrl, onUpdate, onDelete }: NovelCoverImageProps) {
   const [isUploadingCover, setIsUploadingCover] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { supabase } = useSupabase();
 
   const handleCoverImageClick = () => {
     fileInputRef.current?.click();
@@ -23,40 +21,11 @@ export default function NovelCoverImage({ coverImageUrl, onUpdate, onDelete }: N
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Only allow WebP files
-    if (file.type !== 'image/webp') {
-      toast.error('Please select a WebP image file');
-      return;
-    }
-
-    // Max file size: 5MB
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image size should be less than 5MB');
-      return;
-    }
-
     setIsUploadingCover(true);
     try {
-      // Generate a unique filename
-      const filename = `${nanoid()}.webp`;
-
-      // Upload directly to Supabase Storage
-      const { data, error } = await supabase.storage
-        .from('novel-covers')
-        .upload(filename, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
-
-      if (error) throw error;
-
-      // Get the public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('novel-covers')
-        .getPublicUrl(data.path);
-
+      const publicUrl = await uploadImage(file, null, 'novel-covers');
       await onUpdate(publicUrl);
-      toast.success('Cover image updated successfully');
+      toast.success('Cover image uploaded successfully');
     } catch (error) {
       console.error('Error uploading cover:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to upload cover image');
@@ -100,7 +69,7 @@ export default function NovelCoverImage({ coverImageUrl, onUpdate, onDelete }: N
               />
             ) : (
               <div className="w-full h-full bg-accent flex items-center justify-center">
-                <span className="text-muted-foreground text-sm text-center font-medium">Only WebP images are supported</span>
+                <span className="text-muted-foreground text-sm text-center font-medium px-4">Upload WebP, JPG, or PNG (max 5MB)</span>
               </div>
             )}
             <div className="absolute inset-0 bg-foreground/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -111,7 +80,7 @@ export default function NovelCoverImage({ coverImageUrl, onUpdate, onDelete }: N
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/webp"
+          accept="image/webp,image/jpeg,image/png"
           onChange={handleFileChange}
           className="hidden"
           aria-label="Upload cover image"

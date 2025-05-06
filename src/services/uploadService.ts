@@ -32,8 +32,19 @@ export async function listFootnoteImages(): Promise<string[]> {
 
 export async function uploadImage(file: File, userId: string | null, bucket: ImageBucket = 'novel-covers'): Promise<string> {
   try {
-    // Generate unique filename
-    const ext = file.name.split('.').pop();
+    // Validate file type
+    const allowedTypes = ['image/webp', 'image/jpeg', 'image/png'];
+    if (!allowedTypes.includes(file.type)) {
+      throw new Error('Please select a WebP, JPG, or PNG image file');
+    }
+
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      throw new Error('Image size should be less than 5MB');
+    }
+
+    // Generate unique filename with original extension
+    const ext = file.name.split('.').pop() || 'webp';
     const filename = `${nanoid()}.${ext}`;
     
     // Upload to Supabase bucket
@@ -53,12 +64,27 @@ export async function uploadImage(file: File, userId: string | null, bucket: Ima
       throw new Error('Upload failed - no path returned');
     }
 
-    // Get public URL
-    const { data: { publicUrl } } = supabase.storage
-      .from(bucket)
-      .getPublicUrl(data.path);
-
-    return publicUrl;
+    // Try to get transformed WebP version
+    try {
+      const { data: { publicUrl } } = supabase.storage
+        .from(bucket)
+        .getPublicUrl(data.path, {
+          transform: {
+            format: 'origin',
+            quality: 80,
+          },
+        });
+      
+      return publicUrl;
+    } catch (transformError) {
+      // If transformation fails, use original format
+      console.warn('Image transformation failed:', transformError);
+      const { data: { publicUrl } } = supabase.storage
+        .from(bucket)
+        .getPublicUrl(data.path);
+      
+      return publicUrl;
+    }
   } catch (error) {
     console.error('Error uploading image:', error);
     if (error instanceof Error) {

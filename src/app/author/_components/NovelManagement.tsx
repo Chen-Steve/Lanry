@@ -194,11 +194,17 @@ export default function NovelManagement() {
               <div className={`${viewMode === 'grid' 
                 ? 'w-[45px] xs:w-[50px] sm:w-[60px] h-[68px] xs:h-[75px] sm:h-[90px]' 
                 : 'w-[40px] xs:w-[45px] sm:w-[50px] h-[60px] xs:h-[68px] sm:h-[75px]'} flex-shrink-0`}>
-                <img
-                  src={novel.coverImageUrl || '/images/default-cover.jpg'}
-                  alt={novel.title}
-                  className="object-cover w-full h-full rounded border border-border"
-                />
+                {novel.coverImageUrl ? (
+                  <img
+                    src={novel.coverImageUrl}
+                    alt={novel.title}
+                    className="object-cover w-full h-full rounded border border-border"
+                  />
+                ) : (
+                  <div className="w-full h-full rounded border border-border bg-accent flex items-center justify-center">
+                    <span className="text-muted-foreground text-[10px] font-medium">No cover</span>
+                  </div>
+                )}
               </div>
 
               <div className={`flex-1 min-w-0 flex flex-col ${viewMode === 'grid' ? 'justify-between py-0.5' : 'justify-center py-0'}`}>
