@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { Icon } from '@iconify/react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
 
 export default function InventoryPage() {
   // Placeholder for inventory items
@@ -28,45 +27,33 @@ export default function InventoryPage() {
       <div className="flex border-b border-border mb-6">
         <button
           onClick={() => setActiveTab('profile')}
-          className={`px-4 py-2 font-medium transition-colors relative ${
+          className={`tab-button px-4 py-2 font-medium transition-colors ${
             activeTab === 'profile' ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
           }`}
+          data-state={activeTab === 'profile' ? 'active' : 'inactive'}
         >
           Profile Borders
-          {activeTab === 'profile' && (
-            <motion.div 
-              layoutId="activeTab"
-              className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
-            />
-          )}
+          <div className="tab-indicator" />
         </button>
         <button
           onClick={() => setActiveTab('themes')}
-          className={`px-4 py-2 font-medium transition-colors relative ${
+          className={`tab-button px-4 py-2 font-medium transition-colors ${
             activeTab === 'themes' ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
           }`}
+          data-state={activeTab === 'themes' ? 'active' : 'inactive'}
         >
           Themes
-          {activeTab === 'themes' && (
-            <motion.div 
-              layoutId="activeTab"
-              className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
-            />
-          )}
+          <div className="tab-indicator" />
         </button>
         <button
           onClick={() => setActiveTab('badges')}
-          className={`px-4 py-2 font-medium transition-colors relative ${
+          className={`tab-button px-4 py-2 font-medium transition-colors ${
             activeTab === 'badges' ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
           }`}
+          data-state={activeTab === 'badges' ? 'active' : 'inactive'}
         >
           Badges
-          {activeTab === 'badges' && (
-            <motion.div 
-              layoutId="activeTab"
-              className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
-            />
-          )}
+          <div className="tab-indicator" />
         </button>
       </div>
       

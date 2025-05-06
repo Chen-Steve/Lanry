@@ -4,7 +4,6 @@ import React, { useRef, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
 import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
 import { notificationService, type Notification } from '@/services/notificationService';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -44,6 +43,30 @@ const UserProfileButton = ({
   const [showNotifications, setShowNotifications] = useState(false);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
   const { userId } = useAuth();
+
+  // Add click outside handler
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        profileDropdownRef.current && 
+        !profileDropdownRef.current.contains(event.target as Node) &&
+        isProfileDropdownOpen
+      ) {
+        setIsProfileDropdownOpen(false);
+        setShowNotifications(false);
+      }
+    };
+
+    // Add event listener when dropdown is open
+    if (isProfileDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    // Cleanup
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isProfileDropdownOpen, setIsProfileDropdownOpen, setShowNotifications]);
 
   // Fetch unread count on mount and when userId changes
   useEffect(() => {
@@ -226,13 +249,7 @@ const UserProfileButton = ({
   };
 
   const dropdownContent = (
-    <motion.div
-      initial={{ opacity: 0, y: -10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -10 }}
-      transition={{ duration: 0.2 }}
-      className="p-2 space-y-2"
-    >
+    <div className="dropdown-content p-2 space-y-2">
       {/* Profile Header Section */}
       <div className="p-3 bg-accent/50 rounded-lg">
         <div className="flex items-center gap-3">
@@ -371,7 +388,7 @@ const UserProfileButton = ({
           <span>Sign Out</span>
         </button>
       </div>
-    </motion.div>
+    </div>
   );
 
   if (isMobile) {
@@ -383,13 +400,9 @@ const UserProfileButton = ({
         >
           {renderAvatar()}
         </button>
-        {isProfileDropdownOpen && (
-          <div className="absolute right-0 top-full mt-1 w-64 bg-background rounded-lg shadow-lg py-1 z-50 border border-border">
-            <AnimatePresence>
-              {dropdownContent}
-            </AnimatePresence>
-          </div>
-        )}
+        <div className={`dropdown absolute right-0 top-full mt-1 w-64 bg-background rounded-lg shadow-lg py-1 z-50 border border-border ${isProfileDropdownOpen ? 'dropdown-open' : ''}`}>
+          {isProfileDropdownOpen && dropdownContent}
+        </div>
       </div>
     );
   }
@@ -402,13 +415,9 @@ const UserProfileButton = ({
       >
         {renderAvatar()}
       </button>
-      {isProfileDropdownOpen && (
-        <div className="absolute right-0 mt-1 w-72 bg-background rounded-lg shadow-lg border border-border overflow-hidden">
-          <AnimatePresence>
-            {dropdownContent}
-          </AnimatePresence>
-        </div>
-      )}
+      <div className={`dropdown absolute right-0 mt-1 w-72 bg-background rounded-lg shadow-lg border border-border overflow-hidden ${isProfileDropdownOpen ? 'dropdown-open' : ''}`}>
+        {isProfileDropdownOpen && dropdownContent}
+      </div>
     </div>
   );
 };

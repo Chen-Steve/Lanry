@@ -6,13 +6,13 @@ import { useTheme } from '@/lib/ThemeContext';
 import { ChangePasswordModal } from './_components/ChangePasswordModal';
 import { UpdateProfileModal } from './_components/UpdateProfileModal';
 import { TranslatorNovels } from './_components/TranslatorNovels';
-import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import supabase from '@/lib/supabaseClient';
 import type { UserProfile } from '@/types/database';
 import { useSearchParams } from 'next/navigation';
+import { toast } from 'sonner';
 
 const fetchProfile = async (userId?: string): Promise<UserProfile> => {
   if (userId) {
@@ -47,7 +47,6 @@ export default function UserDashboard() {
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isDailyRewardsClicked, setIsDailyRewardsClicked] = useState(false);
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const searchParams = useSearchParams();
   const userId = searchParams.get('id');
 
@@ -184,8 +183,7 @@ export default function UserDashboard() {
         isOpen={isPasswordModalOpen}
         onClose={() => setIsPasswordModalOpen(false)}
         onSuccess={() => {
-          setToast({ message: 'Password changed successfully!', type: 'success' });
-          setTimeout(() => setToast(null), 3000);
+          toast.success('Password changed successfully!');
         }}
       />
 
@@ -193,40 +191,10 @@ export default function UserDashboard() {
         isOpen={isProfileModalOpen}
         onClose={() => setIsProfileModalOpen(false)}
         onSuccess={() => {
-          setToast({ message: 'Profile updated successfully!', type: 'success' });
-          setTimeout(() => setToast(null), 3000);
+          toast.success('Profile updated successfully!');
         }}
         profile={profile}
       />
-
-      {/* Toast Notification */}
-      <AnimatePresence>
-        {toast && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            className={`fixed bottom-4 right-4 px-4 py-2 rounded-md shadow-lg ${
-              toast.type === 'success' ? 'bg-green-500' : 'bg-red-500'
-            } text-white z-50`}
-          >
-            <div className="flex items-center gap-2">
-              <Icon
-                icon={toast.type === 'success' ? 'ph:check-circle' : 'ph:x-circle'}
-                className="w-5 h-5"
-              />
-              <span>{toast.message}</span>
-              <button
-                onClick={() => setToast(null)}
-                className="ml-2 hover:opacity-80"
-                aria-label="Close notification"
-              >
-                <Icon icon="ph:x" className="w-4 h-4" />
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 } 

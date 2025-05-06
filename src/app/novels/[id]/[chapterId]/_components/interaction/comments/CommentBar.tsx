@@ -1,11 +1,10 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Icon } from '@iconify/react';
 import { formatDate } from '@/lib/utils';
 import Link from 'next/link';
 import { createPortal } from 'react-dom';
-import { motion, AnimatePresence } from 'framer-motion';
 import type { ChapterComment as BaseChapterComment } from '@/types/database';
 
 // Extend the base type to include avatar_url
@@ -46,7 +45,14 @@ export default function CommentBar({
   const [newComment, setNewComment] = useState('');
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
+  const [isVisible, setIsVisible] = useState(false);
   const barRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Show the comment bar after mount to trigger animation
+    setIsVisible(true);
+    return () => setIsVisible(false);
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,36 +79,32 @@ export default function CommentBar({
     setEditContent('');
   };
 
+  const handleCloseWithAnimation = useCallback(() => {
+    setIsVisible(false);
+    setTimeout(onClose, 400);
+  }, [onClose]);
+
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        onClose();
+        handleCloseWithAnimation();
       }
     };
 
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
-  }, [onClose]);
+  }, [handleCloseWithAnimation]);
 
   return createPortal(
-    <AnimatePresence>
-      <motion.div
-        key="overlay"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 0.5 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/30 z-40"
-        onClick={onClose}
+    <>
+      <div
+        className={`fixed inset-0 bg-black/30 z-40 comment-overlay ${isVisible ? 'show' : ''}`}
+        onClick={handleCloseWithAnimation}
       />
-      <motion.div
-        key="sidebar"
+      <div
         ref={barRef}
-        initial={{ x: '100%' }}
-        animate={{ x: 0 }}
-        exit={{ x: '100%' }}
-        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className="fixed right-0 top-0 bottom-0 w-full md:w-[400px] bg-[#F2EEE5] dark:bg-gray-900 shadow-lg z-50 
-                  overflow-hidden flex flex-col"
+        className={`comment-sidebar fixed right-0 top-0 bottom-0 w-full md:w-[400px] bg-[#F2EEE5] dark:bg-gray-900 shadow-lg z-50 
+                  overflow-hidden flex flex-col ${isVisible ? 'show' : ''}`}
       >
         <div className="h-full flex flex-col">
           <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
@@ -111,7 +113,7 @@ export default function CommentBar({
               <p className="text-xs text-gray-600 dark:text-gray-400">Paragraph #{paragraphId}</p>
             </div>
             <button 
-              onClick={onClose} 
+              onClick={handleCloseWithAnimation} 
               className="p-2 hover:bg-[#F7F4ED] dark:hover:bg-gray-800 rounded-full transition-colors text-black dark:text-white"
               aria-label="Close comments"
             >
@@ -273,8 +275,8 @@ export default function CommentBar({
             </div>
           )}
         </div>
-      </motion.div>
-    </AnimatePresence>,
+      </div>
+    </>,
     document.body
   );
 } 
