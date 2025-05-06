@@ -4,7 +4,7 @@ import { Icon } from '@iconify/react'
 import { useDiscussions } from '@/hooks/forum/useDiscussions'
 import { ForumDiscussion } from '@/types/forum'
 import Link from 'next/link'
-import { formatDistanceToNow } from 'date-fns'
+import { formatRelativeDate } from '@/lib/utils'
 import { useState } from 'react'
 
 export default function DiscussionList() {
@@ -114,7 +114,7 @@ export default function DiscussionList() {
                 </h3>
               </div>
               <span className="text-xs sm:text-sm text-muted-foreground order-first sm:order-none">
-                {formatDistanceToNow(new Date(discussion.updatedAt), { addSuffix: true })}
+                {formatRelativeDate(discussion.updatedAt)}
               </span>
             </div>
             <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{discussion.description}</p>

@@ -1,40 +1,12 @@
 'use client'
 
 import { forwardRef, useState } from 'react'
-import { formatDistanceToNow } from 'date-fns'
 import { Icon } from '@iconify/react'
 import { ForumMessage } from '@/types/forum'
 import { Avatar } from '@/components/ui/avatar'
 import { useAuth } from '@/hooks/useAuth'
 import { useForumMutations } from '@/hooks/forum/useForumMutations'
-
-const formatDate = (dateString: string) => {
-  try {
-    if (!dateString) {
-      console.error('Date string is missing')
-      return 'Invalid date'
-    }
-    
-    // Parse the date - ensure it's treated as UTC if it doesn't have timezone info
-    let date: Date
-    if (!dateString.endsWith('Z') && !dateString.includes('+')) {
-      // If the date string doesn't have timezone info, treat it as UTC
-      date = new Date(dateString + 'Z')
-    } else {
-      date = new Date(dateString)
-    }
-    
-    if (isNaN(date.getTime())) {
-      console.error('Invalid date format', dateString)
-      return 'Invalid date'
-    }
-
-    return formatDistanceToNow(date, { addSuffix: true })
-  } catch (error) {
-    console.error('Error formatting date:', error)
-    return 'Invalid date'
-  }
-}
+import { formatRelativeDate } from '@/lib/utils'
 
 interface MessageItemProps {
   message: ForumMessage
@@ -93,7 +65,7 @@ const MessageItem = forwardRef<HTMLDivElement, MessageItemProps>(
                 </span>
                 <span className="text-xs sm:text-sm text-muted-foreground">•</span>
                 <span className="text-xs sm:text-sm text-muted-foreground">
-                  {formatDate(message.created_at)}
+                  {formatRelativeDate(message.created_at)}
                 </span>
                 {message.is_edited && (
                   <>

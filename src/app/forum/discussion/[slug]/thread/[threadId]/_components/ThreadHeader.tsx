@@ -3,12 +3,12 @@
 import Link from 'next/link'
 import { Icon } from '@iconify/react'
 import { ForumThread } from '@/types/forum'
-import { formatDistanceToNow } from 'date-fns'
 import { Avatar } from '@/components/ui/avatar'
 import { useAuth } from '@/hooks/useAuth'
 import { useThreadMutations } from '@/hooks/forum/useThreadMutations'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { formatRelativeDate } from '@/lib/utils'
 
 interface ThreadHeaderProps {
   thread: ForumThread | SupabaseThread
@@ -31,40 +31,6 @@ interface SupabaseThread {
     id: string
     title: string
     slug: string
-  }
-}
-
-const formatDate = (thread: ForumThread | SupabaseThread) => {
-  try {
-    // Get the date string, handling both created_at and createdAt
-    const dateString = 'created_at' in thread && thread.created_at
-      ? thread.created_at
-      : thread.createdAt
-    
-    if (!dateString) {
-      console.error('Date string is missing', thread)
-      return 'Invalid date'
-    }
-    
-    // Parse the date - ensure it's treated as UTC if it doesn't have timezone info
-    let date: Date
-    if (typeof dateString === 'string' && !dateString.endsWith('Z') && !dateString.includes('+')) {
-      // If the date string doesn't have timezone info, treat it as UTC
-      date = new Date(dateString + 'Z')
-    } else {
-      date = new Date(dateString)
-    }
-    
-    if (isNaN(date.getTime())) {
-      console.error('Invalid date format', dateString)
-      return 'Invalid date'
-    }
-
-    // Use the same formatting as ThreadList
-    return formatDistanceToNow(date, { addSuffix: true })
-  } catch (error) {
-    console.error('Error formatting date:', error)
-    return 'Invalid date'
   }
 }
 
@@ -151,7 +117,7 @@ export default function ThreadHeader({ thread }: ThreadHeaderProps) {
           </div>
           <span className="hidden sm:inline">•</span>
           <time dateTime={'created_at' in thread ? thread.created_at : thread.createdAt} className="text-muted-foreground">
-            {formatDate(thread)}
+            {formatRelativeDate(('created_at' in thread ? thread.created_at : thread.createdAt) || new Date().toISOString())}
           </time>
           <span className="hidden sm:inline">•</span>
           <div className="flex items-center gap-1">

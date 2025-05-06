@@ -4,7 +4,7 @@ import { Icon } from '@iconify/react'
 import { useThreads } from '@/hooks/forum/useThreads'
 import { ForumThread } from '@/types/forum'
 import Link from 'next/link'
-import { formatDistanceToNow } from 'date-fns'
+import { formatRelativeDate } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
 import { useThreadMutations } from '@/hooks/forum/useThreadMutations'
 import { useState } from 'react'
@@ -95,7 +95,7 @@ export default function ThreadList({ slug }: ThreadListProps) {
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-xs text-muted-foreground">
-                      {formatDistanceToNow(new Date(thread.lastMessageAt), { addSuffix: true })}
+                      {formatRelativeDate(thread.lastMessageAt)}
                     </span>
                     {userId === thread.author.id && (
                       <button
