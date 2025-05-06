@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { Icon } from '@iconify/react';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import supabase from '@/lib/supabaseClient';
 
 interface ChapterPurchaseButtonProps {
@@ -174,7 +174,7 @@ export default function ChapterPurchaseButton({
             <div className="flex gap-2">
               <button
                 onClick={async () => {
-                  toast.dismiss(t.id);
+                  toast.dismiss(t);
                   await unlockChapter();
                 }}
                 className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
@@ -183,7 +183,7 @@ export default function ChapterPurchaseButton({
               </button>
               <button
                 onClick={() => {
-                  toast.dismiss(t.id);
+                  toast.dismiss(t);
                   setIsUnlocking(false);
                 }}
                 className="flex-1 px-4 py-2 bg-muted text-muted-foreground rounded-md hover:bg-accent transition-colors"

@@ -5,7 +5,7 @@ import { Icon } from '@iconify/react';
 import { Novel } from '@/types/database';
 import { fetchAuthorNovels, updateNovel } from '@/app/author/_services/novelManagementService';
 import { deleteNovel } from '@/app/author/_services/novelUploadService';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import NovelEditForm from './NovelEditForm';
 
 interface NovelWithChapters extends Novel {

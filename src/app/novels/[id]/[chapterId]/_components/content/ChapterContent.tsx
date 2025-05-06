@@ -11,7 +11,7 @@ import { Icon } from '@iconify/react';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import type { ChapterComment as BaseChapterComment } from '@/types/database';
 import FootnoteTooltip from './FootnoteTooltip';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import ScreenshotProtection from '../ScreenshotProtection';
 import ChapterParagraph from './ChapterParagraph';
 import TranslatorChapterEdit from './TranslatorChapterEdit';

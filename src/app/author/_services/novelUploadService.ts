@@ -1,5 +1,5 @@
 import supabase from '@/lib/supabaseClient';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import { uploadImage } from '@/services/uploadService';
 import { generateNovelSlug, generateUUID } from '@/lib/utils';
 import { NovelCategory } from '@/types/database';

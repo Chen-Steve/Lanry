@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Icon } from '@iconify/react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 import supabase from '@/lib/supabaseClient';
 import { v4 as uuidv4 } from 'uuid';
 

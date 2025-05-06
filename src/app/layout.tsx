@@ -4,7 +4,7 @@ import "./globals.css";
 import Header from './_components/Header';
 import Footer from './_components/Footer';
 import Providers from './providers';
-import { Toaster } from 'react-hot-toast';
+import { Toaster } from 'sonner';
 import { ThemeProvider } from '@/lib/ThemeContext';
 import CookieConsent from './_components/CookieConsent';
 

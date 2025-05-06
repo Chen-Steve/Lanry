@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Icon } from '@iconify/react';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 
 interface GlobalSettingsProps {
   isOpen: boolean;

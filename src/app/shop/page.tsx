@@ -2,7 +2,7 @@
 
 import { Icon } from '@iconify/react';
 import { useAuth } from '@/hooks/useAuth';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import { onApprove } from "@/services/paymentService";
 import { useRouter } from 'next/navigation';

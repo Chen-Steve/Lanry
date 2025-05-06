@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Icon } from '@iconify/react';
 import { DonationModal } from './DonationModal';
 import { useAuth } from '@/hooks/useAuth';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 
 interface TranslatorLinksProps {
   translator: {

@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { Icon } from '@iconify/react';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import { createPortal } from 'react-dom';
 import * as authorChapterService from '../_services/authorChapterService';
 import { useDropzone } from 'react-dropzone';

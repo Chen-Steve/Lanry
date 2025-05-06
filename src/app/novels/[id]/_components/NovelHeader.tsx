@@ -2,7 +2,7 @@ import { Icon } from '@iconify/react';
 import Link from 'next/link';
 import { NovelCategory, Tag } from '@/types/database';
 import { useState, useRef, useEffect } from 'react';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 import supabase from '@/lib/supabaseClient';
 import { generateUUID } from '@/lib/utils';
 import { NovelSynopsis } from './NovelSynopsis';

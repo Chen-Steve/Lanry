@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { notificationService, type Notification } from '@/services/notificationService';
 import { useAuth } from '@/hooks/useAuth';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import { formatRelativeDate } from '@/lib/utils';
 
 interface UserProfile {

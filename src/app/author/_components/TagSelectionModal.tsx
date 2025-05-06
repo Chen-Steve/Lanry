@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Icon } from '@iconify/react';
 import { Tag } from '@/types/database';
 import * as tagService from '@/app/author/_services/tagService';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 
 interface TagSelectionModalProps {
   isOpen: boolean;

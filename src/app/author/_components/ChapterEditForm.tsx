@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Icon } from '@iconify/react';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import ChapterEditor from './ChapterEditor';
 import ChapterPublishSettings from './ChapterPublishSettings';
 import * as authorChapterService from '../_services/authorChapterService';

@@ -5,7 +5,7 @@ import { Icon } from '@iconify/react';
 import { notFound } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import supabase from '@/lib/supabaseClient';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 import { getNovel, toggleBookmark } from '@/services/novelService';
 import { NovelContent } from '@/app/novels/[id]/_components/NovelContent';
 import AdultContentWarning from './_components/AdultContentWarning';

@@ -1,7 +1,7 @@
 import { UserProfile } from '@/types/database';
 import { Icon } from '@iconify/react';
 import Link from 'next/link';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import { useState, useCallback, memo } from 'react';
 import { useRouter } from 'next/navigation';
 import supabase from '@/lib/supabaseClient';
@@ -151,7 +151,7 @@ export const ChapterListItem = memo(function ChapterListItem({
             <div className="flex gap-2">
               <button
                 onClick={async () => {
-                  toast.dismiss(t.id);
+                  toast.dismiss(t);
                   await unlockChapter(
                     chapter.novel_id, 
                     novelAuthorId, 
@@ -166,7 +166,7 @@ export const ChapterListItem = memo(function ChapterListItem({
               </button>
               <button
                 onClick={() => {
-                  toast.dismiss(t.id);
+                  toast.dismiss(t);
                   setIsUnlocking(false);
                 }}
                 className="flex-1 px-4 py-2 bg-muted text-muted-foreground rounded-md hover:bg-accent transition-colors"

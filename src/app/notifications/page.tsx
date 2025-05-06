@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { notificationService, type Notification } from '@/services/notificationService';
 import { useAuth } from '@/hooks/useAuth';
 import { formatRelativeDate } from '@/lib/utils';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import supabase from '@/lib/supabaseClient';
 import { RealtimePostgresInsertPayload } from '@supabase/supabase-js';
 

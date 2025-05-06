@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { Icon } from '@iconify/react';
 import { ChapterListProps, ChapterListChapter, Volume } from '../_types/authorTypes';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import ChapterEditForm from './ChapterEditForm';
 import ChapterBulkUpload from './ChapterBulkUpload';
 import * as authorChapterService from '../_services/authorChapterService';

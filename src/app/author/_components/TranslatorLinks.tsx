@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Icon } from '@iconify/react';
 import supabase from '@/lib/supabaseClient';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 
 export default function TranslatorLinks() {
   const [links, setLinks] = useState({

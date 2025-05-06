@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Icon } from '@iconify/react';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import { uploadImage, listFootnoteImages } from '@/services/uploadService';
 import { createPortal } from 'react-dom';
 

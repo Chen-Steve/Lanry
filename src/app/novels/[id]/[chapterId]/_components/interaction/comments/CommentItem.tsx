@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Icon } from '@iconify/react';
 import supabase from '@/lib/supabaseClient';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import { CommentReplies } from './CommentReplies';
 
 interface CommentItemProps {

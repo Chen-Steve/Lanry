@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Icon } from '@iconify/react';
 import { generateUUID } from '@/lib/utils';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 import supabase from '@/lib/supabaseClient';
 import type { NovelComment as BaseNovelComment } from '@/types/database';
 import { Button } from '@/components/ui/button';

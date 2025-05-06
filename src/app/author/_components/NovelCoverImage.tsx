@@ -1,6 +1,6 @@
 import { Icon } from '@iconify/react';
 import { useRef, useState } from 'react';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import { nanoid } from 'nanoid';
 import { useSupabase } from '@/app/providers';
 

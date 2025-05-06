@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tansta
 import { Icon } from '@iconify/react';
 import { useEffect, useState, memo } from 'react';
 import { useInView } from 'react-intersection-observer';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import BookmarkItem from './BookmarkItem';
 import supabase from '@/lib/supabaseClient';
 import type { AuthChangeEvent } from '@supabase/supabase-js';

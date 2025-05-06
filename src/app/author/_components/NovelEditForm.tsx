@@ -2,7 +2,7 @@
 
 import { Icon } from '@iconify/react';
 import { useState, useEffect, useCallback } from 'react';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import ChapterList from './ChapterList';
 import NovelCoverImage from './NovelCoverImage';
 import CategorySelectionModal from './CategorySelectionModal';

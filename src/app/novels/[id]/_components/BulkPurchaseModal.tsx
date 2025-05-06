@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { Icon } from '@iconify/react';
 import { ChapterListItem } from '@/services/chapterService';
 import supabase from '@/lib/supabaseClient';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 
 interface BulkPurchaseModalProps {
   isOpen: boolean;

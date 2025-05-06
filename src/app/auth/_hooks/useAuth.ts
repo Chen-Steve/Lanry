@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import supabase from '@/lib/supabaseClient';
 import { generateUsername } from '@/utils/username';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 
 type AuthMode = 'signin' | 'signup';
 

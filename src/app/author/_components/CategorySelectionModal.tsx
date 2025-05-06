@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Icon } from '@iconify/react';
 import { NovelCategory } from '@/types/database';
 import * as categoryService from '@/app/author/_services/categoryService';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 
 interface CategorySelectionModalProps {
   isOpen: boolean;
