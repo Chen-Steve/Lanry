@@ -15,15 +15,14 @@ interface SupabaseContext {
   isAuthenticated: boolean;
 }
 
-const SupabaseContext = createContext<SupabaseContext | undefined>(undefined);
+const SupabaseContext = createContext<SupabaseContext>({
+  supabase,
+  user: null,
+  isLoading: true,
+  isAuthenticated: false,
+});
 
-export const useSupabase = () => {
-  const context = useContext(SupabaseContext);
-  if (!context) {
-    throw new Error('useSupabase must be used within a SupabaseProvider');
-  }
-  return context;
-};
+export const useSupabase = () => useContext(SupabaseContext);
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient({
@@ -48,10 +47,11 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     console.error('PayPal Client ID is not configured');
   }
 
+  // Base PayPal configuration - individual components will override specific options as needed
   const paypalInitialOptions = {
     clientId: paypalClientId!,
     currency: "USD",
-    intent: "capture",
+    components: "buttons,marks",
     "enable-funding": "paypal",
     "disable-funding": "credit,card",
   };
