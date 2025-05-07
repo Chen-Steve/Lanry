@@ -183,8 +183,6 @@ export default function ChapterProgressBar({
                 className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none ${
                   hideComments ? 'bg-gray-300 dark:bg-gray-700' : 'bg-primary'
                 }`}
-                role="switch"
-                aria-checked={Boolean(hideComments)}
                 aria-label="Toggle comment icons"
               >
                 <span 
@@ -294,7 +292,6 @@ export default function ChapterProgressBar({
                 <Icon icon="mdi:comment-outline" className="w-4 h-4" />
                 <span>Comments</span>
               </div>
-              {/* eslint-disable-next-line jsx-a11y/aria-proptypes */}
               <button 
                 onClick={(e) => {
                   e.preventDefault();
@@ -306,8 +303,6 @@ export default function ChapterProgressBar({
                 className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none ${
                   hideComments ? 'bg-gray-300 dark:bg-gray-700' : 'bg-primary'
                 }`}
-                role="switch"
-                aria-checked={Boolean(hideComments)}
                 aria-label="Toggle comment icons"
               >
                 <span 
