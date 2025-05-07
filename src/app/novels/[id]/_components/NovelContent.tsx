@@ -14,7 +14,7 @@ interface NovelContentProps {
   description: string;
   chaptersCount: number;
   bookmarkCount: number;
-  status: 'ONGOING' | 'COMPLETED' | 'HIATUS';
+  status: 'ONGOING' | 'COMPLETED' | 'HIATUS' | 'DROPPED';
   ageRating?: 'EVERYONE' | 'TEEN' | 'MATURE' | 'ADULT';
   createdAt: string;
   updatedAt: string;
