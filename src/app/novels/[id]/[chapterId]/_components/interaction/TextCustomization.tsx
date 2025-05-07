@@ -14,7 +14,7 @@ const fonts = [
   { name: 'Default', value: 'ui-sans-serif, system-ui, sans-serif' },
   { name: 'Mono', value: 'ui-monospace, monospace' },
   { name: 'Garamond', value: 'Garamond, EB Garamond, serif' },
-  { name: 'Comic Sans', value: '"Comic Sans MS", cursive' },
+  { name: 'Comic Sans', value: '"Comic Sans MS", "Comic Sans", "Chalkboard SE", "Comic Neue", sans-serif' },
   { name: 'Playfair Display', value: '"Playfair Display", serif' },
   { name: 'Montserrat', value: 'Montserrat, sans-serif' },
   { name: 'Courier New', value: '"Courier New", monospace' },
