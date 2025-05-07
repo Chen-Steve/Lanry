@@ -319,6 +319,7 @@ export default function AdvancedSearch() {
                     <option value="ONGOING">Ongoing</option>
                     <option value="COMPLETED">Completed</option>
                     <option value="HIATUS">Hiatus</option>
+                    <option value="DROPPED">Dropped</option>
                   </select>
                 </div>
 

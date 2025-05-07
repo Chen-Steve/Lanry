@@ -258,7 +258,8 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
   const statusOptions = [
     { value: 'ONGOING', label: 'Ongoing', icon: 'mdi:pencil' },
     { value: 'COMPLETED', label: 'Completed', icon: 'mdi:check-circle' },
-    { value: 'HIATUS', label: 'Hiatus', icon: 'mdi:pause-circle' }
+    { value: 'HIATUS', label: 'Hiatus', icon: 'mdi:pause-circle' },
+    { value: 'DROPPED', label: 'Dropped', icon: 'mdi:close-circle' }
   ] as const;
 
   const ageRatingOptions = [

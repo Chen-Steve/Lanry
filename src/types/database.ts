@@ -26,7 +26,7 @@ export interface Novel {
   author: string;
   description: string;
   coverImageUrl?: string;
-  status: 'ONGOING' | 'COMPLETED' | 'HIATUS';
+  status: 'ONGOING' | 'COMPLETED' | 'HIATUS' | 'DROPPED';
   ageRating: 'EVERYONE' | 'TEEN' | 'MATURE' | 'ADULT';
   created_at: string;
   updated_at: string;

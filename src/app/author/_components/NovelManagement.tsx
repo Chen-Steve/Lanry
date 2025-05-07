@@ -219,10 +219,12 @@ export default function NovelManagement() {
                     <span className={`inline-flex items-center gap-0.5 xs:gap-1 px-1 xs:px-1.5 py-0.5 rounded-full text-[10px] xs:text-xs font-medium
                       ${novel.status === 'ONGOING' ? 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300' :
                         novel.status === 'COMPLETED' ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300' :
+                        novel.status === 'DROPPED' ? 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300' :
                         'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-300'}`}>
                       <Icon icon={
                         novel.status === 'ONGOING' ? 'mdi:pencil' :
                         novel.status === 'COMPLETED' ? 'mdi:check-circle' :
+                        novel.status === 'DROPPED' ? 'mdi:close-circle' :
                         'mdi:pause-circle'
                       } className="w-2.5 xs:w-3 h-2.5 xs:h-3" />
                       {novel.status}

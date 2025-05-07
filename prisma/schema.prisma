@@ -6,7 +6,6 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "./generated/client"
 }
 
 datasource db {
@@ -341,6 +340,7 @@ enum NovelStatus {
   ONGOING
   COMPLETED
   HIATUS
+  DROPPED
 }
 
 enum UserRole {
