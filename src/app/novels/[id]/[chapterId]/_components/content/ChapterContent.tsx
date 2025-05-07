@@ -81,7 +81,6 @@ export default function ChapterContent({
   const isMobile = useMediaQuery('(max-width: 768px)');
   const isDesktop = useMediaQuery('(min-width: 768px)');
   const contentRef = useRef<HTMLDivElement>(null);
-  const [isScrollButtonVisible, setIsScrollButtonVisible] = useState(false);
   const [isChapterBarVisible, setIsChapterBarVisible] = useState(false);
   
   // Check if the chapter is indefinitely locked
@@ -218,24 +217,6 @@ export default function ChapterContent({
 
     return () => {
       document.removeEventListener('toggleChapterBar', handleChapterBarEvent as EventListener);
-    };
-  }, []);
-
-  // Show scroll button when page is scrolled
-  useEffect(() => {
-    const toggleScrollButtonVisibility = () => {
-      // Show button when page is scrolled more than 300px
-      if (window.pageYOffset > 300) {
-        setIsScrollButtonVisible(true);
-      } else {
-        setIsScrollButtonVisible(false);
-      }
-    };
-
-    window.addEventListener('scroll', toggleScrollButtonVisibility);
-
-    return () => {
-      window.removeEventListener('scroll', toggleScrollButtonVisibility);
     };
   }, []);
 
@@ -523,24 +504,13 @@ export default function ChapterContent({
         )}
         <FootnoteTooltip />
 
-        {/* Bottom right button group (only visible on mobile and when ChapterBar is closed) */}
+        {/* Corner tab for settings (only visible on mobile and when ChapterBar is closed) */}
         {isMobile && !isIndefinitelyLocked && !isChapterBarVisible && (
-          <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3">
-            {/* Scroll to Top Button */}
-            <button
-              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-              className={`bg-primary text-primary-foreground rounded-full p-3 shadow-lg hover:bg-primary/90 transition-opacity duration-300 ${
-                isScrollButtonVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
-              }`}
-              aria-label="Scroll to top"
-            >
-              <Icon icon="mdi:chevron-up" className="w-5 h-5" />
-            </button>
-            
-            {/* Settings Button */}
+          <div className="fixed bottom-0 right-0 z-50">
+            {/* Settings Tab */}
             <button
               onClick={toggleChapterBar}
-              className="bg-primary text-primary-foreground rounded-full p-3 shadow-lg hover:bg-primary/90 transition-colors"
+              className="bg-primary text-primary-foreground px-3 py-3 rounded-tl-2xl shadow-lg hover:bg-primary/90 transition-colors flex items-center gap-2"
               aria-label="Open chapter settings"
             >
               <Icon icon="mdi:cog" className="w-5 h-5" />
