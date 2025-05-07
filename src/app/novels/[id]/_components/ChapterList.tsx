@@ -593,7 +593,7 @@ export const ChapterList = ({
           )}
           
           {showChapterTypeDropdown && (
-            <div className="absolute z-[9999] right-3 top-[calc(100%-0.5rem)] bg-background border border-border rounded-lg shadow-lg min-w-[200px]">
+            <div className="absolute left-0 top-[calc(100%+0.25rem)] bg-background border border-border rounded-lg shadow-lg min-w-[100px]">
               <div className="p-1">
                 <button
                   onClick={() => {
