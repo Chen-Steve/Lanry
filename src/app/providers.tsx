@@ -52,8 +52,12 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     clientId: paypalClientId!,
     currency: "USD",
     components: "buttons,marks",
-    "enable-funding": "paypal",
-    "disable-funding": "credit,card",
+    vault: true,
+    intent: "subscription",
+    enableFunding: ["paypal"],
+    disableFunding: ["credit", "card"],
+    dataClientToken: undefined,
+    debug: false,
   };
 
   useEffect(() => {

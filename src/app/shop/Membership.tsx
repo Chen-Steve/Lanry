@@ -97,6 +97,7 @@ export default function Membership() {
 
           <PayPalButtons
             style={{ layout: "horizontal", height: 35, tagline: false, shape: 'pill', color: 'white' }}
+            forceReRender={[tier.id, tier.planId, tier.price]}
             createSubscription={(data, actions) => {
               try {
                 if (!isAuthenticated || !userId) {
@@ -105,7 +106,8 @@ export default function Membership() {
                 }
                 
                 return actions.subscription.create({
-                  plan_id: tier.planId
+                  plan_id: tier.planId,
+                  custom_id: userId,
                 });
               } catch (error) {
                 console.error("Create subscription error:", error);

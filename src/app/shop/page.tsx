@@ -18,18 +18,23 @@ export default function ShopPage() {
   const baseOptions = {
     clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID!,
     currency: "USD",
+    components: "buttons,marks",
     'data-uid-auto': 'uid_' + Math.random().toString(36).substring(2),
   };
-
+  
   const initialOptions = showMembership 
     ? {
         ...baseOptions,
         vault: true,
         intent: "subscription",
+        components: "buttons,marks",
+        disableFunding: ["credit"],
+        enableFunding: ["paypal"],
       }
     : {
         ...baseOptions,
         intent: "capture",
+        vault: false,
       };
 
   if (!isAuthenticated || !userId) {
@@ -67,7 +72,7 @@ export default function ShopPage() {
         </div>
       </div>
 
-      <PayPalScriptProvider options={initialOptions}>
+      <PayPalScriptProvider options={initialOptions} deferLoading={false}>
         {!showMembership ? <Coins /> : <Membership />}
       </PayPalScriptProvider>
 
