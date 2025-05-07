@@ -30,6 +30,8 @@ interface ChapterProgressBarProps {
   novelTitle?: string;
   hideComments: boolean;
   onHideCommentsChange: (hide: boolean) => void;
+  settingsButtonRef?: React.RefObject<HTMLButtonElement>;
+  floatingDesktopModal?: boolean;
 }
 
 export default function ChapterProgressBar({
@@ -43,12 +45,15 @@ export default function ChapterProgressBar({
   novelTitle,
   hideComments,
   onHideCommentsChange,
+  settingsButtonRef,
+  floatingDesktopModal = false,
 }: ChapterProgressBarProps) {
   const [isVisible, setIsVisible] = useState(false);
   const isMobile = useMediaQuery('(max-width: 768px)');
   const barRef = useRef<HTMLDivElement>(null);
   const [touchStartY, setTouchStartY] = useState<number | null>(null);
   const [isTouching, setIsTouching] = useState(false);
+  const [desktopTop, setDesktopTop] = useState<string | number>('4.5rem');
 
   // Debug cover URL issues
   useEffect(() => {
@@ -128,6 +133,72 @@ export default function ChapterProgressBar({
       setIsVisible(false);
     }
   }, [isCommentOpen, isVisible]);
+
+  // Desktop modal alignment
+  useEffect(() => {
+    if (floatingDesktopModal && settingsButtonRef && settingsButtonRef.current && !isMobile) {
+      const rect = settingsButtonRef.current.getBoundingClientRect();
+      setDesktopTop(rect.top + window.scrollY + 'px');
+    }
+  }, [floatingDesktopModal, settingsButtonRef, isMobile, isVisible]);
+
+  if (floatingDesktopModal && !isMobile) {
+    return (
+      <div
+        ref={barRef}
+        className={`fixed right-4 z-[100] transition-all duration-300 w-80 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-lg rounded-lg ${isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        style={{ top: desktopTop }}
+      >
+        <div className="flex justify-between items-center mb-2 p-4">
+          <h3 className="font-semibold text-gray-900 dark:text-gray-100">Reading Settings</h3>
+          <button
+            onClick={() => setIsVisible(false)}
+            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            title="Close settings"
+            aria-label="Close settings"
+          >
+            <Icon icon="mdi:close" className="text-xl" />
+          </button>
+        </div>
+        <div className="p-4">
+          <TextCustomization
+            onFontChange={onFontChange}
+            onSizeChange={onSizeChange}
+            currentFont={currentFont}
+            currentSize={currentSize}
+          />
+          <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
+                <Icon icon="mdi:comment-outline" className="w-4 h-4" />
+                <span>Comments</span>
+              </div>
+              <button 
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onHideCommentsChange(!hideComments);
+                }}
+                className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none ${
+                  hideComments ? 'bg-gray-300 dark:bg-gray-700' : 'bg-primary'
+                }`}
+                role="switch"
+                aria-checked={Boolean(hideComments)}
+                aria-label="Toggle comment icons"
+              >
+                <span 
+                  className={`inline-block w-4 h-4 transform rounded-full bg-white transition-transform ${
+                    hideComments ? 'translate-x-1.5' : 'translate-x-6'
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!isMobile) return null;
 
@@ -223,6 +294,7 @@ export default function ChapterProgressBar({
                 <Icon icon="mdi:comment-outline" className="w-4 h-4" />
                 <span>Comments</span>
               </div>
+              {/* eslint-disable-next-line jsx-a11y/aria-proptypes */}
               <button 
                 onClick={(e) => {
                   e.preventDefault();
@@ -235,7 +307,7 @@ export default function ChapterProgressBar({
                   hideComments ? 'bg-gray-300 dark:bg-gray-700' : 'bg-primary'
                 }`}
                 role="switch"
-                aria-checked="false"
+                aria-checked={Boolean(hideComments)}
                 aria-label="Toggle comment icons"
               >
                 <span 

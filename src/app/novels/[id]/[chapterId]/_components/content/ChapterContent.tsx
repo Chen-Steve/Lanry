@@ -52,6 +52,7 @@ interface ChapterContentProps {
     customUrlLabel?: string;
     author_bio?: string;
   };
+  settingsButtonRef?: React.RefObject<HTMLButtonElement>;
 }
 
 export default function ChapterContent({
@@ -71,12 +72,14 @@ export default function ChapterContent({
   isTranslator = false,
   publishAt,
   authorProfile,
-  hideComments = false
+  hideComments = false,
+  settingsButtonRef
 }: ChapterContentProps) {
   const [selectedParagraphId, setSelectedParagraphId] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const { comments, addComment, deleteComment, updateComment, isAuthenticated, isLoading, userId } = useComments(novelId, chapterNumber);
   const isMobile = useMediaQuery('(max-width: 768px)');
+  const isDesktop = useMediaQuery('(min-width: 768px)');
   const contentRef = useRef<HTMLDivElement>(null);
   const [isScrollButtonVisible, setIsScrollButtonVisible] = useState(false);
   const [isChapterBarVisible, setIsChapterBarVisible] = useState(false);
@@ -191,14 +194,15 @@ export default function ChapterContent({
     };
   }, [fontFamily]);
 
-  // Function to toggle ChapterBar
+  // Toggle ChapterBar function
   const toggleChapterBar = () => {
     // Create custom event to trigger ChapterBar toggle
     const event = new CustomEvent('toggleChapterBar', {
-      detail: { isVisible: true }
+      detail: { toggle: true }
     });
     document.dispatchEvent(event);
-    setIsChapterBarVisible(true);
+    console.log('Dispatched toggleChapterBar event');
+    setIsChapterBarVisible(!isChapterBarVisible);
   };
 
   // Listen for ChapterBar visibility changes
@@ -276,10 +280,25 @@ export default function ChapterContent({
               <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400">
                 {isIndefinitelyLocked ? 'Not yet available' : `Published ${formatDate(createdAt)}`}
               </p>
-  
+              {!hideComments && !isIndefinitelyLocked && (
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  You can turn off comments in settings
+                </p>
+              )}
             </div>
             
             <div className="flex items-center gap-3">
+              {isDesktop && !isIndefinitelyLocked && (
+                <button
+                  ref={settingsButtonRef}
+                  onClick={toggleChapterBar}
+                  className="flex items-center gap-1.5 px-2 py-1.5 text-sm rounded-md bg-background hover:bg-accent border border-border transition-colors"
+                  title="Chapter Settings"
+                >
+                  <Icon icon="mdi:cog" className="w-4 h-4" />
+                  <span className="hidden sm:inline">Settings</span>
+                </button>
+              )}
               {isTranslator && !isIndefinitelyLocked && (
                 <button
                   onClick={() => setIsEditing(true)}
@@ -290,12 +309,7 @@ export default function ChapterContent({
                   <span className="hidden sm:inline">Edit Chapter</span>
                 </button>
               )}
-              {!isTranslator && !isIndefinitelyLocked && !hideComments && (
-                <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                  <Icon icon="mdi:comment-outline" className="w-4 h-4" />
-                  <span>Use comment icons to interact</span>
-                </div>
-              )}
+
             </div>
           </div>
         </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { getChapter, getChapterNavigation } from '@/services/chapterService';
 import { Icon } from '@iconify/react';
 import Link from 'next/link';
@@ -11,7 +11,6 @@ import ChapterHeader from './_components/content/ChapterHeader';
 import ChapterContent from './_components/content/ChapterContent';
 import supabase from '@/lib/supabaseClient';
 import ChapterProgressBar from './_components/navigation/ChapterBar';
-import ChapterSidebar from './_components/navigation/ChapterSidebar';
 import ChapterNavigation from './_components/navigation/ChapterNavigation';
 import ChapterComments from './_components/interaction/comments/ChapterComments';
 import ChapterPurchaseButton from './_components/interaction/ChapterPurchaseButton';
@@ -46,6 +45,7 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
   );
   const [fontSize, setFontSize] = useLocalStorage('chapter-font-size', 16);
   const [user, setUser] = useState<{ id: string } | null>(null);
+  const settingsButtonRef = useRef<HTMLButtonElement>(null);
 
   // Handle URL fragment scrolling after content loads
   useEffect(() => {
@@ -441,6 +441,7 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
         publishAt={chapter.publish_at}
         authorProfile={chapter.authorProfile}
         hideComments={hideComments}
+        settingsButtonRef={settingsButtonRef}
       />
 
       {/* Bottom Navigation */}
@@ -484,13 +485,8 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
         novelTitle={chapter.novel.title}
         hideComments={hideComments}
         onHideCommentsChange={setHideComments}
-      />
-      
-      <ChapterSidebar
-        onFontChange={setFontFamily}
-        onSizeChange={setFontSize}
-        currentFont={fontFamily}
-        currentSize={fontSize}
+        settingsButtonRef={settingsButtonRef}
+        floatingDesktopModal
       />
     </div>
   );
