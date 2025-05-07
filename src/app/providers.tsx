@@ -56,8 +56,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     intent: "subscription",
     enableFunding: ["paypal"],
     disableFunding: ["credit", "card"],
-    dataClientToken: undefined,
-    debug: false,
+    debug: process.env.NODE_ENV !== 'production',
   };
 
   useEffect(() => {
