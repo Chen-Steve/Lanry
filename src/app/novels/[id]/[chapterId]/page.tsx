@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getChapter, getChapterNavigation, getTotalChapters } from '@/services/chapterService';
+import { getChapter, getChapterNavigation } from '@/services/chapterService';
 import { Icon } from '@iconify/react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -17,46 +17,6 @@ import ChapterComments from './_components/interaction/comments/ChapterComments'
 import ChapterPurchaseButton from './_components/interaction/ChapterPurchaseButton';
 import PullToLoadNext from './_components/navigation/PullToLoadNext';
 import { generateUUID } from '@/lib/utils';
-
-function ScrollToTopButton() {
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    const toggleVisibility = () => {
-      // Show button when page is scrolled more than 300px
-      if (window.pageYOffset > 300) {
-        setIsVisible(true);
-      } else {
-        setIsVisible(false);
-      }
-    };
-
-    window.addEventListener('scroll', toggleVisibility);
-
-    return () => {
-      window.removeEventListener('scroll', toggleVisibility);
-    };
-  }, []);
-
-  const scrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth',
-    });
-  };
-
-  return (
-    <button
-      onClick={scrollToTop}
-      className={`fixed bottom-8 right-8 p-3 bg-primary text-primary-foreground rounded-full shadow-lg transition-all duration-300 hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/20 ${
-        isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
-      }`}
-      aria-label="Scroll to top"
-    >
-      <Icon icon="mdi:chevron-up" className="text-xl" />
-    </button>
-  );
-}
 
 interface ChapterNavigation {
   prevChapter: { id: string; chapter_number: number; part_number?: number | null; title: string } | null;
@@ -78,8 +38,8 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [navigation, setNavigation] = useState<ChapterNavigation>(initialNavigation);
-  const [totalChapters, setTotalChapters] = useState(0);
   const [isCommentOpen, setIsCommentOpen] = useState(false);
+  const [hideComments, setHideComments] = useLocalStorage('chapter-hide-comments', false);
   const [fontFamily, setFontFamily] = useLocalStorage(
     'chapter-font-family',
     'ui-sans-serif, system-ui, sans-serif'
@@ -93,7 +53,7 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
     
     // Check if there's a hash in the URL
     if (window.location.hash) {
-      const hash = window.location.hash.substring(1); // Remove the # character
+      const hash = window.location.hash.substring(1);
       const element = document.getElementById(hash);
       
       if (element) {
@@ -130,10 +90,9 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
         const chapterNumber = parseInt(match[1]);
         const partNumber = match[2] ? parseInt(match[2]) : null;
 
-        const [chapterData, navigationData, totalChaptersCount] = await Promise.all([
+        const [chapterData, navigationData] = await Promise.all([
           getChapter(novelId, chapterNumber, partNumber),
-          getChapterNavigation(novelId, chapterNumber, partNumber),
-          getTotalChapters(novelId)
+          getChapterNavigation(novelId, chapterNumber, partNumber)
         ]);
 
         if (!chapterData) {
@@ -195,7 +154,6 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
           } : undefined
         });
         setNavigation(navigationData);
-        setTotalChapters(totalChaptersCount);
       } catch (error) {
         console.error('Error loading chapter:', error);
         setError('Failed to load chapter');
@@ -482,6 +440,7 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
         isTranslator={chapter.hasTranslatorAccess}
         publishAt={chapter.publish_at}
         authorProfile={chapter.authorProfile}
+        hideComments={hideComments}
       />
 
       {/* Bottom Navigation */}
@@ -514,20 +473,17 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
         isLoading={isLoading}
       />
 
-      <ScrollToTopButton />
       <ChapterProgressBar
         novelId={novelId}
-        currentChapter={chapter.chapter_number}
-        totalChapters={totalChapters}
-        navigation={navigation}
         onFontChange={setFontFamily}
         onSizeChange={setFontSize}
         currentFont={fontFamily}
         currentSize={fontSize}
         isCommentOpen={isCommentOpen}
-        firstChapter={Math.min(...navigation.availableChapters.map(ch => ch.chapter_number))}
         novelCoverUrl={chapter.novel.coverImageUrl}
         novelTitle={chapter.novel.title}
+        hideComments={hideComments}
+        onHideCommentsChange={setHideComments}
       />
       
       <ChapterSidebar

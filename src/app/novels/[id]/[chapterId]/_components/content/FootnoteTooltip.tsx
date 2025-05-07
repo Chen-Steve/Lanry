@@ -104,7 +104,7 @@ export default function FootnoteTooltip() {
         const tooltip = wrapper.querySelector('.footnote-tooltip') as HTMLElement;
         if (!tooltip) return;
 
-        if (e.type === 'click') {
+        if (e.type === 'click' || e.type === 'touchend') {
           // Remove pinned class from all other tooltips
           document.querySelectorAll('.footnote-tooltip.pinned').forEach(t => {
             if (t !== tooltip) {
@@ -128,8 +128,32 @@ export default function FootnoteTooltip() {
       }
     };
 
-    // Add event listeners
+    // Add event listeners for both mouse and touch interactions
     document.addEventListener('click', handleInteractions);
+    document.addEventListener('touchend', handleInteractions);
+    
+    // Enhance mobile experience with explicit touch handling
+    const touchEvents: Record<string, number> = {};
+    
+    const handleTouchStart = (e: TouchEvent) => {
+      const target = e.target as Element;
+      const footnote = target.closest('.footnote');
+      if (footnote) {
+        // Prevent this touch from triggering paragraph handlers
+        e.stopPropagation();
+        
+        // Store the touch start time
+        const touchId = `touch_${Date.now()}`;
+        touchEvents[touchId] = Date.now();
+        
+        // Clean up this touch ID after a delay
+        setTimeout(() => {
+          delete touchEvents[touchId];
+        }, 1000);
+      }
+    };
+    
+    document.addEventListener('touchstart', handleTouchStart, { passive: false });
     
     // Handle repositioning on resize
     const handleResize = () => {
@@ -144,8 +168,26 @@ export default function FootnoteTooltip() {
 
     window.addEventListener('resize', handleResize);
     
+    // Handle closing tooltips when tapping elsewhere
+    const handleDocumentTap = (e: MouseEvent | TouchEvent) => {
+      const target = e.target as Element;
+      if (!target.closest('.footnote') && !target.closest('.footnote-tooltip')) {
+        document.querySelectorAll('.footnote-tooltip.pinned').forEach(tooltip => {
+          tooltip.classList.remove('pinned', 'opacity-100', 'visible');
+          tooltip.classList.add('opacity-0', 'invisible');
+        });
+      }
+    };
+    
+    document.addEventListener('click', handleDocumentTap);
+    document.addEventListener('touchend', handleDocumentTap);
+    
     return () => {
       document.removeEventListener('click', handleInteractions);
+      document.removeEventListener('touchend', handleInteractions);
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('click', handleDocumentTap);
+      document.removeEventListener('touchend', handleDocumentTap);
       window.removeEventListener('resize', handleResize);
     };
   }, []);

@@ -41,6 +41,7 @@ interface ChapterContentProps {
   chapterId: string;
   isTranslator?: boolean;
   publishAt?: string;
+  hideComments?: boolean;
   authorProfile?: {
     username: string;
     avatar_url?: string;
@@ -69,18 +70,17 @@ export default function ChapterContent({
   chapterId,
   isTranslator = false,
   publishAt,
-  authorProfile
+  authorProfile,
+  hideComments = false
 }: ChapterContentProps) {
   const [selectedParagraphId, setSelectedParagraphId] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const { comments, addComment, deleteComment, updateComment, isAuthenticated, isLoading, userId } = useComments(novelId, chapterNumber);
   const isMobile = useMediaQuery('(max-width: 768px)');
   const contentRef = useRef<HTMLDivElement>(null);
+  const [isScrollButtonVisible, setIsScrollButtonVisible] = useState(false);
+  const [isChapterBarVisible, setIsChapterBarVisible] = useState(false);
   
-  // Double tap detection variables
-  const [lastTap, setLastTap] = useState<number>(0);
-  const [isSidebarVisible, setIsSidebarVisible] = useState<boolean>(false);
-
   // Check if the chapter is indefinitely locked
   const isIndefinitelyLocked = publishAt && new Date(publishAt).getFullYear() > new Date().getFullYear() + 50;
 
@@ -91,57 +91,6 @@ export default function ChapterContent({
 
   const handleAddComment = async (paragraphId: string, content: string) => {
     await addComment(paragraphId, content);
-  };
-
-  const handleParagraphClick = (e: React.MouseEvent<Element>, paragraphId: string) => {
-    // If the click is on a footnote, don't open comments
-    if ((e.target as Element).closest('.footnote')) {
-      return;
-    }
-    
-    if (!isMobile) {
-      handleCommentClick(e, paragraphId);
-    } else {
-      handleDoubleTap(e);
-    }
-  };
-
-  const handleDoubleTap = (event: React.MouseEvent<Element> | React.TouchEvent<Element>) => {
-    const currentTime = new Date().getTime();
-    const tapLength = currentTime - lastTap;
-    
-    // Define double tap threshold (300ms)
-    if (tapLength < 300 && tapLength > 0) {
-      // It's a double tap - toggle sidebar visibility
-      setIsSidebarVisible(!isSidebarVisible);
-      event.preventDefault();
-    }
-    
-    setLastTap(currentTime);
-  };
-
-  // Effect to update parent component when sidebar visibility changes
-  useEffect(() => {
-    // We need to update ChapterBar visibility from the parent component
-    // through a custom DOM event or by directly calling a method from props
-    const customEvent = new CustomEvent('toggleChapterBar', { 
-      detail: { isVisible: isSidebarVisible } 
-    });
-    document.dispatchEvent(customEvent);
-  }, [isSidebarVisible]);
-
-  const handleParagraphLongPress = (
-    event: React.TouchEvent<Element> | React.MouseEvent<Element>,
-    paragraphId: string
-  ) => {
-    // If the long press is on a footnote, don't open comments
-    if ((event.target as Element).closest('.footnote')) {
-      return;
-    }
-
-    event.preventDefault();
-    setSelectedParagraphId(paragraphId);
-    onCommentStateChange(true);
   };
 
   const handleCommentClick = useCallback((
@@ -201,36 +150,12 @@ export default function ChapterContent({
     // Add event listeners
     document.addEventListener('mouseenter', handleInteractions, true);
     document.addEventListener('mouseleave', handleInteractions, true);
-
-    // Set up touch event listeners for double tap on mobile
-    const handleTouchStart = (e: TouchEvent) => {
-      if (isMobile) {
-        const currentTime = new Date().getTime();
-        const tapLength = currentTime - lastTap;
-        
-        if (tapLength < 300 && tapLength > 0) {
-          // It's a double tap
-          setIsSidebarVisible(!isSidebarVisible);
-          e.preventDefault();
-        }
-        
-        setLastTap(currentTime);
-      }
-    };
-
-    if (contentRef.current && isMobile) {
-      contentRef.current.addEventListener('touchstart', handleTouchStart);
-    }
     
     return () => {
       document.removeEventListener('mouseenter', handleInteractions, true);
       document.removeEventListener('mouseleave', handleInteractions, true);
-      
-      if (contentRef.current && isMobile) {
-        contentRef.current.removeEventListener('touchstart', handleTouchStart);
-      }
     };
-  }, [isMobile, lastTap, isSidebarVisible]);
+  }, []);
 
   const { likeCount, isLiked, toggleLike } = useChapterLikes({ 
     chapterNumber,
@@ -265,6 +190,50 @@ export default function ChapterContent({
       document.head.removeChild(style);
     };
   }, [fontFamily]);
+
+  // Function to toggle ChapterBar
+  const toggleChapterBar = () => {
+    // Create custom event to trigger ChapterBar toggle
+    const event = new CustomEvent('toggleChapterBar', {
+      detail: { isVisible: true }
+    });
+    document.dispatchEvent(event);
+    setIsChapterBarVisible(true);
+  };
+
+  // Listen for ChapterBar visibility changes
+  useEffect(() => {
+    const handleChapterBarEvent = (event: CustomEvent) => {
+      if (event.detail && typeof event.detail.isVisible === 'boolean') {
+        setIsChapterBarVisible(event.detail.isVisible);
+      }
+    };
+
+    // Add event listener for the custom event
+    document.addEventListener('toggleChapterBar', handleChapterBarEvent as EventListener);
+
+    return () => {
+      document.removeEventListener('toggleChapterBar', handleChapterBarEvent as EventListener);
+    };
+  }, []);
+
+  // Show scroll button when page is scrolled
+  useEffect(() => {
+    const toggleScrollButtonVisibility = () => {
+      // Show button when page is scrolled more than 300px
+      if (window.pageYOffset > 300) {
+        setIsScrollButtonVisible(true);
+      } else {
+        setIsScrollButtonVisible(false);
+      }
+    };
+
+    window.addEventListener('scroll', toggleScrollButtonVisibility);
+
+    return () => {
+      window.removeEventListener('scroll', toggleScrollButtonVisibility);
+    };
+  }, []);
 
   return (
     <div className="max-w-2xl mx-auto" ref={contentRef}>
@@ -307,6 +276,7 @@ export default function ChapterContent({
               <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400">
                 {isIndefinitelyLocked ? 'Not yet available' : `Published ${formatDate(createdAt)}`}
               </p>
+  
             </div>
             
             <div className="flex items-center gap-3">
@@ -320,16 +290,10 @@ export default function ChapterContent({
                   <span className="hidden sm:inline">Edit Chapter</span>
                 </button>
               )}
-              {!isTranslator && !isMobile && !isIndefinitelyLocked && (
+              {!isTranslator && !isIndefinitelyLocked && !hideComments && (
                 <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                  <Icon icon="mdi:gesture-tap-hold" className="w-4 h-4" />
-                  <span>Hold text to comment</span>
-                </div>
-              )}
-              {!isTranslator && isMobile && !isIndefinitelyLocked && (
-                <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                  <Icon icon="mdi:gesture-tap" className="w-4 h-4" />
-                  <span>Double-tap for options</span>
+                  <Icon icon="mdi:comment-outline" className="w-4 h-4" />
+                  <span>Use comment icons to interact</span>
                 </div>
               )}
             </div>
@@ -377,10 +341,8 @@ export default function ChapterContent({
                         totalParagraphs={paragraphs.length}
                         selectedParagraphId={selectedParagraphId}
                         commentCount={paragraphComments.length}
-                        isMobile={isMobile}
-                        onParagraphClick={handleParagraphClick}
-                        onParagraphLongPress={handleParagraphLongPress}
                         onCommentClick={handleCommentClick}
+                        hideComments={hideComments}
                       />
                     );
                   })}
@@ -404,10 +366,8 @@ export default function ChapterContent({
                       totalParagraphs={paragraphs.length}
                       selectedParagraphId={selectedParagraphId}
                       commentCount={paragraphComments.length}
-                      isMobile={isMobile}
-                      onParagraphClick={handleParagraphClick}
-                      onParagraphLongPress={handleParagraphLongPress}
                       onCommentClick={handleCommentClick}
+                      hideComments={hideComments}
                     />
                   );
                 })}
@@ -548,6 +508,31 @@ export default function ChapterContent({
           />
         )}
         <FootnoteTooltip />
+
+        {/* Bottom right button group (only visible on mobile and when ChapterBar is closed) */}
+        {isMobile && !isIndefinitelyLocked && !isChapterBarVisible && (
+          <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3">
+            {/* Scroll to Top Button */}
+            <button
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              className={`bg-primary text-primary-foreground rounded-full p-3 shadow-lg hover:bg-primary/90 transition-opacity duration-300 ${
+                isScrollButtonVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
+              }`}
+              aria-label="Scroll to top"
+            >
+              <Icon icon="mdi:chevron-up" className="w-5 h-5" />
+            </button>
+            
+            {/* Settings Button */}
+            <button
+              onClick={toggleChapterBar}
+              className="bg-primary text-primary-foreground rounded-full p-3 shadow-lg hover:bg-primary/90 transition-colors"
+              aria-label="Open chapter settings"
+            >
+              <Icon icon="mdi:cog" className="w-5 h-5" />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

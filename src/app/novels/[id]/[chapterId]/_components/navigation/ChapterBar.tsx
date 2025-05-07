@@ -28,15 +28,8 @@ interface ChapterProgressBarProps {
   isCommentOpen: boolean;
   novelCoverUrl?: string;
   novelTitle?: string;
-  currentChapter: number;
-  totalChapters: number;
-  navigation: {
-    prevChapter: { id: string; chapter_number: number; part_number?: number | null; title: string } | null;
-    nextChapter: { id: string; chapter_number: number; part_number?: number | null; title: string } | null;
-    availableChapters: Array<{ chapter_number: number; part_number?: number | null; volume_id?: string }>;
-    volumes: Array<{ id: string; title: string; volume_number: number }>;
-  };
-  firstChapter: number;
+  hideComments: boolean;
+  onHideCommentsChange: (hide: boolean) => void;
 }
 
 export default function ChapterProgressBar({
@@ -48,10 +41,8 @@ export default function ChapterProgressBar({
   isCommentOpen,
   novelCoverUrl,
   novelTitle,
-  currentChapter,
-  totalChapters,
-  navigation,
-  firstChapter,
+  hideComments,
+  onHideCommentsChange,
 }: ChapterProgressBarProps) {
   const [isVisible, setIsVisible] = useState(false);
   const isMobile = useMediaQuery('(max-width: 768px)');
@@ -74,6 +65,11 @@ export default function ChapterProgressBar({
     const handleClickOutside = (event: MouseEvent | TouchEvent) => {
       if (barRef.current && !barRef.current.contains(event.target as Node)) {
         setIsVisible(false);
+        // Notify other components that ChapterBar is closed
+        const customEvent = new CustomEvent('toggleChapterBar', {
+          detail: { isVisible: false }
+        });
+        document.dispatchEvent(customEvent);
       }
     };
 
@@ -152,7 +148,14 @@ export default function ChapterProgressBar({
 
         {/* Close button for mobile */}
         <button
-          onClick={() => setIsVisible(false)}
+          onClick={() => {
+            setIsVisible(false);
+            // Notify other components that ChapterBar is closed
+            const event = new CustomEvent('toggleChapterBar', {
+              detail: { isVisible: false }
+            });
+            document.dispatchEvent(event);
+          }}
           className="absolute top-3 right-3 text-gray-500 p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full"
           aria-label="Close chapter options"
         >
@@ -212,57 +215,35 @@ export default function ChapterProgressBar({
             currentFont={currentFont}
             currentSize={currentSize}
           />
-        </div>
-
-        {/* Chapter Progress Section */}
-        <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3">
-          <div className="mb-2 text-center">
-            <div className="text-sm font-medium text-gray-800 dark:text-gray-300">
-              Chapter Progress
-            </div>
-          </div>
-          <div className="flex flex-col gap-2">
-            {/* Progress Bar */}
-            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-              <div 
-                className="bg-primary h-2 rounded-full transition-all duration-300"
-                style={{ 
-                  width: `${((currentChapter - firstChapter + 1) / totalChapters) * 100}%` 
+          
+          {/* Comment Icons Toggle */}
+          <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
+                <Icon icon="mdi:comment-outline" className="w-4 h-4" />
+                <span>Comments</span>
+              </div>
+              <button 
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onHideCommentsChange(!hideComments);
                 }}
-              />
-            </div>
-            {/* Progress Text */}
-            <div className="text-xs text-center text-gray-600 dark:text-gray-400">
-              Chapter {currentChapter} of {totalChapters}
-            </div>
-            {/* Navigation Links */}
-            <div className="flex justify-between mt-1">
-              {navigation.prevChapter ? (
-                <Link
-                  href={`/novels/${novelId}/c${navigation.prevChapter.chapter_number}${
-                    navigation.prevChapter.part_number ? `-p${navigation.prevChapter.part_number}` : ''
+                onPointerDown={(e) => e.stopPropagation()}
+                onTouchStart={(e) => e.stopPropagation()}
+                className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none ${
+                  hideComments ? 'bg-gray-300 dark:bg-gray-700' : 'bg-primary'
+                }`}
+                role="switch"
+                aria-checked="false"
+                aria-label="Toggle comment icons"
+              >
+                <span 
+                  className={`inline-block w-4 h-4 transform rounded-full bg-white transition-transform ${
+                    hideComments ? 'translate-x-1.5' : 'translate-x-6'
                   }`}
-                  className="text-xs text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
-                >
-                  <Icon icon="mdi:chevron-left" className="text-base" />
-                  Previous
-                </Link>
-              ) : (
-                <span className="text-xs text-gray-400">First Chapter</span>
-              )}
-              {navigation.nextChapter ? (
-                <Link
-                  href={`/novels/${novelId}/c${navigation.nextChapter.chapter_number}${
-                    navigation.nextChapter.part_number ? `-p${navigation.nextChapter.part_number}` : ''
-                  }`}
-                  className="text-xs text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
-                >
-                  Next
-                  <Icon icon="mdi:chevron-right" className="text-base" />
-                </Link>
-              ) : (
-                <span className="text-xs text-gray-400">Last Chapter</span>
-              )}
+                />
+              </button>
             </div>
           </div>
         </div>

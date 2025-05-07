@@ -95,8 +95,10 @@ export const formatText = (text: string): string => {
         class="footnote inline-block text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors" 
         data-footnote="${num}" 
         data-content="${formattedContent.replace(/"/g, '&quot;')}"
+        onclick="event.stopPropagation(); event.preventDefault();"
       ><sup>[${num}]</sup></button>
       <div class="footnote-tooltip opacity-0 invisible absolute z-50 bg-white dark:bg-gray-800 border border-border rounded-lg shadow-lg transition-all duration-200 text-sm text-foreground">
+        <div class="arrow absolute w-3 h-3 bg-white dark:bg-gray-800 border-t border-l border-border transform -translate-y-1.5 rotate-45 hidden"></div>
         <div class="p-3 max-w-sm overflow-hidden">
           ${formattedContent}
         </div>
