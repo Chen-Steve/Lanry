@@ -13,6 +13,7 @@ import supabase from '@/lib/supabaseClient';
 import type { UserProfile } from '@/types/database';
 import { useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
+import { CancelMembershipModal } from './_components/CancelMembershipModal';
 
 const fetchProfile = async (userId?: string): Promise<UserProfile> => {
   if (userId) {
@@ -47,6 +48,7 @@ export default function UserDashboard() {
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isDailyRewardsClicked, setIsDailyRewardsClicked] = useState(false);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const searchParams = useSearchParams();
   const userId = searchParams.get('id');
   const [subscriptionStatus, setSubscriptionStatus] = useState<null | {
@@ -151,12 +153,20 @@ export default function UserDashboard() {
                   </p>
                   <div className="flex items-center justify-between">
                     <div className="text-muted-foreground">PayPal</div>
-                    <Link 
-                      href="/shop?tab=membership"
-                      className="inline-block px-4 py-1.5 bg-primary/10 text-primary rounded-full text-center font-medium hover:bg-primary/20 transition-colors"
-                    >
-                      Change Plan
-                    </Link>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setIsCancelModalOpen(true)}
+                        className="px-4 py-1.5 bg-destructive/10 text-destructive rounded-full text-center font-medium hover:bg-destructive/20 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <Link 
+                        href="/shop?tab=membership"
+                        className="inline-block px-4 py-1.5 bg-primary/10 text-primary rounded-full text-center font-medium hover:bg-primary/20 transition-colors"
+                      >
+                        Change Plan
+                      </Link>
+                    </div>
                   </div>
                 </>
               ) : (
@@ -277,6 +287,11 @@ export default function UserDashboard() {
           toast.success('Profile updated successfully!');
         }}
         profile={profile}
+      />
+
+      <CancelMembershipModal
+        isOpen={isCancelModalOpen}
+        onClose={() => setIsCancelModalOpen(false)}
       />
     </div>
   );
