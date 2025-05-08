@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Icon } from '@iconify/react';
 import { useTheme } from '@/lib/ThemeContext';
 import { ChangePasswordModal } from './_components/ChangePasswordModal';
@@ -43,17 +43,44 @@ const fetchProfile = async (userId?: string): Promise<UserProfile> => {
 
 export default function UserDashboard() {
   const { theme, toggleTheme } = useTheme();
-  const { handleSignOut } = useAuth();
+  const { handleSignOut, userId: authUserId } = useAuth();
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isDailyRewardsClicked, setIsDailyRewardsClicked] = useState(false);
   const searchParams = useSearchParams();
   const userId = searchParams.get('id');
+  const [subscriptionStatus, setSubscriptionStatus] = useState<null | {
+    hasSubscription: boolean;
+    status?: string;
+    plan?: string;
+    startDate?: string;
+    endDate?: string;
+    latestBillingDate?: string;
+    cancelledAt?: string;
+  }>(null);
+  const [isSubLoading, setIsSubLoading] = useState(false);
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ['profile', userId],
     queryFn: () => fetchProfile(userId || undefined),
   });
+
+  useEffect(() => {
+    const fetchSubscriptionStatus = async () => {
+      if (!authUserId) return;
+      setIsSubLoading(true);
+      try {
+        const res = await fetch(`/api/subscriptions/status?userId=${authUserId}`);
+        const data = await res.json();
+        setSubscriptionStatus(data);
+      } catch {
+        setSubscriptionStatus(null);
+      } finally {
+        setIsSubLoading(false);
+      }
+    };
+    fetchSubscriptionStatus();
+  }, [authUserId]);
 
   if (isLoading || !profile) {
     return <div className="container mx-auto px-4 py-6 max-w-5xl">Loading...</div>;
@@ -103,27 +130,110 @@ export default function UserDashboard() {
   return (
     <div className="container mx-auto px-4 py-6 max-w-5xl">
       <div className="flex flex-col gap-6">
-        <button 
-          className="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-yellow-500 text-white px-4 py-2.5 rounded-lg hover:opacity-90 transition-opacity shadow-md hover:shadow-lg w-fit"
-          onClick={() => {
-            setIsDailyRewardsClicked(true);
-            setTimeout(() => setIsDailyRewardsClicked(false), 2000);
-          }}
-        >
-          <Icon icon="ph:gift-fill" className="w-5 h-5" />
-          <span className="font-medium">{isDailyRewardsClicked ? 'Coming Soon' : 'Daily Rewards'}</span>
-        </button>
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Plan Card - Left Column */}
+          <div className="md:col-span-2">
+            <div className="bg-card dark:bg-zinc-900 border border-border rounded-lg p-4 h-full">
+              <h2 className="text-sm font-medium text-muted-foreground mb-1">Your plan</h2>
+              {isSubLoading ? (
+                <div className="flex items-center">
+                  <Icon icon="eos-icons:loading" className="w-5 h-5 animate-spin mr-2" />
+                  <span className="text-muted-foreground">Checking subscription...</span>
+                </div>
+              ) : subscriptionStatus?.hasSubscription ? (
+                <>
+                  <h1 className="text-2xl font-bold text-primary mb-1">
+                    {subscriptionStatus.status === 'ACTIVE' ? 'Premium Membership' : 'Membership'}
+                  </h1>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Your next bill is for $1.00 + tax on {subscriptionStatus.endDate ? new Date(subscriptionStatus.endDate).toLocaleDateString() : 'your next billing date'}.
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <div className="text-muted-foreground">PayPal</div>
+                    <Link 
+                      href="/shop?tab=membership"
+                      className="inline-block px-4 py-1.5 bg-primary/10 text-primary rounded-full text-center font-medium hover:bg-primary/20 transition-colors"
+                    >
+                      Change Plan
+                    </Link>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h1 className="text-2xl font-bold text-foreground mb-1">Free Plan</h1>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Upgrade to Premium to unlock all features.
+                  </p>
+                  <Link 
+                    href="/shop?tab=membership"
+                    className="inline-block px-4 py-1.5 bg-primary text-primary-foreground rounded-full text-center font-medium hover:bg-primary/90 transition-colors"
+                  >
+                    Get Premium
+                  </Link>
+                </>
+              )}
+            </div>
+          </div>
 
-        <div className="flex flex-col gap-4">
-          <h2 className="text-lg font-semibold text-foreground">Settings</h2>
-          
-          <div className="flex flex-col rounded-lg border border-border overflow-hidden">
+          {/* Daily Rewards Card - Right Column */}
+          <div>
+            <div className="bg-card dark:bg-zinc-900 border border-border rounded-lg p-4 h-full">
+              <h2 className="text-sm font-medium text-muted-foreground mb-1">Rewards</h2>
+              <button 
+                className="w-full flex items-center justify-between p-3 bg-card/50 hover:bg-card/80 transition-colors rounded-lg"
+                onClick={() => {
+                  setIsDailyRewardsClicked(true);
+                  setTimeout(() => setIsDailyRewardsClicked(false), 2000);
+                }}
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="bg-amber-500/10 rounded-lg">
+                    <Icon icon="ph:gift-fill" className="text-amber-500 text-2xl" />
+                  </div>
+                  <div className="flex flex-col">
+                    <p className="font-medium text-foreground text-sm">{isDailyRewardsClicked ? 'Coming Soon' : 'Daily Rewards'}</p>
+                  </div>
+                </div>
+                <Icon icon="ph:caret-right" className="text-lg text-muted-foreground" />
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+        {/* Account Section */}
+        <div className="mt-4">
+          <h2 className="text-2xl font-bold mb-4">Account</h2>
+          <div className="bg-card dark:bg-zinc-900 border border-border rounded-lg overflow-hidden">
             <button 
-              className="flex items-center justify-between px-4 py-2.5 bg-card hover:bg-accent transition-colors w-full"
+              onClick={() => setIsProfileModalOpen(true)} 
+              className="w-full flex items-center justify-between p-4 hover:bg-card/80 transition-colors"
+            >
+              <div className="flex items-center">
+                <Icon icon="ph:pencil-simple-line" className="text-xl mr-4" />
+                <span>Edit profile</span>
+              </div>
+              <Icon icon="ph:caret-right" className="text-xl text-muted-foreground" />
+            </button>
+            
+            <button 
+              onClick={() => setIsPasswordModalOpen(true)}
+              className="w-full flex items-center justify-between p-4 hover:bg-card/80 transition-colors"
+            >
+              <div className="flex items-center">
+                <Icon icon="ph:lock-key" className="text-xl mr-4" />
+                <span>Change Password</span>
+              </div>
+              <Icon icon="ph:caret-right" className="text-xl text-muted-foreground" />
+            </button>
+
+            <button 
+              className="w-full flex items-center justify-between p-4 hover:bg-card/80 transition-colors"
               onClick={toggleTheme}
             >
-              <div className="flex items-center gap-3">
-                <Icon icon={theme === 'dark' ? "ph:sun-bold" : "ph:moon-bold"} className="w-5 h-5" />
+              <div className="flex items-center">
+                <Icon icon={theme === 'dark' ? "ph:sun-bold" : "ph:moon-bold"} className="text-xl mr-4" />
                 <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
               </div>
               <div className={`
@@ -136,47 +246,20 @@ export default function UserDashboard() {
                 `} />
               </div>
             </button>
-
-            <button 
-              className="flex items-center gap-3 px-4 py-2.5 bg-card hover:bg-accent transition-colors w-full"
-              onClick={() => setIsPasswordModalOpen(true)}
-            >
-              <Icon icon="mdi:key" className="w-5 h-5" />
-              <span>Change Password</span>
-            </button>
           </div>
         </div>
+        
 
-        <div className="flex flex-col gap-4">
-          <h2 className="text-lg font-semibold text-foreground">Account</h2>
-          
-          <div className="flex flex-col rounded-lg border border-border overflow-hidden">
-            <Link
-              href="/user-dashboard/inventory"
-              className="flex items-center gap-3 px-4 py-2.5 bg-card hover:bg-accent transition-colors w-full"
-            >
-              <Icon icon="ph:stack-fill" className="w-5 h-5" />
-              <span>Inventory</span>
-            </Link>
-
-            <button 
-              className="flex items-center gap-3 px-4 py-2.5 bg-card hover:bg-accent transition-colors w-full"
-              onClick={() => setIsProfileModalOpen(true)}
-            >
-              <Icon icon="ph:user-circle-fill" className="w-5 h-5" />
-              <span>Update Profile</span>
-            </button>
-
-            <button 
-              className="flex items-center gap-3 px-4 py-2.5 bg-card hover:bg-accent transition-colors w-full"
-              onClick={handleSignOut}
-            >
-              <Icon icon="ix:log-out" className="w-5 h-5" />
-              <span>Log out</span>
-            </button>
-          </div>
+        {/* Log out button at the bottom */}
+        <div className="mt-6">
+          <button 
+            onClick={handleSignOut}
+            className="w-full bg-card dark:bg-zinc-900 border border-border rounded-lg p-4 flex items-center gap-3 hover:bg-card/80 transition-colors"
+          >
+            <Icon icon="ph:sign-out" className="text-xl" />
+            <span className="font-medium">Log out</span>
+          </button>
         </div>
-
       </div>
 
       <ChangePasswordModal

@@ -113,7 +113,7 @@ export function UpdateProfileModal({ isOpen, onClose, onSuccess, profile }: Upda
       />
       
       <div
-        className={`relative bg-background dark:bg-background rounded-lg shadow-xl w-full max-w-md mx-4 overflow-hidden modal-content ${isVisible ? 'show' : ''}`}
+        className={`relative bg-background dark:bg-zinc-900 border border-border rounded-lg shadow-xl w-full max-w-md mx-4 overflow-hidden modal-content ${isVisible ? 'show' : ''}`}
       >
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">

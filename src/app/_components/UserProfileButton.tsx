@@ -43,6 +43,16 @@ const UserProfileButton = ({
   const [showNotifications, setShowNotifications] = useState(false);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
   const { userId } = useAuth();
+  const [subscriptionStatus, setSubscriptionStatus] = useState<null | {
+    hasSubscription: boolean;
+    status?: string;
+    plan?: string;
+    startDate?: string;
+    endDate?: string;
+    latestBillingDate?: string;
+    cancelledAt?: string;
+  }>(null);
+  const [isSubLoading, setIsSubLoading] = useState(false);
 
   // Add click outside handler
   useEffect(() => {
@@ -107,6 +117,23 @@ const UserProfileButton = ({
 
     fetchNotifications();
   }, [userId, showNotifications]);
+
+  useEffect(() => {
+    const fetchSubscriptionStatus = async () => {
+      if (!userId) return;
+      setIsSubLoading(true);
+      try {
+        const res = await fetch(`/api/subscriptions/status?userId=${userId}`);
+        const data = await res.json();
+        setSubscriptionStatus(data);
+      } catch {
+        setSubscriptionStatus(null);
+      } finally {
+        setIsSubLoading(false);
+      }
+    };
+    fetchSubscriptionStatus();
+  }, [userId]);
 
   // Mark notification as read when clicked
   const handleNotificationClick = async (notificationId: string) => {
@@ -259,6 +286,22 @@ const UserProfileButton = ({
             <div className="flex items-center gap-1 text-sm text-muted-foreground">
               <Icon icon="ph:coins-fill" className="w-4 h-4 text-amber-500" />
               {userProfile?.coins || 0} coins
+            </div>
+            {/* Subscription Status */}
+            <div className="mt-1 text-xs">
+              {isSubLoading ? (
+                <span className="text-muted-foreground">Checking membership...</span>
+              ) : subscriptionStatus?.hasSubscription ? (
+                <span className={
+                  subscriptionStatus.status === 'ACTIVE'
+                    ? 'text-green-600 font-semibold'
+                    : 'text-muted-foreground'
+                }>
+                  Membership: {subscriptionStatus.status}
+                </span>
+              ) : (
+                <span className="text-muted-foreground">No Membership</span>
+              )}
             </div>
           </div>
         </div>

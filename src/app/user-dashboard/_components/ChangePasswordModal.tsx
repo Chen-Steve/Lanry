@@ -71,7 +71,7 @@ export function ChangePasswordModal({ isOpen, onClose, onSuccess }: ChangePasswo
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         {/* Modal Content */}
         <div
-          className={`w-full max-w-md bg-background rounded-lg shadow-lg overflow-y-auto modal-content ${isVisible ? 'show' : ''}`}
+          className={`w-full max-w-md bg-background dark:bg-zinc-900 border border-border rounded-lg shadow-lg overflow-y-auto modal-content ${isVisible ? 'show' : ''}`}
         >
           <div className="p-4 sm:p-6">
             <div className="flex items-center justify-between mb-4">
@@ -115,7 +115,7 @@ export function ChangePasswordModal({ isOpen, onClose, onSuccess }: ChangePasswo
                   id="newPassword"
                   value={passwordForm.newPassword}
                   onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-md bg-background text-base"
+                  className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                   required
                   minLength={6}
                   placeholder="Enter new password"
@@ -131,7 +131,7 @@ export function ChangePasswordModal({ isOpen, onClose, onSuccess }: ChangePasswo
                   id="confirmPassword"
                   value={passwordForm.confirmPassword}
                   onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-md bg-background text-base"
+                  className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                   required
                   placeholder="Confirm new password"
                 />
