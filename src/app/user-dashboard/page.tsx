@@ -55,6 +55,8 @@ export default function UserDashboard() {
     hasSubscription: boolean;
     status?: string;
     plan?: string;
+    amount?: number;
+    currency?: string;
     startDate?: string;
     endDate?: string;
     latestBillingDate?: string;
@@ -152,7 +154,9 @@ export default function UserDashboard() {
                     {subscriptionStatus.status === 'CANCELLED' ? (
                       `Your membership will continue until ${subscriptionStatus.endDate ? new Date(subscriptionStatus.endDate).toLocaleDateString() : 'your current billing period end'}.`
                     ) : (
-                      `Your next bill is for $1.00 + tax on ${subscriptionStatus.endDate ? new Date(subscriptionStatus.endDate).toLocaleDateString() : 'your next billing date'}.`
+                      `Your next bill is ${subscriptionStatus.amount && subscriptionStatus.currency ? 
+                        `for ${subscriptionStatus.currency}${subscriptionStatus.amount.toFixed(2)}` : 
+                        ''} ${subscriptionStatus.endDate ? `on ${new Date(subscriptionStatus.endDate).toLocaleDateString()}` : 'on your next billing date'}.`
                     )}
                   </p>
                   <div className="flex items-center justify-between">
