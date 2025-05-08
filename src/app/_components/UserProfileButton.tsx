@@ -220,9 +220,9 @@ const UserProfileButton = ({
   // Add helper function to determine membership tier
   const getMembershipTier = (amount?: number) => {
     if (!amount) return null;
-    if (amount === 4.99) return { name: "Supporter", icon: "material-symbols:verified-outline", color: "text-blue-400" };
-    if (amount === 9.99) return { name: "Premium", icon: "material-symbols:diamond", color: "text-purple-500" };
-    if (amount === 19.99) return { name: "VIP", icon: "material-symbols:star-rounded", color: "text-amber-500" };
+    if (amount === 5) return { name: "Supporter", icon: "material-symbols:verified-outline", color: "text-blue-400" };
+    if (amount === 9) return { name: "Premium", icon: "material-symbols:diamond", color: "text-purple-500" };
+    if (amount === 19) return { name: "VIP", icon: "material-symbols:star-rounded", color: "text-amber-500" };
     return null;
   };
 
