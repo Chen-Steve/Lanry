@@ -5,12 +5,13 @@ import { toast } from 'sonner';
 import { PayPalButtons } from "@paypal/react-paypal-js";
 import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
+import { useState, useEffect } from 'react';
 
 export const membershipTiers = [
   {
     id: 1,
     name: "Supporter",
-    price: 1.00,
+    price: 4.99,
     billingPeriod: "month",
     planId: process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID!,
     perks: [
@@ -25,7 +26,7 @@ export const membershipTiers = [
   {
     id: 2,
     name: "Premium",
-    price: 1.00,
+    price: 9.99,
     billingPeriod: "month",
     planId: process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID!,
     perks: [
@@ -41,7 +42,7 @@ export const membershipTiers = [
   {
     id: 3,
     name: "VIP",
-    price: 1.00,
+    price: 19.99,
     billingPeriod: "month",
     planId: process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID!,
     perks: [
@@ -59,100 +60,277 @@ export const membershipTiers = [
 export default function Membership() {
   const { userId, isAuthenticated } = useAuth();
   const router = useRouter();
+  const [subscriptionStatus, setSubscriptionStatus] = useState<null | {
+    hasSubscription: boolean;
+    status?: string;
+    plan?: string;
+    startDate?: string;
+    endDate?: string;
+    membershipTierId?: number;
+  }>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchSubscriptionStatus = async () => {
+      if (!userId) return;
+      try {
+        const res = await fetch(`/api/subscriptions/status?userId=${userId}`);
+        const data = await res.json();
+        setSubscriptionStatus(data);
+      } catch (error) {
+        console.error('Error fetching subscription status:', error);
+        toast.error('Failed to load subscription status');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSubscriptionStatus();
+  }, [userId]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Icon icon="eos-icons:loading" className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      {membershipTiers.map((tier) => (
-        <div 
-          key={tier.id}
-          className="border border-border rounded-lg p-6 text-center hover:shadow-md transition-shadow bg-background relative overflow-hidden"
-        >
+      {membershipTiers.map((tier) => {
+        const isCurrentTier = subscriptionStatus?.membershipTierId === tier.id;
+        const hasActiveSubscription = subscriptionStatus?.hasSubscription && subscriptionStatus?.status === 'ACTIVE';
 
-          
-          <div className="mb-4">
-            <div className="flex justify-center mb-3">
-              <Icon icon={tier.icon} className={`text-4xl ${tier.iconColor}`} />
+        return (
+          <div 
+            key={tier.id}
+            className="border border-border rounded-lg p-4 text-center transition-all bg-background relative overflow-hidden hover:shadow-md"
+          >
+            {isCurrentTier && (
+              <div className="absolute top-0 inset-x-0 bg-primary text-primary-foreground py-1 text-sm font-medium">
+                Current Plan
+              </div>
+            )}
+            
+            <div className={`mb-3 ${isCurrentTier ? 'mt-5' : ''}`}>
+              <div className="flex justify-center mb-2">
+                <Icon icon={tier.icon} className={`text-3xl ${tier.iconColor}`} />
+              </div>
+              <h3 className="text-lg font-bold text-foreground mb-1">{tier.name}</h3>
+              <div className="flex items-center justify-center gap-1">
+                <span className="text-xl font-bold text-primary">${tier.price}</span>
+                <span className="text-muted-foreground">/{tier.billingPeriod}</span>
+              </div>
             </div>
-            <h3 className="text-xl font-bold text-foreground mb-2">{tier.name}</h3>
-            <div className="flex items-center justify-center gap-1">
-              <span className="text-2xl font-bold text-primary">${tier.price}</span>
-              <span className="text-muted-foreground">/{tier.billingPeriod}</span>
+            
+            <div className="h-[200px] flex flex-col items-start justify-start text-muted-foreground text-sm mb-3">
+              <ul className="text-left space-y-1.5 w-full">
+                {tier.perks.map((perk, index) => (
+                  <li key={index} className="flex items-start">
+                    <Icon 
+                      icon="mdi:check-circle"
+                      className="text-green-500 mr-2 flex-shrink-0 mt-0.5 text-base"
+                    />
+                    {perk.highlight ? (
+                      <span className="font-semibold text-primary underline text-sm">{perk.text}</span>
+                    ) : (
+                      <span className="text-sm">{perk.text}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
             </div>
-          </div>
-          
-          <div className="h-[280px] flex flex-col items-start justify-start text-muted-foreground text-sm mb-4">
-            <ul className="text-left space-y-2 w-full">
-              {tier.perks.map((perk, index) => (
-                <li key={index} className="flex items-start">
-                  <Icon icon="mdi:check-circle" className="text-green-500 mr-2 flex-shrink-0 mt-0.5" />
-                  {perk.highlight ? (
-                    <span className="font-semibold text-primary underline">{perk.text}</span>
-                  ) : (
-                    <span>{perk.text}</span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </div>
 
-          <PayPalButtons
-            style={{ layout: "horizontal", height: 35, tagline: false, shape: 'pill', color: 'white' }}
-            forceReRender={[tier.id, tier.planId, tier.price]}
-            createSubscription={(data, actions) => {
-              try {
-                if (!isAuthenticated || !userId) {
-                  toast.error("Please sign in to subscribe");
-                  throw new Error("Please sign in to subscribe");
-                }
-                
-                return actions.subscription.create({
-                  plan_id: tier.planId,
-                  custom_id: userId,
-                });
-              } catch (error) {
-                console.error("Create subscription error:", error);
-                toast.error(error instanceof Error ? error.message : "Failed to create subscription");
-                throw error;
-              }
-            }}
-            onApprove={async (data) => {
-              try {
-                if (!userId) return;
-                
-                // Call our backend to record the subscription
-                const response = await fetch("/api/subscriptions/record", {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                  },
-                  body: JSON.stringify({
-                    userId,
-                    subscriptionId: data.subscriptionID,
-                    membershipTierId: tier.id,
-                  }),
-                  credentials: "include",
-                });
-                
-                const result = await response.json();
-                if (result.error) {
-                  throw new Error(result.error);
-                }
-                
-                toast.success(`Successfully subscribed to ${tier.name} membership!`);
-                router.refresh();
-              } catch (error) {
-                console.error("Subscription approval error:", error);
-                toast.error("Failed to complete subscription");
-              }
-            }}
-            onError={(err) => {
-              console.error("PayPal error:", err);
-              toast.error("Subscription failed");
-            }}
-          />
-          <p className="text-xs text-muted-foreground mt-2">Cancel anytime</p>
-        </div>
-      ))}
+            {isCurrentTier ? (
+              <div className="space-y-2">
+                <div className="bg-card dark:bg-zinc-900 p-3 rounded-lg">
+                  <p className="text-sm text-muted-foreground">
+                    Current Plan
+                  </p>
+                </div>
+              </div>
+            ) : hasActiveSubscription && tier.id > (subscriptionStatus?.membershipTierId || 0) ? (
+              <>
+                <PayPalButtons
+                  style={{ layout: "horizontal", height: 35, tagline: false, shape: 'pill', color: 'white' }}
+                  forceReRender={[tier.id, tier.planId, tier.price]}
+                  createSubscription={(data, actions) => {
+                    try {
+                      if (!isAuthenticated || !userId) {
+                        toast.error("Please sign in to subscribe");
+                        throw new Error("Please sign in to subscribe");
+                      }
+                      
+                      return actions.subscription.create({
+                        plan_id: tier.planId,
+                        custom_id: userId,
+                      });
+                    } catch (error) {
+                      console.error("Create subscription error:", error);
+                      toast.error(error instanceof Error ? error.message : "Failed to create subscription");
+                      throw error;
+                    }
+                  }}
+                  onApprove={async (data) => {
+                    try {
+                      if (!userId) return;
+                      
+                      // Call our backend to record the subscription
+                      const response = await fetch("/api/subscriptions/record", {
+                        method: "POST",
+                        headers: {
+                          "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                          userId,
+                          subscriptionId: data.subscriptionID,
+                          membershipTierId: tier.id,
+                        }),
+                        credentials: "include",
+                      });
+                      
+                      const result = await response.json();
+                      if (result.error) {
+                        throw new Error(result.error);
+                      }
+                      
+                      toast.success(`Successfully upgraded to ${tier.name} membership!`);
+                      router.refresh();
+                    } catch (error) {
+                      console.error("Subscription upgrade error:", error);
+                      toast.error("Failed to upgrade subscription");
+                    }
+                  }}
+                  onError={(err) => {
+                    console.error("PayPal error:", err);
+                    toast.error("Subscription upgrade failed");
+                  }}
+                />
+                <p className="text-xs text-muted-foreground mt-2">Upgrade to access more features</p>
+              </>
+            ) : hasActiveSubscription ? (
+              <>
+                <PayPalButtons
+                  style={{ layout: "horizontal", height: 35, tagline: false, shape: 'pill', color: 'white' }}
+                  forceReRender={[tier.id, tier.planId, tier.price]}
+                  createSubscription={(data, actions) => {
+                    try {
+                      if (!isAuthenticated || !userId) {
+                        toast.error("Please sign in to subscribe");
+                        throw new Error("Please sign in to subscribe");
+                      }
+                      
+                      return actions.subscription.create({
+                        plan_id: tier.planId,
+                        custom_id: userId,
+                      });
+                    } catch (error) {
+                      console.error("Create subscription error:", error);
+                      toast.error(error instanceof Error ? error.message : "Failed to create subscription");
+                      throw error;
+                    }
+                  }}
+                  onApprove={async (data) => {
+                    try {
+                      if (!userId) return;
+                      
+                      // Call our backend to record the subscription
+                      const response = await fetch("/api/subscriptions/record", {
+                        method: "POST",
+                        headers: {
+                          "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                          userId,
+                          subscriptionId: data.subscriptionID,
+                          membershipTierId: tier.id,
+                        }),
+                        credentials: "include",
+                      });
+                      
+                      const result = await response.json();
+                      if (result.error) {
+                        throw new Error(result.error);
+                      }
+                      
+                      toast.success(`Successfully switched to ${tier.name} membership!`);
+                      router.refresh();
+                    } catch (error) {
+                      console.error("Subscription switch error:", error);
+                      toast.error("Failed to switch subscription");
+                    }
+                  }}
+                  onError={(err) => {
+                    console.error("PayPal error:", err);
+                    toast.error("Subscription switch failed");
+                  }}
+                />
+                <p className="text-xs text-muted-foreground mt-2">Switch to this plan</p>
+              </>
+            ) : (
+              <>
+                <PayPalButtons
+                  style={{ layout: "horizontal", height: 35, tagline: false, shape: 'pill', color: 'white' }}
+                  forceReRender={[tier.id, tier.planId, tier.price]}
+                  createSubscription={(data, actions) => {
+                    try {
+                      if (!isAuthenticated || !userId) {
+                        toast.error("Please sign in to subscribe");
+                        throw new Error("Please sign in to subscribe");
+                      }
+                      
+                      return actions.subscription.create({
+                        plan_id: tier.planId,
+                        custom_id: userId,
+                      });
+                    } catch (error) {
+                      console.error("Create subscription error:", error);
+                      toast.error(error instanceof Error ? error.message : "Failed to create subscription");
+                      throw error;
+                    }
+                  }}
+                  onApprove={async (data) => {
+                    try {
+                      if (!userId) return;
+                      
+                      // Call our backend to record the subscription
+                      const response = await fetch("/api/subscriptions/record", {
+                        method: "POST",
+                        headers: {
+                          "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                          userId,
+                          subscriptionId: data.subscriptionID,
+                          membershipTierId: tier.id,
+                        }),
+                        credentials: "include",
+                      });
+                      
+                      const result = await response.json();
+                      if (result.error) {
+                        throw new Error(result.error);
+                      }
+                      
+                      toast.success(`Successfully subscribed to ${tier.name} membership!`);
+                      router.refresh();
+                    } catch (error) {
+                      console.error("Subscription approval error:", error);
+                      toast.error("Failed to complete subscription");
+                    }
+                  }}
+                  onError={(err) => {
+                    console.error("PayPal error:", err);
+                    toast.error("Subscription failed");
+                  }}
+                />
+                <p className="text-xs text-muted-foreground mt-2">Cancel anytime</p>
+              </>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 } 

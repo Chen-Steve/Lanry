@@ -51,6 +51,7 @@ const UserProfileButton = ({
     endDate?: string;
     latestBillingDate?: string;
     cancelledAt?: string;
+    latestBillingAmount?: number;
   }>(null);
   const [isSubLoading, setIsSubLoading] = useState(false);
 
@@ -216,38 +217,50 @@ const UserProfileButton = ({
     return username.charAt(0).toUpperCase();
   };
 
+  // Add helper function to determine membership tier
+  const getMembershipTier = (amount?: number) => {
+    if (!amount) return null;
+    if (amount === 4.99) return { name: "Supporter", icon: "material-symbols:verified-outline", color: "text-blue-400" };
+    if (amount === 9.99) return { name: "Premium", icon: "material-symbols:diamond", color: "text-purple-500" };
+    if (amount === 19.99) return { name: "VIP", icon: "material-symbols:star-rounded", color: "text-amber-500" };
+    return null;
+  };
+
   const renderAvatar = () => {
-    if (userProfile?.avatar_url) {
-      return (
-        <div className="relative">
-          <img
-            src={userProfile.avatar_url}
-            alt={userProfile.username}
-            className="w-8 h-8 rounded-full object-cover"
-            onError={() => {
-              const target = document.querySelector(`img[alt="${userProfile.username}"]`) as HTMLImageElement;
-              if (target) {
-                target.remove();
-              }
-            }}
-          />
-          {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-              {unreadCount > 9 ? '9+' : unreadCount}
-            </span>
-          )}
-        </div>
-      );
-    }
+    if (!userProfile) return null;
+
     return (
-      <div className="relative">
-        <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
-          {userProfile?.username ? getInitial(userProfile.username) : '?'}
-        </div>
-        {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-            {unreadCount > 9 ? '9+' : unreadCount}
-          </span>
+      <div className="flex items-center gap-2">
+        {userProfile.avatar_url ? (
+          <div className="relative">
+            <img
+              src={userProfile.avatar_url}
+              alt={userProfile.username}
+              className="w-8 h-8 rounded-full object-cover"
+              onError={() => {
+                const target = document.querySelector(`img[alt="${userProfile.username}"]`) as HTMLImageElement;
+                if (target) {
+                  target.remove();
+                }
+              }}
+            />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+          </div>
+        ) : (
+          <div className="relative">
+            <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
+              {userProfile?.username ? getInitial(userProfile.username) : '?'}
+            </div>
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+          </div>
         )}
       </div>
     );
@@ -283,24 +296,26 @@ const UserProfileButton = ({
           {renderAvatar()}
           <div>
             <div className="font-medium">{userProfile?.username || 'Error loading profile'}</div>
-            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-              <Icon icon="ph:coins-fill" className="w-4 h-4 text-amber-500" />
-              {userProfile?.coins || 0} coins
-            </div>
-            {/* Subscription Status */}
-            <div className="mt-1 text-xs">
+            <div className="flex items-center gap-2 text-sm">
+              <div className="flex items-center gap-1 text-muted-foreground">
+                {userProfile?.coins || 0} coins
+              </div>
+              <span className="text-muted-foreground">•</span>
               {isSubLoading ? (
-                <span className="text-muted-foreground">Checking membership...</span>
+                <span className="text-muted-foreground text-sm">Loading...</span>
               ) : subscriptionStatus?.hasSubscription ? (
                 <span className={
                   subscriptionStatus.status === 'ACTIVE'
-                    ? 'text-green-600 font-semibold'
+                    ? getMembershipTier(subscriptionStatus.latestBillingAmount)?.color || 'text-muted-foreground'
                     : 'text-muted-foreground'
                 }>
-                  Membership: {subscriptionStatus.status}
+                  {subscriptionStatus.status === 'ACTIVE' 
+                    ? getMembershipTier(subscriptionStatus.latestBillingAmount)?.name || 'Member'
+                    : `${subscriptionStatus.status}`
+                  }
                 </span>
               ) : (
-                <span className="text-muted-foreground">No Membership</span>
+                <span className="text-muted-foreground">Free</span>
               )}
             </div>
           </div>

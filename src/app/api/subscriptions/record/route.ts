@@ -72,10 +72,12 @@ export async function POST(req: Request) {
 // Helper function to get the amount based on membership tier ID
 function getMembershipAmount(tierIdAsNumber: number): number {
   switch (tierIdAsNumber) {
-    case 1:
-    case 2:
-    case 3:
-      return 1.00;
+    case 1: // Supporter
+      return 4.99;
+    case 2: // Premium
+      return 9.99;
+    case 3: // VIP
+      return 19.99;
     default:
       return 0;
   }
