@@ -146,26 +146,42 @@ export default function UserDashboard() {
               ) : subscriptionStatus?.hasSubscription ? (
                 <>
                   <h1 className="text-2xl font-bold text-primary mb-1">
-                    {subscriptionStatus.status === 'ACTIVE' ? 'Premium Membership' : 'Membership'}
+                    {subscriptionStatus.status === 'ACTIVE' ? 'Premium Membership' : 'Cancelled Membership'}
                   </h1>
                   <p className="text-sm text-muted-foreground mb-3">
-                    Your next bill is for $1.00 + tax on {subscriptionStatus.endDate ? new Date(subscriptionStatus.endDate).toLocaleDateString() : 'your next billing date'}.
+                    {subscriptionStatus.status === 'CANCELLED' ? (
+                      `Your membership will continue until ${subscriptionStatus.endDate ? new Date(subscriptionStatus.endDate).toLocaleDateString() : 'your current billing period end'}.`
+                    ) : (
+                      `Your next bill is for $1.00 + tax on ${subscriptionStatus.endDate ? new Date(subscriptionStatus.endDate).toLocaleDateString() : 'your next billing date'}.`
+                    )}
                   </p>
                   <div className="flex items-center justify-between">
                     <div className="text-muted-foreground">PayPal</div>
                     <div className="flex gap-2">
-                      <button
-                        onClick={() => setIsCancelModalOpen(true)}
-                        className="px-4 py-1.5 bg-destructive/10 text-destructive rounded-full text-center font-medium hover:bg-destructive/20 transition-colors"
-                      >
-                        Cancel
-                      </button>
-                      <Link 
-                        href="/shop?tab=membership"
-                        className="inline-block px-4 py-1.5 bg-primary/10 text-primary rounded-full text-center font-medium hover:bg-primary/20 transition-colors"
-                      >
-                        Change Plan
-                      </Link>
+                      {subscriptionStatus.status === 'ACTIVE' && (
+                        <>
+                          <button
+                            onClick={() => setIsCancelModalOpen(true)}
+                            className="px-4 py-1.5 bg-destructive/10 text-destructive rounded-full text-center font-medium hover:bg-destructive/20 transition-colors"
+                          >
+                            Cancel
+                          </button>
+                          <Link 
+                            href="/shop?tab=membership"
+                            className="inline-block px-4 py-1.5 bg-primary/10 text-primary rounded-full text-center font-medium hover:bg-primary/20 transition-colors"
+                          >
+                            Change Plan
+                          </Link>
+                        </>
+                      )}
+                      {subscriptionStatus.status === 'CANCELLED' && (
+                        <Link 
+                          href="/shop?tab=membership"
+                          className="inline-block px-4 py-1.5 bg-primary rounded-full text-primary-foreground text-center font-medium hover:bg-primary/90 transition-colors"
+                        >
+                          Renew Membership
+                        </Link>
+                      )}
                     </div>
                   </div>
                 </>
