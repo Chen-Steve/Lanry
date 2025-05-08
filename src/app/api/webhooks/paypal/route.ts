@@ -232,12 +232,8 @@ async function handleSubscriptionPayment(payload: PayPalWebhookEvent) {
     // This would require you to store the tier ID in the subscription record
     // For now, we'll just determine based on amount
     let bonusCoins = 0;
-    if (amountValue >= 19) {
-      bonusCoins = 400; // VIP tier
-    } else if (amountValue >= 9) {
-      bonusCoins = 150; // Premium tier
-    } else if (amountValue >= 4) {
-      bonusCoins = 60;  // Supporter tier
+    if (amountValue >= 1) {
+      bonusCoins = 60; // For testing: award Supporter bonus for all $1 payments
     }
     
     if (bonusCoins > 0) {

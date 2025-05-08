@@ -73,11 +73,9 @@ export async function POST(req: Request) {
 function getMembershipAmount(tierIdAsNumber: number): number {
   switch (tierIdAsNumber) {
     case 1:
-      return 4.99;
     case 2:
-      return 9.99;
     case 3:
-      return 19.99;
+      return 1.00;
     default:
       return 0;
   }

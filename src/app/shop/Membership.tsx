@@ -10,7 +10,7 @@ export const membershipTiers = [
   {
     id: 1,
     name: "Supporter",
-    price: 4.99,
+    price: 1.00,
     billingPeriod: "month",
     planId: process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID!,
     perks: [
@@ -25,7 +25,7 @@ export const membershipTiers = [
   {
     id: 2,
     name: "Premium",
-    price: 9.99,
+    price: 1.00,
     billingPeriod: "month",
     planId: process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID!,
     perks: [
@@ -41,7 +41,7 @@ export const membershipTiers = [
   {
     id: 3,
     name: "VIP",
-    price: 19.99,
+    price: 1.00,
     billingPeriod: "month",
     planId: process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID!,
     perks: [
