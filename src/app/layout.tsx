@@ -7,6 +7,7 @@ import Providers from './providers';
 import { Toaster } from 'sonner';
 import { ThemeProvider } from '@/lib/ThemeContext';
 import CookieConsent from './_components/CookieConsent';
+import AdFreeScript from './_components/AdFreeScript';
 
 export const metadata: Metadata = {
   title: "Lanry",
@@ -44,6 +45,9 @@ export default function RootLayout({
             // Set default consent mode
             gtag('consent', 'default', {
               'analytics_storage': 'denied',
+              'ad_storage': 'denied',
+              'ad_user_data': 'denied',
+              'ad_personalization': 'denied',
               'wait_for_update': 500
             });
           `}
@@ -67,33 +71,14 @@ export default function RootLayout({
       <body className="min-h-screen relative overflow-x-hidden">
         <Providers>
           <ThemeProvider>
+            <AdFreeScript />
             <div className="flex flex-col min-h-screen max-w-[100vw]">
               <Header />
               <div className="flex-grow flex justify-between w-full">
-                {/* Left Ad Column - Hidden on mobile */}
-                <div className="hidden lg:block w-[120px] xl:w-[160px] flex-shrink-0 sticky top-0 h-screen">
-                  <div className="p-2">
-                    {/* Left Ad Container */}
-                    <div id="left-ad-container" className="w-full h-[400px]">
-                      {/* Your left ad unit code here */}
-                    </div>
-                  </div>
-                </div>
-                
                 {/* Main Content */}
                 <main className="flex-grow max-w-full overflow-x-hidden pr-2">
                   {children}
                 </main>
-                
-                {/* Right Ad Column - Hidden on mobile */}
-                <div className="hidden lg:block w-[120px] xl:w-[160px] flex-shrink-0 sticky top-0 h-screen -ml-2">
-                  <div className="p-0">
-                    {/* Right Ad Container */}
-                    <div id="right-ad-container" className="w-full h-[400px]">
-                      {/* Your right ad unit code here */}
-                    </div>
-                  </div>
-                </div>
               </div>
               <Footer />
             </div>

@@ -92,6 +92,7 @@ export interface UserProfile {
   avatar_url?: string;
   created_at: string;
   updated_at: string;
+  isAdFree?: boolean;
 }
 
 export interface ChapterComment {
