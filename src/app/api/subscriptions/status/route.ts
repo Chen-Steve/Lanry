@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 
 function getMembershipTierFromAmount(amount: number): number {
   if (amount === 20) return 3; // VIP
-  if (amount === 9) return 2;  // Premium
+  if (amount === 9) return 2;  // Patron
   if (amount === 5) return 1;  // Supporter
   return 0; // Unknown/No subscription
 }

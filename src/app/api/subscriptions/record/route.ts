@@ -74,7 +74,7 @@ function getMembershipAmount(tierIdAsNumber: number): number {
   switch (tierIdAsNumber) {
     case 1: // Supporter
       return 5;
-    case 2: // Premium
+    case 2: // Patron
       return 9;
     case 3: // VIP
       return 19;

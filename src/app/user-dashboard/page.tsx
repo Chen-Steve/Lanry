@@ -150,7 +150,12 @@ export default function UserDashboard() {
               ) : subscriptionStatus?.hasSubscription ? (
                 <>
                   <h1 className="text-2xl font-bold text-primary mb-1">
-                    {subscriptionStatus.status === 'ACTIVE' ? 'Premium Membership' : 'Cancelled Membership'}
+                    {subscriptionStatus.status === 'ACTIVE' ? (
+                      subscriptionStatus.amount === 5 ? 'Supporter Membership' :
+                      subscriptionStatus.amount === 9 ? 'Patron Membership' :
+                      subscriptionStatus.amount === 20 ? 'Super Patron Membership' :
+                      'Active Membership'
+                    ) : 'Cancelled Membership'}
                   </h1>
                   <p className="text-sm text-muted-foreground mb-3">
                     {subscriptionStatus.status === 'CANCELLED' ? (
@@ -201,13 +206,13 @@ export default function UserDashboard() {
                 <>
                   <h1 className="text-2xl font-bold text-foreground mb-1">Free Plan</h1>
                   <p className="text-sm text-muted-foreground mb-3">
-                    Upgrade to Premium to unlock all features.
+                    Upgrade to Supporter to unlock all features.
                   </p>
                   <Link 
                     href="/shop?tab=membership"
                     className="inline-block px-4 py-1.5 bg-primary text-primary-foreground rounded-full text-center font-medium hover:bg-primary/90 transition-colors"
                   >
-                    Get Premium
+                    Get Supporter
                   </Link>
                 </>
               )}

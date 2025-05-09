@@ -221,7 +221,7 @@ const UserProfileButton = ({
   const getMembershipTier = (amount?: number) => {
     if (!amount) return null;
     if (amount === 5) return { name: "Supporter", icon: "material-symbols:verified-outline", color: "text-blue-400" };
-    if (amount === 9) return { name: "Premium", icon: "material-symbols:diamond", color: "text-purple-500" };
+    if (amount === 9) return { name: "Patron", icon: "material-symbols:diamond", color: "text-purple-500" };
     if (amount === 19) return { name: "VIP", icon: "material-symbols:star-rounded", color: "text-amber-500" };
     return null;
   };

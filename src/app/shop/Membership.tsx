@@ -16,23 +16,22 @@ export const membershipTiers = [
     planId: process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID!,
     perks: [
       { text: "Ad-free experience", highlight: true },
-      { text: <>50 + <span className="text-green-500">10</span> monthly bonus coins</>, highlight: false },
-      { text: <><span className="underline">5%</span> discount on coin purchases</>, highlight: false },
-      { text: "Supporter badge on profile", highlight: false }
+      { text: "Supporter badge on profile", highlight: false },
+      { text: "New Wallpapers every week", highlight: false },
+      { text: "5 Profile Borders", highlight: false }
     ],
     iconColor: "text-blue-400",
     icon: "material-symbols:verified-outline"
   },
   {
     id: 2,
-    name: "Premium",
+    name: "Patron",
     price: 9,
     billingPeriod: "month",
     planId: process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID!,
     perks: [
       { text: "Everything in Supporter", highlight: false },
-      { text: <>100 + <span className="text-green-500">50</span> monthly bonus coins</>, highlight: false },
-      { text: <><span className="underline">10%</span> discount on coin purchases</>, highlight: false },
+      { text: <><span className="underline">5%</span> discount on coin purchases</>, highlight: false },
       { text: "Patron badge on profile", highlight: false }
     ],
     iconColor: "text-purple-500",
@@ -45,10 +44,10 @@ export const membershipTiers = [
     billingPeriod: "month",
     planId: process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID!,
     perks: [
-      { text: "Everything in Premium", highlight: false },  
-      { text: <>300 + <span className="text-green-500">100</span> monthly bonus coins</>, highlight: false },
-      { text: <><span className="underline">20%</span> discount on coin purchases</>, highlight: false },
+      { text: "Everything in Patron", highlight: false },  
+      { text: <>300 + <span className="text-green-500">100</span> monthly bonus coins</>, highlight: true },
       { text: "Audio for all Chapters", highlight: true },
+      { text: <><span className="underline">20%</span> discount on coin purchases</>, highlight: false },
       { text: "Name in supporter credits", highlight: false },
       { text: "Super Patron badge on profile", highlight: false }
     ],
