@@ -45,7 +45,7 @@ export const membershipTiers = [
     planId: process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID!,
     perks: [
       { text: "Everything in Patron", highlight: false },  
-      { text: <>300 + <span className="text-green-500">100</span> monthly bonus coins</>, highlight: true },
+      { text: <>200 + <span className="text-green-500">100</span> monthly bonus coins</>, highlight: true },
       { text: "Audio for all Chapters", highlight: true },
       { text: <><span className="underline">20%</span> discount on coin purchases</>, highlight: false },
       { text: "Name in supporter credits", highlight: false },
