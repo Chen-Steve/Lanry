@@ -99,14 +99,18 @@ export async function getNovel(id: string, userId?: string): Promise<Novel | nul
 
     if (error || !data) return null;
 
-    // Process chapters to include unlock status
+    // Check if user has translator access (matches author_profile_id)
+    const hasTranslatorAccess = userId ? data.author_profile_id === userId : false;
+
+    // Process chapters to include unlock status and translator access
     const chapters = (data.chapters || []).map((chapter: Chapter) => ({
       ...chapter,
       isUnlocked: userId ? 
         data.chapter_unlocks?.some((unlock: ChapterUnlock) => 
           unlock.chapter_number === chapter.chapter_number && 
           unlock.profile_id === userId
-        ) : false
+        ) : false,
+      hasTranslatorAccess
     })).sort((a: Chapter, b: Chapter) => a.chapter_number - b.chapter_number);
 
     // Calculate ratings
