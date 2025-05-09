@@ -83,33 +83,28 @@ export const NovelSynopsis = ({
       {/* Description */}
       <div className="relative">
         <div 
-          className="prose prose-sm max-w-none text-muted-foreground dark:prose-invert [&>p]:mb-4 [&>p:last-child]:mb-0 whitespace-pre-line"
+          className="prose prose-sm max-w-none text-black dark:text-white dark:prose-invert [&>p]:mb-4 [&>p:last-child]:mb-0 whitespace-pre-line"
           dangerouslySetInnerHTML={{ 
             __html: formatText(displayText)
           }}
         />
         
         {shouldShowButton && !isExpanded && (
-          <>
-            {description.length > truncateLength && (
-              <div className="absolute bottom-0 w-full h-12 bg-gradient-to-t from-background to-transparent"></div>
-            )}
-            <div className="relative">
-              <div className="w-full border-t border-black/20 dark:border-white/20 -mb-[1px]"></div>
-              <div className="flex justify-center">
-                <button
-                  onClick={() => setIsExpanded(true)}
-                  className="flex items-center text-xs text-primary hover:text-primary/80 font-medium border border-black/20 dark:border-white/20 px-2 py-1 rounded-b-md bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800"
-                >
-                  <span>Show {characters.length > 0 ? 'Characters' : 'More'}</span>
-                  <Icon 
-                    icon="mdi:chevron-down"
-                    className="w-3.5 h-3.5" 
-                  />
-                </button>
-              </div>
+          <div className="relative">
+            <div className="w-full border-t border-black/20 dark:border-white/20 -mb-[1px]"></div>
+            <div className="flex justify-center">
+              <button
+                onClick={() => setIsExpanded(true)}
+                className="flex items-center text-xs text-primary hover:text-primary/80 font-medium border border-black/20 dark:border-white/20 px-2 py-1 rounded-b-md bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800"
+              >
+                <span>Show {characters.length > 0 ? 'Characters' : 'More'}</span>
+                <Icon 
+                  icon="mdi:chevron-down"
+                  className="w-3.5 h-3.5" 
+                />
+              </button>
             </div>
-          </>
+          </div>
         )}
 
         {shouldShowButton && isExpanded && (

@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
-import { ChapterList } from './ChapterList';
-import { Chapter, UserProfile, NovelCategory, Tag } from '@/types/database';
-import { Volume } from '@/types/novel';
+import { Chapter, NovelCategory, Tag } from '@/types/database';
 import { NovelRecommendations } from './NovelRecommendations';
 import { NovelComments } from './NovelComments';
 import { NovelHeader } from './NovelHeader';
 import { TabGroup } from '@/app/novels/[id]/_components/TabGroup';
 import { TranslatorLinks } from './TranslatorLinks';
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
+import { Icon } from '@iconify/react';
+import { NovelSynopsis } from './NovelSynopsis';
 
 interface NovelContentProps {
   title: string;
@@ -36,9 +37,7 @@ interface NovelContentProps {
   onBookmarkClick: () => void;
   coverImageUrl?: string;
   chapters: Chapter[];
-  volumes?: Volume[];
   novelId: string;
-  userProfile: UserProfile | null;
   novelAuthorId: string;
   rating: number;
   ratingCount: number;
@@ -73,9 +72,7 @@ export const NovelContent = ({
   onBookmarkClick,
   coverImageUrl,
   chapters,
-  volumes = [],
   novelId,
-  userProfile,
   novelAuthorId,
   rating = 0,
   ratingCount = 0,
@@ -98,7 +95,6 @@ export const NovelContent = ({
   }, [searchParams]);
 
   const tabs = [
-    { label: 'Chapters', value: 'chapters' },
     ...(translator && (translator.kofiUrl || translator.patreonUrl || translator.customUrl) ? [
       { 
         label: `About ${translator.username || 'Translator'}`, 
@@ -111,18 +107,6 @@ export const NovelContent = ({
 
   const renderTabContent = () => {
     switch (activeTab) {
-      case 'chapters':
-        return (
-          <ChapterList
-            initialChapters={chapters}
-            volumes={volumes}
-            novelId={novelId}
-            novelSlug={novelSlug}
-            userProfile={userProfile}
-            isAuthenticated={isAuthenticated}
-            novelAuthorId={novelAuthorId}
-          />
-        );
       case 'recommendations':
         return (
           <NovelRecommendations 
@@ -151,42 +135,67 @@ export const NovelContent = ({
   return (
     <div className="max-w-5xl mx-auto px-4 py-4">
       {showHeader && (
-        <NovelHeader
-          title={title}
-          author={author}
-          translator={translator}
-          bookmarkCount={bookmarkCount}
-          chapterCount={chapters.length}
-          coverImageUrl={coverImageUrl}
-          novelAuthorId={novelAuthorId}
-          isAuthorNameCustom={isAuthorNameCustom}
-          categories={categories}
-          tags={tags}
-          description={description}
-          firstChapterNumber={firstChapterNumber}
-          novelSlug={novelSlug}
-          isAuthenticated={isAuthenticated}
-          isBookmarked={isBookmarked}
-          isBookmarkLoading={isBookmarkLoading}
-          onBookmarkClick={onBookmarkClick}
-          rating={rating}
-          ratingCount={ratingCount}
-          userRating={userRating}
-          novelId={novelId}
-          ageRating={ageRating}
-          characters={characters}
-        />
+        <>
+          <NovelHeader
+            title={title}
+            author={author}
+            translator={translator}
+            bookmarkCount={bookmarkCount}
+            chapterCount={chapters.length}
+            coverImageUrl={coverImageUrl}
+            novelAuthorId={novelAuthorId}
+            isAuthorNameCustom={isAuthorNameCustom}
+            categories={categories}
+            tags={tags}
+            description={description}
+            firstChapterNumber={firstChapterNumber}
+            novelSlug={novelSlug}
+            isAuthenticated={isAuthenticated}
+            isBookmarked={isBookmarked}
+            isBookmarkLoading={isBookmarkLoading}
+            onBookmarkClick={onBookmarkClick}
+            rating={rating}
+            ratingCount={ratingCount}
+            userRating={userRating}
+            novelId={novelId}
+            ageRating={ageRating}
+            characters={characters}
+            hideDescription={true}
+          />
+
+          <div className=" bg-gray-50 dark:bg-neutral-900 rounded-lg p-4">
+            <NovelSynopsis
+              description={description}
+              characters={characters}
+            />
+            
+            <div className="border-t border-black dark:border-gray-600 pt-4 mt-4">
+              <div className="flex justify-between items-center">
+                <Link 
+                  href={`/novels/${novelSlug}/chapters`}
+                  className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors group"
+                >
+                  <div className="flex flex-col">
+                    <div className="flex items-center gap-1">
+                      <span className="text-md text-black dark:text-white">{chapters.length} Chapters Updated</span>
+                      <Icon icon="mdi:chevron-right" className="text-xl text-black dark:text-white" />
+                    </div>
+                  </div>
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-2 bg-gray-50 dark:bg-neutral-900 rounded-lg p-6">
+            <TabGroup
+              tabs={tabs}
+              value={activeTab}
+              onChange={setActiveTab}
+            />
+            {renderTabContent()}
+          </div>
+        </>
       )}
-
-      <div className="mt-6">
-        <TabGroup
-          tabs={tabs}
-          value={activeTab}
-          onChange={setActiveTab}
-        />
-      </div>
-
-      {renderTabContent()}
     </div>
   );
-}; 
+};

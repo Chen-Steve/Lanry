@@ -17,6 +17,11 @@ interface NovelHeaderProps {
   translator?: { 
     username: string | null;
     profile_id: string;
+    kofiUrl?: string;
+    patreonUrl?: string;
+    customUrl?: string;
+    customUrlLabel?: string;
+    author_bio?: string;
   } | null;
   bookmarkCount: number;
   chapterCount?: number;
@@ -45,6 +50,7 @@ interface NovelHeaderProps {
     description?: string | null;
     orderIndex: number;
   }[];
+  hideDescription?: boolean;
 }
 
 export const NovelHeader = ({
@@ -70,6 +76,7 @@ export const NovelHeader = ({
   novelId,
   ageRating = 'EVERYONE',
   characters = [],
+  hideDescription = false,
 }: NovelHeaderProps) => {
   const [isRating, setIsRating] = useState(false);
   const [localRating, setLocalRating] = useState(rating);
@@ -303,10 +310,12 @@ export const NovelHeader = ({
 
                   {/* Desktop Synopsis */}
                   <div className="hidden sm:block">
-                    <NovelSynopsis
-                      description={description}
-                      characters={characters}
-                    />
+                    {hideDescription ? null : (
+                      <NovelSynopsis
+                        description={description}
+                        characters={characters}
+                      />
+                    )}
                   </div>
                 </div>
               </div>
@@ -383,10 +392,12 @@ export const NovelHeader = ({
 
           {/* Mobile Synopsis - Below Everything */}
           <div className="sm:hidden">
-            <NovelSynopsis
-              description={description}
-              characters={characters}
-            />
+            {hideDescription ? null : (
+              <NovelSynopsis
+                description={description}
+                characters={characters}
+              />
+            )}
           </div>
 
           {/* Mobile Tags - Below Synopsis */}
