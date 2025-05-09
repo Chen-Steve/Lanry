@@ -21,20 +21,16 @@ export const useAdFreeStatus = () => {
       }
 
       try {
-        // Check if user has 'isAdFree' field set to true first
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('isAdFree')
-          .eq('id', userId)
-          .single();
-
-        if (profile?.isAdFree) {
-          setIsAdFree(true);
+        // Get ad-free status from dedicated API endpoint instead of directly querying
+        const response = await fetch(`/api/user/ad-free-status`);
+        if (response.ok) {
+          const data = await response.json();
+          setIsAdFree(data.isAdFree || false);
           setIsLoading(false);
           return;
         }
 
-        // Otherwise check total coin purchases
+        // Fallback: Check total coin purchases directly
         const { data: transactions, error: transactionError } = await supabase
           .from('coin_transactions')
           .select('amount')
@@ -49,14 +45,7 @@ export const useAdFreeStatus = () => {
         // Set ad-free status based on threshold
         const shouldBeAdFree = totalCoinsPurchased >= AD_FREE_THRESHOLD;
         
-        // Update the profile if user qualifies for ad-free
-        if (shouldBeAdFree) {
-          await supabase
-            .from('profiles')
-            .update({ isAdFree: true })
-            .eq('id', userId);
-        }
-        
+        // We don't update the profile anymore since the column doesn't exist
         setIsAdFree(shouldBeAdFree);
       } catch (error) {
         console.error('Error checking ad-free status:', error);

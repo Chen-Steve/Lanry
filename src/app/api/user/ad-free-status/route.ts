@@ -18,18 +18,7 @@ export async function GET() {
     
     const userId = session.user.id;
     
-    // Check if user already has ad-free status in profile
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('isAdFree')
-      .eq('id', userId)
-      .single();
-    
-    if (profile?.isAdFree) {
-      return NextResponse.json({ isAdFree: true });
-    }
-    
-    // Otherwise check total coin purchases
+    // Check total coin purchases to determine ad-free status
     const { data: transactions, error: transactionError } = await supabase
       .from('coin_transactions')
       .select('amount')
@@ -46,15 +35,11 @@ export async function GET() {
     // Determine ad-free status based on threshold
     const isAdFree = totalCoinsPurchased >= AD_FREE_THRESHOLD;
     
-    // Update the profile if user qualifies for ad-free
-    if (isAdFree) {
-      await supabase
-        .from('profiles')
-        .update({ isAdFree: true })
-        .eq('id', userId);
-    }
+    // Cache the response for 1 hour
+    const response = NextResponse.json({ isAdFree });
+    response.headers.set('Cache-Control', 'private, max-age=3600');
     
-    return NextResponse.json({ isAdFree });
+    return response;
   } catch (error) {
     console.error('Error checking ad-free status:', error);
     return NextResponse.json({ error: 'Failed to check ad-free status' }, { status: 500 });

@@ -55,26 +55,15 @@ export function UpdateProfileModal({ isOpen, onClose, onSuccess, profile }: Upda
           avatarUrl = await uploadImage(imageFile, profile.id);
         }
 
-        // Get current profile data first
-        const { data: currentProfile, error: fetchError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', profile.id)
-          .single();
-
-        if (fetchError) throw fetchError;
-
-        // Merge current profile with updates
-        const mergedProfile = {
-          ...currentProfile,
-          username: name,
-          avatar_url: avatarUrl,
-          updated_at: new Date().toISOString(),
-        };
-
+        // Instead of fetching and merging, directly update only the changed fields
         const { data, error } = await supabase
           .from('profiles')
-          .upsert(mergedProfile)
+          .update({
+            username: name,
+            avatar_url: avatarUrl,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', profile.id)
           .select()
           .single();
 
