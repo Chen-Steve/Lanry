@@ -16,9 +16,9 @@ export const membershipTiers = [
     planId: process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID!,
     perks: [
       { text: "Ad-free experience", highlight: true },
-      { text: "60 monthly bonus coins", highlight: false },
-      { text: "Supporter badge on profile", highlight: false },
-      { text: "5% discount on coin purchases", highlight: false }
+      { text: <>50 + <span className="text-green-500">10</span> monthly bonus coins</>, highlight: false },
+      { text: <><span className="underline">5%</span> discount on coin purchases</>, highlight: false },
+      { text: "Supporter badge on profile", highlight: false }
     ],
     iconColor: "text-blue-400",
     icon: "material-symbols:verified-outline"
@@ -31,26 +31,26 @@ export const membershipTiers = [
     planId: process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID!,
     perks: [
       { text: "Everything in Supporter", highlight: false },
-      { text: "150 monthly bonus coins", highlight: false },
-      { text: "Audio for all Chapters", highlight: true },
-      { text: "10% discount on coin purchases", highlight: false },
-      { text: "Super Patron badge on profile", highlight: false }
+      { text: <>100 + <span className="text-green-500">50</span> monthly bonus coins</>, highlight: false },
+      { text: <><span className="underline">10%</span> discount on coin purchases</>, highlight: false },
+      { text: "Patron badge on profile", highlight: false }
     ],
     iconColor: "text-purple-500",
     icon: "material-symbols:diamond"
   },
   {
     id: 3,
-    name: "VIP",
+    name: "Super Patron",
     price: 20,
     billingPeriod: "month",
     planId: process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID!,
     perks: [
       { text: "Everything in Premium", highlight: false },  
-      { text: "400 monthly bonus coins", highlight: false },
-      { text: "20% discount on coin purchases", highlight: false },
+      { text: <>300 + <span className="text-green-500">100</span> monthly bonus coins</>, highlight: false },
+      { text: <><span className="underline">20%</span> discount on coin purchases</>, highlight: false },
+      { text: "Audio for all Chapters", highlight: true },
       { text: "Name in supporter credits", highlight: false },
-      { text: "VIP badge on profile", highlight: false }
+      { text: "Super Patron badge on profile", highlight: false }
     ],
     iconColor: "text-amber-500",
     icon: "material-symbols:star-rounded"
