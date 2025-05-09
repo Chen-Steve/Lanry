@@ -4,6 +4,21 @@ import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 
+// Add a cache response helper
+function cachedResponse(data: { likeCount: number; isLiked: boolean }, isAuthenticated: boolean) {
+  const response = NextResponse.json(data);
+  
+  if (isAuthenticated) {
+    // For authenticated users - 5 minutes cache, private
+    response.headers.set('Cache-Control', 'private, max-age=300');
+  } else {
+    // For anonymous users - 15 minutes with revalidation
+    response.headers.set('Cache-Control', 'public, max-age=900, stale-while-revalidate=3600');
+  }
+  
+  return response;
+}
+
 export async function POST(
   request: Request,
   { params }: { params: { chapterNumber: string } }
@@ -73,6 +88,8 @@ export async function POST(
       }
     });
 
+    let result;
+    
     if (existingLike) {
       // Remove like if it exists
       await prisma.$transaction([
@@ -92,13 +109,10 @@ export async function POST(
         select: { likeCount: true }
       });
 
-      // Revalidate the cache for this chapter's likes
-      revalidatePath(`/api/chapters/${chapterNumber}/likes?novelId=${novelId}`);
-
-      return NextResponse.json({ 
+      result = { 
         likeCount: updatedChapter?.likeCount || 0,
         isLiked: false
-      });
+      };
     } else {
       // Create new like
       await prisma.$transaction([
@@ -122,14 +136,18 @@ export async function POST(
         select: { likeCount: true }
       });
 
-      // Revalidate the cache for this chapter's likes
-      revalidatePath(`/api/chapters/${chapterNumber}/likes?novelId=${novelId}`);
-
-      return NextResponse.json({ 
+      result = { 
         likeCount: updatedChapter?.likeCount || 0,
         isLiked: true
-      });
+      };
     }
+
+    // Revalidate only the specific path for this chapter/novel
+    revalidatePath(`/api/chapters/${chapterNumber}/likes?novelId=${novelId}`);
+    
+    const response = NextResponse.json(result);
+    response.headers.set('Cache-Control', 'no-store');
+    return response;
   } catch (error) {
     console.error('Error handling chapter like:', error);
     return NextResponse.json(
@@ -162,19 +180,14 @@ export async function GET(
     }
 
     const authHeader = request.headers.get('Authorization');
-    let response;
-
+    
     if (authHeader?.startsWith('Bearer ')) {
-      // For authenticated users - shorter cache due to personalized isLiked field
-      response = await handleAuthenticatedGet(authHeader, novelId, chapterNumber);
-      response.headers.set('Cache-Control', 'private, s-maxage=30');
+      // For authenticated users
+      return await handleAuthenticatedGet(authHeader, novelId, chapterNumber);
     } else {
-      // For anonymous users - longer cache since we only return likeCount
-      response = await handleAnonymousGet(novelId, chapterNumber);
-      response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
+      // For anonymous users
+      return await handleAnonymousGet(novelId, chapterNumber);
     }
-
-    return response;
   } catch (error) {
     console.error('Error fetching chapter likes:', error);
     return NextResponse.json(
@@ -185,9 +198,13 @@ export async function GET(
 }
 
 async function handleAuthenticatedGet(authHeader: string, novelId: string, chapterNumber: number) {
+  const cookieStore = cookies();
+  const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+  
   const token = authHeader.split(' ')[1];
-  const { data: { user } } = await createRouteHandlerClient({ cookies }).auth.getUser(token);
+  const { data: { user } } = await supabase.auth.getUser(token);
 
+  // Single database query to get chapter
   const chapter = await prisma.chapter.findFirst({
     where: { 
       chapterNumber,
@@ -205,6 +222,7 @@ async function handleAuthenticatedGet(authHeader: string, novelId: string, chapt
 
   let isLiked = false;
   if (user) {
+    // Only query the like status if we have a user
     const existingLike = await prisma.chapterLike.findUnique({
       where: {
         profileId_chapterId: {
@@ -216,13 +234,14 @@ async function handleAuthenticatedGet(authHeader: string, novelId: string, chapt
     isLiked = !!existingLike;
   }
 
-  return NextResponse.json({
+  return cachedResponse({
     likeCount: chapter.likeCount,
     isLiked
-  });
+  }, true);
 }
 
 async function handleAnonymousGet(novelId: string, chapterNumber: number) {
+  // Simple database query to get only the like count
   const chapter = await prisma.chapter.findFirst({
     where: { 
       chapterNumber,
@@ -238,8 +257,8 @@ async function handleAnonymousGet(novelId: string, chapterNumber: number) {
     );
   }
 
-  return NextResponse.json({
+  return cachedResponse({
     likeCount: chapter.likeCount,
     isLiked: false
-  });
+  }, false);
 } 
