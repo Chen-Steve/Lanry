@@ -11,18 +11,15 @@ type ChapterWithNovel = Chapter & {
 export async function isChapterPublished(publishAt: string | null): Promise<boolean> {
   if (!publishAt) return true; // No publish date means it's published immediately
   
-  // Get server time from Supabase
-  const { data: serverTime, error } = await supabase.rpc('get_server_time');
+  // Use the is_chapter_published RPC function
+  const { data, error } = await supabase.rpc('is_chapter_published', { publish_at: publishAt });
+  
   if (error) {
-    console.error('Error getting server time:', error);
+    console.error('Error checking if chapter is published:', error);
     return false;
   }
-
-  // Compare server time with publish date
-  const publishDate = new Date(publishAt);
-  const serverDate = new Date(serverTime);
   
-  return publishDate <= serverDate;
+  return data;
 }
 
 export async function getChapter(novelId: string, chapterNumber: number, partNumber?: number | null): Promise<ChapterWithNovel | null> {
