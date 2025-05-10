@@ -548,9 +548,9 @@ export const ChapterList = ({
   }, []);
 
   return (
-    <div className="max-w-5xl mx-auto">
+    <>
       <div className="mt-6 flex flex-col gap-4">
-        <div className="bg-card rounded-xl shadow-sm border border-border overflow-visible relative">
+        <div className="overflow-visible relative">
           {/* Unified Filter Bar */}
           <div className="p-3 bg-accent/50 border-b border-border flex flex-col md:flex-row gap-3 relative">
             {/* Dropdown Containers - Positioned outside the scroll container */}
@@ -794,6 +794,6 @@ export const ChapterList = ({
         novelId={novelId}
         novelAuthorId={novelAuthorId}
       />
-    </div>
+    </>
   );
 }; 
