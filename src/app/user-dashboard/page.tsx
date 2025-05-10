@@ -50,6 +50,7 @@ export default function UserDashboard() {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isDailyRewardsClicked, setIsDailyRewardsClicked] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [isUpgradeClicked, setIsUpgradeClicked] = useState(false);
   const searchParams = useSearchParams();
   const userId = searchParams.get('id');
   const { isAdFree } = useAdFreeStatus();
@@ -194,9 +195,9 @@ export default function UserDashboard() {
                       {subscriptionStatus.status === 'CANCELLED' && (
                         <Link 
                           href="/shop?tab=membership"
-                          className="inline-block px-4 py-1.5 bg-primary rounded-full text-primary-foreground text-center font-medium hover:bg-primary/90 transition-colors"
+                          className="inline-block px-4 py-1.5 bg-primary text-primary-foreground rounded-full text-center font-medium hover:bg-primary/90 transition-colors"
                         >
-                          Renew Membership
+                          Reactivate
                         </Link>
                       )}
                     </div>
@@ -208,12 +209,17 @@ export default function UserDashboard() {
                   <p className="text-sm text-muted-foreground mb-3">
                     Upgrade to Supporter to unlock all features.
                   </p>
-                  <Link 
-                    href="/shop?tab=membership"
-                    className="inline-block px-4 py-1.5 bg-primary text-primary-foreground rounded-full text-center font-medium hover:bg-primary/90 transition-colors"
+                  <button 
+                    onClick={() => setIsUpgradeClicked(true)}
+                    disabled={isUpgradeClicked}
+                    className={`inline-block px-4 py-1.5 text-center font-medium rounded-full transition-colors ${
+                      isUpgradeClicked 
+                        ? 'bg-primary/20 text-primary cursor-not-allowed' 
+                        : 'bg-primary text-primary-foreground hover:bg-primary/90'
+                    }`}
                   >
-                    Get Supporter
-                  </Link>
+                    {isUpgradeClicked ? 'Coming Soon' : 'Upgrade'}
+                  </button>
                 </>
               )}
             </div>

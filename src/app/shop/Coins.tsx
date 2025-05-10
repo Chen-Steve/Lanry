@@ -36,7 +36,7 @@ export default function Coins() {
             <p className={`text-sm ${isAdFree ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400'}`}>
               {isAdFree 
                 ? 'You are currently enjoying an ad-free browsing experience across the entire site!' 
-                : 'Purchase 50 or more coins to automatically receive an ad-free browsing experience. Google ads will be completely disabled site-wide!'}
+                : 'Purchase 50 or more coins to automatically receive an ad-free browsing experience.'}
             </p>
           </div>
         </div>
