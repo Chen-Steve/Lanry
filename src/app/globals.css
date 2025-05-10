@@ -14,6 +14,7 @@
   --accent: #F7F4ED;
   --accent-foreground: #1F2937;
   --border: #E5E1D8;
+  --card: #fff;
 }
 
 :root[class~="dark"] {
@@ -28,6 +29,7 @@
   --accent: #27272A;
   --accent-foreground: #FAFAFA;
   --border: #27272A;
+  --card: #18181B;
 }
 
 body {

@@ -29,6 +29,7 @@ const config: Config = {
           foreground: 'var(--accent-foreground)',
         },
         border: 'var(--border)',
+        card: 'var(--card)',
       },
       typography: {
         DEFAULT: {

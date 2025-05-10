@@ -242,7 +242,7 @@ export const NovelComments = ({ novelId, novelSlug, isAuthenticated }: NovelComm
           onChange={(e) => setNewComment(e.target.value)}
           placeholder={isAuthenticated ? "Write a comment..." : "Please sign in to comment"}
           disabled={!isAuthenticated || isSubmitting}
-          className="w-full p-3 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-primary disabled:bg-muted disabled:text-muted-foreground"
+          className="w-full p-3 border border-border rounded-lg bg-card text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-primary disabled:bg-muted disabled:text-muted-foreground"
           rows={3}
         />
         <div className="flex justify-end">

@@ -39,7 +39,6 @@ export const TranslatorLinks = ({ translator }: TranslatorLinksProps) => {
           onClick={() => isAuthenticated ? setShowDonationModal(true) : toast.error('Please sign in to donate')}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-full bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 font-medium transition-colors"
         >
-          <Icon icon="ph:coin-fill" className="text-base" />
           <span>Donate Coins</span>
         </button>
 
