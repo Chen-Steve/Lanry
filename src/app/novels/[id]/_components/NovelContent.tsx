@@ -83,7 +83,7 @@ export const NovelContent = ({
   showHeader = true,
   characters = [],
 }: NovelContentProps) => {
-  const [activeTab, setActiveTab] = useState('chapters');
+  const [activeTab, setActiveTab] = useState('support');
   const searchParams = useSearchParams();
 
   // Set initial active tab based on URL query parameter
@@ -91,8 +91,12 @@ export const NovelContent = ({
     const tab = searchParams.get('tab');
     if (tab && ['chapters', 'comments', 'recommendations', 'support'].includes(tab)) {
       setActiveTab(tab);
+    } else if (translator && (translator.kofiUrl || translator.patreonUrl || translator.customUrl)) {
+      setActiveTab('support');
+    } else {
+      setActiveTab('comments');
     }
-  }, [searchParams]);
+  }, [searchParams, translator]);
 
   const tabs = [
     ...(translator && (translator.kofiUrl || translator.patreonUrl || translator.customUrl) ? [
@@ -163,13 +167,13 @@ export const NovelContent = ({
             hideDescription={true}
           />
 
-          <div className=" bg-gray-50 dark:bg-neutral-900 rounded-lg p-4">
+          <div className="bg-gray-50 dark:bg-neutral-900 rounded-lg p-3 -mt-8 sm:mt-8">
             <NovelSynopsis
               description={description}
               characters={characters}
             />
             
-            <div className="border-t border-black dark:border-gray-600 pt-4 mt-4">
+            <div className="border-t border-black dark:border-gray-600 pt-2 mt-2">
               <div className="flex justify-between items-center">
                 <Link 
                   href={`/novels/${novelSlug}/chapters`}

@@ -58,7 +58,6 @@ export const NovelHeader = ({
   author,
   translator,
   bookmarkCount,
-  chapterCount = 0,
   coverImageUrl,
   novelAuthorId,
   isAuthorNameCustom = true,
@@ -222,7 +221,13 @@ export const NovelHeader = ({
                     </div>
                   </>
                 ) : (
-                  <div className="w-full h-full bg-gray-200 dark:bg-gray-800" />
+                  <div className="w-full h-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center p-4">
+                    <div className="text-center">
+                      <span className="text-sm font-medium text-gray-600 dark:text-gray-300 line-clamp-4 break-words">
+                        {title}
+                      </span>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
@@ -361,7 +366,6 @@ export const NovelHeader = ({
                 <div className="flex items-center gap-3 sm:ml-auto">
                   <div className="flex items-center gap-3 px-2 py-1.5 bg-gray-100 dark:bg-gray-800/50 rounded-lg text-sm">
                     <StatsItem icon="pepicons-print:bookmark" value={`${bookmarkCount}`} />
-                    <StatsItem icon="pepicons-print:book" value={`${chapterCount}`} withGap={true} />
                   </div>
                   <div className="relative flex items-center px-2 py-1.5 bg-gray-100 dark:bg-gray-800/50 rounded-lg">
                     <button
