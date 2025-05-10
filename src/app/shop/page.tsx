@@ -35,18 +35,16 @@ export default function ShopPage() {
 
   if (!isAuthenticated || !userId) {
     return (
-      <div className="max-w-5xl mx-auto px-4 py-20">
+      <div className="py-10">
         <div className="text-center">
-          <p className="text-muted-foreground mb-6">Please create an account or sign in to access this page.</p>
+          <p className="text-muted-foreground">Please create an account or sign in to access this page.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-10">
-      <h1 className="text-3xl font-bold text-center mb-8">Shop</h1>
-      
+    <div className="max-w-5xl mx-auto px-2 py-6">      
       <div className="flex justify-center mb-8">
         <div className="inline-flex bg-muted rounded-lg p-1">
           <button
