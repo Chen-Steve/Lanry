@@ -31,7 +31,6 @@ interface NovelWithRelations extends Omit<Novel, 'categories' | 'tags'> {
 
 export const NovelRecommendations = ({ novelId, categories = [], tags = [] }: NovelRecommendationsProps) => {
   const [recommendations, setRecommendations] = useState<(Novel & { relevanceScore?: number })[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchRecommendations = async () => {
@@ -114,39 +113,11 @@ export const NovelRecommendations = ({ novelId, categories = [], tags = [] }: No
         setRecommendations(sortedNovels);
       } catch (error) {
         console.error('Error fetching recommendations:', error);
-      } finally {
-        setIsLoading(false);
       }
     };
 
     fetchRecommendations();
   }, [novelId, categories, tags]);
-
-  if (isLoading) {
-    return (
-      <div className="bg-card rounded-xl shadow-sm border border-border p-3 sm:p-4">
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-          {[...Array(6)].map((_, index) => (
-            <div key={index} className="animate-pulse">
-              <div className="bg-muted rounded-lg aspect-[2/3] mb-2"></div>
-              <div className="bg-muted h-3 rounded w-3/4 mb-1.5"></div>
-              <div className="bg-muted h-3 rounded w-1/2"></div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (recommendations.length === 0) {
-    return (
-      <div className="p-4">
-        <div className="text-center text-muted-foreground py-6">
-          <p className="text-sm sm:text-base">No recommendations found</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8">
