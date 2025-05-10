@@ -118,7 +118,19 @@ export const ChapterList = ({
     if (!isInitialMount.current) return;
     
     if (filteredInitialChapters && filteredInitialChapters.length > 0) {
-      setChapters(filteredInitialChapters);
+      // Calculate total pages based on 50 chapters per page
+      const limit = 50;
+      const total = filteredInitialChapters.length;
+      const calculatedTotalPages = Math.ceil(total / limit);
+      
+      // Get the first page of chapters
+      const start = 0;
+      const end = Math.min(limit, total);
+      const firstPageChapters = filteredInitialChapters.slice(start, end);
+      
+      setChapters(firstPageChapters);
+      setCurrentPage(1);
+      setTotalPages(calculatedTotalPages);
     } else {
       loadChapters(1);
     }
@@ -152,10 +164,20 @@ export const ChapterList = ({
     if (isInitialMount.current) return;
     
     if (prevPageRef.current !== currentPage) {
-      loadChapters(currentPage);
+      if (filteredInitialChapters && filteredInitialChapters.length > 0) {
+        // Handle pagination for initial chapters
+        const limit = 50;
+        const start = (currentPage - 1) * limit;
+        const end = Math.min(start + limit, filteredInitialChapters.length);
+        const paginatedChapters = filteredInitialChapters.slice(start, end);
+        setChapters(paginatedChapters);
+      } else {
+        // Load from API
+        loadChapters(currentPage);
+      }
       prevPageRef.current = currentPage;
     }
-  }, [currentPage, loadChapters]);
+  }, [currentPage, loadChapters, filteredInitialChapters]);
 
   const handlePageChange = useCallback((newPage: number) => {
     if (newPage >= 1 && newPage <= totalPages && newPage !== currentPage) {
