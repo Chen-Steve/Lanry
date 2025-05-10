@@ -78,7 +78,7 @@ const FeaturedNovel = ({ novels }: FeaturedNovelProps) => {
     <div className="col-span-2 sm:col-span-2 md:col-span-3 lg:col-span-3 flex flex-col">
       <Link
         href={`/novels/${novels[featuredIndex].slug}`}
-        className="group relative flex flex-row gap-4 p-4 sm:p-8 bg-card hover:bg-accent/50 rounded-lg transition-colors touch-pan-y overflow-hidden min-h-[200px] sm:min-h-[300px]"
+        className="group relative flex flex-row gap-4 p-4 sm:p-8 hover:bg-accent/20 rounded-lg transition-colors touch-pan-y overflow-hidden min-h-[200px] sm:min-h-[300px]"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}

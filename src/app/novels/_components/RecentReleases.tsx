@@ -55,7 +55,7 @@ const NewReleases = ({ recentNovels, className = '' }: NewReleasesProps) => {
               <Link
                 key={novel.id}
                 href={`/novels/${novel.slug}`}
-                className="group/card flex-none w-[120px] sm:w-[160px] flex flex-col p-1.5 sm:p-2 bg-card hover:bg-accent/50 transition-colors"
+                className="group/card flex-none w-[120px] sm:w-[160px] flex flex-col p-1.5 sm:p-2 hover:bg-accent/20 transition-colors"
               >
                 <div className="w-full aspect-[2/3] relative rounded-sm overflow-hidden mb-1.5">
                   <NovelCover
