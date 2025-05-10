@@ -6,23 +6,24 @@ import { toast } from 'sonner';
 import { PayPalButtons } from "@paypal/react-paypal-js";
 import { onApprove } from "@/services/paymentService";
 import { useRouter } from 'next/navigation';
-import { useAdFreeStatus } from '@/hooks/useAdFreeStatus';
+// import { useAdFreeStatus } from '@/hooks/useAdFreeStatus';
 
 export const coinPackages = [
   { id: 1, coins: 10, price: 1 },
-  { id: 2, coins: 50, price: 5, isAdFree: true }, // Now includes ad-free benefit
-  { id: 3, coins: 100, price: 10, isAdFree: true },
-  { id: 4, coins: 200, price: 20, isAdFree: true },
-  { id: 5, coins: 600, price: 50, isBonus: true, isAdFree: true }, // Best value! 500 + 100 bonus coins
+  { id: 2, coins: 50, price: 5 }, // Commented out: , isAdFree: true
+  { id: 3, coins: 100, price: 10 }, // Commented out: , isAdFree: true
+  { id: 4, coins: 200, price: 20 }, // Commented out: , isAdFree: true
+  { id: 5, coins: 600, price: 50, isBonus: true }, // Commented out: , isAdFree: true // Best value! 500 + 100 bonus coins
 ];
 
 export default function Coins() {
   const { userId, isAuthenticated } = useAuth();
-  const { isAdFree } = useAdFreeStatus();
+  // const { isAdFree } = useAdFreeStatus();
   const router = useRouter();
 
   return (
     <>
+      {/* Commented out ad-free banner
       <div className={`${isAdFree ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800' : 'bg-yellow-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800'} border rounded-lg p-4 mb-6`}>
         <div className="flex gap-2 items-start">
           <Icon 
@@ -41,12 +42,13 @@ export default function Coins() {
           </div>
         </div>
       </div>
+      */}
       
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {coinPackages.map((pkg) => (
           <div 
             key={pkg.id}
-            className={`border ${pkg.isAdFree ? 'border-emerald-200 dark:border-emerald-800' : 'border-border'} rounded-lg p-4 text-center hover:shadow-md transition-shadow bg-background`}
+            className="border border-border rounded-lg p-4 text-center hover:shadow-md transition-shadow bg-background"
           >
             <div className="flex items-center justify-center gap-2 mb-2">
               <Icon icon="pepicons-print:coins" className="text-amber-500 text-2xl" />
@@ -63,12 +65,14 @@ export default function Coins() {
               ${pkg.price.toFixed(2)}
             </p>
 
+            {/* Commented out ad-free badge
             {pkg.isAdFree && (
               <div className="my-2 text-xs text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-1">
                 <Icon icon="mdi:check-circle" />
                 <span>Ad-Free Experience</span>
               </div>
             )}
+            */}
             
             <PayPalButtons
               style={{ layout: "horizontal", height: 35, tagline: false }}
@@ -111,18 +115,6 @@ export default function Coins() {
                   if (!userId) return;
                   await onApprove(userId, data.orderID);
                   toast.success(`Successfully purchased ${pkg.coins} coins!`);
-                  if (pkg.isAdFree && !isAdFree) {
-                    toast.success(
-                      <div className="flex items-start gap-2">
-                        <Icon icon="mdi:check-circle" className="text-xl text-green-500 mt-0.5" />
-                        <div>
-                          <h3 className="font-medium">Ad-Free Experience Activated!</h3>
-                          <p className="text-sm">You now have an ad-free experience across the entire site!</p>
-                        </div>
-                      </div>,
-                      { duration: 5000 }
-                    );
-                  }
                   router.refresh();
                 } catch (error) {
                   console.error("Approve error:", error);

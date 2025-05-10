@@ -14,7 +14,6 @@ import type { UserProfile } from '@/types/database';
 import { useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { CancelMembershipModal } from './_components/CancelMembershipModal';
-import { useAdFreeStatus } from '@/hooks/useAdFreeStatus';
 
 const fetchProfile = async (userId?: string): Promise<UserProfile> => {
   if (userId) {
@@ -53,7 +52,6 @@ export default function UserDashboard() {
   const [isUpgradeClicked, setIsUpgradeClicked] = useState(false);
   const searchParams = useSearchParams();
   const userId = searchParams.get('id');
-  const { isAdFree } = useAdFreeStatus();
   const [subscriptionStatus, setSubscriptionStatus] = useState<null | {
     hasSubscription: boolean;
     status?: string;
@@ -255,41 +253,6 @@ export default function UserDashboard() {
         <div className="mt-4">
           <h2 className="text-2xl font-bold mb-4">Account</h2>
           <div className="bg-card dark:bg-zinc-900 border border-border rounded-lg p-6 mb-6">
-            {/* Ad-Free Status */}
-            <div className="border-b border-border pb-4 mb-4">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground">Ad-Free Experience</h3>
-                  <p className="font-medium text-foreground flex items-center gap-1.5">
-                    {isAdFree ? (
-                      <>
-                        <span className="text-emerald-500">Active</span>
-                        <Icon icon="mdi:check-circle" className="text-emerald-500" />
-                      </>
-                    ) : (
-                      <>
-                        <span>Not Active</span>
-                        <Icon icon="mdi:information-outline" className="text-amber-500" />
-                      </>
-                    )}
-                  </p>
-                </div>
-                {!isAdFree && (
-                  <Link 
-                    href="/shop" 
-                    className="text-sm text-primary hover:text-primary/90 transition-colors"
-                  >
-                    Get Ad-Free
-                  </Link>
-                )}
-              </div>
-              {!isAdFree && (
-                <p className="text-xs text-muted-foreground mt-2">
-                  Purchase at least 50 coins to get ad-free experience
-                </p>
-              )}
-            </div>
-            
             <button 
               onClick={() => setIsProfileModalOpen(true)} 
               className="w-full flex items-center justify-between p-4 hover:bg-card/80 transition-colors"
