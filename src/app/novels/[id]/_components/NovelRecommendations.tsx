@@ -140,7 +140,7 @@ export const NovelRecommendations = ({ novelId, categories = [], tags = [] }: No
 
   if (recommendations.length === 0) {
     return (
-      <div className="bg-card rounded-xl shadow-sm border border-border p-4">
+      <div className="p-4">
         <div className="text-center text-muted-foreground py-6">
           <p className="text-sm sm:text-base">No recommendations found</p>
         </div>
@@ -149,36 +149,34 @@ export const NovelRecommendations = ({ novelId, categories = [], tags = [] }: No
   }
 
   return (
-    <div className="bg-card rounded-lg shadow-sm border border-border p-1.5 sm:p-2">
-      <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8">
-        {recommendations.map((novel) => (
-          <Link
-            key={novel.id}
-            href={`/novels/${novel.slug}`}
-            className="block hover:opacity-80 transition-opacity"
-          >
-            <div className="relative aspect-[3/4] bg-muted rounded-sm">
-              {novel.coverImageUrl ? (
-                <img
-                  src={novel.coverImageUrl.startsWith('http') ? novel.coverImageUrl : `/novel-covers/${novel.coverImageUrl}`}
-                  alt={`Cover for ${novel.title}`}
-                  className="absolute inset-0 w-full h-full object-cover rounded-sm"
-                  loading="lazy"
-                />
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center bg-muted rounded-sm">
-                  <span className="text-xs text-muted-foreground">No Cover</span>
-                </div>
-              )}
-            </div>
-            <div className="mt-0.5 px-0.5">
-              <h3 className="text-xs font-medium text-foreground line-clamp-1">
-                {novel.title}
-              </h3>
-            </div>
-          </Link>
-        ))}
-      </div>
+    <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8">
+      {recommendations.map((novel) => (
+        <Link
+          key={novel.id}
+          href={`/novels/${novel.slug}`}
+          className="block hover:opacity-80 transition-opacity"
+        >
+          <div className="relative aspect-[3/4] bg-muted rounded-sm">
+            {novel.coverImageUrl ? (
+              <img
+                src={novel.coverImageUrl.startsWith('http') ? novel.coverImageUrl : `/novel-covers/${novel.coverImageUrl}`}
+                alt={`Cover for ${novel.title}`}
+                className="absolute inset-0 w-full h-full object-cover rounded-sm"
+                loading="lazy"
+              />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center bg-muted rounded-sm">
+                <span className="text-xs text-muted-foreground">No Cover</span>
+              </div>
+            )}
+          </div>
+          <div className="mt-0.5 px-0.5">
+            <h3 className="text-xs font-medium text-foreground line-clamp-1">
+              {novel.title}
+            </h3>
+          </div>
+        </Link>
+      ))}
     </div>
   );
 }; 
