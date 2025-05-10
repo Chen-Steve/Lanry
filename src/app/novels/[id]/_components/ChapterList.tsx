@@ -525,10 +525,10 @@ export const ChapterList = ({
   // Count of active filters to show
   const activeFilterCount = useMemo(() => {
     let count = 0;
-    if (selectedVolumeId) count++;
+    if (volumes.length > 0 && selectedVolumeId) count++;
     if (chapterTypeFilter !== 'all') count++;
     return count;
-  }, [selectedVolumeId, chapterTypeFilter]);
+  }, [selectedVolumeId, chapterTypeFilter, volumes.length]);
 
   // Add click outside handler
   useEffect(() => {
@@ -554,8 +554,8 @@ export const ChapterList = ({
           {/* Unified Filter Bar */}
           <div className="p-3 bg-accent/50 border-b border-border flex flex-col md:flex-row gap-3 relative">
             {/* Dropdown Containers - Positioned outside the scroll container */}
-            {showVolumeDescription && (
-              <div className="absolute z-[9999] left-3 top-[calc(100%-0.5rem)] bg-background border border-border rounded-lg shadow-lg min-w-[200px] max-h-[400px] overflow-y-auto">
+            {showVolumeDescription && volumes.length > 0 && (
+              <div className="absolute left-3 top-[calc(100%-0.5rem)] bg-background border border-border rounded-lg shadow-lg min-w-[200px] max-h-[400px] overflow-y-auto">
                 <div className="p-1">
                   <button
                     onClick={() => {
@@ -642,25 +642,27 @@ export const ChapterList = ({
             )}
 
             <div className="flex items-center gap-2 overflow-x-auto overflow-y-visible no-scrollbar">
-              <div className="relative inline-block flex-shrink-0" ref={volumeDropdownRef}>
-                <button 
-                  className="px-3 py-1.5 bg-background border border-border rounded-lg text-sm font-medium flex items-center gap-2 whitespace-nowrap hover:border-primary/50 transition-colors"
-                  onClick={() => {
-                    setShowVolumeDescription(!showVolumeDescription);
-                    setShowChapterTypeDropdown(false);
-                  }}
-                >
-                  <Icon icon="solar:book-broken" className="w-4 h-4" />
-                  <span>
-                    {selectedVolumeId 
-                      ? volumes.find(v => v.id === selectedVolumeId)?.title 
-                        ? `Vol ${volumes.find(v => v.id === selectedVolumeId)?.volume_number}: ${volumes.find(v => v.id === selectedVolumeId)?.title}`
-                        : `Volume ${volumes.find(v => v.id === selectedVolumeId)?.volume_number}`
-                      : 'All Volumes'}
-                  </span>
-                  <Icon icon="solar:alt-arrow-down-linear" className="w-4 h-4 opacity-70" />
-                </button>
-              </div>
+              {volumes.length > 0 && (
+                <div className="relative inline-block flex-shrink-0" ref={volumeDropdownRef}>
+                  <button 
+                    className="px-3 py-1.5 bg-background border border-border rounded-lg text-sm font-medium flex items-center gap-2 whitespace-nowrap hover:border-primary/50 transition-colors"
+                    onClick={() => {
+                      setShowVolumeDescription(!showVolumeDescription);
+                      setShowChapterTypeDropdown(false);
+                    }}
+                  >
+                    <Icon icon="solar:book-broken" className="w-4 h-4" />
+                    <span>
+                      {selectedVolumeId 
+                        ? volumes.find(v => v.id === selectedVolumeId)?.title 
+                          ? `Vol ${volumes.find(v => v.id === selectedVolumeId)?.volume_number}: ${volumes.find(v => v.id === selectedVolumeId)?.title}`
+                          : `Volume ${volumes.find(v => v.id === selectedVolumeId)?.volume_number}`
+                        : 'All Volumes'}
+                    </span>
+                    <Icon icon="solar:alt-arrow-down-linear" className="w-4 h-4 opacity-70" />
+                  </button>
+                </div>
+              )}
               
               <div className="relative inline-block flex-shrink-0" ref={chapterTypeDropdownRef}>
                 <button 
