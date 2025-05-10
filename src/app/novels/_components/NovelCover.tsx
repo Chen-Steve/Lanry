@@ -1,9 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { Icon } from '@iconify/react';
+import Image from 'next/image';
 import { getResponsiveImageUrl } from '@/services/imageService';
-import { cacheImage, clearExpiredCache } from '@/services/imageCacheService';
 
 interface NovelCoverProps {
   coverUrl?: string;
@@ -30,47 +29,22 @@ const NovelCover = ({
   chapterCount,
   isPriority = false
 }: NovelCoverProps) => {
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    // Clear expired cache entries on mount
-    clearExpiredCache();
-
-    // Load and cache image
-    if (coverUrl) {
-      const loadImage = async () => {
-        try {
-          if (coverUrl.startsWith('http')) {
-            const cachedUrl = await cacheImage(coverUrl, size);
-            setImageUrl(cachedUrl);
-          } else {
-            setImageUrl(`/novel-covers/${coverUrl}`);
-          }
-        } catch (error) {
-          console.warn('Error loading cached image:', error);
-          // Fallback to original URL
-          setImageUrl(coverUrl.startsWith('http') ? getResponsiveImageUrl(coverUrl, size) : `/novel-covers/${coverUrl}`);
-        }
-      };
-
-      loadImage();
-    }
-  }, [coverUrl, size]);
+  const imageUrl = coverUrl?.startsWith('http') 
+    ? getResponsiveImageUrl(coverUrl, size)
+    : coverUrl ? `/novel-covers/${coverUrl}` : null;
 
   return (
     <div className="relative aspect-[2/3] w-full rounded overflow-hidden bg-muted group">
       {imageUrl ? (
-        <img
+        <Image
           src={imageUrl}
-          srcSet={`
-            ${getResponsiveImageUrl(imageUrl, 'small')} 300w,
-            ${getResponsiveImageUrl(imageUrl, 'medium')} 600w,
-            ${getResponsiveImageUrl(imageUrl, 'large')} 900w
-          `}
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           alt={`Cover for ${title}`}
-          loading={isPriority ? "eager" : "lazy"}
+          fill
+          sizes={`(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw`}
           className="absolute inset-0 w-full h-full object-cover transition-transform group-hover:scale-105"
+          priority={isPriority}
+          quality={size === 'thumbnail' ? 60 : size === 'small' ? 75 : 85}
+          loading={isPriority ? "eager" : "lazy"}
         />
       ) : (
         <div className="w-full h-full flex items-center justify-center bg-muted">

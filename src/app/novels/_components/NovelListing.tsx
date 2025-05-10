@@ -23,7 +23,7 @@ const NovelListing = () => {
   const [curatedNovels, setCuratedNovels] = useState<Novel[]>([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  const ITEMS_PER_PAGE = 14;
+  const ITEMS_PER_PAGE = 12;
 
   useEffect(() => {
     // Check if user is logged in

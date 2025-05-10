@@ -11,8 +11,10 @@ const nextConfig = {
   images: {
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
-    minimumCacheTTL: 60,
+    minimumCacheTTL: 60 * 60 * 24 * 30, // 30 days
     formats: ['image/webp'],
+    deviceSizes: [640, 750, 828, 1080, 1200],
+    imageSizes: [100, 200, 300, 400],
     remotePatterns: [
       {
         protocol: 'https',
@@ -85,20 +87,32 @@ const nextConfig = {
         ],
       },
       {
+        // Cache static assets for 1 month
         source: '/static/:path*',
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=604800, stale-while-revalidate=86400'
+            value: 'public, max-age=2592000, stale-while-revalidate=86400'
           }
         ],
       },
       {
+        // Cache Next.js static assets for 1 year
         source: '/_next/static/:path*',
         headers: [
           {
             key: 'Cache-Control',
             value: 'public, max-age=31536000, immutable'
+          }
+        ],
+      },
+      {
+        // Cache images for 1 month with stale-while-revalidate
+        source: '/_next/image/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=2592000, stale-while-revalidate=86400'
           }
         ],
       }

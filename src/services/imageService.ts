@@ -10,6 +10,8 @@ interface ImageTransformOptions {
   resize?: 'cover' | 'contain' | 'fill';
 }
 
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+
 /**
  * Optimizes a Supabase storage URL with transformation parameters
  * @param url The original Supabase storage URL
@@ -21,24 +23,25 @@ export const getOptimizedImageUrl = (url: string, options: ImageTransformOptions
     return url;
   }
 
-  const params = new URLSearchParams();
-
-  if (options.width) {
-    params.append('width', options.width.toString());
+  // If it's a Supabase storage URL, use Supabase's image transformation
+  if (url.includes(SUPABASE_URL as string)) {
+    const transformOptions = new URLSearchParams();
+    
+    if (options.width) transformOptions.append('width', options.width.toString());
+    if (options.height) transformOptions.append('height', options.height.toString());
+    if (options.quality) transformOptions.append('quality', options.quality.toString());
+    
+    // Always use WebP for better compression
+    transformOptions.append('format', 'webp');
+    
+    // Add resize mode if specified
+    if (options.resize) transformOptions.append('resize', options.resize);
+    
+    return `${url}?${transformOptions.toString()}`;
   }
-  
-  if (options.height) {
-    params.append('height', options.height.toString());
-  }
 
-  // Default to 80% quality if not specified
-  params.append('quality', (options.quality || 80).toString());
-  
-  // Default to WebP format for better compression if not specified
-  params.append('format', options.format || 'webp');
-
-  const queryString = params.toString();
-  return queryString ? `${url}?${queryString}` : url;
+  // For non-Supabase URLs, return as is
+  return url;
 };
 
 /**
@@ -50,24 +53,32 @@ export const getOptimizedImageUrl = (url: string, options: ImageTransformOptions
 export const getResponsiveImageUrl = (url: string, size: 'thumbnail' | 'small' | 'medium' | 'large'): string => {
   const sizeMap: Record<typeof size, ImageTransformOptions> = {
     thumbnail: { 
-      width: 100, 
+      width: 100,
+      height: 150,
       quality: 60,
-      format: 'webp'
+      format: 'webp',
+      resize: 'cover'
     },
     small: { 
-      width: 300, 
-      quality: 70,
-      format: 'webp'
+      width: 200,
+      height: 300,
+      quality: 75,
+      format: 'webp',
+      resize: 'cover'
     },
     medium: { 
-      width: 600, 
+      width: 300,
+      height: 450,
       quality: 80,
-      format: 'webp'
+      format: 'webp',
+      resize: 'cover'
     },
     large: { 
-      width: 1200, 
+      width: 400,
+      height: 600,
       quality: 85,
-      format: 'webp'
+      format: 'webp',
+      resize: 'cover'
     }
   };
 
@@ -80,6 +91,8 @@ export const getResponsiveImageUrl = (url: string, size: 'thumbnail' | 'small' |
  * @returns Promise resolving to the public URL
  */
 export const getPublicUrl = async (path: string): Promise<string> => {
-  const { data } = await supabase.storage.from('public').getPublicUrl(path);
+  const { data } = await supabase.storage
+    .from('public')
+    .getPublicUrl(path);
   return data.publicUrl;
 }; 
