@@ -128,11 +128,6 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
           .eq('id', chapterData.novel.id)
           .single();
 
-        console.log("Fetched Novel Data for Cover:", {
-          novelId: chapterData.novel.id,
-          coverImageUrl: novelData?.cover_image_url
-        });
-
         // Merge novel data with cover image URL
         const novelWithCover = {
           ...chapterData.novel,

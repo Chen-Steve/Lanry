@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { UserRole } from '@prisma/client';
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
 
 // Mark this route as dynamic
 export const dynamic = 'force-dynamic';
@@ -9,36 +9,36 @@ export const revalidate = 0;
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const query = searchParams.get('q')?.trim().toLowerCase();
-
-    // Get authors and translators
-    const users = await prisma.profile.findMany({
-      where: {
-        AND: [
-          {
-            role: {
-              in: [UserRole.AUTHOR, UserRole.TRANSLATOR]
-            }
-          },
-          query ? {
-            username: {
-              contains: query,
-              mode: 'insensitive'
-            }
-          } : {}
-        ]
-      },
-      select: {
-        username: true,
-        role: true
-      },
-      orderBy: {
-        username: 'asc'
-      },
-      take: 10
-    });
-
-    return NextResponse.json(users.map(user => ({
+    const query = searchParams.get('q')?.trim().toLowerCase() || '';
+    
+    // Create Supabase client
+    const supabase = createRouteHandlerClient({ cookies });
+    
+    // Fetch profile data from Supabase
+    let queryBuilder = supabase.from('profiles')
+      .select('username, role')
+      .in('role', ['AUTHOR', 'TRANSLATOR'])
+      .order('username', { ascending: true })
+      .limit(10);
+    
+    // Add search filter if query exists
+    if (query) {
+      queryBuilder = queryBuilder.ilike('username', `%${query}%`);
+    }
+    
+    // Execute the query
+    const { data, error } = await queryBuilder;
+    
+    if (error) {
+      console.error('Supabase error:', error);
+      throw error;
+    }
+    
+    if (!data) {
+      return NextResponse.json([]);
+    }
+    
+    return NextResponse.json(data.map(user => ({
       username: user.username,
       role: user.role
     })));

@@ -78,15 +78,19 @@ const BookmarkItem = memo(({
         }}
       >
         <div className="aspect-[2/3] relative overflow-hidden rounded-md bg-accent/5">
-          <img
-            src={bookmark.novel.cover_image_url 
-              ? (bookmark.novel.cover_image_url.startsWith('http') 
-                  ? bookmark.novel.cover_image_url 
-                  : `/novel-covers/${bookmark.novel.cover_image_url}`)
-              : '/images/default-cover.jpg'}
-            alt={bookmark.novel.title}
-            className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
-          />
+          {bookmark.novel.cover_image_url ? (
+            <img
+              src={bookmark.novel.cover_image_url.startsWith('http') 
+                ? bookmark.novel.cover_image_url 
+                : `/novel-covers/${bookmark.novel.cover_image_url}`}
+              alt={bookmark.novel.title}
+              className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
+            />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-sm text-muted-foreground font-medium">no cover</span>
+            </div>
+          )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         </div>
         <div className="mt-1.5 px-0.5">

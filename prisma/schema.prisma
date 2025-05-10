@@ -141,6 +141,8 @@ model Profile {
   bookmarkFolders      BookmarkFolder[]
   forumThreads         ForumThread[]
   forumMessages        ForumMessage[]
+  subscription         Subscription?
+  subscriptionTransactions SubscriptionTransaction[]
 
   @@map("profiles")
 }
@@ -511,4 +513,41 @@ model ForumMessage {
   @@index([threadId])
   @@index([authorId])
   @@map("forum_messages")
+}
+
+model Subscription {
+  id                   String    @id @default(uuid())
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+  profileId            String    @unique @map("profile_id")
+  profile              Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  paypalSubscriptionId String    @map("paypal_subscription_id")
+  status               String    // "ACTIVE", "CANCELLED", "EXPIRED"
+  startDate            DateTime  @map("start_date")
+  endDate              DateTime  @map("end_date")
+  latestBillingDate    DateTime  @map("latest_billing_date")
+  cancelledAt          DateTime? @map("cancelled_at")
+  transactions         SubscriptionTransaction[]
+
+  @@index([profileId])
+  @@index([status])
+  @@index([endDate])
+  @@map("subscriptions")
+}
+
+model SubscriptionTransaction {
+  id                   String    @id @default(uuid())
+  createdAt            DateTime  @default(now()) @map("created_at")
+  subscriptionId       String    @map("subscription_id")
+  subscription         Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  profileId            String    @map("profile_id")
+  profile              Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  paypalSubscriptionId String    @map("paypal_subscription_id")
+  type                 String    // "SUBSCRIPTION_START", "RENEWAL", "CANCELLATION"
+  amount               Decimal   @db.Decimal
+
+  @@index([subscriptionId])
+  @@index([profileId])
+  @@index([type])
+  @@map("subscription_transactions")
 }

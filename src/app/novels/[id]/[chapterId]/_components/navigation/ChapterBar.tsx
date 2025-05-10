@@ -55,14 +55,6 @@ export default function ChapterProgressBar({
   const [isTouching, setIsTouching] = useState(false);
   const [desktopTop, setDesktopTop] = useState<string | number>('4.5rem');
 
-  // Debug cover URL issues
-  useEffect(() => {
-    console.log("Novel Cover Debugging:");
-    console.log("- Novel Cover URL:", novelCoverUrl);
-    console.log("- Processed URL:", getProcessedCoverUrl(novelCoverUrl));
-    console.log("- Novel Title:", novelTitle);
-  }, [novelCoverUrl, novelTitle]);
-
   // Handle clicks outside the bar
   useEffect(() => {
     if (!isMobile || !isVisible) return;

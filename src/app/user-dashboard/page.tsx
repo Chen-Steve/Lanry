@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Icon } from '@iconify/react';
 import { useTheme } from '@/lib/ThemeContext';
 import { ChangePasswordModal } from './_components/ChangePasswordModal';
@@ -13,6 +13,8 @@ import supabase from '@/lib/supabaseClient';
 import type { UserProfile } from '@/types/database';
 import { useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
+import { CancelMembershipModal } from './_components/CancelMembershipModal';
+import { useAdFreeStatus } from '@/hooks/useAdFreeStatus';
 
 const fetchProfile = async (userId?: string): Promise<UserProfile> => {
   if (userId) {
@@ -43,17 +45,49 @@ const fetchProfile = async (userId?: string): Promise<UserProfile> => {
 
 export default function UserDashboard() {
   const { theme, toggleTheme } = useTheme();
-  const { handleSignOut } = useAuth();
+  const { handleSignOut, userId: authUserId } = useAuth();
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isDailyRewardsClicked, setIsDailyRewardsClicked] = useState(false);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [isUpgradeClicked, setIsUpgradeClicked] = useState(false);
   const searchParams = useSearchParams();
   const userId = searchParams.get('id');
+  const { isAdFree } = useAdFreeStatus();
+  const [subscriptionStatus, setSubscriptionStatus] = useState<null | {
+    hasSubscription: boolean;
+    status?: string;
+    plan?: string;
+    amount?: number;
+    currency?: string;
+    startDate?: string;
+    endDate?: string;
+    latestBillingDate?: string;
+    cancelledAt?: string;
+  }>(null);
+  const [isSubLoading, setIsSubLoading] = useState(false);
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ['profile', userId],
     queryFn: () => fetchProfile(userId || undefined),
   });
+
+  useEffect(() => {
+    const fetchSubscriptionStatus = async () => {
+      if (!authUserId) return;
+      setIsSubLoading(true);
+      try {
+        const res = await fetch(`/api/subscriptions/status?userId=${authUserId}`);
+        const data = await res.json();
+        setSubscriptionStatus(data);
+      } catch {
+        setSubscriptionStatus(null);
+      } finally {
+        setIsSubLoading(false);
+      }
+    };
+    fetchSubscriptionStatus();
+  }, [authUserId]);
 
   if (isLoading || !profile) {
     return <div className="container mx-auto px-4 py-6 max-w-5xl">Loading...</div>;
@@ -103,27 +137,187 @@ export default function UserDashboard() {
   return (
     <div className="container mx-auto px-4 py-6 max-w-5xl">
       <div className="flex flex-col gap-6">
-        <button 
-          className="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-yellow-500 text-white px-4 py-2.5 rounded-lg hover:opacity-90 transition-opacity shadow-md hover:shadow-lg w-fit"
-          onClick={() => {
-            setIsDailyRewardsClicked(true);
-            setTimeout(() => setIsDailyRewardsClicked(false), 2000);
-          }}
-        >
-          <Icon icon="ph:gift-fill" className="w-5 h-5" />
-          <span className="font-medium">{isDailyRewardsClicked ? 'Coming Soon' : 'Daily Rewards'}</span>
-        </button>
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Plan Card - Left Column */}
+          <div className="md:col-span-2">
+            <div className="bg-card dark:bg-zinc-900 border border-border rounded-lg p-4 h-full">
+              <h2 className="text-sm font-medium text-muted-foreground mb-1">Your plan</h2>
+              {isSubLoading ? (
+                <div className="flex items-center">
+                  <Icon icon="eos-icons:loading" className="w-5 h-5 animate-spin mr-2" />
+                  <span className="text-muted-foreground">Checking subscription...</span>
+                </div>
+              ) : subscriptionStatus?.hasSubscription ? (
+                <>
+                  <h1 className="text-2xl font-bold text-primary mb-1">
+                    {subscriptionStatus.status === 'ACTIVE' ? (
+                      subscriptionStatus.amount === 5 ? 'Supporter Membership' :
+                      subscriptionStatus.amount === 9 ? 'Patron Membership' :
+                      subscriptionStatus.amount === 20 ? 'Super Patron Membership' :
+                      'Active Membership'
+                    ) : 'Cancelled Membership'}
+                  </h1>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    {subscriptionStatus.status === 'CANCELLED' ? (
+                      `Your membership will continue `
+                    ) : (
+                      `Your next bill is ${subscriptionStatus.amount && subscriptionStatus.currency ? 
+                        `for ${subscriptionStatus.currency}${subscriptionStatus.amount.toFixed(2)}` : 
+                        ''} ${subscriptionStatus.endDate ? `on ${new Date(subscriptionStatus.endDate).toLocaleDateString()}` : 'on your next billing date'}.`
+                    )}
+                    {subscriptionStatus.status === 'CANCELLED' && (
+                      <>
+                        <span className="underline">until</span>
+                        {` ${subscriptionStatus.endDate ? new Date(subscriptionStatus.endDate).toLocaleDateString() : 'your current billing period end'}.`}
+                      </>
+                    )}
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <div className="text-muted-foreground">PayPal</div>
+                    <div className="flex gap-2">
+                      {subscriptionStatus.status === 'ACTIVE' && (
+                        <>
+                          <button
+                            onClick={() => setIsCancelModalOpen(true)}
+                            className="px-4 py-1.5 bg-destructive/10 text-destructive rounded-full text-center font-medium hover:bg-destructive/20 transition-colors"
+                          >
+                            Cancel
+                          </button>
+                          <Link 
+                            href="/shop?tab=membership"
+                            className="inline-block px-4 py-1.5 bg-primary/10 text-primary rounded-full text-center font-medium hover:bg-primary/20 transition-colors"
+                          >
+                            Change Plan
+                          </Link>
+                        </>
+                      )}
+                      {subscriptionStatus.status === 'CANCELLED' && (
+                        <Link 
+                          href="/shop?tab=membership"
+                          className="inline-block px-4 py-1.5 bg-primary text-primary-foreground rounded-full text-center font-medium hover:bg-primary/90 transition-colors"
+                        >
+                          Reactivate
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h1 className="text-2xl font-bold text-foreground mb-1">Free Plan</h1>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Upgrade to Supporter to unlock all features.
+                  </p>
+                  <button 
+                    onClick={() => setIsUpgradeClicked(true)}
+                    disabled={isUpgradeClicked}
+                    className={`inline-block px-4 py-1.5 text-center font-medium rounded-full transition-colors ${
+                      isUpgradeClicked 
+                        ? 'bg-primary/20 text-primary cursor-not-allowed' 
+                        : 'bg-primary text-primary-foreground hover:bg-primary/90'
+                    }`}
+                  >
+                    {isUpgradeClicked ? 'Coming Soon' : 'Upgrade'}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
 
-        <div className="flex flex-col gap-4">
-          <h2 className="text-lg font-semibold text-foreground">Settings</h2>
-          
-          <div className="flex flex-col rounded-lg border border-border overflow-hidden">
+          {/* Daily Rewards Card - Right Column */}
+          <div>
+            <div className="bg-card dark:bg-zinc-900 border border-border rounded-lg p-4 h-full">
+              <h2 className="text-sm font-medium text-muted-foreground mb-1">Rewards</h2>
+              <button 
+                className="w-full flex items-center justify-between p-3 bg-card/50 hover:bg-card/80 transition-colors rounded-lg"
+                onClick={() => {
+                  setIsDailyRewardsClicked(true);
+                  setTimeout(() => setIsDailyRewardsClicked(false), 2000);
+                }}
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="bg-amber-500/10 rounded-lg">
+                    <Icon icon="ph:gift-fill" className="text-amber-500 text-2xl" />
+                  </div>
+                  <div className="flex flex-col">
+                    <p className="font-medium text-foreground text-sm">{isDailyRewardsClicked ? 'Coming Soon' : 'Daily Rewards'}</p>
+                  </div>
+                </div>
+                <Icon icon="ph:caret-right" className="text-lg text-muted-foreground" />
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+        {/* Account Section */}
+        <div className="mt-4">
+          <h2 className="text-2xl font-bold mb-4">Account</h2>
+          <div className="bg-card dark:bg-zinc-900 border border-border rounded-lg p-6 mb-6">
+            {/* Ad-Free Status */}
+            <div className="border-b border-border pb-4 mb-4">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="text-sm font-medium text-muted-foreground">Ad-Free Experience</h3>
+                  <p className="font-medium text-foreground flex items-center gap-1.5">
+                    {isAdFree ? (
+                      <>
+                        <span className="text-emerald-500">Active</span>
+                        <Icon icon="mdi:check-circle" className="text-emerald-500" />
+                      </>
+                    ) : (
+                      <>
+                        <span>Not Active</span>
+                        <Icon icon="mdi:information-outline" className="text-amber-500" />
+                      </>
+                    )}
+                  </p>
+                </div>
+                {!isAdFree && (
+                  <Link 
+                    href="/shop" 
+                    className="text-sm text-primary hover:text-primary/90 transition-colors"
+                  >
+                    Get Ad-Free
+                  </Link>
+                )}
+              </div>
+              {!isAdFree && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  Purchase at least 50 coins to get ad-free experience
+                </p>
+              )}
+            </div>
+            
             <button 
-              className="flex items-center justify-between px-4 py-2.5 bg-card hover:bg-accent transition-colors w-full"
+              onClick={() => setIsProfileModalOpen(true)} 
+              className="w-full flex items-center justify-between p-4 hover:bg-card/80 transition-colors"
+            >
+              <div className="flex items-center">
+                <Icon icon="ph:pencil-simple-line" className="text-xl mr-4" />
+                <span>Edit profile</span>
+              </div>
+              <Icon icon="ph:caret-right" className="text-xl text-muted-foreground" />
+            </button>
+            
+            <button 
+              onClick={() => setIsPasswordModalOpen(true)}
+              className="w-full flex items-center justify-between p-4 hover:bg-card/80 transition-colors"
+            >
+              <div className="flex items-center">
+                <Icon icon="ph:lock-key" className="text-xl mr-4" />
+                <span>Change Password</span>
+              </div>
+              <Icon icon="ph:caret-right" className="text-xl text-muted-foreground" />
+            </button>
+
+            <button 
+              className="w-full flex items-center justify-between p-4 hover:bg-card/80 transition-colors"
               onClick={toggleTheme}
             >
-              <div className="flex items-center gap-3">
-                <Icon icon={theme === 'dark' ? "ph:sun-bold" : "ph:moon-bold"} className="w-5 h-5" />
+              <div className="flex items-center">
+                <Icon icon={theme === 'dark' ? "ph:sun-bold" : "ph:moon-bold"} className="text-xl mr-4" />
                 <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
               </div>
               <div className={`
@@ -136,47 +330,20 @@ export default function UserDashboard() {
                 `} />
               </div>
             </button>
-
-            <button 
-              className="flex items-center gap-3 px-4 py-2.5 bg-card hover:bg-accent transition-colors w-full"
-              onClick={() => setIsPasswordModalOpen(true)}
-            >
-              <Icon icon="mdi:key" className="w-5 h-5" />
-              <span>Change Password</span>
-            </button>
           </div>
         </div>
+        
 
-        <div className="flex flex-col gap-4">
-          <h2 className="text-lg font-semibold text-foreground">Account</h2>
-          
-          <div className="flex flex-col rounded-lg border border-border overflow-hidden">
-            <Link
-              href="/user-dashboard/inventory"
-              className="flex items-center gap-3 px-4 py-2.5 bg-card hover:bg-accent transition-colors w-full"
-            >
-              <Icon icon="ph:stack-fill" className="w-5 h-5" />
-              <span>Inventory</span>
-            </Link>
-
-            <button 
-              className="flex items-center gap-3 px-4 py-2.5 bg-card hover:bg-accent transition-colors w-full"
-              onClick={() => setIsProfileModalOpen(true)}
-            >
-              <Icon icon="ph:user-circle-fill" className="w-5 h-5" />
-              <span>Update Profile</span>
-            </button>
-
-            <button 
-              className="flex items-center gap-3 px-4 py-2.5 bg-card hover:bg-accent transition-colors w-full"
-              onClick={handleSignOut}
-            >
-              <Icon icon="ix:log-out" className="w-5 h-5" />
-              <span>Log out</span>
-            </button>
-          </div>
+        {/* Log out button at the bottom */}
+        <div className="mt-6">
+          <button 
+            onClick={handleSignOut}
+            className="w-full bg-card dark:bg-zinc-900 border border-border rounded-lg p-4 flex items-center gap-3 hover:bg-card/80 transition-colors"
+          >
+            <Icon icon="ph:sign-out" className="text-xl" />
+            <span className="font-medium">Log out</span>
+          </button>
         </div>
-
       </div>
 
       <ChangePasswordModal
@@ -194,6 +361,11 @@ export default function UserDashboard() {
           toast.success('Profile updated successfully!');
         }}
         profile={profile}
+      />
+
+      <CancelMembershipModal
+        isOpen={isCancelModalOpen}
+        onClose={() => setIsCancelModalOpen(false)}
       />
     </div>
   );

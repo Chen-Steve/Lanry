@@ -1,6 +1,6 @@
 'use client';
 
-import { Novel, UserProfile } from '@/types/database';
+import { Novel } from '@/types/database';
 import { Icon } from '@iconify/react';
 import { notFound } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -19,7 +19,6 @@ export default function NovelPage({ params }: { params: { id: string } }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isBookmarkLoading, setIsBookmarkLoading] = useState(false);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [hasAcceptedWarning, setHasAcceptedWarning] = useState(false);
 
   useEffect(() => {
@@ -33,35 +32,6 @@ export default function NovelPage({ params }: { params: { id: string } }) {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         setIsAuthenticated(!!session?.user);
-        
-        if (session?.user) {
-          let { data: profile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-          
-          if (!profile) {
-            const { data: newProfile, error: insertError } = await supabase
-              .from('profiles')
-              .insert([
-                {
-                  id: session.user.id,
-                  username: session.user.user_metadata?.full_name,
-                  avatar_url: session.user.user_metadata?.avatar_url,
-                  updated_at: new Date().toISOString(),
-                }
-              ])
-              .select()
-              .single();
-
-            if (!insertError) {
-              profile = newProfile;
-            }
-          }
-          
-          setUserProfile(profile);
-        }
         
         const data = await getNovel(id, session?.user?.id);
         if (data) {
@@ -204,9 +174,7 @@ export default function NovelPage({ params }: { params: { id: string } }) {
         onBookmarkClick={handleBookmark}
         coverImageUrl={novel.coverImageUrl}
         chapters={novel.chapters}
-        volumes={novel.volumes}
         novelId={novel.id}
-        userProfile={userProfile}
         novelAuthorId={novel.author_profile_id}
         rating={novel.rating}
         ratingCount={novel.ratingCount}

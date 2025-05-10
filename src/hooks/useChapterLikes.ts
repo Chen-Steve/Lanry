@@ -19,9 +19,7 @@ export function useChapterLikes({ chapterNumber, novelId }: UseChapterLikesProps
       const response = await fetch(`/api/chapters/${chapterNumber}/likes?novelId=${novelId}`, {
         headers: token ? {
           'Authorization': `Bearer ${token}`
-        } : {},
-        // Add cache: 'no-store' to prevent caching
-        cache: 'no-store'
+        } : {}
       });
 
       if (!response.ok) throw new Error('Failed to fetch likes');

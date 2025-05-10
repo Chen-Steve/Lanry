@@ -55,26 +55,15 @@ export function UpdateProfileModal({ isOpen, onClose, onSuccess, profile }: Upda
           avatarUrl = await uploadImage(imageFile, profile.id);
         }
 
-        // Get current profile data first
-        const { data: currentProfile, error: fetchError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', profile.id)
-          .single();
-
-        if (fetchError) throw fetchError;
-
-        // Merge current profile with updates
-        const mergedProfile = {
-          ...currentProfile,
-          username: name,
-          avatar_url: avatarUrl,
-          updated_at: new Date().toISOString(),
-        };
-
+        // Instead of fetching and merging, directly update only the changed fields
         const { data, error } = await supabase
           .from('profiles')
-          .upsert(mergedProfile)
+          .update({
+            username: name,
+            avatar_url: avatarUrl,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', profile.id)
           .select()
           .single();
 
@@ -113,7 +102,7 @@ export function UpdateProfileModal({ isOpen, onClose, onSuccess, profile }: Upda
       />
       
       <div
-        className={`relative bg-background dark:bg-background rounded-lg shadow-xl w-full max-w-md mx-4 overflow-hidden modal-content ${isVisible ? 'show' : ''}`}
+        className={`relative bg-background dark:bg-zinc-900 border border-border rounded-lg shadow-xl w-full max-w-md mx-4 overflow-hidden modal-content ${isVisible ? 'show' : ''}`}
       >
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">

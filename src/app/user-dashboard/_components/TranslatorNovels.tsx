@@ -12,9 +12,7 @@ const fetchTranslatorNovels = async (translatorId: string) => {
       id,
       title,
       slug,
-      cover_image_url,
-      rating,
-      bookmark_count
+      cover_image_url
     `)
     .eq('translator_id', translatorId)
     .order('updated_at', { ascending: false });
@@ -29,9 +27,7 @@ const fetchTranslatorNovels = async (translatorId: string) => {
       id,
       title,
       slug,
-      cover_image_url,
-      rating,
-      bookmark_count
+      cover_image_url
     `)
     .eq('author_profile_id', translatorId)
     .eq('is_author_name_custom', true)
@@ -39,8 +35,18 @@ const fetchTranslatorNovels = async (translatorId: string) => {
 
   if (authoredError) throw authoredError;
 
-  // Combine both types of novels
-  return [...(translatedNovels || []), ...(authoredNovels || [])];
+  // Combine both types of novels and remove duplicates
+  const allNovels = [...(translatedNovels || []), ...(authoredNovels || [])];
+  
+  // Remove duplicates by using a Map with novel.id as the key
+  const uniqueNovelsMap = new Map();
+  allNovels.forEach(novel => {
+    if (!uniqueNovelsMap.has(novel.id)) {
+      uniqueNovelsMap.set(novel.id, novel);
+    }
+  });
+  
+  return Array.from(uniqueNovelsMap.values());
 };
 
 export function TranslatorNovels({ translatorId }: { translatorId: string }) {
@@ -81,16 +87,6 @@ export function TranslatorNovels({ translatorId }: { translatorId: string }) {
             </div>
             <div className="p-2">
               <h3 className="font-medium text-foreground text-sm line-clamp-1">{novel.title}</h3>
-              <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                <div className="flex items-center">
-                  <span className="text-amber-500">★</span>
-                  <span className="ml-0.5">{Number(novel.rating).toFixed(1)}</span>
-                </div>
-                <div className="flex items-center">
-                  <span className="text-primary">♥</span>
-                  <span className="ml-0.5">{novel.bookmark_count}</span>
-                </div>
-              </div>
             </div>
           </div>
         </Link>
