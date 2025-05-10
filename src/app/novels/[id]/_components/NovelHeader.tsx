@@ -1,5 +1,6 @@
 import { Icon } from '@iconify/react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { NovelCategory, Tag } from '@/types/database';
 import { useState, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
@@ -10,6 +11,7 @@ import { RatingPopup } from './RatingPopup';
 import { TagsModal } from './TagsModal';
 import { StatsItem } from './StatsItem';
 import { NovelAgeRating } from './NovelAgeRating';
+import { getResponsiveImageUrl } from '@/services/imageService';
 
 interface NovelHeaderProps {
   title: string;
@@ -200,6 +202,10 @@ export const NovelHeader = ({
     }
   };
 
+  const imageUrl = coverImageUrl?.startsWith('http') 
+    ? getResponsiveImageUrl(coverImageUrl, 'large')
+    : coverImageUrl ? `/novel-covers/${coverImageUrl}` : null;
+
   return (
     <>
       <div className="-mt-2 sm:-mt-3 -mb-4">
@@ -209,12 +215,16 @@ export const NovelHeader = ({
             {/* Left Side - Cover Image */}
             <div className="w-28 sm:w-36 lg:w-44 flex-shrink-0">
               <div className="relative aspect-[2/3] rounded-lg overflow-hidden shadow-md">
-                {coverImageUrl ? (
+                {imageUrl ? (
                   <>
-                    <img
-                      src={coverImageUrl.startsWith('http') ? coverImageUrl : `/novel-covers/${coverImageUrl}`}
+                    <Image
+                      src={imageUrl}
                       alt={title}
-                      className="absolute inset-0 w-full h-full object-cover"
+                      fill
+                      sizes="(max-width: 640px) 112px, (max-width: 1024px) 144px, 176px"
+                      className="object-cover"
+                      priority={true}
+                      quality={85}
                     />
                     <div className="absolute top-1.5 left-1.5">
                       <NovelAgeRating rating={ageRating} />
