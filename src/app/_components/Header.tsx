@@ -173,7 +173,7 @@ const Header = () => {
 
   return (
     <>
-      <header className={`w-full sticky top-0 z-40 mb-0 sm:mb-6 transition-all duration-300 ${
+      <header className={`w-full sticky top-0 z-40 mb-0 sm:mb-2 transition-all duration-300 ${
         isVisible ? 'translate-y-0' : '-translate-y-full'
       }`}>
         <div className="max-w-5xl mx-auto">

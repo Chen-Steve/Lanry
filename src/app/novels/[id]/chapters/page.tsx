@@ -6,8 +6,7 @@ import supabase from '@/lib/supabaseClient';
 import { ChapterList } from '@/app/novels/[id]/_components/ChapterList';
 import { getNovel } from '@/services/novelService';
 import { notFound } from 'next/navigation';
-import Link from 'next/link';
-import { Icon } from '@iconify/react';
+
 
 export default function ChaptersPage({ params }: { params: { id: string } }) {
   const { id: novelSlug } = params;
@@ -82,15 +81,7 @@ export default function ChaptersPage({ params }: { params: { id: string } }) {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-4">
-      <div className="flex items-center gap-2 mb-6">
-        <Link 
-          href={`/novels/${novel.slug}`}
-          className="text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <Icon icon="mdi:arrow-left" className="text-xl" />
-        </Link>
-      </div>
+    <div className="max-w-5xl mx-auto px-4">
       <ChapterList
         initialChapters={novel.chapters}
         volumes={novel.volumes}

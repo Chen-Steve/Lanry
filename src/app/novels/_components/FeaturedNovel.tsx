@@ -135,14 +135,13 @@ const FeaturedNovel = ({ novels }: FeaturedNovelProps) => {
             </h3>
 
             {/* Synopsis */}
-            <div className="relative h-[80px] sm:h-[120px]">
+            <div className="h-[80px] sm:h-[120px] overflow-hidden">
               <div 
                 className="prose prose-sm sm:prose-lg max-w-none text-black dark:text-white dark:prose-invert line-clamp-3 sm:line-clamp-4 whitespace-pre-line"
                 dangerouslySetInnerHTML={{ 
                   __html: formatText(novels[featuredIndex].description) 
                 }}
               />
-              <div className="absolute bottom-0 left-0 right-0 h-8 sm:h-12 bg-gradient-to-t from-card to-transparent" />
             </div>
 
             {/* Navigation Dots */}
