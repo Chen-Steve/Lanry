@@ -13,7 +13,7 @@ export const coinPackages = [
   { id: 2, coins: 50, price: 5 }, // Commented out: , isAdFree: true
   { id: 3, coins: 100, price: 10 }, // Commented out: , isAdFree: true
   { id: 4, coins: 200, price: 20 }, // Commented out: , isAdFree: true
-  { id: 5, coins: 600, price: 50, isBonus: true }, // Commented out: , isAdFree: true // Best value! 500 + 100 bonus coins
+  // { id: 5, coins: 600, price: 50, isBonus: true }, // Commented out: , isAdFree: true // Best value! 500 + 100 bonus coins
 ];
 
 export default function Coins() {
@@ -53,11 +53,7 @@ export default function Coins() {
             <div className="flex items-center justify-center gap-2 mb-2">
               <Icon icon="pepicons-print:coins" className="text-amber-500 text-2xl" />
               <h3 className="text-lg font-bold text-foreground">
-                {pkg.isBonus ? (
-                  <span>500 + <span className="text-green-500">100 Bonus</span></span>
-                ) : (
-                  `${pkg.coins} Coins`
-                )}
+                {`${pkg.coins} Coins`}
               </h3>
             </div>
             
