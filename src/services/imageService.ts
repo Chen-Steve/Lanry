@@ -25,19 +25,28 @@ export const getOptimizedImageUrl = (url: string, options: ImageTransformOptions
 
   // If it's a Supabase storage URL, use Supabase's image transformation
   if (url.includes(SUPABASE_URL as string)) {
-    const transformOptions = new URLSearchParams();
-    
-    if (options.width) transformOptions.append('width', options.width.toString());
-    if (options.height) transformOptions.append('height', options.height.toString());
-    if (options.quality) transformOptions.append('quality', options.quality.toString());
-    
-    // Always use WebP for better compression
-    transformOptions.append('format', 'webp');
-    
-    // Add resize mode if specified
-    if (options.resize) transformOptions.append('resize', options.resize);
-    
-    return `${url}?${transformOptions.toString()}`;
+    try {
+      // Parse the URL properly to handle query parameters correctly
+      const parsedUrl = new URL(url);
+      
+      // Add transformation parameters
+      if (options.width) parsedUrl.searchParams.set('width', options.width.toString());
+      if (options.height) parsedUrl.searchParams.set('height', options.height.toString());
+      if (options.quality) parsedUrl.searchParams.set('quality', options.quality.toString());
+      
+      // Only set format if not already present
+      if (!parsedUrl.searchParams.has('format')) {
+        parsedUrl.searchParams.set('format', 'webp');
+      }
+      
+      // Add resize mode if specified
+      if (options.resize) parsedUrl.searchParams.set('resize', options.resize);
+      
+      return parsedUrl.toString();
+    } catch (error) {
+      console.error('Error parsing image URL:', error);
+      return url; // Return original URL if parsing fails
+    }
   }
 
   // For non-Supabase URLs, return as is

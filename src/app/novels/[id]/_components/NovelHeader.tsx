@@ -1,17 +1,18 @@
+'use client';
+
 import { Icon } from '@iconify/react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { NovelCategory, Tag } from '@/types/database';
 import { useState, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
-import supabase from '@/lib/supabaseClient';
 import { generateUUID } from '@/lib/utils';
 import { NovelSynopsis } from './NovelSynopsis';
 import { RatingPopup } from './RatingPopup';
 import { TagsModal } from './TagsModal';
 import { StatsItem } from './StatsItem';
 import { NovelAgeRating } from './NovelAgeRating';
-import { getResponsiveImageUrl } from '@/services/imageService';
+import supabase from '@/lib/supabaseClient';
 
 interface NovelHeaderProps {
   title: string;
@@ -203,7 +204,7 @@ export const NovelHeader = ({
   };
 
   const imageUrl = coverImageUrl?.startsWith('http') 
-    ? getResponsiveImageUrl(coverImageUrl, 'large')
+    ? coverImageUrl
     : coverImageUrl ? `/novel-covers/${coverImageUrl}` : null;
 
   return (

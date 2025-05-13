@@ -1,8 +1,6 @@
 'use client';
 
 import { Icon } from '@iconify/react';
-import Image from 'next/image';
-import { getResponsiveImageUrl } from '@/services/imageService';
 
 interface NovelCoverProps {
   coverUrl?: string;
@@ -25,25 +23,20 @@ const NovelCover = ({
   hasChapters = true,
   contentType,
   category,
-  size = 'small',
   chapterCount,
   isPriority = false
 }: NovelCoverProps) => {
   const imageUrl = coverUrl?.startsWith('http') 
-    ? getResponsiveImageUrl(coverUrl, size)
+    ? coverUrl
     : coverUrl ? `/novel-covers/${coverUrl}` : null;
 
   return (
     <div className="relative aspect-[2/3] w-full rounded overflow-hidden bg-muted group">
       {imageUrl ? (
-        <Image
+        <img
           src={imageUrl}
           alt={`Cover for ${title}`}
-          fill
-          sizes={`(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw`}
           className="absolute inset-0 w-full h-full object-cover transition-transform group-hover:scale-105"
-          priority={isPriority}
-          quality={size === 'thumbnail' ? 60 : size === 'small' ? 75 : 85}
           loading={isPriority ? "eager" : "lazy"}
         />
       ) : (

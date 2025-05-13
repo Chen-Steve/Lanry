@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = 'force-dynamic';
+
 function getMembershipTierFromAmount(amount: number): number {
   if (amount === 20) return 3; // VIP
   if (amount === 9) return 2;  // Patron
