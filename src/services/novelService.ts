@@ -111,7 +111,16 @@ export async function getNovel(id: string, userId?: string): Promise<Novel | nul
           unlock.profile_id === userId
         ) : false,
       hasTranslatorAccess
-    })).sort((a: Chapter, b: Chapter) => a.chapter_number - b.chapter_number);
+    })).sort((a: Chapter, b: Chapter) => {
+      // First sort by chapter number
+      if (a.chapter_number !== b.chapter_number) {
+        return a.chapter_number - b.chapter_number;
+      }
+      // If chapter numbers are equal, sort by part number
+      const partA = a.part_number ?? 0;
+      const partB = b.part_number ?? 0;
+      return partA - partB;
+    });
 
     // Calculate ratings
     const ratings = data.novel_ratings || [];

@@ -155,8 +155,7 @@ export async function getChapterNavigation(novelId: string, currentChapterNumber
         .from('chapters')
         .select('id, chapter_number, part_number, title, publish_at, coins, volume_id')
         .eq('novel_id', novel.id)
-        .order('chapter_number')
-        .order('part_number', { nullsFirst: true }),
+        .order('chapter_number'),
       supabase
         .from('volumes')
         .select('id, title, volume_number')
@@ -167,6 +166,18 @@ export async function getChapterNavigation(novelId: string, currentChapterNumber
     if (!chapters || chapters.length === 0) {
       return { prevChapter: null, nextChapter: null, availableChapters: [], volumes: volumes || [] };
     }
+
+    // Sort chapters by chapter_number and then part_number
+    const sortedChapters = [...chapters].sort((a, b) => {
+      // First compare chapter numbers
+      if (a.chapter_number !== b.chapter_number) {
+        return a.chapter_number - b.chapter_number;
+      }
+      // If chapter numbers are equal, sort by part number
+      const partA = a.part_number ?? 0;
+      const partB = b.part_number ?? 0;
+      return partA - partB;
+    });
 
     // If user is authenticated, get their unlocks with part numbers
     let unlockedChapters: { chapter_number: number; part_number: number | null; }[] = [];
@@ -193,7 +204,7 @@ export async function getChapterNavigation(novelId: string, currentChapterNumber
     const nowUTCTime = new Date(nowUTC).getTime();
 
     // Mark chapters as accessible based on publish status, unlocks, and user role
-    const accessibleChapters = chapters.map(chapter => {
+    const accessibleChapters = sortedChapters.map(chapter => {
       if (hasFullAccess) return { ...chapter, isAccessible: true };
 
       const isUnlocked = isChapterUnlocked(chapter);
@@ -259,8 +270,7 @@ export async function getTotalChapters(novelId: string): Promise<number> {
     const { data: chapters } = await supabase
       .from('chapters')
       .select('chapter_number, part_number, publish_at, coins')
-      .eq('novel_id', novel.id)
-      .order('chapter_number', { ascending: false });
+      .eq('novel_id', novel.id);
 
     if (!chapters) return 0;
 
@@ -426,8 +436,7 @@ export async function getChaptersForList({
       .from('chapters')
       .select('id, chapter_number, part_number, title, publish_at, coins, age_rating, volume_id', { count: 'exact' })
       .eq('novel_id', novel.id)
-      .order('chapter_number')
-      .order('part_number', { nullsFirst: true });
+      .order('chapter_number', { ascending: true });
 
     // Apply volume filtering
     if (volumeId) {
@@ -441,9 +450,21 @@ export async function getChaptersForList({
       throw chaptersError || new Error('Failed to fetch chapters');
     }
 
+    // Sort chapters by chapter_number and then part_number
+    const sortedChapters = [...allChapters].sort((a, b) => {
+      // First compare chapter numbers
+      if (a.chapter_number !== b.chapter_number) {
+        return a.chapter_number - b.chapter_number;
+      }
+      // If chapter numbers are equal, sort by part number
+      const partA = a.part_number ?? 0;
+      const partB = b.part_number ?? 0;
+      return partA - partB;
+    });
+
     // Filter chapters based on access and advanced status
     const now = new Date().toISOString();
-    const filteredChapters = allChapters.filter(ch => {
+    const filteredChapters = sortedChapters.filter(ch => {
       const isUnlocked = includeAccess && isChapterUnlocked(ch);
       const isFree = !ch.coins || ch.coins === 0;
       const isPublished = !ch.publish_at || ch.publish_at <= now;
