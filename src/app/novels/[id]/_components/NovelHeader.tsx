@@ -209,7 +209,8 @@ export const NovelHeader = ({
 
   return (
     <>
-      <div className="-mt-2 sm:-mt-3 -mb-4">
+      {/* Novel Header Content */}
+      <div className="-mt-2 sm:-mt-3">
         <div className="flex flex-col gap-4">
           {/* Top Row - Cover and Info */}
           <div className="flex gap-4">
@@ -404,33 +405,35 @@ export const NovelHeader = ({
               </div>
             </div>
           </div>
+        </div>
+      </div>
 
-          {/* Mobile Synopsis - Below Everything */}
-          <div className="sm:hidden">
-            {hideDescription ? null : (
-              <NovelSynopsis
-                description={description}
-                characters={characters}
-              />
-            )}
+      {/* Mobile Tags */}
+      <div className="sm:hidden mt-4 overflow-x-auto scrollbar-hide pb-6">
+        {tags && tags.length > 0 && (
+          <div className="flex items-center gap-1.5">
+            {tags.map((tag) => (
+              <Link
+                key={tag.id}
+                href={`/search?tags=${tag.id}`}
+                className="flex-none inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full transition-colors bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 whitespace-nowrap"
+              >
+                {tag.name}
+              </Link>
+            ))}
           </div>
+        )}
+      </div>
 
-          {/* Mobile Tags - Below Synopsis */}
-          <div className="sm:hidden mt-3 overflow-x-auto scrollbar-hide">
-            {tags && tags.length > 0 && (
-              <div className="flex items-center gap-1.5">
-                {tags.map((tag) => (
-                  <Link
-                    key={tag.id}
-                    href={`/search?tags=${tag.id}`}
-                    className="flex-none inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full transition-colors bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 whitespace-nowrap"
-                  >
-                    {tag.name}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
+      {/* Mobile Synopsis Container */}
+      <div className="-mt-2 sm:-mt-3 -mb-4">
+        <div className="sm:hidden mt-4">
+          {hideDescription ? null : (
+            <NovelSynopsis
+              description={description}
+              characters={characters}
+            />
+          )}
         </div>
       </div>
     </>
