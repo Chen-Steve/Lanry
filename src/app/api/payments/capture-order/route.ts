@@ -60,11 +60,12 @@ export async function POST(req: Request) {
     const result = response.result as PayPalCaptureResult;
     const amount = parseFloat(result.purchase_units[0].payments.captures[0].amount.value);
     // Calculate coins based on amount (matching our packages)
-    const coins = amount === 50 ? 600 : // 500 + 100 bonus coins package
-                 amount === 1 ? 10 :
-                 amount === 5 ? 50 :
+    const coins = amount === 2 ? 20 :
                  amount === 10 ? 100 :
-                 amount === 20 ? 200 : 0;
+                 amount === 20 ? 200 :
+                 amount === 25 ? 300 :
+                 amount === 50 ? 600 :
+                 amount === 150 ? 1950 : 0;
 
     if (coins === 0) {
       throw new Error("Invalid payment amount");
