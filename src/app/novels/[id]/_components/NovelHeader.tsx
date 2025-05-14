@@ -297,10 +297,10 @@ export const NovelHeader = ({
                 </div>
 
                 {/* Desktop Stats and Tags */}
-                <div className="hidden sm:flex flex-col gap-2 mt-4">
+                <div className="hidden sm:flex flex-col gap-2 mt-2">
                   {/* Desktop Tags */}
                   {tags && tags.length > 0 && (
-                    <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                    <div className="hidden sm:flex flex-wrap items-center gap-1.5">
                       <Link
                         href={`/search?tags=${tags[0].id}`}
                         className="flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full transition-colors bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200"
