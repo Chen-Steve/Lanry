@@ -60,7 +60,7 @@ export async function POST(req: Request) {
     const result = response.result as PayPalCaptureResult;
     const amount = parseFloat(result.purchase_units[0].payments.captures[0].amount.value);
     // Calculate coins based on amount (matching our packages)
-    const coins = amount === 1 && orderId ? 600 : // Special test case for 600 coins
+    const coins = amount === 50 ? 600 : // 500 + 100 bonus coins package
                  amount === 1 ? 10 :
                  amount === 5 ? 50 :
                  amount === 10 ? 100 :
