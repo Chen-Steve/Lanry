@@ -162,41 +162,34 @@ export default function BookmarksContent() {
 
   return (
     <main className="container max-w-5xl mx-auto px-4 py-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Icon icon="mdi:bookmark-multiple" className="w-6 h-6" />
-          My Bookmarks
-        </h1>
-      </div>
-
       {/* Navigation and Actions */}
-      <div className="border-b mb-6">
+      <div className="mb-4">
         <div className="flex items-center justify-between">
           {/* Tabs */}
           <div className="flex gap-1">
             <button
               onClick={() => setActiveTab('bookmarks')}
-              className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+              className={`px-4 py-2 text-base rounded-md transition-colors ${
                 activeTab === 'bookmarks'
-                  ? 'bg-primary/10 text-primary font-medium'
-                  : 'text-muted-foreground hover:bg-accent'
+                  ? 'bg-[#faf7f2] dark:bg-zinc-800 font-medium'
+                  : 'bg-[#f7f3ec] dark:bg-zinc-800 hover:bg-[#faf7f2] dark:hover:bg-zinc-700'
               }`}
             >
               All Bookmarks
             </button>
             <button
               onClick={() => setActiveTab('folders')}
-              className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+              className={`px-4 py-2 text-base rounded-md transition-colors ${
                 activeTab === 'folders'
-                  ? 'bg-primary/10 text-primary font-medium'
-                  : 'text-muted-foreground hover:bg-accent'
+                  ? 'bg-[#faf7f2] dark:bg-zinc-800 font-medium'
+                  : 'bg-[#f7f3ec] dark:bg-zinc-800 hover:bg-[#faf7f2] dark:hover:bg-zinc-700'
               }`}
             >
               Folders
             </button>
           </div>
           
-          {/* Action Buttons - depends on active tab */}
+          {/* Action Buttons */}
           {activeTab === 'bookmarks' && mode === 'view' && (
             <button
               onClick={() => handleModeChange('select')}
@@ -248,25 +241,29 @@ export default function BookmarksContent() {
       </div>
 
       {activeTab === 'bookmarks' && (
-        <BookmarkList 
-          userId={userId} 
-          isOwnProfile={true}
-          mode={mode}
-          selectedItems={selectedItems}
-          onSelectionChange={(items) => {
-            setSelectedItems(items);
-            if (items.length === 0 && mode === 'select') {
-              handleModeChange('view');
-            }
-          }}
-        />
+        <div className="bg-[#f7f3ec] dark:bg-zinc-900 rounded-lg p-4">
+          <BookmarkList 
+            userId={userId} 
+            isOwnProfile={true}
+            mode={mode}
+            selectedItems={selectedItems}
+            onSelectionChange={(items) => {
+              setSelectedItems(items);
+              if (items.length === 0 && mode === 'select') {
+                handleModeChange('view');
+              }
+            }}
+          />
+        </div>
       )}
       {activeTab === 'folders' && (
-        <FolderGrid 
-          userId={userId} 
-          showNewFolderButton={false}
-          onNewFolderRequest={() => setIsCreateFolderOpen(true)}
-        />
+        <div className="bg-[#f7f3ec] dark:bg-zinc-900 rounded-lg p-4">
+          <FolderGrid 
+            userId={userId} 
+            showNewFolderButton={false}
+            onNewFolderRequest={() => setIsCreateFolderOpen(true)}
+          />
+        </div>
       )}
 
       <BulkDeleteDialog

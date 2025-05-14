@@ -139,7 +139,7 @@ export default function UserDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Plan Card - Left Column */}
           <div className="md:col-span-2">
-            <div className="bg-card dark:bg-zinc-900 border border-border rounded-lg p-4 h-full">
+            <div className="bg-[#f7f3ec] dark:bg-zinc-900 border-0 rounded-lg p-4 h-full">
               <h2 className="text-sm font-medium text-muted-foreground mb-1">Your plan</h2>
               {isSubLoading ? (
                 <div className="flex items-center">
@@ -225,10 +225,10 @@ export default function UserDashboard() {
 
           {/* Daily Rewards Card - Right Column */}
           <div>
-            <div className="bg-card dark:bg-zinc-900 border border-border rounded-lg p-4 h-full">
+            <div className="bg-[#f7f3ec] dark:bg-zinc-900 border-0 rounded-lg p-4 h-full">
               <h2 className="text-sm font-medium text-muted-foreground mb-1">Rewards</h2>
               <button 
-                className="w-full flex items-center justify-between p-3 bg-card/50 hover:bg-card/80 transition-colors rounded-lg"
+                className="w-full flex items-center justify-between p-3 bg-[#faf7f2] dark:bg-zinc-800 hover:bg-[#faf7f2] dark:hover:bg-zinc-700 transition-colors rounded-lg"
                 onClick={() => {
                   setIsDailyRewardsClicked(true);
                   setTimeout(() => setIsDailyRewardsClicked(false), 2000);
@@ -252,10 +252,10 @@ export default function UserDashboard() {
         {/* Account Section */}
         <div className="mt-4">
           <h2 className="text-2xl font-bold mb-4">Account</h2>
-          <div className="bg-card dark:bg-zinc-900 border border-border rounded-lg p-6 mb-6">
+          <div className="bg-[#f7f3ec] dark:bg-zinc-900 border-0 rounded-lg p-6 mb-6">
             <button 
               onClick={() => setIsProfileModalOpen(true)} 
-              className="w-full flex items-center justify-between p-4 hover:bg-card/80 transition-colors"
+              className="w-full flex items-center justify-between p-4 hover:bg-[#faf7f2] dark:hover:bg-zinc-800 transition-colors rounded-lg"
             >
               <div className="flex items-center">
                 <Icon icon="ph:pencil-simple-line" className="text-xl mr-4" />
@@ -266,7 +266,7 @@ export default function UserDashboard() {
             
             <button 
               onClick={() => setIsPasswordModalOpen(true)}
-              className="w-full flex items-center justify-between p-4 hover:bg-card/80 transition-colors"
+              className="w-full flex items-center justify-between p-4 hover:bg-[#faf7f2] dark:hover:bg-zinc-800 transition-colors rounded-lg"
             >
               <div className="flex items-center">
                 <Icon icon="ph:lock-key" className="text-xl mr-4" />
@@ -276,7 +276,7 @@ export default function UserDashboard() {
             </button>
 
             <button 
-              className="w-full flex items-center justify-between p-4 hover:bg-card/80 transition-colors"
+              className="w-full flex items-center justify-between p-4 hover:bg-[#faf7f2] dark:hover:bg-zinc-800 transition-colors rounded-lg"
               onClick={toggleTheme}
             >
               <div className="flex items-center">
@@ -301,7 +301,7 @@ export default function UserDashboard() {
         <div className="mt-6">
           <button 
             onClick={handleSignOut}
-            className="w-full bg-card dark:bg-zinc-900 border border-border rounded-lg p-4 flex items-center gap-3 hover:bg-card/80 transition-colors"
+            className="w-full bg-[#f7f3ec] dark:bg-zinc-900 border-0 rounded-lg p-4 flex items-center gap-3 hover:bg-[#faf7f2] dark:hover:bg-zinc-800 transition-colors"
           >
             <Icon icon="ph:sign-out" className="text-xl" />
             <span className="font-medium">Log out</span>
