@@ -92,11 +92,42 @@ export default function AdvancedSearch() {
   }, [debouncedFetchAuthors]);
 
   useEffect(() => {
-    // Cache tags in localStorage
-    const cachedTags = localStorage.getItem('availableTags');
-    if (cachedTags) {
-      setAvailableTags(JSON.parse(cachedTags));
-    }
+    // Cache tags in localStorage with error handling
+    const getTags = () => {
+      try {
+        const cachedTags = localStorage.getItem('availableTags');
+        if (cachedTags) {
+          setAvailableTags(JSON.parse(cachedTags));
+        }
+        return !!cachedTags;
+      } catch (error) {
+        console.warn('Error reading from localStorage:', error);
+        return false;
+      }
+    };
+
+    const storeTags = (tags: Tag[]) => {
+      try {
+        // Try to store tags
+        localStorage.setItem('availableTags', JSON.stringify(tags));
+        localStorage.setItem('tagsTimestamp', Date.now().toString());
+      } catch (error: unknown) {
+        // If storage fails, try to clear old data first
+        if (error instanceof Error && error.name === 'QuotaExceededError') {
+          try {
+            // Clear potentially stale data
+            localStorage.removeItem('availableTags');
+            localStorage.removeItem('tagsTimestamp');
+            // Try storing again
+            localStorage.setItem('availableTags', JSON.stringify(tags));
+            localStorage.setItem('tagsTimestamp', Date.now().toString());
+          } catch (retryError) {
+            // If it still fails, just log and continue
+            console.warn('Unable to store tags in localStorage:', retryError);
+          }
+        }
+      }
+    };
 
     // Fetch available tags if not cached or expired
     const fetchTags = async () => {
@@ -105,16 +136,17 @@ export default function AdvancedSearch() {
         if (!response.ok) throw new Error('Failed to fetch tags');
         const data = await response.json();
         setAvailableTags(data);
-        localStorage.setItem('availableTags', JSON.stringify(data));
-        localStorage.setItem('tagsTimestamp', Date.now().toString());
+        storeTags(data);
       } catch (error) {
         console.error('Error fetching tags:', error);
       }
     };
 
+    const hasValidCache = getTags();
     const tagsTimestamp = localStorage.getItem('tagsTimestamp');
     const ONE_HOUR = 60 * 60 * 1000;
-    if (!tagsTimestamp || Date.now() - parseInt(tagsTimestamp) > ONE_HOUR) {
+
+    if (!hasValidCache || !tagsTimestamp || Date.now() - parseInt(tagsTimestamp) > ONE_HOUR) {
       fetchTags();
     }
   }, []);
