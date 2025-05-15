@@ -1,29 +1,19 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import debounce from 'lodash/debounce';
 import type { Novel } from '@/types/database';
 import { Icon } from '@iconify/react';
 
-// Add cache interface
-interface SearchCache {
-  [query: string]: {
-    results: Novel[];
-    timestamp: number;
-  };
-}
-
 interface SearchSectionProps {
   onSearch?: (query: string, results: Novel[]) => void;
   minSearchLength?: number;
   onExpandChange?: (expanded: boolean) => void;
-  cacheTimeout?: number; // Time in milliseconds before cache expires
 }
 
 const SearchSection: React.FC<SearchSectionProps> = ({ 
   onSearch = () => {}, 
   minSearchLength = 2,
-  onExpandChange,
-  cacheTimeout = 5 * 60 * 1000 // 5 minutes default cache timeout
+  onExpandChange
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -32,13 +22,11 @@ const SearchSection: React.FC<SearchSectionProps> = ({
   const [isFocused, setIsFocused] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
-  
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const blurTimeoutRef = useRef<NodeJS.Timeout>();
   const closeTimeoutRef = useRef<NodeJS.Timeout>();
-  const searchCacheRef = useRef<SearchCache>({});
 
   useEffect(() => {
     onExpandChange?.(isExpanded);
@@ -67,88 +55,54 @@ const SearchSection: React.FC<SearchSectionProps> = ({
     }, 300); // Match the transition duration
   };
 
-  // Check if cached results are valid
-  const getCachedResults = useCallback((query: string) => {
-    const cached = searchCacheRef.current[query];
-    if (!cached) return null;
-    
-    const now = Date.now();
-    if (now - cached.timestamp > cacheTimeout) {
-      delete searchCacheRef.current[query];
-      return null;
-    }
-    
-    return cached.results;
-  }, [cacheTimeout]);
-
-  // Memoize the search function
-  const performSearch = useCallback(async (query: string) => {
-    if (!query.trim() || query.length < minSearchLength) {
-      setResults([]);
-      setShowDropdown(false);
-      setIsLoading(false);
-      return;
-    }
-
-    // Check cache first
-    const cachedResults = getCachedResults(query);
-    if (cachedResults) {
-      setResults(cachedResults);
-      setShowDropdown(true);
-      onSearch(query, cachedResults);
-      return;
-    }
-
-    try {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-
-      abortControllerRef.current = new AbortController();
-      setIsLoading(true);
-
-      const response = await fetch(
-        `/api/novels/search?q=${encodeURIComponent(query)}&basic=true`,
-        { signal: abortControllerRef.current.signal }
-      );
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Search failed:', errorData);
-        throw new Error(errorData.error || 'Search failed');
-      }
-
-      const data = await response.json();
-      
-      if (!Array.isArray(data.novels)) {
-        throw new Error('Invalid response format');
-      }
-      
-      // Cache the results
-      searchCacheRef.current[query] = {
-        results: data.novels,
-        timestamp: Date.now()
-      };
-      
-      setResults(data.novels);
-      setShowDropdown(true);
-      onSearch(query, data.novels);
-    } catch (error: unknown) {
-      if (error instanceof Error && error.name === 'AbortError') {
+  const debouncedSearch = useRef(
+    debounce(async (query: string) => {
+      if (!query.trim() || query.length < minSearchLength) {
+        setResults([]);
+        setShowDropdown(false);
+        setIsLoading(false);
         return;
       }
-      console.error('Search error:', error);
-      setResults([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [minSearchLength, onSearch, getCachedResults]);
 
-  // Increase debounce time to reduce API calls
-  const debouncedSearch = useMemo(
-    () => debounce(performSearch, 300),
-    [performSearch]
-  );
+      try {
+        if (abortControllerRef.current) {
+          abortControllerRef.current.abort();
+        }
+
+        abortControllerRef.current = new AbortController();
+        setIsLoading(true);
+
+        const response = await fetch(
+          `/api/novels/search?q=${encodeURIComponent(query)}&basic=true`,
+          { signal: abortControllerRef.current.signal }
+        );
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error('Search failed:', errorData);
+          throw new Error(errorData.error || 'Search failed');
+        }
+
+        const data = await response.json();
+        
+        if (!Array.isArray(data.novels)) {
+          throw new Error('Invalid response format');
+        }
+        
+        setResults(data.novels);
+        setShowDropdown(true);
+        onSearch(query, data.novels);
+      } catch (error: unknown) {
+        if (error instanceof Error && error.name === 'AbortError') {
+          return;
+        }
+        console.error('Search error:', error);
+        setResults([]);
+      } finally {
+        setIsLoading(false);
+      }
+    }, 200)
+  ).current;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -189,14 +143,14 @@ const SearchSection: React.FC<SearchSectionProps> = ({
     setShowDropdown(!!searchQuery);
   };
 
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchQuery(value);
     setShowDropdown(true);
     debouncedSearch(value);
-  }, [debouncedSearch]);
+  };
 
-  const handleSearchClick = useCallback((e: React.MouseEvent) => {
+  const handleSearchClick = (e: React.MouseEvent) => {
     if (!isExpanded) {
       e.preventDefault();
       e.stopPropagation();
@@ -205,7 +159,7 @@ const SearchSection: React.FC<SearchSectionProps> = ({
         inputRef.current?.focus();
       }, 150);
     }
-  }, [isExpanded]);
+  };
 
   return (
     <div 
