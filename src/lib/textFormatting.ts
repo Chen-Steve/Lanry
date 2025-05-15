@@ -7,7 +7,22 @@ export const scrambleText = (text: string): string => {
   }).join('');
 };
 
-export const formatText = (text: string): string => {
+// New type to track extracted footnotes
+export interface ExtractedFootnote {
+  id: string;
+  number: string;
+  content: string;
+}
+
+// Track footnotes globally during formatting process
+export const extractedFootnotes: ExtractedFootnote[] = [];
+
+export const formatText = (text: string, extractFootnotes = false): string => {
+  // Clear the footnotes array if we're extracting them
+  if (extractFootnotes) {
+    extractedFootnotes.length = 0;
+  }
+
   // Replace standalone Supabase image URLs with image elements
   text = text.replace(
     /(https:\/\/[a-zA-Z0-9-]+\.supabase\.co\/storage\/v1\/object\/public\/footnote-images\/[a-zA-Z0-9_-]+\.(png|jpg|jpeg|gif))/g,
@@ -66,7 +81,7 @@ export const formatText = (text: string): string => {
     return depth === 0 ? i - 1 : -1;
   };
 
-  // Replace [^number: content] with inline footnote popups - handling nested brackets
+  // Replace [^number: content] with footnote links that navigate to footnote section
   let lastIndex = 0;
   let result = '';
   
@@ -89,21 +104,25 @@ export const formatText = (text: string): string => {
     const content = text.substring(startContent, endIndex).trim();
     const formattedContent = formatContent(content);
     
-    // Add the formatted footnote
-    result += `<span class="footnote-wrapper inline-block relative pointer-events-auto">
-      <button type="button" 
-        class="footnote inline-block text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors" 
-        data-footnote="${num}" 
-        data-content="${formattedContent.replace(/"/g, '&quot;')}"
-        onclick="event.stopPropagation(); event.preventDefault();"
-      ><sup>[${num}]</sup></button>
-      <div class="footnote-tooltip opacity-0 invisible absolute z-50 bg-white dark:bg-gray-800 border border-border rounded-lg shadow-lg transition-all duration-200 text-sm text-foreground">
-        <div class="arrow absolute w-3 h-3 bg-white dark:bg-gray-800 border-t border-l border-border transform -translate-y-1.5 rotate-45 hidden"></div>
-        <div class="p-3 max-w-sm overflow-hidden">
-          ${formattedContent}
-        </div>
-      </div>
-    </span>`;
+    // Create a unique ID for this footnote (using just the number for consistent reference)
+    const footnoteId = `footnote-${num}`;
+    
+    // Store the footnote for later use if extracting
+    if (extractFootnotes) {
+      extractedFootnotes.push({
+        id: footnoteId,
+        number: num,
+        content: formattedContent
+      });
+    }
+    
+    // Add the formatted footnote reference
+    result += `<a 
+      id="footnote-ref-${num}" 
+      href="#footnote-${num}" 
+      class="inline-block text-primary hover:text-primary/80 transition-colors"
+      data-footnote-ref="${num}"
+    ><sup>[${num}]</sup></a>`;
     
     lastIndex = endIndex + 1;
   }

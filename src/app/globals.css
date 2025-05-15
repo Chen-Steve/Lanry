@@ -15,6 +15,7 @@
   --accent-foreground: #1F2937;
   --border: #E5E1D8;
   --card: #fff;
+  --primary-rgb: 79, 70, 229;
 }
 
 :root[class~="dark"] {
@@ -30,6 +31,7 @@
   --accent-foreground: #FAFAFA;
   --border: #27272A;
   --card: #18181B;
+  --primary-rgb: 99, 102, 241;
 }
 
 body {
@@ -198,3 +200,74 @@ iframe {
 .tab-button[data-state="inactive"] .tab-indicator {
   transform: scaleX(0);
 } 
+
+/* Footnote Navigation Styles */
+a[data-footnote-ref],
+[id^="footnote-"],
+[id^="footnote-ref-"] {
+  scroll-margin-top: 120px;
+}
+
+/* Highlight effect for footnote navigation */
+.footnote-highlight {
+  animation: highlight-pulse 2s ease;
+  border-radius: 0.25rem;
+}
+
+@keyframes highlight-pulse {
+  0% { background-color: transparent; }
+  20% { background-color: rgba(var(--primary-rgb), 0.2); }
+  80% { background-color: rgba(var(--primary-rgb), 0.1); }
+  100% { background-color: transparent; }
+}
+
+/* Style for footnote references */
+a[data-footnote-ref] sup {
+  transition: all 0.2s ease;
+}
+
+a[data-footnote-ref]:hover sup {
+  color: var(--primary);
+}
+
+/* Style for back references */
+a[data-back-to-ref] {
+  transition: all 0.2s ease;
+}
+
+a[data-back-to-ref]:hover {
+  transform: translateY(-1px);
+}
+
+/* Footnote content formatting */
+[id^="footnote-"] div[dangerouslySetInnerHTML] {
+  line-height: 1.6;
+}
+
+/* Ensure proper spacing in footnote content */
+[id^="footnote-"] div[dangerouslySetInnerHTML] p {
+  margin-bottom: 0.75em;
+}
+
+[id^="footnote-"] div[dangerouslySetInnerHTML] p:last-child {
+  margin-bottom: 0;
+}
+
+/* Handle images in footnotes */
+[id^="footnote-"] div[dangerouslySetInnerHTML] img {
+  margin: 0.75em 0;
+  max-width: 100%;
+  border-radius: 0.25rem;
+}
+
+/* Add proper styling for links in footnotes */
+[id^="footnote-"] div[dangerouslySetInnerHTML] a {
+  color: var(--primary);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+[id^="footnote-"] div[dangerouslySetInnerHTML] a:hover {
+  color: var(--primary-foreground);
+  text-decoration: underline;
+}

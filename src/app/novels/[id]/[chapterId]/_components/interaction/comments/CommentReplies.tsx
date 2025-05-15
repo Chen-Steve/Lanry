@@ -291,7 +291,7 @@ export function CommentReplies({
           onChange={(e) => setNewReply(e.target.value)}
           placeholder={userId ? "Write a reply..." : "Please sign in to reply"}
           disabled={!userId || isSubmitting}
-          className="w-full min-h-[80px] dark:text-black"
+          className="w-full min-h-[80px] bg-[#faf7f2] dark:bg-zinc-800 dark:text-gray-200 focus-visible:ring-primary"
         />
         <div className="flex justify-end">
           <Button
@@ -347,7 +347,7 @@ export function CommentReplies({
                     <Textarea
                       value={editContent}
                       onChange={(e) => setEditContent(e.target.value)}
-                      className="w-full min-h-[80px] dark:text-black"
+                      className="w-full min-h-[80px] bg-[#faf7f2] dark:bg-zinc-800 dark:text-gray-200 focus-visible:ring-primary"
                     />
                     <div className="flex gap-2">
                       <Button

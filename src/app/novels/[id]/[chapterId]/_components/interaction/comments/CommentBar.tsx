@@ -114,7 +114,7 @@ export default function CommentBar({
             </div>
             <button 
               onClick={handleCloseWithAnimation} 
-              className="p-2 hover:bg-[#F7F4ED] dark:hover:bg-gray-800 rounded-full transition-colors text-black dark:text-white"
+              className="p-2 hover:bg-[#faf7f2] dark:hover:bg-zinc-800 rounded-full transition-colors text-black dark:text-white"
               aria-label="Close comments"
             >
               <Icon icon="mdi:close" className="text-xl" />
@@ -123,7 +123,7 @@ export default function CommentBar({
 
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {comments.map((comment) => (
-              <div key={comment.id} className="bg-[#F7F4ED] dark:bg-gray-800 rounded-lg p-3">
+              <div key={comment.id} className="bg-[#faf7f2] dark:bg-zinc-800 rounded-lg p-3">
                 <div className="flex gap-3">
                   <Link href={`/user-dashboard?id=${comment.profile_id}`} className="flex-shrink-0">
                     <div className="w-8 h-8 rounded-full overflow-hidden bg-blue-500">
@@ -207,7 +207,7 @@ export default function CommentBar({
                           onChange={(e) => setEditContent(e.target.value)}
                           placeholder="Edit your comment..."
                           className="w-full p-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm resize-none 
-                                   bg-[#F7F4ED] dark:bg-gray-800 focus:ring-2 focus:ring-amber-500 focus:border-transparent 
+                                   bg-[#faf7f2] dark:bg-zinc-800 focus:ring-2 focus:ring-amber-500 focus:border-transparent 
                                    text-black dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                           rows={2}
                         />
@@ -253,7 +253,7 @@ export default function CommentBar({
                   onChange={(e) => setNewComment(e.target.value)}
                   placeholder="Add a comment..."
                   className="w-full p-3 border border-gray-200 dark:border-gray-700 rounded-lg text-sm resize-none 
-                           bg-[#F7F4ED] dark:bg-gray-800 focus:ring-2 focus:ring-amber-500 focus:border-transparent 
+                           bg-[#faf7f2] dark:bg-zinc-800 focus:ring-2 focus:ring-amber-500 focus:border-transparent 
                            text-black dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                   rows={3}
                 />

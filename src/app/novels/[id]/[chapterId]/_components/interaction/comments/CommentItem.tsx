@@ -213,7 +213,7 @@ export function CommentItem({ comment, userId, authorId, onEdit, onDelete, chapt
               <Textarea
                 value={editContent}
                 onChange={(e) => setEditContent(e.target.value)}
-                className="w-full min-h-[100px] dark:text-black"
+                className="w-full min-h-[100px] bg-[#faf7f2] dark:bg-zinc-800 dark:text-gray-200 focus-visible:ring-primary"
               />
               <div className="flex gap-2">
                 <Button

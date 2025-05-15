@@ -254,7 +254,7 @@ export function ChapterComments({ chapterId, authorId }: ChapterCommentsProps) {
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
             placeholder="Write a comment..."
-            className="w-full min-h-[100px] dark:text-black"
+            className="w-full min-h-[100px] bg-[#faf7f2] dark:bg-zinc-800 dark:text-gray-200 focus-visible:ring-primary"
           />
           <Button 
             type="submit" 
@@ -275,7 +275,7 @@ export function ChapterComments({ chapterId, authorId }: ChapterCommentsProps) {
           </Button>
         </form>
       ) : (
-        <div className="bg-muted/50 rounded-lg p-4 text-center">
+        <div className="bg-[#faf7f2] dark:bg-zinc-800 rounded-lg p-4 text-center">
           <p className="text-muted-foreground mb-2">Please sign in to comment</p>
           <Link 
             href="/auth" 

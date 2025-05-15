@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { formatDate } from '@/lib/utils';
-import { getTextStyles, formatText } from '@/lib/textFormatting';
+import { getTextStyles, formatText, extractedFootnotes, ExtractedFootnote } from '@/lib/textFormatting';
 import { filterExplicitContent } from '@/lib/contentFiltering';
 import CommentPopover from '../interaction/comments/CommentBar';
 import { useComments } from '@/hooks/useComments';
@@ -10,7 +10,7 @@ import { useChapterLikes } from '@/hooks/useChapterLikes';
 import { Icon } from '@iconify/react';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import type { ChapterComment as BaseChapterComment } from '@/types/database';
-import FootnoteTooltip from './FootnoteTooltip';
+import FootnotesList from './FootnotesList';
 import { toast } from 'sonner';
 import ScreenshotProtection from '../ScreenshotProtection';
 import ChapterParagraph from './ChapterParagraph';
@@ -82,6 +82,7 @@ export default function ChapterContent({
   const isDesktop = useMediaQuery('(min-width: 768px)');
   const contentRef = useRef<HTMLDivElement>(null);
   const [isChapterBarVisible, setIsChapterBarVisible] = useState(false);
+  const [footnotes, setFootnotes] = useState<ExtractedFootnote[]>([]);
   
   // Check if the chapter is indefinitely locked
   const isIndefinitelyLocked = publishAt && new Date(publishAt).getFullYear() > new Date().getFullYear() + 50;
@@ -105,9 +106,124 @@ export default function ChapterContent({
     onCommentStateChange(true);
   }, [onCommentStateChange]);
 
+  // Extract paragraphs and footnotes
   const paragraphs = filterExplicitContent(content)
     .split('\n\n')
     .filter(p => p.trim());
+
+  // Handle smooth scrolling for footnote links
+  useEffect(() => {
+    const handleFootnoteNavigation = (e: MouseEvent) => {
+      const target = e.target as Element;
+      
+      // For references in main text (going down to footnotes)
+      const footnoteLink = target.closest('[data-footnote-ref]');
+      
+      // For back links in footnotes section (going up to references)
+      const backToRefLink = target.closest('[data-back-to-ref]');
+      
+      if (footnoteLink && footnoteLink instanceof HTMLAnchorElement) {
+        e.preventDefault();
+        
+        const footnoteNumber = footnoteLink.getAttribute('data-footnote-ref');
+        const footnoteElement = document.getElementById(`footnote-${footnoteNumber}`);
+        
+        if (footnoteElement) {
+          // Remove any existing highlights
+          document.querySelectorAll('.footnote-highlight').forEach(el => {
+            el.classList.remove('footnote-highlight');
+          });
+          
+          // Smooth scroll to the footnote
+          window.scrollTo({
+            top: footnoteElement.offsetTop - 100, // Add some space above
+            behavior: 'smooth'
+          });
+          
+          // Add a highlight effect to the footnote
+          footnoteElement.classList.add('footnote-highlight');
+          setTimeout(() => {
+            footnoteElement.classList.remove('footnote-highlight');
+          }, 2000);
+        }
+      }
+      
+      // Handle back-to-reference links
+      if (backToRefLink && backToRefLink instanceof HTMLAnchorElement) {
+        e.preventDefault();
+        
+        const refNumber = backToRefLink.getAttribute('data-back-to-ref');
+        const refElement = document.getElementById(`footnote-ref-${refNumber}`);
+        
+        if (refElement) {
+          // Remove any existing highlights
+          document.querySelectorAll('.footnote-highlight').forEach(el => {
+            el.classList.remove('footnote-highlight');
+          });
+          
+          // Smooth scroll to the reference
+          window.scrollTo({
+            top: refElement.offsetTop - 100, // Add some space above
+            behavior: 'smooth'
+          });
+          
+          // Add a highlight effect to the reference
+          refElement.classList.add('footnote-highlight');
+          setTimeout(() => {
+            refElement.classList.remove('footnote-highlight');
+          }, 2000);
+        }
+      }
+    };
+    
+    // Add click event listener for footnote navigation
+    document.addEventListener('click', handleFootnoteNavigation);
+    
+    // Also handle initial navigation if hash is present in URL
+    const handleInitialNavigation = () => {
+      if (window.location.hash) {
+        const id = window.location.hash.substring(1);
+        const element = document.getElementById(id);
+        
+        if (element) {
+          // Remove any existing highlights
+          document.querySelectorAll('.footnote-highlight').forEach(el => {
+            el.classList.remove('footnote-highlight');
+          });
+          
+          setTimeout(() => {
+            window.scrollTo({
+              top: element.offsetTop - 100,
+              behavior: 'smooth'
+            });
+            
+            element.classList.add('footnote-highlight');
+            setTimeout(() => {
+              element.classList.remove('footnote-highlight');
+            }, 2000);
+          }, 300); // Small delay to ensure page is fully loaded
+        }
+      }
+    };
+    
+    // Run on initial load
+    handleInitialNavigation();
+    
+    // Also run when hash changes
+    window.addEventListener('hashchange', handleInitialNavigation);
+    
+    return () => {
+      document.removeEventListener('click', handleFootnoteNavigation);
+      window.removeEventListener('hashchange', handleInitialNavigation);
+    };
+  }, []);
+
+  // Extract footnotes from content
+  useEffect(() => {
+    // Process the content to extract footnotes
+    formatText(content, true);
+    setFootnotes([...extractedFootnotes]);
+  }, [content]);
 
   useEffect(() => {
     // Use event delegation for link previews
@@ -341,6 +457,11 @@ export default function ChapterContent({
                       />
                     );
                   })}
+                  
+                  {/* Footnotes Section */}
+                  {footnotes.length > 0 && (
+                    <FootnotesList footnotes={footnotes} />
+                  )}
                 </div>
               </ScreenshotProtection>
             ) : (
@@ -366,6 +487,11 @@ export default function ChapterContent({
                     />
                   );
                 })}
+                
+                {/* Footnotes Section */}
+                {footnotes.length > 0 && (
+                  <FootnotesList footnotes={footnotes} />
+                )}
               </div>
             )}
           </>
@@ -374,7 +500,7 @@ export default function ChapterContent({
         {/* Author's Thoughts Section - Only show if not indefinitely locked */}
         {!isIndefinitelyLocked && authorThoughts && authorThoughts.trim() !== '' && (
           <div className="mt-8 max-w-2xl mx-auto">
-            <div className="relative bg-gray-50 dark:bg-gray-800/50 rounded-lg p-6 border border-primary/20 shadow-sm before:absolute before:inset-0 before:p-[2px] before:bg-gradient-to-r before:from-primary/40 before:via-primary/20 before:to-primary/40 before:rounded-lg before:-z-10 before:pointer-events-none">
+            <div className="relative bg-[#faf7f2] dark:bg-zinc-800 rounded-lg p-6 border border-border shadow-sm">
               <div className="relative mb-4">
                 {/* Like Button - Absolute positioned */}
                 <div className="absolute right-0 top-0">
@@ -437,7 +563,7 @@ export default function ChapterContent({
                         </span>
                       </h3>
                       {/* Gradient fade effect */}
-                      <div className="absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-gray-50 dark:from-gray-800/50 pointer-events-none group-hover:opacity-0 transition-opacity md:hidden" />
+                      <div className="absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-[#faf7f2] dark:from-zinc-800 pointer-events-none group-hover:opacity-0 transition-opacity md:hidden" />
                       {/* Scroll indicator */}
                       <div 
                         className="absolute -right-1 top-1/2 -translate-y-1/2 text-muted-foreground/50 cursor-pointer hover:text-muted-foreground transition-colors md:hidden"
@@ -502,7 +628,6 @@ export default function ChapterContent({
             authorId={authorId}
           />
         )}
-        <FootnoteTooltip />
 
         {/* Corner tab for settings (only visible on mobile and when ChapterBar is closed) */}
         {isMobile && !isIndefinitelyLocked && !isChapterBarVisible && (
