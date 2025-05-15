@@ -19,7 +19,7 @@ const NovelListing = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [featuredNovels, setFeaturedNovels] = useState<Novel[]>([]);
   const [advancedNovels, setAdvancedNovels] = useState<Novel[]>([]);
-  const [recentAdvancedNovels, setRecentAdvancedNovels] = useState<Novel[]>([]);
+  const [recentNovels, setRecentNovels] = useState<Novel[]>([]);
   const [curatedNovels, setCuratedNovels] = useState<Novel[]>([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
@@ -47,10 +47,17 @@ const NovelListing = () => {
         setNovels(allNovels);
         setTotalNovels(total);
         
-        // Only fetch featured novels on first page load
+        // Only fetch featured novels and recent novels on first page load
         if (currentPage === 1) {
           const topNovels = await getTopNovels();
           setFeaturedNovels(topNovels);
+          
+          // Fetch recent novels (no pagination needed since we only show top 10)
+          const { novels: recentNovelsList } = await getCachedNovels({
+            limit: 10,
+            offset: 0
+          });
+          setRecentNovels(recentNovelsList);
           
           // Only fetch curated novels if user is logged in
           if (isLoggedIn) {
@@ -73,9 +80,6 @@ const NovelListing = () => {
       try {
         const novels = await getNovelsWithAdvancedChapters();
         setAdvancedNovels(novels);
-        
-        // Set recent advanced novels (top 10 most recent)
-        setRecentAdvancedNovels(novels.slice(0, 10));
       } catch (error) {
         console.error('Error fetching advanced novels:', error);
       }
@@ -111,7 +115,7 @@ const NovelListing = () => {
       )}
 
       <NewReleases
-        recentNovels={recentAdvancedNovels.map(novel => ({
+        recentNovels={recentNovels.map(novel => ({
           id: novel.id,
           slug: novel.slug,
           title: novel.title,
