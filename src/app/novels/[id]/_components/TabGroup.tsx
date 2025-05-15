@@ -20,11 +20,11 @@ const TabButton = ({
 }) => (
   <button
     onClick={onClick}
-    className={`px-3 py-1.5 font-medium text-sm transition-colors whitespace-nowrap
-      ${isActive 
-        ? 'text-primary border-b-2 border-primary' 
-        : 'text-muted-foreground hover:text-foreground'
-      }`}
+    className={`px-4 py-2 text-base rounded-md transition-colors whitespace-nowrap ${
+      isActive 
+        ? 'bg-[#faf7f2] dark:bg-zinc-800 font-medium'
+        : 'bg-[#f7f3ec] dark:bg-zinc-800 hover:bg-[#faf7f2] dark:hover:bg-zinc-700'
+    }`}
   >
     {label}
   </button>
@@ -36,8 +36,8 @@ export const TabGroup = ({
   onChange,
 }: TabGroupProps) => {
   return (
-    <div className="flex overflow-x-auto scrollbar-hide border-b border-border mb-4">
-      <div className="flex min-w-full sm:min-w-0 gap-2">
+    <div className="w-full overflow-x-auto scrollbar-hide">
+      <div className="flex gap-1 min-w-max px-1 pb-1">
         {tabs.map((tab) => (
           <TabButton
             key={tab.value}
