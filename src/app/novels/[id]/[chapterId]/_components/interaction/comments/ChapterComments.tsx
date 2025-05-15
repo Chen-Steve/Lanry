@@ -233,7 +233,7 @@ export function ChapterComments({ chapterId, authorId }: ChapterCommentsProps) {
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 max-w-2xl mx-auto">
       <div className="bg-yellow-500/10 border border-yellow-500/20 p-4 rounded-lg">
         <div className="flex items-center gap-3">
           <Icon 
@@ -255,6 +255,7 @@ export function ChapterComments({ chapterId, authorId }: ChapterCommentsProps) {
             onChange={(e) => setNewComment(e.target.value)}
             placeholder="Write a comment..."
             className="w-full min-h-[100px] bg-[#faf7f2] dark:bg-zinc-800 dark:text-gray-200 focus-visible:ring-primary"
+            noBorder
           />
           <Button 
             type="submit" 
