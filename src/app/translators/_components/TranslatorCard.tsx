@@ -22,7 +22,7 @@ type TranslatorCardProps = {
 
 export function TranslatorCard({ translator }: TranslatorCardProps) {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4">
+    <div className="bg-[#f7f3ec] dark:bg-zinc-900 rounded-lg shadow-sm p-4">
       {/* Translator Info */}
       <div className="flex items-center gap-3 mb-4">
         <div className="relative w-12 h-12 flex-shrink-0">

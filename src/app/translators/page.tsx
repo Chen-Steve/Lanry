@@ -105,12 +105,10 @@ export default async function TranslatorsPage({
           <p className="mt-4 text-gray-600">No translators found</p>
         </div>
       ) : (
-        <div className="space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-            {translators.map((translator) => (
-              <TranslatorCard key={translator.id} translator={translator} />
-            ))}
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+          {translators.map((translator) => (
+            <TranslatorCard key={translator.id} translator={translator} />
+          ))}
           
           {totalPages > 1 && (
             <div className="flex justify-center mt-8">
