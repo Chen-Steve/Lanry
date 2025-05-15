@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { PayPalButtons } from "@paypal/react-paypal-js";
 import { onApprove } from "@/services/paymentService";
 import { useRouter } from 'next/navigation';
+import { FUNDING } from "@paypal/react-paypal-js";
 // import { useAdFreeStatus } from '@/hooks/useAdFreeStatus';
 
 export const coinPackages = [
@@ -75,15 +76,15 @@ export default function Coins() {
               </h3>
             </div>
             
-            <p className="text-xl font-bold text-amber-500 dark:text-amber-400 mb-1">
+            <p className="text-xl font-bold text-amber-500 dark:text-amber-400 mb-3 flex items-center justify-center gap-2">
               ${pkg.price}
-            </p>
-            
-            <p className="text-xs text-muted-foreground mb-3">
-              {pkg.coinsPerDollar} coins per $1
+              <span className="text-xs font-normal text-muted-foreground">
+                ({pkg.coinsPerDollar} coins per $1)
+              </span>
             </p>
 
             <PayPalButtons
+              fundingSource={FUNDING.PAYPAL}
               style={{ layout: "horizontal", height: 35, tagline: false }}
               createOrder={async () => {
                 try {
@@ -168,15 +169,15 @@ export default function Coins() {
               </h3>
             </div>
             
-            <p className="text-xl font-bold text-amber-500 dark:text-amber-400 mb-1">
+            <p className="text-xl font-bold text-amber-500 dark:text-amber-400 mb-3 flex items-center justify-center gap-2">
               ${pkg.price}
-            </p>
-            
-            <p className="text-xs text-muted-foreground mb-3">
-              {pkg.coinsPerDollar} coins per $1
+              <span className="text-xs font-normal text-muted-foreground">
+                ({pkg.coinsPerDollar} coins per $1)
+              </span>
             </p>
 
             <PayPalButtons
+              fundingSource={FUNDING.PAYPAL}
               style={{ layout: "horizontal", height: 35, tagline: false }}
               createOrder={async () => {
                 try {
