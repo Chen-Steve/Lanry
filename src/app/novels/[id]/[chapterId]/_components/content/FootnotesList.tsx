@@ -11,6 +11,19 @@ interface FootnotesListProps {
   footnotes: FootnoteItem[];
 }
 
+const extractSupabaseImageUrl = (content: string): { text: string; imageUrl: string | null } => {
+  const urlRegex = /(https:\/\/[^\s]+\.supabase\.co\/storage\/v1\/render\/image\/public\/footnote-images\/[^\s]+)/;
+  const match = content.match(urlRegex);
+  
+  if (match) {
+    const imageUrl = match[0];
+    const text = content.replace(imageUrl, '').trim();
+    return { text, imageUrl };
+  }
+  
+  return { text: content, imageUrl: null };
+};
+
 const FootnotesList: React.FC<FootnotesListProps> = ({ footnotes }) => {
   const [expanded, setExpanded] = useState(false);
   
@@ -29,6 +42,31 @@ const FootnotesList: React.FC<FootnotesListProps> = ({ footnotes }) => {
     
   // Number of hidden footnotes
   const hiddenCount = footnotes.length - initialFootnotesCount;
+
+  const renderFootnoteContent = (content: string) => {
+    const { text, imageUrl } = extractSupabaseImageUrl(content);
+    
+    return (
+      <>
+        {text && (
+          <div 
+            className="text-sm text-foreground"
+            dangerouslySetInnerHTML={{ __html: text }}
+          />
+        )}
+        {imageUrl && (
+          <div className="mt-2">
+            <img
+              src={imageUrl}
+              alt="Footnote illustration"
+              className="rounded-lg object-cover w-[200px] max-h-[150px]"
+              loading="lazy"
+            />
+          </div>
+        )}
+      </>
+    );
+  };
 
   return (
     <div className="mt-4 pt-4 border-t border-border">
@@ -50,10 +88,9 @@ const FootnotesList: React.FC<FootnotesListProps> = ({ footnotes }) => {
                 [{footnote.number}]
               </a>
             </div>
-            <div 
-              className="text-sm text-foreground flex-1"
-              dangerouslySetInnerHTML={{ __html: footnote.content }}
-            />
+            <div className="text-sm text-foreground flex-1">
+              {renderFootnoteContent(footnote.content)}
+            </div>
           </div>
         ))}
         
