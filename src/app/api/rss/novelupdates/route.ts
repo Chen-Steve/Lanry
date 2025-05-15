@@ -6,18 +6,22 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    // Get only published and free chapters
+    // Get chapters that are either:
+    // 1. Free (coins = 0) OR
+    // 2. Published (publish date has passed)
     const chapters = await prisma.chapter.findMany({
       where: {
-        AND: [
-          {
-            publishAt: {
-              lte: new Date()
-            }
-          },
+        OR: [
+          // Free chapters
           {
             coins: {
               equals: 0
+            }
+          },
+          // Published chapters (timer has expired)
+          {
+            publishAt: {
+              lte: new Date()
             }
           }
         ]
