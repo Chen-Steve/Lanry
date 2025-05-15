@@ -399,11 +399,10 @@ export default function ChapterContent({
               {isTranslator && !isIndefinitelyLocked && (
                 <button
                   onClick={() => setIsEditing(true)}
-                  className="flex items-center gap-1.5 px-2 py-1.5 sm:px-3 sm:py-1.5 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                  className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors w-[120px] whitespace-nowrap"
                   title="Edit Chapter"
                 >
-                  <Icon icon="mdi:pencil" className="w-4 h-4" />
-                  <span className="hidden sm:inline">Edit Chapter</span>
+                  <span>Edit Chapter</span>
                 </button>
               )}
 
