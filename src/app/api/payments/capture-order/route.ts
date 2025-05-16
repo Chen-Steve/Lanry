@@ -61,6 +61,7 @@ export async function POST(req: Request) {
     const amount = parseFloat(result.purchase_units[0].payments.captures[0].amount.value);
     // Calculate coins based on amount (matching our packages)
     const coins = amount === 2 ? 20 :
+                 amount === 5 ? 50 :
                  amount === 10 ? 100 :
                  amount === 20 ? 200 :
                  amount === 25 ? 300 :

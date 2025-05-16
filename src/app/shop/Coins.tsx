@@ -11,11 +11,12 @@ import { FUNDING } from "@paypal/react-paypal-js";
 
 export const coinPackages = [
   { id: 1, coins: 20, price: 2, coinsPerDollar: Math.round(20/2) },
-  { id: 2, coins: 100, price: 10, coinsPerDollar: Math.round(100/10), tag: "POPULAR" },
-  { id: 3, coins: 200, price: 20, coinsPerDollar: Math.round(200/20) },
-  { id: 4, coins: 300, price: 25, coinsPerDollar: Math.round(300/25), tag: "BEST VALUE" },
-  { id: 5, coins: 600, price: 50, coinsPerDollar: Math.round(600/50), isBonus: true }, // 500 + 100 bonus
-  { id: 6, coins: 1950, price: 150, coinsPerDollar: Math.round(1950/150) }, // Price anchor, 13 coins per dollar
+  { id: 2, coins: 50, price: 5, coinsPerDollar: Math.round(50/5) },
+  { id: 3, coins: 100, price: 10, coinsPerDollar: Math.round(100/10), tag: "POPULAR" },
+  { id: 4, coins: 200, price: 20, coinsPerDollar: Math.round(200/20) },
+  { id: 5, coins: 300, price: 25, coinsPerDollar: Math.round(300/25), tag: "BEST VALUE" },
+  { id: 6, coins: 600, price: 50, coinsPerDollar: Math.round(600/50), isBonus: true }, // 500 + 100 bonus
+  { id: 7, coins: 1950, price: 150, coinsPerDollar: Math.round(1950/150) }, // Price anchor, 13 coins per dollar
 ];
 
 export default function Coins() {
@@ -67,7 +68,7 @@ export default function Coins() {
             <div className="flex items-center justify-center gap-2 mb-2">
               <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
                 <Icon icon="pepicons-print:coins" className="text-amber-500 text-xl" />
-                {pkg.id === 5 ? (
+                {pkg.id === 6 ? (
                   <>
                     500 <span className="text-emerald-500">+ 100</span>
                   </>
@@ -160,7 +161,7 @@ export default function Coins() {
             <div className="flex items-center justify-center gap-2 mb-2">
               <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
                 <Icon icon="pepicons-print:coins" className="text-amber-500 text-xl" />
-                {pkg.id === 5 ? (
+                {pkg.id === 6 ? (
                   <>
                     500 <span className="text-emerald-500">+ 100</span>
                   </>
