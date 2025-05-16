@@ -251,66 +251,7 @@ export async function getNovels(options: GetNovelsOptions = {}): Promise<{ novel
   try {
     const { limit = 12, offset = 0, categories } = options;
     
-    // First get all novels count and IDs
-    const { data: allNovels, count: totalCount } = await supabase
-      .from('novels')
-      .select('id', { count: 'exact' })
-      .order('created_at', { ascending: false });
-    
-    if (!allNovels) {
-      return { novels: [], total: 0 };
-    }
-
-    const now = new Date().toISOString();
-
-    // Get the latest chapter dates and recently unlocked chapters
-    const [{ data: latestChapters }, { data: recentUnlocks }] = await Promise.all([
-      supabase
-        .from('chapters')
-        .select('novel_id, created_at, title')
-        .order('created_at', { ascending: false }),
-      supabase
-        .from('chapters')
-        .select('novel_id, publish_at')
-        .lte('publish_at', now) // Get chapters that just became available
-        .gt('publish_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()) // Within last 7 days
-    ]);
-
-    // Create a map of novel IDs to their latest activity (either chapter creation or unlock)
-    const novelActivityMap = new Map<string, Date>();
-
-    // Add chapters based on creation date
-    latestChapters?.forEach(chapter => {
-      const currentDate = novelActivityMap.get(chapter.novel_id);
-      const chapterDate = new Date(chapter.created_at);
-      if (!currentDate || chapterDate > currentDate) {
-        novelActivityMap.set(chapter.novel_id, chapterDate);
-      }
-    });
-
-    // Add recently unlocked chapters
-    recentUnlocks?.forEach(chapter => {
-      const currentDate = novelActivityMap.get(chapter.novel_id);
-      const unlockDate = new Date(chapter.publish_at);
-      if (!currentDate || unlockDate > currentDate) {
-        novelActivityMap.set(chapter.novel_id, unlockDate);
-      }
-    });
-
-    // Convert map to array and sort by date
-    const orderedNovelIds = Array.from(novelActivityMap.entries())
-      .sort((a, b) => b[1].getTime() - a[1].getTime())
-      .map(([id]) => id);
-    
-    // Get all novel IDs that are not in orderedNovelIds
-    const novelsWithoutActivity = allNovels
-      .filter(novel => !orderedNovelIds.includes(novel.id))
-      .map(novel => novel.id);
-    
-    // Combine IDs, putting novels with activity first
-    const allNovelIds = [...orderedNovelIds, ...novelsWithoutActivity];
-
-    // Then fetch the full novel data in the correct order
+    // Build the base query
     let query = supabase
       .from('novels')
       .select(`
@@ -324,17 +265,6 @@ export async function getNovels(options: GetNovelsOptions = {}): Promise<{ novel
           custom_url_label,
           author_bio
         ),
-        chapters (
-          id,
-          title,
-          chapter_number,
-          part_number,
-          publish_at,
-          coins,
-          volume_id,
-          age_rating,
-          created_at
-        ),
         categories:categories_on_novels (
           category:category_id (
             id,
@@ -343,7 +273,8 @@ export async function getNovels(options: GetNovelsOptions = {}): Promise<{ novel
             updated_at
           )
         )
-      `);
+      `, { count: 'exact' })
+      .order('created_at', { ascending: false });
 
     // Apply category filters if provided
     if (categories?.included && categories.included.length > 0) {
@@ -353,27 +284,15 @@ export async function getNovels(options: GetNovelsOptions = {}): Promise<{ novel
       query = query.not('categories', 'cs', `{${categories.excluded.join(',')}}`);
     }
 
-    // Only apply ID filtering if we have novels
-    if (allNovelIds.length > 0) {
-      query = query.in('id', allNovelIds);
-    }
+    // Apply pagination
+    query = query.range(offset, offset + limit - 1);
 
-    const { data, error } = await query;
+    const { data, error, count } = await query;
 
     if (error) throw error;
 
-    // Sort the novels to match the order of allNovelIds
-    const sortedNovels = data?.sort((a: Novel, b: Novel) => {
-      const aIndex = allNovelIds.indexOf(a.id);
-      const bIndex = allNovelIds.indexOf(b.id);
-      return aIndex - bIndex;
-    });
-
-    // Apply pagination
-    const paginatedNovels = sortedNovels?.slice(offset, offset + limit);
-
     return {
-      novels: paginatedNovels?.map(novel => ({
+      novels: data?.map(novel => ({
         ...novel,
         coverImageUrl: novel.cover_image_url,
         translator: novel.translator ? {
@@ -387,7 +306,7 @@ export async function getNovels(options: GetNovelsOptions = {}): Promise<{ novel
         } : null,
         categories: novel.categories?.map((item: { category: NovelCategory }) => item.category) || []
       })) || [],
-      total: totalCount || 0
+      total: count || 0
     };
   } catch (error) {
     console.error('Error fetching novels:', error);

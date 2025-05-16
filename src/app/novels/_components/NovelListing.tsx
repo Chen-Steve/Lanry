@@ -2,7 +2,7 @@
 
 import { Novel } from '@/types/database';
 import { useEffect, useState } from 'react';
-import { getCachedNovels, getNovelsWithAdvancedChapters, getTopNovels, getCuratedNovels } from '@/services/novelService';
+import { getCachedNovels, getNovelsWithAdvancedChapters, getTopNovels, getCuratedNovels, getNovelsWithRecentUnlocks } from '@/services/novelService';
 import LoadingGrid from './LoadingGrid';
 import AdvancedChapters from './AdvancedChapters';
 import NewReleases from './RecentReleases';
@@ -38,13 +38,13 @@ const NovelListing = () => {
   useEffect(() => {
     const fetchNovels = async () => {
       try {
-        // Fetch all novels with pagination
-        const { novels: allNovels, total } = await getCachedNovels({
-          limit: ITEMS_PER_PAGE,
-          offset: (currentPage - 1) * ITEMS_PER_PAGE
-        });
+        // Fetch novels with recent chapter updates
+        const { novels: updatedNovels, total } = await getNovelsWithRecentUnlocks(
+          ITEMS_PER_PAGE,
+          (currentPage - 1) * ITEMS_PER_PAGE
+        );
         
-        setNovels(allNovels);
+        setNovels(updatedNovels);
         setTotalNovels(total);
         
         // Only fetch featured novels and recent novels on first page load
@@ -52,7 +52,7 @@ const NovelListing = () => {
           const topNovels = await getTopNovels();
           setFeaturedNovels(topNovels);
           
-          // Fetch recent novels (no pagination needed since we only show top 10)
+          // Fetch newest novels (no pagination needed since we only show top 10)
           const { novels: recentNovelsList } = await getCachedNovels({
             limit: 10,
             offset: 0
@@ -119,7 +119,8 @@ const NovelListing = () => {
           id: novel.id,
           slug: novel.slug,
           title: novel.title,
-          coverImageUrl: novel.coverImageUrl || null
+          coverImageUrl: novel.coverImageUrl || null,
+          createdAt: novel.created_at
         }))}
         className="mb-2"
       />

@@ -2,20 +2,26 @@ import Link from 'next/link';
 import NovelCover from './NovelCover';
 import { useRef, useEffect } from 'react';
 
-interface NewReleaseNovel {
+interface NewestNovel {
   id: string;
   slug: string;
   title: string;
   coverImageUrl: string | null;
+  createdAt: string; // ISO date string for when the novel was created
 }
 
 interface NewReleasesProps {
-  recentNovels: NewReleaseNovel[];
+  recentNovels: NewestNovel[];
   className?: string;
 }
 
 const NewReleases = ({ recentNovels, className = '' }: NewReleasesProps) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  
+  // Sort novels by creation date, newest first
+  const sortedNovels = [...recentNovels].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
 
   // Add Google Fonts link via useEffect
   useEffect(() => {
@@ -41,7 +47,7 @@ const NewReleases = ({ recentNovels, className = '' }: NewReleasesProps) => {
           style={{ fontFamily: "'Dancing Script', cursive" }} 
           className="text-indigo-600 dark:text-indigo-300 font-bold text-2xl"
         >
-          Recent Releases
+          Newest Novels
         </h2>
       </div>
 
@@ -51,7 +57,7 @@ const NewReleases = ({ recentNovels, className = '' }: NewReleasesProps) => {
           ref={scrollContainerRef}
           className="flex overflow-x-auto scroll-smooth [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/60 [&::-webkit-scrollbar-track]:bg-accent/30 [&::-webkit-scrollbar-track]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-primary"
         >
-          {recentNovels.map(novel => (
+          {sortedNovels.map(novel => (
               <Link
                 key={novel.id}
                 href={`/novels/${novel.slug}`}
