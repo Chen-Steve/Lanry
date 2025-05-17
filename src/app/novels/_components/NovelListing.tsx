@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { getCachedNovels, getNovelsWithAdvancedChapters, getTopNovels, getCuratedNovels, getNovelsWithRecentUnlocks } from '@/services/novelService';
 import LoadingGrid from './LoadingGrid';
 import AdvancedChapters from './AdvancedChapters';
-import NewReleases from './RecentReleases';
+import NewReleases from './NewestNovels';
 import FeaturedNovel from './FeaturedNovel';
 import RegularNovels from './RegularNovels';
 import NovelStatistics from './NovelStatistics';
@@ -19,6 +19,7 @@ const NovelListing = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [featuredNovels, setFeaturedNovels] = useState<Novel[]>([]);
   const [advancedNovels, setAdvancedNovels] = useState<Novel[]>([]);
+  const [advancedNovelsTotal, setAdvancedNovelsTotal] = useState(0);
   const [recentNovels, setRecentNovels] = useState<Novel[]>([]);
   const [curatedNovels, setCuratedNovels] = useState<Novel[]>([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -78,8 +79,13 @@ const NovelListing = () => {
   useEffect(() => {
     const fetchAdvancedNovels = async () => {
       try {
-        const novels = await getNovelsWithAdvancedChapters();
+        const { novels, total } = await getNovelsWithAdvancedChapters(1, 10);
+        console.log('Fetched Advanced Novels:', {
+          novelsCount: novels.length,
+          total
+        });
         setAdvancedNovels(novels);
+        setAdvancedNovelsTotal(total);
       } catch (error) {
         console.error('Error fetching advanced novels:', error);
       }
@@ -139,11 +145,16 @@ const NovelListing = () => {
         onPageChange={handlePageChange}
       />
 
-      <NovelStatistics />
+      <div className="my-4 border-t border-border" />
 
       <AdvancedChapters
-        novels={advancedNovels}
+        initialNovels={advancedNovels}
+        initialTotal={advancedNovelsTotal}
       />
+
+      <div className="my-4 border-t border-border" />
+
+      <NovelStatistics />
     </div>
   );
 };

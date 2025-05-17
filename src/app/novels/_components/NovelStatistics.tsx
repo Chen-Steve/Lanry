@@ -7,26 +7,30 @@ const NovelStatistics = () => {
       icon: 'ph:books-duotone',
       label: 'Total Novels',
       value: 134,
-      color: 'emerald'
+      color: 'emerald',
+      bgImage: 'https://vkgkhipasxqxitwlktwz.supabase.co/storage/v1/object/public/stat-section/novels.jpg'
     },
     {
       icon: 'ph:book-bookmark-duotone',
       label: 'Total Chapters',
       value: 10065,
-      color: 'violet'
+      color: 'violet',
+      bgImage: 'https://vkgkhipasxqxitwlktwz.supabase.co/storage/v1/object/public/stat-section/chapters.avif'
     },
     {
       icon: 'ph:check-circle-duotone',
       label: 'Completed',
       value: 32,
-      color: 'rose'
+      color: 'rose',
+      bgImage: 'https://vkgkhipasxqxitwlktwz.supabase.co/storage/v1/object/public/stat-section/completed.jpg'
     },
     {
       icon: 'ph:users-duotone',
       label: 'Translators',
       value: 43,
       color: 'amber',
-      href: '/translators'
+      href: '/translators',
+      bgImage: 'https://vkgkhipasxqxitwlktwz.supabase.co/storage/v1/object/public/stat-section/translators.jpg'
     }
   ];
 
@@ -35,16 +39,24 @@ const NovelStatistics = () => {
       {stats.map((stat) => {
         const CardContent = (
           <div
-            className={`flex flex-col items-center p-2 sm:p-4 rounded-lg border-2 border-black`}
+            className={`flex flex-col items-center p-2 sm:p-4 rounded-lg border-2 border-black relative overflow-hidden`}
+            style={stat.bgImage ? {
+              backgroundImage: `url(${stat.bgImage})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center'
+            } : {}}
           >
+            {stat.bgImage && (
+              <div className="absolute inset-0 bg-black/40 z-0" />
+            )}
             <Icon 
               icon={stat.icon} 
-              className={`w-6 h-6 sm:w-8 sm:h-8 mb-1 sm:mb-2 text-${stat.color}-400`} 
+              className={`w-6 h-6 sm:w-8 sm:h-8 mb-1 sm:mb-2 text-${stat.color}-400 relative z-10`} 
             />
-            <span className="text-lg sm:text-2xl font-bold mb-0.5 sm:mb-1">
+            <span className="text-lg sm:text-2xl font-bold mb-0.5 sm:mb-1 relative z-10 text-white">
               {(stat.value ?? 0).toLocaleString()}
             </span>
-            <span className="text-xs sm:text-sm text-muted-foreground text-center">
+            <span className="text-xs sm:text-sm text-white text-center relative z-10">
               {stat.label}
             </span>
           </div>

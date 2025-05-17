@@ -1,12 +1,47 @@
 import Link from 'next/link';
 import { Novel } from '@/types/database';
+import { useState } from 'react';
+import { getNovelsWithAdvancedChapters } from '@/services/novelService';
 
 interface AdvancedChaptersProps {
-  novels: Novel[];
+  initialNovels: Novel[];
+  initialTotal: number;
 }
 
-const AdvancedChapters = ({ novels }: AdvancedChaptersProps) => {
+const AdvancedChapters = ({ initialNovels, initialTotal }: AdvancedChaptersProps) => {
+  const [novels, setNovels] = useState<Novel[]>(initialNovels);
+  const [total, setTotal] = useState<number>(initialTotal);
+  const [page, setPage] = useState<number>(1);
+  const [isLoading, setIsLoading] = useState(false);
+  const ITEMS_PER_PAGE = 10;
+
+  const loadMore = async () => {
+    try {
+      setIsLoading(true);
+      const nextPage = page + 1;
+      const { novels: newNovels, total: newTotal } = await getNovelsWithAdvancedChapters(nextPage, ITEMS_PER_PAGE);
+      if (newNovels.length > 0) {
+        setNovels(prev => [...prev, ...newNovels]);
+        setTotal(newTotal);
+        setPage(nextPage);
+      }
+    } catch (error) {
+      console.error('Error loading more novels:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   if (!novels?.length) return null;
+
+  const hasMore = total > novels.length;
+  
+  console.log('Advanced Chapters Debug:', {
+    totalNovels: total,
+    currentlyShowing: novels.length,
+    hasMore,
+    initialTotal
+  });
 
   return (
     <div className="mb-8">
@@ -40,10 +75,27 @@ const AdvancedChapters = ({ novels }: AdvancedChaptersProps) => {
                   </span>
                 </div>
               ))}
+              {novel.chapters?.length === 5 && (
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="text-muted-foreground">. . .</span>
+                </div>
+              )}
             </div>
           </Link>
         ))}
       </div>
+
+      {hasMore && (
+        <div className="mt-4 text-center">
+          <button
+            onClick={loadMore}
+            disabled={isLoading}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors disabled:opacity-50"
+          >
+            {isLoading ? 'Loading...' : 'Load More'}
+          </button>
+        </div>
+      )}
     </div>
   );
 };

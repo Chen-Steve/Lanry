@@ -380,7 +380,10 @@ export async function getNovelsWithRecentUnlocks(
   }
 }
 
-export async function getNovelsWithAdvancedChapters(): Promise<Novel[]> {
+export async function getNovelsWithAdvancedChapters(
+  page: number = 1,
+  limit: number = 10
+): Promise<{ novels: Novel[]; total: number }> {
   try {    
     interface DBNovel {
       id: string;
@@ -394,21 +397,56 @@ export async function getNovelsWithAdvancedChapters(): Promise<Novel[]> {
       }[];
     }
 
-    const { data: novels, error } = await supabase
-      .rpc('get_novels_with_advanced_chapters');
+    // Calculate offset based on page and limit
+    const offset = (page - 1) * limit;
 
-    if (error) throw error;
+    // First get the count
+    const { data: countResult, count: totalCount, error: countError } = await supabase
+      .from('chapters')
+      .select('novel_id', { count: 'exact', head: true })
+      .gt('publish_at', new Date().toISOString())
+      .gt('coins', 0)
+      .not('coins', 'is', null);
 
-    return (novels || []).map((novel: DBNovel) => {
+    console.log('Count Query Result:', { countResult, totalCount, countError });
+
+    if (countError) throw countError;
+
+    // Get the novels with their advanced chapters
+    const { data: result, error: novelsError } = await supabase
+      .rpc('get_novels_with_advanced_chapters', {
+        p_limit: limit,
+        p_offset: offset
+      });
+
+    console.log('Novels Query Result:', { 
+      result, 
+      novelsError,
+      offset,
+      limit
+    });
+
+    if (novelsError) throw novelsError;
+
+    const novels = (result || []).map((novel: DBNovel) => {
       return {
         ...novel,
         coverImageUrl: novel.cover_image_url,
         chapters: novel.chapters || []
       };
     }) as Novel[];
+
+    const response = {
+      novels,
+      total: totalCount || 0
+    };
+
+    console.log('Final Response:', response);
+
+    return response;
   } catch (error) {
     console.error('Error fetching novels with advanced chapters:', error);
-    return [];
+    return { novels: [], total: 0 };
   }
 }
 
