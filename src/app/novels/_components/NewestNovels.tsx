@@ -41,23 +41,22 @@ const NewReleases = ({ recentNovels, className = '' }: NewReleasesProps) => {
   if (recentNovels.length === 0) return null;
 
   return (
-    <div className={`mt-2 w-full max-w-[95%] mx-auto ${className}`}>
-      <div className="flex items-center mb-2">
-        <h2 
-          style={{ fontFamily: "'Dancing Script', cursive" }} 
-          className="text-indigo-600 dark:text-indigo-300 font-bold text-2xl"
-        >
-          Newest Novels
-        </h2>
-      </div>
+    <div className={`mt-2 ${className}`}>
+      <div className="bg-[#f7f3ec] dark:bg-zinc-900 rounded-lg">
+        <div className="p-4">
+          <h2 
+            style={{ fontFamily: "'Dancing Script', cursive" }} 
+            className="text-indigo-600 dark:text-indigo-300 font-bold text-2xl mb-4"
+          >
+            Newest Novels
+          </h2>
 
-      <div className="bg-[#f7f3ec] dark:bg-zinc-900 rounded-lg p-4">
-        {/* Carousel Container */}
-        <div 
-          ref={scrollContainerRef}
-          className="flex overflow-x-auto scroll-smooth [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/60 [&::-webkit-scrollbar-track]:bg-accent/30 [&::-webkit-scrollbar-track]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-primary"
-        >
-          {sortedNovels.map(novel => (
+          {/* Carousel Container */}
+          <div 
+            ref={scrollContainerRef}
+            className="flex overflow-x-auto scroll-smooth [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/60 [&::-webkit-scrollbar-track]:bg-accent/30 [&::-webkit-scrollbar-track]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-primary"
+          >
+            {sortedNovels.map(novel => (
               <Link
                 key={novel.id}
                 href={`/novels/${novel.slug}`}
@@ -75,6 +74,7 @@ const NewReleases = ({ recentNovels, className = '' }: NewReleasesProps) => {
                 </h3>
               </Link>
             ))}
+          </div>
         </div>
       </div>
     </div>

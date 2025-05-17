@@ -43,29 +43,29 @@ const RegularNovels = ({
 
   return (
     <>
-      <div className="flex items-center p-3">
-        <h2 
-          style={{ fontFamily: "'Dancing Script', cursive" }} 
-          className="text-indigo-600 dark:text-indigo-300 font-bold text-2xl"
-        >
-          Recently Updated
-        </h2>
-      </div>
+      <div className="bg-[#f7f3ec] dark:bg-zinc-900 rounded-lg">
+        <div className="p-4">
+          <h2 
+            style={{ fontFamily: "'Dancing Script', cursive" }} 
+            className="text-indigo-600 dark:text-indigo-300 font-bold text-2xl mb-4"
+          >
+            Recently Updated
+          </h2>
 
-      <div className="bg-[#f7f3ec] dark:bg-zinc-900 rounded-lg p-4">
-        <div className="grid grid-cols-3 xs:grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 gap-x-1.5 sm:gap-x-2">
-          {novels.map((novel, index) => (
-            <NovelCard 
-              key={novel.id} 
-              novel={{
-                ...novel,
-                chapters: novel.chapters || []
-              }}
-              isPriority={index < 6}
-              size="small"
-              className="mt-1.5 sm:mt-2"
-            />
-          ))}
+          <div className="grid grid-cols-3 xs:grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 gap-x-1.5 sm:gap-x-2">
+            {novels.map((novel, index) => (
+              <NovelCard 
+                key={novel.id} 
+                novel={{
+                  ...novel,
+                  chapters: novel.chapters || []
+                }}
+                isPriority={index < 6}
+                size="small"
+                className="mt-1.5 sm:mt-2"
+              />
+            ))}
+          </div>
         </div>
       </div>
 

@@ -131,12 +131,10 @@ const NovelListing = () => {
         className="mb-2"
       />
 
-      {isLoggedIn && curatedNovels.length > 0 && (
-        <CuratedNovels 
-          novels={curatedNovels} 
-          className="mb-1"
-        />
-      )}
+      {isLoggedIn && <CuratedNovels 
+        novels={curatedNovels} 
+        className="mb-2"
+      />}
 
       <RegularNovels
         novels={novels}

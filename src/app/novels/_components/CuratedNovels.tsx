@@ -95,71 +95,71 @@ const CuratedNovels = ({ novels, className = '' }: CuratedNovelsProps) => {
 
   return (
     <div className={`rounded-lg ${className}`}>
-      <div className="relative p-3 pb-0">
-        <h2 
-          style={{ fontFamily: "'Dancing Script', cursive" }} 
-          className="text-indigo-600 dark:text-indigo-300 font-bold text-2xl"
-        >
-          Curated For You
-        </h2>
-      </div>
-      
       <div 
         ref={containerRef}
-        className="bg-[#f7f3ec] dark:bg-zinc-900 rounded-lg p-4 relative"
+        className="bg-[#f7f3ec] dark:bg-zinc-900 rounded-lg relative"
       >
-        {/* Scrollable container for mobile, grid for larger screens */}
-        <div className="relative z-10">
-          <div
-            ref={scrollContainerRef}
-            className="flex overflow-x-auto scroll-smooth [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/60 [&::-webkit-scrollbar-track]:bg-accent/30 [&::-webkit-scrollbar-track]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-primary"
+        <div className="p-4">
+          <h2 
+            style={{ fontFamily: "'Dancing Script', cursive" }} 
+            className="text-indigo-600 dark:text-indigo-300 font-bold text-2xl mb-4"
           >
-            {displayNovels.map((novel) => (
-              <div
-                onClick={() => handleNovelClick(novel)}
-                key={novel.id}
-                className={`group/card flex-none w-20 sm:w-24 flex flex-col p-0.5 bg-card/60 backdrop-blur-sm hover:bg-accent/60 transition-all duration-200 ease-in-out rounded-md mr-1.5 cursor-pointer ${selectedNovelId === novel.id ? 'ring-2 ring-primary shadow-lg' : 'hover:shadow-md'}`}
-              >
-                <div className="w-full aspect-[2/3] relative rounded-sm overflow-hidden">
-                  <NovelCover
-                    coverUrl={novel.coverImageUrl || undefined}
-                    title={novel.title}
-                    size="small"
-                  />
+            Curated For You
+          </h2>
+          
+          {/* Scrollable container for mobile, grid for larger screens */}
+          <div className="relative z-10">
+            <div
+              ref={scrollContainerRef}
+              className="flex overflow-x-auto scroll-smooth [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/60 [&::-webkit-scrollbar-track]:bg-accent/30 [&::-webkit-scrollbar-track]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-primary"
+            >
+              {displayNovels.map((novel) => (
+                <div
+                  onClick={() => handleNovelClick(novel)}
+                  key={novel.id}
+                  className={`group/card flex-none w-20 sm:w-24 flex flex-col p-0.5 bg-card/60 backdrop-blur-sm hover:bg-accent/60 transition-all duration-200 ease-in-out rounded-md mr-1.5 cursor-pointer ${selectedNovelId === novel.id ? 'ring-2 ring-primary shadow-lg' : 'hover:shadow-md'}`}
+                >
+                  <div className="w-full aspect-[2/3] relative rounded-sm overflow-hidden">
+                    <NovelCover
+                      coverUrl={novel.coverImageUrl || undefined}
+                      title={novel.title}
+                      size="small"
+                    />
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-          {selectedNovelId && (
-            <div className="mt-3">
-              {isLoadingDescription ? (
-                <p className="text-sm text-foreground/80">Loading description...</p>
-              ) : descriptionCache[selectedNovelId] ? (
-                (() => {
-                  const selectedNovel = novels.find(n => n.id === selectedNovelId);
-                  if (!selectedNovel) return <p className="text-sm text-foreground/80">Novel details not found.</p>;
-
-                  return (
-                    <div>
-                      <h4 className="text-md font-semibold text-primary mb-1">
-                        {selectedNovel.title}
-                      </h4>
-                      <p className="text-sm text-foreground/90 whitespace-pre-wrap mb-3">
-                        {descriptionCache[selectedNovelId]}
-                      </p>
-                      <Link href={`/novels/${selectedNovel.slug}`} passHref legacyBehavior>
-                        <a className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-                          Read Novel
-                        </a>
-                      </Link>
-                    </div>
-                  );
-                })()
-              ) : (
-                <p className="text-sm text-foreground/80">No description available.</p>
-              )}
+              ))}
             </div>
-          )}
+            {selectedNovelId && (
+              <div className="mt-3">
+                {isLoadingDescription ? (
+                  <p className="text-sm text-foreground/80">Loading description...</p>
+                ) : descriptionCache[selectedNovelId] ? (
+                  (() => {
+                    const selectedNovel = novels.find(n => n.id === selectedNovelId);
+                    if (!selectedNovel) return <p className="text-sm text-foreground/80">Novel details not found.</p>;
+
+                    return (
+                      <div>
+                        <h4 className="text-md font-semibold text-primary mb-1">
+                          {selectedNovel.title}
+                        </h4>
+                        <p className="text-sm text-foreground/90 whitespace-pre-wrap mb-3">
+                          {descriptionCache[selectedNovelId]}
+                        </p>
+                        <Link href={`/novels/${selectedNovel.slug}`} passHref legacyBehavior>
+                          <a className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                            Read Novel
+                          </a>
+                        </Link>
+                      </div>
+                    );
+                  })()
+                ) : (
+                  <p className="text-sm text-foreground/80">No description available.</p>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
