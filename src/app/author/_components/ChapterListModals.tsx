@@ -20,6 +20,13 @@ interface DeleteConfirmationModalProps {
   message: string;
 }
 
+interface MassDeleteConfirmationModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  numberOfChaptersToDelete: number;
+}
+
 interface AssignChaptersModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -128,6 +135,25 @@ export function DeleteConfirmationModal({
         </div>
       </div>
     </div>
+  );
+}
+
+export function MassDeleteConfirmationModal({
+  isOpen,
+  onClose,
+  onConfirm,
+  numberOfChaptersToDelete
+}: MassDeleteConfirmationModalProps) {
+  if (!isOpen) return null;
+
+  return (
+    <DeleteConfirmationModal
+      isOpen={isOpen}
+      onClose={onClose}
+      onConfirm={onConfirm}
+      title="Delete Selected Chapters"
+      message={`Are you sure you want to delete ${numberOfChaptersToDelete} selected ${numberOfChaptersToDelete === 1 ? 'chapter' : 'chapters'}? This action cannot be undone.`}
+    />
   );
 }
 

@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import ChapterEditForm from './ChapterEditForm';
 import ChapterBulkUpload from './ChapterBulkUpload';
 import * as authorChapterService from '../_services/authorChapterService';
-import { VolumeModal, DeleteConfirmationModal, AssignChaptersModal } from './ChapterListModals';
+import { VolumeModal, DeleteConfirmationModal, AssignChaptersModal, MassDeleteConfirmationModal } from './ChapterListModals';
 import { DefaultCoinsModal, GlobalSettingsModal } from './GlobalPublishing';
 import { formatLocalDateTime, isFutureDate } from '@/utils/dateUtils';
 
@@ -77,6 +77,11 @@ export default function ChapterList({
   } | null>(null);
   const [isLoadingSettings, setIsLoadingSettings] = useState(false);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
+
+  // State for mass delete
+  const [isMassDeleting, setIsMassDeleting] = useState(false);
+  const [chaptersToDelete, setChaptersToDelete] = useState<Set<string>>(new Set());
+  const [massDeleteConfirmation, setMassDeleteConfirmation] = useState(false);
 
   const fetchGlobalSettings = useCallback(async () => {
     setIsLoadingSettings(true);
@@ -329,17 +334,60 @@ export default function ChapterList({
     setIsGlobalSettingsModalOpen(true);
   };
 
+  const toggleChapterForDeletion = (chapterId: string) => {
+    setChaptersToDelete(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(chapterId)) {
+        newSet.delete(chapterId);
+      } else {
+        newSet.add(chapterId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleMassDeleteChapters = async () => {
+    try {
+      // Using a for...of loop to ensure sequential deletion or if you need to await each deletion
+      for (const chapterId of chaptersToDelete) {
+        // Assuming onDeleteChapter is synchronous or you don't need to wait for each one individually.
+        // If onDeleteChapter is async and you need to wait, then: await onDeleteChapter(chapterId);
+        onDeleteChapter(chapterId);
+      }
+      toast.success(`${chaptersToDelete.size} chapters deleted successfully`);
+      setChaptersToDelete(new Set());
+      setIsMassDeleting(false);
+      setMassDeleteConfirmation(false);
+      if (onLoadChapters) {
+        await onLoadChapters(); // Refresh chapter list
+      }
+    } catch (error) {
+      console.error('Error deleting chapters in bulk:', error);
+      toast.error('Failed to delete some chapters.');
+    }
+  };
+
   const renderChapter = (chapter: ChapterListChapter) => (
     <div
       key={chapter.id}
-      className={`relative group ${
-        editingChapterId === chapter.id 
+      className={`relative group ${editingChapterId === chapter.id 
           ? 'bg-primary/10 hover:bg-primary/20' 
           : 'hover:bg-accent/50'
-      }`}
-    >
+      } ${isMassDeleting ? 'pl-10' : ''}` // Add padding for checkbox
+    }>
+      {isMassDeleting && (
+        <div className="absolute top-1/2 left-3 -translate-y-1/2">
+          <input 
+            type="checkbox"
+            checked={chaptersToDelete.has(chapter.id)}
+            onChange={() => toggleChapterForDeletion(chapter.id)}
+            className="form-checkbox h-4 w-4 text-primary rounded border-border focus:ring-primary/50 cursor-pointer"
+            onClick={(e) => e.stopPropagation()} // Prevent row click when clicking checkbox
+          />
+        </div>
+      )}
       <div 
-        onClick={() => handleEditChapter(chapter)}
+        onClick={() => !isMassDeleting && handleEditChapter(chapter)} // Only allow edit if not mass deleting
         className="p-3 sm:p-4 cursor-pointer"
       >
         <div className="flex flex-col gap-1 pr-20">
@@ -585,11 +633,28 @@ export default function ChapterList({
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                {isMassDeleting && chaptersToDelete.size > 0 && (
+                   <button
+                    onClick={() => setMassDeleteConfirmation(true)}
+                    className="inline-flex items-center px-2.5 py-1.5 text-sm font-medium text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-900/50 border border-red-300 dark:border-red-700 rounded-md hover:bg-red-200 dark:hover:bg-red-800/50 focus:outline-none focus:ring-2 focus:ring-red-500/50 transition-colors"
+                  >
+                    <Icon icon="mdi:delete-sweep-outline" className="w-4 h-4 mr-1.5" />
+                    Delete Selected ({chaptersToDelete.size})
+                  </button>
+                )}
+                {!isMassDeleting && (
+                  <button
+                    onClick={() => setIsVolumeModalOpen(true)}
+                    className="inline-flex items-center px-2.5 py-1.5 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors"
+                  >
+                    Add Volume
+                  </button>
+                )}
                 <button
-                  onClick={() => setIsVolumeModalOpen(true)}
-                  className="inline-flex items-center px-2.5 py-1.5 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors"
+                  onClick={() => setIsMassDeleting(prev => !prev)}
+                  className={`inline-flex items-center px-2.5 py-1.5 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors ${isMassDeleting ? 'bg-red-500/20 text-red-700 dark:text-red-400' : ''}`}
                 >
-                  Add Volume
+                  {isMassDeleting ? 'Cancel Delete' : 'Delete Chapters'}
                 </button>
                 <button
                   onClick={handleOpenGlobalSettings}
@@ -661,6 +726,13 @@ export default function ChapterList({
             }}
             title="Delete Volume"
             message="Are you sure you want to delete this volume? All chapters in this volume will be unassigned. This action cannot be undone."
+          />
+
+          <MassDeleteConfirmationModal
+            isOpen={massDeleteConfirmation}
+            onClose={() => setMassDeleteConfirmation(false)}
+            onConfirm={handleMassDeleteChapters}
+            numberOfChaptersToDelete={chaptersToDelete.size}
           />
 
           <DefaultCoinsModal
