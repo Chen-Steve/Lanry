@@ -26,7 +26,7 @@ const MobileMenu = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
       {/* Backdrop with improved blur and opacity */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-background/90 backdrop-blur-md z-50 transition-opacity duration-300"
+          className="fixed inset-0 bg-background/80 z-50 transition-opacity duration-300"
           onClick={onClose}
         />
       )}
