@@ -51,7 +51,7 @@ const NewReleases = ({ recentNovels, className = '' }: NewReleasesProps) => {
         </h2>
       </div>
 
-      <div>
+      <div className="bg-[#f7f3ec] dark:bg-zinc-900 rounded-lg p-4">
         {/* Carousel Container */}
         <div 
           ref={scrollContainerRef}

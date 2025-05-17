@@ -95,7 +95,7 @@ const CuratedNovels = ({ novels, className = '' }: CuratedNovelsProps) => {
 
   return (
     <div className={`rounded-lg ${className}`}>
-      <div className="relative p-3 pb-0 bg-background">
+      <div className="relative p-3 pb-0">
         <h2 
           style={{ fontFamily: "'Dancing Script', cursive" }} 
           className="text-indigo-600 dark:text-indigo-300 font-bold text-2xl"
@@ -106,13 +106,13 @@ const CuratedNovels = ({ novels, className = '' }: CuratedNovelsProps) => {
       
       <div 
         ref={containerRef}
-        className="bg-card/60 backdrop-blur-sm relative"
+        className="bg-[#f7f3ec] dark:bg-zinc-900 rounded-lg p-4 relative"
       >
         {/* Scrollable container for mobile, grid for larger screens */}
         <div className="relative z-10">
           <div
             ref={scrollContainerRef}
-            className="flex overflow-x-auto scroll-smooth [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/60 [&::-webkit-scrollbar-track]:bg-accent/30 [&::-webkit-scrollbar-track]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-primary p-3 pt-2"
+            className="flex overflow-x-auto scroll-smooth [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/60 [&::-webkit-scrollbar-track]:bg-accent/30 [&::-webkit-scrollbar-track]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-primary"
           >
             {displayNovels.map((novel) => (
               <div
@@ -131,7 +131,7 @@ const CuratedNovels = ({ novels, className = '' }: CuratedNovelsProps) => {
             ))}
           </div>
           {selectedNovelId && (
-            <div className="mt-3 p-3 bg-accent/20 rounded-md shadow animate-fadeIn">
+            <div className="mt-3">
               {isLoadingDescription ? (
                 <p className="text-sm text-foreground/80">Loading description...</p>
               ) : descriptionCache[selectedNovelId] ? (

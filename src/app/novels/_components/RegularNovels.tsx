@@ -52,19 +52,21 @@ const RegularNovels = ({
         </h2>
       </div>
 
-      <div className="grid grid-cols-3 xs:grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 gap-x-1.5 sm:gap-x-2">
-        {novels.map((novel, index) => (
-          <NovelCard 
-            key={novel.id} 
-            novel={{
-              ...novel,
-              chapters: novel.chapters || []
-            }}
-            isPriority={index < 6}
-            size="small"
-            className="mt-1.5 sm:mt-2"
-          />
-        ))}
+      <div className="bg-[#f7f3ec] dark:bg-zinc-900 rounded-lg p-4">
+        <div className="grid grid-cols-3 xs:grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 gap-x-1.5 sm:gap-x-2">
+          {novels.map((novel, index) => (
+            <NovelCard 
+              key={novel.id} 
+              novel={{
+                ...novel,
+                chapters: novel.chapters || []
+              }}
+              isPriority={index < 6}
+              size="small"
+              className="mt-1.5 sm:mt-2"
+            />
+          ))}
+        </div>
       </div>
 
       {/* Pagination Controls */}
