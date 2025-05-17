@@ -16,7 +16,21 @@ const CuratedNovels = ({ novels, className = '' }: CuratedNovelsProps) => {
   const [selectedNovelId, setSelectedNovelId] = useState<string | null>(null);
   const [descriptionCache, setDescriptionCache] = useState<Record<string, string>>({});
   const [isLoadingDescription, setIsLoadingDescription] = useState<boolean>(false);
+  const [isDesktop, setIsDesktop] = useState<boolean>(false);
   
+  // Handle window resize
+  useEffect(() => {
+    const handleResize = () => {
+      setIsDesktop(window.innerWidth >= 640); // sm breakpoint
+    };
+    
+    // Set initial value
+    handleResize();
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Add Google Fonts link via useEffect
   useEffect(() => {
     // Create a link element for Google Fonts
@@ -33,8 +47,8 @@ const CuratedNovels = ({ novels, className = '' }: CuratedNovelsProps) => {
     };
   }, []);
   
-  // Only display the first 6 novels - adjust if more are needed with smaller covers
-  const displayNovels = novels.slice(0, 6);
+  // Display more novels on desktop
+  const displayNovels = novels.slice(0, isDesktop ? 9 : 6);
 
   // Automatically select and fetch description for the first novel on mount
   useEffect(() => {
@@ -75,9 +89,8 @@ const CuratedNovels = ({ novels, className = '' }: CuratedNovelsProps) => {
   if (novels.length === 0) return null;
   
   const handleNovelClick = (novel: Novel) => {
-    if (selectedNovelId === novel.id) {
-      setSelectedNovelId(null); // Deselect if already selected
-    } else {
+    // Only proceed if the clicked novel is different from the currently selected one
+    if (selectedNovelId !== novel.id) {
       setSelectedNovelId(novel.id);
       if (!descriptionCache[novel.id]) {
         setIsLoadingDescription(true);
@@ -117,9 +130,9 @@ const CuratedNovels = ({ novels, className = '' }: CuratedNovelsProps) => {
                 <div
                   onClick={() => handleNovelClick(novel)}
                   key={novel.id}
-                  className={`group/card flex-none w-20 sm:w-24 flex flex-col p-0.5 bg-card/60 backdrop-blur-sm hover:bg-accent/60 transition-all duration-200 ease-in-out rounded-md mr-1.5 cursor-pointer ${selectedNovelId === novel.id ? 'ring-2 ring-primary shadow-lg' : 'hover:shadow-md'}`}
+                  className={`group/card flex-none w-20 sm:w-[calc(6rem+1rem)] flex flex-col p-0.5 sm:p-2 bg-card/60 backdrop-blur-sm hover:bg-accent/60 transition-all duration-200 ease-in-out rounded-md mr-1.5 cursor-pointer`}
                 >
-                  <div className="w-full aspect-[2/3] relative rounded-sm overflow-hidden">
+                  <div className={`w-full aspect-[2/3] relative rounded-sm overflow-hidden ${selectedNovelId === novel.id ? 'ring-2 ring-primary shadow-lg' : 'hover:shadow-md'}`}>
                     <NovelCover
                       coverUrl={novel.coverImageUrl || undefined}
                       title={novel.title}
@@ -167,14 +180,3 @@ const CuratedNovels = ({ novels, className = '' }: CuratedNovelsProps) => {
 };
 
 export default CuratedNovels;
-
-// Basic CSS for fadeIn animation (add to a global CSS file or style tag if needed)
-/*
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.animate-fadeIn {
-  animation: fadeIn 0.3s ease-out;
-}
-*/ 
