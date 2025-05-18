@@ -76,7 +76,9 @@ export const config = {
      * - favicon.ico (favicon file)
      * - public (public files)
      * - auth (auth pages)
+     * - api (API routes)
+     * - .css, .js, .png, .jpg, .jpeg, .gif, .svg, .ico, .webp, .avif (common asset types)
      */
-    '/((?!_next/static|_next/image|favicon.ico|public|auth).*)',
+    '/((?!_next/static|_next/image|favicon.ico|public|auth|api/|.*\.(?:css|js|png|jpg|jpeg|gif|svg|ico|webp|avif)).*)',
   ],
 };
