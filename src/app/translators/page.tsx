@@ -9,17 +9,74 @@ export const metadata: Metadata = {
   description: "Browse all translators and their novels",
 }
 
-async function getTranslators(page: number = 1) {
-  const itemsPerPage = 9
+type PageInfo = {
+  cursors: string[]
+  currentPage: number
+  hasNextPage: boolean
+}
 
-  // First get all profiles that are translators with their novel counts
-  const translatorsWithCount = await prisma.profile.findMany({
+const ITEMS_PER_PAGE = 9
+const MAX_PAGES_SHOWN = 5
+
+async function getTranslators(page: number = 1) {
+  // Get cursors for requested page and surrounding pages
+  const startPage = Math.max(1, page - Math.floor(MAX_PAGES_SHOWN / 2))
+  const cursors: string[] = []
+  let currentCursor: string | undefined = undefined
+
+  // Fetch cursors for the page window
+  for (let i = 1; i < startPage + MAX_PAGES_SHOWN; i++) {
+    const batch: { id: string }[] = await prisma.profile.findMany({
+      where: {
+        role: 'TRANSLATOR',
+        authoredNovels: { some: {} }
+      },
+      take: ITEMS_PER_PAGE,
+      ...(currentCursor ? {
+        skip: 1,
+        cursor: { id: currentCursor }
+      } : {}),
+      select: { id: true },
+      orderBy: {
+        authoredNovels: {
+          _count: 'desc'
+        }
+      }
+    })
+    
+    if (batch.length === 0) break
+    
+    currentCursor = batch[batch.length - 1].id
+    cursors.push(currentCursor)
+  }
+
+  // Get actual data for current page
+  const skipPages = page - 1
+  const cursor = skipPages > 0 ? cursors[skipPages - 1] : undefined
+
+  const translators = await prisma.profile.findMany({
     where: {
       role: 'TRANSLATOR',
-      authoredNovels: { some: {} } // Only get translators who have novels
+      authoredNovels: { some: {} }
     },
-    select: {
-      id: true,
+    take: ITEMS_PER_PAGE + 1,
+    ...(cursor ? {
+      skip: 1,
+      cursor: { id: cursor }
+    } : {}),
+    include: {
+      authoredNovels: {
+        orderBy: {
+          updatedAt: 'desc'
+        },
+        include: {
+          categories: {
+            include: {
+              category: true
+            }
+          }
+        }
+      },
       _count: {
         select: {
           authoredNovels: true
@@ -33,55 +90,75 @@ async function getTranslators(page: number = 1) {
     }
   })
 
-  // Get total count
-  const total = translatorsWithCount.length
+  const hasNextPage = translators.length > ITEMS_PER_PAGE
+  const displayTranslators = hasNextPage ? translators.slice(0, -1) : translators
 
-  // Get paginated translators with full data
-  const paginatedTranslatorIds = translatorsWithCount
-    .slice((page - 1) * itemsPerPage, page * itemsPerPage)
-    .map(t => t.id)
-
-  // Fetch full data for paginated translators
-  const translatorsWithNovels = await prisma.profile.findMany({
-    where: {
-      id: {
-        in: paginatedTranslatorIds
-      }
-    },
-    include: {
-      authoredNovels: {
-        orderBy: {
-          updatedAt: 'desc'
-        },
-        include: {
-          categories: {
-            include: {
-              category: true
-            }
-          }
-        }
-      }
-    },
-    orderBy: {
-      authoredNovels: {
-        _count: 'desc'
-      }
-    }
-  })
-  
-  // Sort the translators to match the original order from translatorsWithCount
-  const orderedTranslators = paginatedTranslatorIds
-    .map(id => translatorsWithNovels.find(t => t.id === id))
-    .filter((t): t is NonNullable<typeof t> => t !== undefined)
-  
-  return { 
-    translators: orderedTranslators.map(translator => ({
+  return {
+    translators: displayTranslators.map(translator => ({
       ...translator,
       translatedNovels: translator.authoredNovels,
-      translatedNovelsCount: translatorsWithCount.find(t => t.id === translator.id)?._count.authoredNovels || 0
-    })), 
-    total 
+      translatedNovelsCount: translator._count.authoredNovels
+    })),
+    pageInfo: {
+      cursors,
+      currentPage: page,
+      hasNextPage
+    }
   }
+}
+
+function Pagination({ pageInfo }: { pageInfo: PageInfo }) {
+  const { cursors, currentPage, hasNextPage } = pageInfo
+  const startPage = Math.max(1, currentPage - Math.floor(MAX_PAGES_SHOWN / 2))
+  const endPage = startPage + Math.min(MAX_PAGES_SHOWN - 1, cursors.length)
+  
+  return (
+    <nav className="flex items-center gap-2">
+      {currentPage > 1 && (
+        <Link
+          href={currentPage === 2 ? "/translators" : `/translators?page=${currentPage - 1}`}
+          className="px-3 py-2 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors"
+        >
+          Previous
+        </Link>
+      )}
+      
+      {startPage > 1 && (
+        <>
+          <Link
+            href="/translators"
+            className={`px-3 py-2 rounded-lg transition-colors ${
+              currentPage === 1 ? 'bg-primary text-white' : 'bg-secondary hover:bg-secondary/80'
+            }`}
+          >
+            1
+          </Link>
+          {startPage > 2 && <span className="px-2">...</span>}
+        </>
+      )}
+
+      {Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i).map((pageNum) => (
+        <Link
+          key={pageNum}
+          href={pageNum === 1 ? "/translators" : `/translators?page=${pageNum}`}
+          className={`px-3 py-2 rounded-lg transition-colors ${
+            currentPage === pageNum ? 'bg-primary text-white' : 'bg-secondary hover:bg-secondary/80'
+          }`}
+        >
+          {pageNum}
+        </Link>
+      ))}
+
+      {hasNextPage && (
+        <Link
+          href={`/translators?page=${currentPage + 1}`}
+          className="px-3 py-2 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors"
+        >
+          Next
+        </Link>
+      )}
+    </nav>
+  )
 }
 
 export default async function TranslatorsPage({
@@ -90,8 +167,7 @@ export default async function TranslatorsPage({
   searchParams?: { [key: string]: string | string[] | undefined }
 }) {
   const page = typeof searchParams?.page === 'string' ? parseInt(searchParams.page) : 1
-  const { translators, total } = await getTranslators(page)
-  const totalPages = Math.ceil(total / 9)
+  const { translators, pageInfo } = await getTranslators(page)
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
@@ -110,45 +186,11 @@ export default async function TranslatorsPage({
             <TranslatorCard key={translator.id} translator={translator} />
           ))}
           
-          {totalPages > 1 && (
-            <div className="flex justify-center mt-8">
-              <Pagination currentPage={page} totalPages={totalPages} basePath="/translators" />
-            </div>
-          )}
+          <div className="flex justify-center mt-8 col-span-full">
+            <Pagination pageInfo={pageInfo} />
+          </div>
         </div>
       )}
     </div>
-  )
-}
-
-function Pagination({ currentPage, totalPages, basePath }: { 
-  currentPage: number
-  totalPages: number
-  basePath: string
-}) {
-  return (
-    <nav className="flex items-center gap-4">
-      {currentPage > 1 && (
-        <Link
-          href={`${basePath}?page=${currentPage - 1}`}
-          className="px-4 py-2 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors"
-        >
-          Previous
-        </Link>
-      )}
-      
-      <span className="text-sm text-gray-600">
-        Page {currentPage} of {totalPages}
-      </span>
-
-      {currentPage < totalPages && (
-        <Link
-          href={`${basePath}?page=${currentPage + 1}`}
-          className="px-4 py-2 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors"
-        >
-          Next
-        </Link>
-      )}
-    </nav>
   )
 } 

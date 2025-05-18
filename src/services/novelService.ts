@@ -103,24 +103,26 @@ export async function getNovel(id: string, userId?: string): Promise<Novel | nul
     const hasTranslatorAccess = userId ? data.author_profile_id === userId : false;
 
     // Process chapters to include unlock status and translator access
-    const chapters = (data.chapters || []).map((chapter: Chapter) => ({
-      ...chapter,
-      isUnlocked: userId ? 
-        data.chapter_unlocks?.some((unlock: ChapterUnlock) => 
-          unlock.chapter_number === chapter.chapter_number && 
-          unlock.profile_id === userId
-        ) : false,
-      hasTranslatorAccess
-    })).sort((a: Chapter, b: Chapter) => {
-      // First sort by chapter number
-      if (a.chapter_number !== b.chapter_number) {
-        return a.chapter_number - b.chapter_number;
-      }
-      // If chapter numbers are equal, sort by part number
-      const partA = a.part_number ?? 0;
-      const partB = b.part_number ?? 0;
-      return partA - partB;
-    });
+    const chapters = (data.chapters || [])
+      .filter((chapter: Chapter) => chapter.chapter_number >= 0) // Filter out negative chapter numbers (drafts)
+      .map((chapter: Chapter) => ({
+        ...chapter,
+        isUnlocked: userId ? 
+          data.chapter_unlocks?.some((unlock: ChapterUnlock) => 
+            unlock.chapter_number === chapter.chapter_number && 
+            unlock.profile_id === userId
+          ) : false,
+        hasTranslatorAccess
+      })).sort((a: Chapter, b: Chapter) => {
+        // First sort by chapter number
+        if (a.chapter_number !== b.chapter_number) {
+          return a.chapter_number - b.chapter_number;
+        }
+        // If chapter numbers are equal, sort by part number
+        const partA = a.part_number ?? 0;
+        const partB = b.part_number ?? 0;
+        return partA - partB;
+      });
 
     // Calculate ratings
     const ratings = data.novel_ratings || [];

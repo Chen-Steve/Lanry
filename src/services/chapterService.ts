@@ -48,7 +48,8 @@ export async function getChapter(novelId: string, chapterNumber: number, partNum
         )
       `)
       .eq('novel_id', novel.id)
-      .eq('chapter_number', chapterNumber);
+      .eq('chapter_number', chapterNumber)
+      .gte('chapter_number', 0); // Filter out negative chapter numbers (drafts)
 
     // Handle part number filter differently for null values
     if (partNumber === null || partNumber === undefined) {
@@ -155,6 +156,7 @@ export async function getChapterNavigation(novelId: string, currentChapterNumber
         .from('chapters')
         .select('id, chapter_number, part_number, title, publish_at, coins, volume_id')
         .eq('novel_id', novel.id)
+        .gte('chapter_number', 0) // Filter out negative chapter numbers (drafts)
         .order('chapter_number'),
       supabase
         .from('volumes')
@@ -270,7 +272,8 @@ export async function getTotalChapters(novelId: string): Promise<number> {
     const { data: chapters } = await supabase
       .from('chapters')
       .select('chapter_number, part_number, publish_at, coins')
-      .eq('novel_id', novel.id);
+      .eq('novel_id', novel.id)
+      .gte('chapter_number', 0); // Filter out negative chapter numbers (drafts)
 
     if (!chapters) return 0;
 
@@ -327,7 +330,8 @@ export async function getTotalAllChapters(novelId: string): Promise<number> {
     const { count } = await supabase
       .from('chapters')
       .select('*', { count: 'exact', head: true })
-      .eq('novel_id', novel.id);
+      .eq('novel_id', novel.id)
+      .gte('chapter_number', 0); // Filter out negative chapter numbers (drafts)
 
     return count || 0;
   } catch (error) {
@@ -436,6 +440,7 @@ export async function getChaptersForList({
       .from('chapters')
       .select('id, chapter_number, part_number, title, publish_at, coins, age_rating, volume_id', { count: 'exact' })
       .eq('novel_id', novel.id)
+      .gte('chapter_number', 0) // Filter out negative chapter numbers (drafts)
       .order('chapter_number', { ascending: true });
 
     // Apply volume filtering
