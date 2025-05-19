@@ -12,7 +12,10 @@ export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
   const supabase = createMiddlewareClient({ req, res });
 
-  // Get session data
+  // Refresh session if expired - required for Server Components
+  await supabase.auth.getSession();
+
+  // Check if the user is authenticated
   const { data: { session } } = await supabase.auth.getSession();
 
   // If user is authenticated, ensure they have a profile
