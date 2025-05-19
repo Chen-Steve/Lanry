@@ -7,7 +7,7 @@ interface Novel {
   title: string;
   author?: string;
   slug: string | null;
-  cover_image_url: string;
+  cover_image_url: string | null;
 }
 
 interface Bookmark {

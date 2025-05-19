@@ -5,7 +5,7 @@ export interface Novel {
   title: string;
   author?: string;
   slug: string | null;
-  cover_image_url: string;
+  cover_image_url: string | null;
 }
 
 export interface Bookmark {
@@ -13,7 +13,12 @@ export interface Bookmark {
   profileId: string;
   novelId: string;
   createdAt: string;
-  novel: Novel;
+  novel: {
+    id: string;
+    title: string;
+    slug: string;
+    cover_image_url: string | null;
+  };
 }
 
 export interface BookmarkPage {
@@ -21,17 +26,14 @@ export interface BookmarkPage {
   count: number | null;
 }
 
-export const ITEMS_PER_PAGE = 10;
+export const ITEMS_PER_PAGE = 2;
 
 export const fetchBookmarkPage = async (
   userId: string | undefined, 
-  page: number, 
+  _page: number, 
   folderId: string | null
 ): Promise<BookmarkPage> => {
   if (!userId) throw new Error('Not authenticated');
-
-  const from = page * ITEMS_PER_PAGE;
-  const to = from + ITEMS_PER_PAGE - 1;
 
   let query = supabase
     .from('bookmarks')
@@ -45,8 +47,7 @@ export const fetchBookmarkPage = async (
       )
     `, { count: 'exact' })
     .eq('profile_id', userId)
-    .order('created_at', { ascending: false })
-    .range(from, to);
+    .order('created_at', { ascending: false });
 
   if (folderId !== null) {
     query = query.eq('folder_id', folderId);
