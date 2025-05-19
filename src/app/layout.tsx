@@ -21,6 +21,14 @@ export const metadata: Metadata = {
   icons: {
     icon: '/lanry.ico',
   },
+  robots: {
+    index: false,
+    follow: false,
+    googleBot: {
+      index: false,
+      follow: false,
+    },
+  },
 };
 
 export const viewport: Viewport = {
