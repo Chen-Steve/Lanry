@@ -1,7 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
-import { useInView } from 'react-intersection-observer'
+import { useEffect, useRef } from 'react'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { ForumMessage } from '@/types/forum'
 import supabase from '@/lib/supabaseClient'
@@ -16,7 +15,7 @@ interface ThreadMessagesProps {
 const PAGE_SIZE = 20
 
 export default function ThreadMessages({ threadId }: ThreadMessagesProps) {
-  const { ref, inView } = useInView()
+  const loadMoreRef = useRef<HTMLDivElement>(null)
 
   const {
     data,
@@ -51,10 +50,21 @@ export default function ThreadMessages({ threadId }: ThreadMessagesProps) {
   })
 
   useEffect(() => {
-    if (inView && hasNextPage && !isFetchingNextPage) {
-      fetchNextPage()
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage()
+        }
+      },
+      { threshold: 0.1 }
+    )
+
+    if (loadMoreRef.current) {
+      observer.observe(loadMoreRef.current)
     }
-  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage])
+
+    return () => observer.disconnect()
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage])
 
   if (status === 'pending') {
     return (
@@ -89,7 +99,7 @@ export default function ThreadMessages({ threadId }: ThreadMessagesProps) {
               key={message.id}
               message={message}
               isLast={i === data.pages.length - 1 && index === page.length - 1}
-              ref={i === data.pages.length - 1 && index === page.length - 1 ? ref : undefined}
+              ref={i === data.pages.length - 1 && index === page.length - 1 ? loadMoreRef : undefined}
             />
           ))
         ))}
