@@ -115,7 +115,7 @@ const NovelListing = () => {
     <div className="max-w-5xl mx-auto px-4">
       {/* Featured Novels */}
       {featuredNovels.length > 0 && (
-        <div className="relative mb-4">
+        <div className="relative mb-2">
           <FeaturedNovel novels={featuredNovels} />
         </div>
       )}
@@ -143,14 +143,10 @@ const NovelListing = () => {
         onPageChange={handlePageChange}
       />
 
-      <div className="my-4 border-t border-border" />
-
       <AdvancedChapters
         initialNovels={advancedNovels}
         initialTotal={advancedNovelsTotal}
       />
-
-      <div className="my-4 border-t border-border" />
 
       <NovelStatistics />
     </div>

@@ -71,7 +71,7 @@ const RegularNovels = ({
 
       {/* Pagination Controls */}
       {totalPages > 1 && (
-        <div className="flex justify-center items-center gap-2 mt-4 mb-8">
+        <div className="flex justify-center items-center gap-2 mt-4 mb-4">
           <button
             onClick={() => onPageChange(currentPage - 1)}
             disabled={currentPage === 1}
