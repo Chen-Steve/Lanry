@@ -39,22 +39,22 @@ const AdvancedChapters = ({ initialNovels, initialTotal }: AdvancedChaptersProps
 
   return (
     <div className="mb-8">
-      <div className="flex items-center p-3">
-        <h2 
-          style={{ fontFamily: "'Dancing Script', cursive" }} 
-          className="text-indigo-600 dark:text-indigo-300 font-bold text-2xl"
-        >
-          Advanced Chapters
-        </h2>
-      </div>
-
       <div className="bg-[#f7f3ec] dark:bg-zinc-900 rounded-lg p-4">
+        <div className="flex items-center mb-4">
+          <h2 
+            style={{ fontFamily: "'Dancing Script', cursive" }} 
+            className="text-indigo-600 dark:text-indigo-300 font-bold text-2xl"
+          >
+            Advanced Chapters
+          </h2>
+        </div>
+
         <div className="divide-y divide-border">
           {novels.map(novel => (
             <Link
               key={novel.id}
               href={`/novels/${novel.slug}`}
-              className="group block px-3 py-1.5 hover:bg-accent/50 transition-colors"
+              className="group block py-1.5 hover:bg-accent/50 transition-colors"
             >
               <h3 className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">
                 {novel.title}
