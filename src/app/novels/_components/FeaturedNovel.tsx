@@ -6,7 +6,6 @@ import Link from 'next/link';
 import NovelCover from './NovelCover';
 import { useEffect, useState } from 'react';
 import { formatText } from '@/lib/textFormatting';
-import LavaBlobs from './blobs';
 
 interface FeaturedNovelProps {
   novels: Novel[];
@@ -88,11 +87,6 @@ const FeaturedNovel = ({ novels }: FeaturedNovelProps) => {
           }
         }}
       >
-        {/* Lava Blobs Background */}
-        <div className="absolute inset-0 overflow-hidden rounded-lg">
-          <LavaBlobs />
-        </div>
-
         {/* Content */}
         <div className="relative z-10 flex flex-row gap-4 w-full items-start">
           {/* Left Arrow */}
