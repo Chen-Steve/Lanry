@@ -63,7 +63,7 @@ export default function ThemeToggle() {
       </button>
 
       {isOpen && (
-        <div className={`absolute ${isMobile ? 'bottom-full mb-2' : 'top-full mt-2'} right-0 w-40 bg-card rounded-lg shadow-lg border border-border py-1 z-50`}>
+        <div className={`absolute ${isMobile ? 'bottom-full mb-2' : 'top-full mt-2'} left-0 w-40 bg-card rounded-lg shadow-lg border border-border py-1 z-50`}>
           {Object.entries(themeNames).map(([key, name]) => (
             <button
               key={key}
