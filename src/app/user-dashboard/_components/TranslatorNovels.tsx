@@ -78,7 +78,7 @@ export function TranslatorNovels({ translatorId }: { translatorId: string }) {
       <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
         {novels.map((novel) => (
           <Link href={`/novels/${novel.slug}`} key={novel.id} className="group">
-            <div className="rounded-md overflow-hidden bg-[#f7f3ec] dark:bg-zinc-900">
+            <div className="rounded-md overflow-hidden bg-container">
               <div className="aspect-[2/3] relative w-full max-w-[120px] overflow-hidden">
                 {novel.cover_image_url ? (
                   <img

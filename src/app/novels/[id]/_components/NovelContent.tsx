@@ -167,7 +167,7 @@ export const NovelContent = ({
             hideDescription={true}
           />
 
-          <div className="bg-[#f7f3ec] dark:bg-zinc-900 rounded-lg p-4 -mt-8 sm:mt-8">
+          <div className="bg-container rounded-lg p-4 -mt-8 sm:mt-8">
             <NovelSynopsis
               description={description}
               characters={characters}
@@ -190,7 +190,7 @@ export const NovelContent = ({
             </div>
           </div>
 
-          <div className="mt-2 bg-[#f7f3ec] dark:bg-zinc-900 rounded-lg p-6">
+          <div className="mt-2 bg-container rounded-lg p-6">
             <TabGroup
               tabs={tabs}
               value={activeTab}

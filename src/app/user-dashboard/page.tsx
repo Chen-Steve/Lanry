@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Icon } from '@iconify/react';
-import { useTheme } from '@/lib/ThemeContext';
+import { useTheme, Theme } from '@/lib/ThemeContext';
 import { ChangePasswordModal } from './_components/ChangePasswordModal';
 import { UpdateProfileModal } from './_components/UpdateProfileModal';
 import { TranslatorNovels } from './_components/TranslatorNovels';
@@ -42,8 +42,26 @@ const fetchProfile = async (userId?: string): Promise<UserProfile> => {
   return data;
 };
 
+const themeIcons: Record<Theme, string> = {
+  'light': 'ph:sun-bold',
+  'dark': 'ph:moon-bold',
+  'blue': 'ph:drop-bold',
+  'green': 'ph:leaf-bold',
+  'gray': 'ph:circle-half-bold',
+  'orange': 'ph:sun-bold'
+};
+
+const themeNames: Record<Theme, string> = {
+  'light': 'Light',
+  'dark': 'Dark',
+  'blue': 'Blue',
+  'green': 'Green',
+  'gray': 'Gray',
+  'orange': 'Orange'
+};
+
 export default function UserDashboard() {
-  const { theme, toggleTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
   const { handleSignOut, userId: authUserId } = useAuth();
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -139,7 +157,7 @@ export default function UserDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Plan Card - Left Column */}
           <div className="md:col-span-2">
-            <div className="bg-[#f7f3ec] dark:bg-zinc-900 border-0 rounded-lg p-4 h-full">
+            <div className="bg-container border-0 rounded-lg p-4 h-full">
               <h2 className="text-sm font-medium text-muted-foreground mb-1">Your plan</h2>
               {isSubLoading ? (
                 <div className="flex items-center">
@@ -225,7 +243,7 @@ export default function UserDashboard() {
 
           {/* Daily Rewards Card - Right Column */}
           <div>
-            <div className="bg-[#f7f3ec] dark:bg-zinc-900 border-0 rounded-lg p-4 h-full">
+            <div className="bg-container border-0 rounded-lg p-4 h-full">
               <h2 className="text-sm font-medium text-muted-foreground mb-1">Rewards</h2>
               <button 
                 className="w-full flex items-center justify-between p-3 bg-[#faf7f2] dark:bg-zinc-800 hover:bg-[#faf7f2] dark:hover:bg-zinc-700 transition-colors rounded-lg"
@@ -252,7 +270,7 @@ export default function UserDashboard() {
         {/* Account Section */}
         <div className="mt-4">
           <h2 className="text-2xl font-bold mb-4">Account</h2>
-          <div className="bg-[#f7f3ec] dark:bg-zinc-900 border-0 rounded-lg p-6 mb-6">
+          <div className="bg-container border-0 rounded-lg p-6 mb-6">
             <button 
               onClick={() => setIsProfileModalOpen(true)} 
               className="w-full flex items-center justify-between p-4 hover:bg-[#faf7f2] dark:hover:bg-zinc-800 transition-colors rounded-lg"
@@ -275,24 +293,34 @@ export default function UserDashboard() {
               <Icon icon="ph:caret-right" className="text-xl text-muted-foreground" />
             </button>
 
-            <button 
-              className="w-full flex items-center justify-between p-4 hover:bg-[#faf7f2] dark:hover:bg-zinc-800 transition-colors rounded-lg"
-              onClick={toggleTheme}
-            >
-              <div className="flex items-center">
-                <Icon icon={theme === 'dark' ? "ph:sun-bold" : "ph:moon-bold"} className="text-xl mr-4" />
-                <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
+            <div className="p-4 bg-container rounded-lg">
+              <div className="space-y-2">
+                <div className="text-sm font-medium text-gray-600 dark:text-gray-400">Theme</div>
+                <div className="space-y-2">
+                  {Object.entries(themeNames).map(([key, name]) => (
+                    <button
+                      key={key}
+                      onClick={() => setTheme(key as Theme)}
+                      className={`w-full flex items-center justify-between p-3 rounded-lg transition-colors ${
+                        theme === key 
+                          ? 'bg-card' 
+                          : 'hover:bg-card'
+                      }`}
+                    >
+                      <div className="flex items-center">
+                        <Icon icon={themeIcons[key as Theme]} className="text-xl mr-4" />
+                        <span>{name}</span>
+                      </div>
+                      {theme === key && (
+                        <div className="w-4 h-4 text-primary">
+                          <Icon icon="ph:check-bold" />
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div className={`
-                w-9 h-5 rounded-full p-0.5 transition-colors duration-200
-                ${theme === 'dark' ? 'bg-primary' : 'bg-gray-200'}
-              `}>
-                <div className={`
-                  w-4 h-4 rounded-full bg-white transition-transform duration-200
-                  ${theme === 'dark' ? 'translate-x-4' : 'translate-x-0'}
-                `} />
-              </div>
-            </button>
+            </div>
           </div>
         </div>
         
@@ -301,7 +329,7 @@ export default function UserDashboard() {
         <div className="mt-6">
           <button 
             onClick={handleSignOut}
-            className="w-full bg-[#f7f3ec] dark:bg-zinc-900 border-0 rounded-lg p-4 flex items-center gap-3 hover:bg-[#faf7f2] dark:hover:bg-zinc-800 transition-colors"
+            className="w-full bg-container border-0 rounded-lg p-4 flex items-center gap-3 hover:bg-[#faf7f2] dark:hover:bg-zinc-800 transition-colors"
           >
             <Icon icon="ph:sign-out" className="text-xl" />
             <span className="font-medium">Log out</span>

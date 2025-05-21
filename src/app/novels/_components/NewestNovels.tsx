@@ -42,7 +42,7 @@ const NewReleases = ({ recentNovels, className = '' }: NewReleasesProps) => {
 
   return (
     <div className={`mt-2 ${className}`}>
-      <div className="bg-[#f7f3ec] dark:bg-zinc-900 rounded-lg">
+      <div className="bg-container rounded-lg">
         <div className="p-4">
           <h2 
             style={{ fontFamily: "'Dancing Script', cursive" }} 

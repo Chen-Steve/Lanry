@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useTheme } from '@/lib/ThemeContext';
+import { useTheme, Theme } from '@/lib/ThemeContext';
 import supabase from '@/lib/supabaseClient';
 import ChapterPurchaseHistory from '@/app/author/_components/ChapterPurchaseHistory';
 import NovelStatistics from '@/app/author/_components/NovelStatistics';
@@ -11,13 +11,31 @@ import NovelManagement from '@/app/author/_components/NovelManagement';
 import NovelComments from '@/app/author/_components/NovelComments';
 import { Icon } from '@iconify/react';
 
+const themeIcons: Record<Theme, string> = {
+  'light': 'ph:sun-bold',
+  'dark': 'ph:moon-bold',
+  'blue': 'ph:drop-bold',
+  'green': 'ph:leaf-bold',
+  'gray': 'ph:circle-half-bold',
+  'orange': 'ph:sun-bold'
+};
+
+const themeNames: Record<Theme, string> = {
+  'light': 'Light',
+  'dark': 'Dark',
+  'blue': 'Blue',
+  'green': 'Green',
+  'gray': 'Gray',
+  'orange': 'Orange'
+};
+
 export default function AuthorDashboard() {
   const [activeTab, setActiveTab] = useState('manage-novels');
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const router = useRouter();
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const { theme, toggleTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
 
   useEffect(() => {
     const checkAuthorization = async () => {
@@ -81,11 +99,11 @@ export default function AuthorDashboard() {
       <div className={`w-64 bg-background border-r border-border fixed left-0 h-full z-40 transition-transform duration-300 lg:translate-x-0 ${
         isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
-        <div className="p-4 pt-16 lg:pt-4">
-          <a href="https://lanry.space/" className="text-2xl font-bold mb-6 block text-center text-foreground">
-            Lanry
-          </a>
-          <nav className="flex flex-col gap-2">
+        <div className="flex flex-col h-full">
+          <nav className="flex-1 p-4">
+            <a href="https://lanry.space/" className="text-2xl font-bold mb-6 block text-center text-foreground">
+              Lanry
+            </a>
             <button
               onClick={() => setActiveTab('manage-novels')}
               className={`w-full py-2 px-4 rounded-lg transition-colors text-left ${
@@ -153,15 +171,27 @@ export default function AuthorDashboard() {
             </button>
             
             <div className="mt-auto pt-4 border-t border-border">
-              <button
-                onClick={toggleTheme}
-                className="w-full py-2 px-4 rounded-lg transition-colors text-left text-muted-foreground hover:bg-accent/50"
-              >
-                <span className="flex items-center gap-2">
-                  <Icon icon={theme === 'dark' ? "ph:sun-bold" : "ph:moon-bold"} className="w-5 h-5" />
-                  {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-                </span>
-              </button>
+              <div className="space-y-2">
+                <div className="text-sm font-medium text-muted-foreground">Theme</div>
+                <div className="space-y-1">
+                  {Object.entries(themeNames).map(([key, name]) => (
+                    <button
+                      key={key}
+                      onClick={() => setTheme(key as Theme)}
+                      className={`w-full py-2 px-4 rounded-lg transition-colors text-left ${
+                        theme === key
+                          ? 'bg-accent text-accent-foreground'
+                          : 'text-muted-foreground hover:bg-accent/50'
+                      }`}
+                    >
+                      <span className="flex items-center gap-2">
+                        <Icon icon={themeIcons[key as Theme]} className="w-5 h-5" />
+                        {name}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           </nav>
         </div>

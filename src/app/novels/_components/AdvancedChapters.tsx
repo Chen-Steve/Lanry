@@ -39,7 +39,7 @@ const AdvancedChapters = ({ initialNovels, initialTotal }: AdvancedChaptersProps
 
   return (
     <div className="mb-8">
-      <div className="bg-[#f7f3ec] dark:bg-zinc-900 rounded-lg p-4">
+      <div className="bg-container rounded-lg p-4">
         <div className="flex items-center mb-4">
           <h2 
             style={{ fontFamily: "'Dancing Script', cursive" }} 

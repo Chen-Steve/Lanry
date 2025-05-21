@@ -43,7 +43,7 @@ const RegularNovels = ({
 
   return (
     <>
-      <div className="bg-[#f7f3ec] dark:bg-zinc-900 rounded-lg">
+      <div className="bg-container rounded-lg">
         <div className="p-4">
           <h2 
             style={{ fontFamily: "'Dancing Script', cursive" }} 

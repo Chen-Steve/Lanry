@@ -110,7 +110,7 @@ const CuratedNovels = ({ novels, className = '' }: CuratedNovelsProps) => {
     <div className={`rounded-lg ${className}`}>
       <div 
         ref={containerRef}
-        className="bg-[#f7f3ec] dark:bg-zinc-900 rounded-lg relative"
+        className="bg-container rounded-lg relative"
       >
         <div className="p-4">
           <h2 

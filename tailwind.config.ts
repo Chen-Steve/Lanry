@@ -80,6 +80,9 @@ const config: Config = {
           },
         }
       },
+      backgroundColor: {
+        container: 'var(--container)',
+      },
     },
   },
   plugins: [],

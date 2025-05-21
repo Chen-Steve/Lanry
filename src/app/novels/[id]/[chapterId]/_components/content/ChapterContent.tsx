@@ -499,7 +499,7 @@ export default function ChapterContent({
         {/* Author's Thoughts Section - Only show if not indefinitely locked */}
         {!isIndefinitelyLocked && authorThoughts && authorThoughts.trim() !== '' && (
           <div className="mt-8 max-w-2xl mx-auto">
-            <div className="relative bg-[#faf7f2] dark:bg-zinc-800 rounded-lg p-6 border border-border shadow-sm">
+            <div className="relative bg-card rounded-lg p-6 border border-border shadow-sm">
               <div className="relative mb-4">
                 {/* Like Button - Absolute positioned */}
                 <div className="absolute right-0 top-0">
@@ -549,7 +549,7 @@ export default function ChapterContent({
                   <div className="min-w-0">
                     <div className="relative">
                       <h3 
-                        className="text-lg font-medium text-gray-700 dark:text-gray-200 whitespace-nowrap overflow-hidden hover:overflow-x-auto md:overflow-visible scrollbar-none group"
+                        className="text-lg font-medium text-foreground whitespace-nowrap overflow-hidden hover:overflow-x-auto md:overflow-visible scrollbar-none group"
                         style={{
                           maxWidth: 'calc(100% - 8px)',
                           scrollbarWidth: 'none',
@@ -562,7 +562,7 @@ export default function ChapterContent({
                         </span>
                       </h3>
                       {/* Gradient fade effect */}
-                      <div className="absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-[#faf7f2] dark:from-zinc-800 pointer-events-none group-hover:opacity-0 transition-opacity md:hidden" />
+                      <div className="absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-card pointer-events-none group-hover:opacity-0 transition-opacity md:hidden" />
                       {/* Scroll indicator */}
                       <div 
                         className="absolute -right-1 top-1/2 -translate-y-1/2 text-muted-foreground/50 cursor-pointer hover:text-muted-foreground transition-colors md:hidden"
@@ -582,7 +582,7 @@ export default function ChapterContent({
               </div>
 
               <div 
-                className="prose prose-sm md:prose-base text-gray-700 dark:text-gray-300 dark:prose-invert mb-6"
+                className="prose prose-sm md:prose-base text-foreground dark:prose-invert mb-6"
                 style={getTextStyles(fontFamily, fontSize - 1)}
                 dangerouslySetInnerHTML={{ __html: formatText(filterExplicitContent(authorThoughts)) }}
               />

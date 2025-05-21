@@ -3,19 +3,20 @@
 @tailwind utilities;
 
 :root {
-  --background: #F2EEE5;
+  --background: #ffffff;
   --foreground: #171717;
   --primary: #4F46E5;
   --primary-foreground: #ffffff;
-  --secondary: #E5E1D8;
+  --secondary: #f1f5f9;
   --secondary-foreground: #1F2937;
   --muted: #F3F4F6;
   --muted-foreground: #6B7280;
-  --accent: #F7F4ED;
+  --accent: #F8FAFC;
   --accent-foreground: #1F2937;
-  --border: #E5E1D8;
+  --border: #E2E8F0;
   --card: #fff;
   --primary-rgb: 79, 70, 229;
+  --container: #f8fafc;
 }
 
 :root[class~="dark"] {
@@ -32,6 +33,75 @@
   --border: #27272A;
   --card: #18181B;
   --primary-rgb: 99, 102, 241;
+  --container: rgb(24 24 27);
+}
+
+:root[class~="orange"] {
+  --background: #F2EEE5;
+  --foreground: #171717;
+  --primary: #4F46E5;
+  --primary-foreground: #ffffff;
+  --secondary: #E5E1D8;
+  --secondary-foreground: #1F2937;
+  --muted: #F3F4F6;
+  --muted-foreground: #6B7280;
+  --accent: #F7F4ED;
+  --accent-foreground: #1F2937;
+  --border: #E5E1D8;
+  --card: #fff;
+  --primary-rgb: 79, 70, 229;
+  --container: #f7f3ec;
+}
+
+:root[class~="blue"] {
+  --background: #EDF2FF;
+  --foreground: #364FC7;
+  --primary: #4263EB;
+  --primary-foreground: #ffffff;
+  --secondary: #DBE4FF;
+  --secondary-foreground: #364FC7;
+  --muted: #E7ECFF;
+  --muted-foreground: #748FFC;
+  --accent: #DBE4FF;
+  --accent-foreground: #364FC7;
+  --border: #BAC8FF;
+  --card: #F8F9FF;
+  --primary-rgb: 66, 99, 235;
+  --container: #dbe4ff;
+}
+
+:root[class~="green"] {
+  --background: #EDF9ED;
+  --foreground: #2B8A3E;
+  --primary: #2F9E44;
+  --primary-foreground: #ffffff;
+  --secondary: #E6F7E6;
+  --secondary-foreground: #2B8A3E;
+  --muted: #DCF5DC;
+  --muted-foreground: #37B24D;
+  --accent: #E6F7E6;
+  --accent-foreground: #2B8A3E;
+  --border: #D3F0D3;
+  --card: #F4FDF4;
+  --primary-rgb: 47, 158, 68;
+  --container: #E6F7E6;
+}
+
+:root[class~="gray"] {
+  --background: #F3F4F6;
+  --foreground: #374151;
+  --primary: #4B5563;
+  --primary-foreground: #ffffff;
+  --secondary: #E5E7EB;
+  --secondary-foreground: #374151;
+  --muted: #D1D5DB;
+  --muted-foreground: #6B7280;
+  --accent: #E5E7EB;
+  --accent-foreground: #374151;
+  --border: #D1D5DB;
+  --card: #ffffff;
+  --primary-rgb: 75, 85, 99;
+  --container: #E5E7EB;
 }
 
 body {

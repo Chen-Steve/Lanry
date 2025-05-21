@@ -103,7 +103,7 @@ export default function CommentBar({
       />
       <div
         ref={barRef}
-        className={`comment-sidebar fixed right-0 top-0 bottom-0 w-full md:w-[400px] bg-[#F2EEE5] dark:bg-gray-900 shadow-lg z-50 
+        className={`comment-sidebar fixed right-0 top-0 bottom-0 w-full md:w-[400px] bg-container shadow-lg z-50 
                   overflow-hidden flex flex-col ${isVisible ? 'show' : ''}`}
       >
         <div className="h-full flex flex-col">
@@ -114,7 +114,7 @@ export default function CommentBar({
             </div>
             <button 
               onClick={handleCloseWithAnimation} 
-              className="p-2 hover:bg-[#faf7f2] dark:hover:bg-zinc-800 rounded-full transition-colors text-black dark:text-white"
+              className="p-2 hover:bg-accent/50 rounded-full transition-colors text-black dark:text-white"
               aria-label="Close comments"
             >
               <Icon icon="mdi:close" className="text-xl" />
@@ -123,7 +123,7 @@ export default function CommentBar({
 
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {comments.map((comment) => (
-              <div key={comment.id} className="bg-[#faf7f2] dark:bg-zinc-800 rounded-lg p-3">
+              <div key={comment.id} className="bg-card rounded-lg p-3">
                 <div className="flex gap-3">
                   <Link href={`/user-dashboard?id=${comment.profile_id}`} className="flex-shrink-0">
                     <div className="w-8 h-8 rounded-full overflow-hidden bg-blue-500">
@@ -185,14 +185,14 @@ export default function CommentBar({
                         <div className="flex items-center gap-1">
                           <button
                             onClick={() => handleEdit(comment.id, comment.content)}
-                            className="p-1 hover:bg-[#F2EEE5] dark:hover:bg-gray-700 rounded-full transition-colors flex-shrink-0"
+                            className="p-1 hover:bg-accent/50 rounded-full transition-colors flex-shrink-0"
                             aria-label="Edit comment"
                           >
                             <Icon icon="mdi:pencil-outline" className="text-gray-500 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 w-4 h-4" />
                           </button>
                           <button
                             onClick={() => onDeleteComment(comment.id)}
-                            className="p-1 hover:bg-[#F2EEE5] dark:hover:bg-gray-700 rounded-full transition-colors flex-shrink-0"
+                            className="p-1 hover:bg-accent/50 rounded-full transition-colors flex-shrink-0"
                             aria-label="Delete comment"
                           >
                             <Icon icon="mdi:delete-outline" className="text-gray-500 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 w-4 h-4" />
@@ -207,7 +207,7 @@ export default function CommentBar({
                           onChange={(e) => setEditContent(e.target.value)}
                           placeholder="Edit your comment..."
                           className="w-full p-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm resize-none 
-                                   bg-[#faf7f2] dark:bg-zinc-800 focus:ring-2 focus:ring-amber-500 focus:border-transparent 
+                                   bg-card focus:ring-2 focus:ring-amber-500 focus:border-transparent 
                                    text-black dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                           rows={2}
                         />

@@ -171,8 +171,8 @@ export default function BookmarksContent() {
               onClick={() => setActiveTab('bookmarks')}
               className={`px-4 py-2 text-base rounded-md transition-colors ${
                 activeTab === 'bookmarks'
-                  ? 'bg-[#faf7f2] dark:bg-zinc-800 font-medium'
-                  : 'bg-[#f7f3ec] dark:bg-zinc-800 hover:bg-[#faf7f2] dark:hover:bg-zinc-700'
+                  ? 'bg-container font-medium'
+                  : 'bg-container hover:bg-[#faf7f2] dark:hover:bg-zinc-700'
               }`}
             >
               All Bookmarks
@@ -181,8 +181,8 @@ export default function BookmarksContent() {
               onClick={() => setActiveTab('folders')}
               className={`px-4 py-2 text-base rounded-md transition-colors ${
                 activeTab === 'folders'
-                  ? 'bg-[#faf7f2] dark:bg-zinc-800 font-medium'
-                  : 'bg-[#f7f3ec] dark:bg-zinc-800 hover:bg-[#faf7f2] dark:hover:bg-zinc-700'
+                  ? 'bg-container font-medium'
+                  : 'bg-container hover:bg-[#faf7f2] dark:hover:bg-zinc-700'
               }`}
             >
               Folders
@@ -241,7 +241,7 @@ export default function BookmarksContent() {
       </div>
 
       {activeTab === 'bookmarks' && (
-        <div className="bg-[#f7f3ec] dark:bg-zinc-900 rounded-lg p-4">
+        <div className="bg-container rounded-lg p-4">
           <BookmarkList 
             userId={userId} 
             isOwnProfile={true}
@@ -257,7 +257,7 @@ export default function BookmarksContent() {
         </div>
       )}
       {activeTab === 'folders' && (
-        <div className="bg-[#f7f3ec] dark:bg-zinc-900 rounded-lg p-4">
+        <div className="bg-container rounded-lg p-4">
           <FolderGrid 
             userId={userId} 
             showNewFolderButton={false}

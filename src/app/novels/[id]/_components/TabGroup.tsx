@@ -22,8 +22,8 @@ const TabButton = ({
     onClick={onClick}
     className={`px-4 py-2 text-base rounded-md transition-colors whitespace-nowrap ${
       isActive 
-        ? 'bg-[#faf7f2] dark:bg-zinc-800 font-medium'
-        : 'bg-[#f7f3ec] dark:bg-zinc-800 hover:bg-[#faf7f2] dark:hover:bg-zinc-700'
+        ? 'bg-accent text-accent-foreground font-medium'
+        : 'bg-card hover:bg-accent/50 text-muted-foreground hover:text-foreground'
     }`}
   >
     {label}
