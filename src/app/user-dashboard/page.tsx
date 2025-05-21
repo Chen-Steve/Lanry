@@ -151,10 +151,10 @@ export default function UserDashboard() {
 
   // Current user's dashboard
   return (
-    <div className="container mx-auto px-4 py-6 max-w-5xl">
-      <div className="flex flex-col gap-6">
+    <div className="container mx-auto px-4 max-w-5xl">
+      <div className="flex flex-col gap-2">
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
           {/* Plan Card - Left Column */}
           <div className="md:col-span-2">
             <div className="bg-container border-0 rounded-lg p-4 h-full">
@@ -268,9 +268,11 @@ export default function UserDashboard() {
         </div>
 
         {/* Account Section */}
-        <div className="mt-4">
-          <h2 className="text-2xl font-bold mb-4">Account</h2>
-          <div className="bg-container border-0 rounded-lg p-6 mb-6">
+        <div>
+          <div className="bg-container border-0 rounded-lg">
+            <div className="px-4 pt-4">
+              <h2 className="text-2xl font-bold">Account</h2>
+            </div>
             <button 
               onClick={() => setIsProfileModalOpen(true)} 
               className="w-full flex items-center justify-between p-4 hover:bg-[#faf7f2] dark:hover:bg-zinc-800 transition-colors rounded-lg"
@@ -294,27 +296,23 @@ export default function UserDashboard() {
             </button>
 
             <div className="p-4 bg-container rounded-lg">
-              <div className="space-y-2">
-                <div className="text-sm font-medium text-gray-600 dark:text-gray-400">Theme</div>
-                <div className="space-y-2">
+              <div>
+                <div className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-3">Theme</div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {Object.entries(themeNames).map(([key, name]) => (
                     <button
                       key={key}
                       onClick={() => setTheme(key as Theme)}
-                      className={`w-full flex items-center justify-between p-3 rounded-lg transition-colors ${
+                      className={`flex items-center p-2.5 rounded-lg transition-colors ${
                         theme === key 
-                          ? 'bg-card' 
+                          ? 'bg-card ring-2 ring-primary/20' 
                           : 'hover:bg-card'
                       }`}
                     >
-                      <div className="flex items-center">
-                        <Icon icon={themeIcons[key as Theme]} className="text-xl mr-4" />
-                        <span>{name}</span>
-                      </div>
+                      <Icon icon={themeIcons[key as Theme]} className={`text-lg mr-2 ${theme === key ? 'text-primary' : ''}`} />
+                      <span className="text-sm">{name}</span>
                       {theme === key && (
-                        <div className="w-4 h-4 text-primary">
-                          <Icon icon="ph:check-bold" />
-                        </div>
+                        <Icon icon="ph:check-bold" className="ml-auto text-primary text-sm" />
                       )}
                     </button>
                   ))}
@@ -326,7 +324,7 @@ export default function UserDashboard() {
         
 
         {/* Log out button at the bottom */}
-        <div className="mt-6">
+        <div>
           <button 
             onClick={handleSignOut}
             className="w-full bg-container border-0 rounded-lg p-4 flex items-center gap-3 hover:bg-[#faf7f2] dark:hover:bg-zinc-800 transition-colors"
