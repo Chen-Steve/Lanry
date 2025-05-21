@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Novel } from '@/types/database';
 import { useState } from 'react';
 import { getNovelsWithAdvancedChapters } from '@/services/novelService';
+import NovelCover from './NovelCover';
 
 interface AdvancedChaptersProps {
   initialNovels: Novel[];
@@ -56,30 +57,41 @@ const AdvancedChapters = ({ initialNovels, initialTotal }: AdvancedChaptersProps
               href={`/novels/${novel.slug}`}
               className="group block py-1.5 hover:bg-accent/50 transition-colors"
             >
-              <h3 className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">
-                {novel.title}
-              </h3>
-              
-              <div className="flex flex-wrap gap-x-4">
-                {novel.chapters?.map((chapter, index) => (
-                  <div key={index} className="flex items-center gap-2 text-xs">
-                    <span className="text-muted-foreground">
-                      Ch.{chapter.chapter_number}
-                      {chapter.part_number && `.${chapter.part_number}`}
-                    </span>
-                    <span className="text-primary">
-                      {chapter.publish_at && new Date(chapter.publish_at).toLocaleDateString(undefined, { 
-                        month: 'short', 
-                        day: 'numeric' 
-                      })}
-                    </span>
+              <div className="flex items-center gap-3">
+                <div className="relative w-12 h-16 flex-shrink-0">
+                  <NovelCover
+                    coverUrl={novel.coverImageUrl}
+                    title={novel.title}
+                    size="thumbnail"
+                  />
+                </div>
+                <div className="flex-grow">
+                  <h3 className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">
+                    {novel.title}
+                  </h3>
+                  
+                  <div className="flex flex-wrap gap-x-4">
+                    {novel.chapters?.map((chapter, index) => (
+                      <div key={index} className="flex items-center gap-2 text-xs">
+                        <span className="text-muted-foreground">
+                          Ch.{chapter.chapter_number}
+                          {chapter.part_number && `.${chapter.part_number}`}
+                        </span>
+                        <span className="text-primary">
+                          {chapter.publish_at && new Date(chapter.publish_at).toLocaleDateString(undefined, { 
+                            month: 'short', 
+                            day: 'numeric' 
+                          })}
+                        </span>
+                      </div>
+                    ))}
+                    {novel.chapters?.length === 5 && (
+                      <div className="flex items-center gap-2 text-xs">
+                        <span className="text-muted-foreground">. . .</span>
+                      </div>
+                    )}
                   </div>
-                ))}
-                {novel.chapters?.length === 5 && (
-                  <div className="flex items-center gap-2 text-xs">
-                    <span className="text-muted-foreground">. . .</span>
-                  </div>
-                )}
+                </div>
               </div>
             </Link>
           ))}
