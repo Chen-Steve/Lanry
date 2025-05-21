@@ -32,6 +32,7 @@ const themeNames: Record<Theme, string> = {
 export default function AuthorDashboard() {
   const [activeTab, setActiveTab] = useState('manage-novels');
   const [isSidebarOpen, setSidebarOpen] = useState(false);
+  const [isThemeDropdownOpen, setIsThemeDropdownOpen] = useState(false);
   const router = useRouter();
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -173,23 +174,44 @@ export default function AuthorDashboard() {
             <div className="mt-auto pt-4 border-t border-border">
               <div className="space-y-2">
                 <div className="text-sm font-medium text-muted-foreground">Theme</div>
-                <div className="space-y-1">
-                  {Object.entries(themeNames).map(([key, name]) => (
-                    <button
-                      key={key}
-                      onClick={() => setTheme(key as Theme)}
-                      className={`w-full py-2 px-4 rounded-lg transition-colors text-left ${
-                        theme === key
-                          ? 'bg-accent text-accent-foreground'
-                          : 'text-muted-foreground hover:bg-accent/50'
-                      }`}
-                    >
+                <div className="relative">
+                  <button
+                    onClick={() => setIsThemeDropdownOpen(!isThemeDropdownOpen)}
+                    className="w-full py-2 px-4 rounded-lg transition-colors text-left bg-accent/50 hover:bg-accent text-foreground"
+                  >
+                    <span className="flex items-center justify-between">
                       <span className="flex items-center gap-2">
-                        <Icon icon={themeIcons[key as Theme]} className="w-5 h-5" />
-                        {name}
+                        <Icon icon={themeIcons[theme]} className="w-5 h-5" />
+                        {themeNames[theme]}
                       </span>
-                    </button>
-                  ))}
+                      <Icon 
+                        icon={isThemeDropdownOpen ? "mdi:chevron-up" : "mdi:chevron-down"} 
+                        className="w-5 h-5" 
+                      />
+                    </span>
+                  </button>
+                  
+                  {isThemeDropdownOpen && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-popover border border-border rounded-lg shadow-lg overflow-hidden z-50">
+                      {Object.entries(themeNames).map(([key, name]) => (
+                        <button
+                          key={key}
+                          onClick={() => {
+                            setTheme(key as Theme);
+                            setIsThemeDropdownOpen(false);
+                          }}
+                          className={`w-full py-2 px-4 transition-colors text-left hover:bg-accent/50 flex items-center gap-2 ${
+                            theme === key
+                              ? 'bg-accent text-accent-foreground'
+                              : 'text-muted-foreground'
+                          }`}
+                        >
+                          <Icon icon={themeIcons[key as Theme]} className="w-5 h-5" />
+                          {name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
