@@ -7,7 +7,6 @@ import Providers from './providers';
 import { Toaster } from 'sonner';
 import { ThemeProvider } from '@/lib/ThemeContext';
 import CookieConsent from './_components/CookieConsent';
-import AdFreeScript from './_components/AdFreeScript';
 
 export const metadata: Metadata = {
   title: "Lanry",
@@ -79,7 +78,6 @@ export default function RootLayout({
       <body className="min-h-screen relative overflow-x-hidden">
         <Providers>
           <ThemeProvider>
-            <AdFreeScript />
             <div className="flex flex-col min-h-screen max-w-[100vw]">
               <Header />
               <div className="flex-grow flex justify-between w-full">
