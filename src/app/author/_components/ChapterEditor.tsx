@@ -42,12 +42,18 @@ export default function ChapterEditor({
   const [highlightOverlay, setHighlightOverlay] = useState<HTMLDivElement | null>(null);
   const [draftValue, setDraftValue] = useState(value);
 
+  // Force initial sync to ensure draftValue is always up-to-date on component mount
+  useEffect(() => {
+    setDraftValue(value);
+  }, []);  // Empty dependency array - only runs once on mount
+
   // Update draft value when main value changes
   useEffect(() => {
-    if (!isFindReplaceOpen) {
+    // Always sync on initial render or when value changes significantly
+    if (!isFindReplaceOpen || Math.abs(value.length - draftValue.length) > 10) {
       setDraftValue(value);
     }
-  }, [value, isFindReplaceOpen]);
+  }, [value, isFindReplaceOpen, draftValue]);
 
   // Add a new effect to sync changes when draftValue changes due to find/replace
   useEffect(() => {
