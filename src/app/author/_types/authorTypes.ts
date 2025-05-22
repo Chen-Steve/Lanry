@@ -4,6 +4,13 @@ export interface NovelEditFormProps {
   novel: DatabaseNovel;
   onCancel: () => void;
   onUpdate: (novel: DatabaseNovel) => void;
+  onChapterEdit: (data: {
+    novelId: string;
+    chapterId?: string;
+    userId: string;
+    volumeId?: string;
+    autoReleaseEnabled?: boolean;
+  }) => void;
 }
 
 export interface ChapterListChapter {
@@ -33,6 +40,7 @@ export interface ChapterListProps {
   novelId: string;
   userId: string;
   onLoadChapters?: () => Promise<void>;
+  onChapterEdit?: (chapterId?: string, volumeId?: string) => void;
 }
 
 export interface AuthorNovel extends Pick<DatabaseNovel, 

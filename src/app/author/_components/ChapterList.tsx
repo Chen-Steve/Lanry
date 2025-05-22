@@ -4,7 +4,6 @@ import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { Icon } from '@iconify/react';
 import { ChapterListProps, ChapterListChapter, Volume } from '../_types/authorTypes';
 import { toast } from 'sonner';
-import ChapterEditForm from './ChapterEditForm';
 import ChapterBulkUpload from './ChapterBulkUpload';
 import * as authorChapterService from '../_services/authorChapterService';
 import { VolumeModal, DeleteConfirmationModal, AssignChaptersModal, MassDeleteConfirmationModal } from './ChapterListModals';
@@ -35,24 +34,7 @@ const isIndefinitelyLocked = (chapter: ChapterListChapter): boolean => {
   return publishDate > fiftyYearsFromNow;
 };
 
-export default function ChapterList({
-  chapters,
-  volumes,
-  editingChapterId,
-  onDeleteChapter,
-  onCreateVolume,
-  onCreateChapter,
-  novelId,
-  userId,
-  onLoadChapters
-}: ChapterListProps) {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isVolumeModalOpen, setIsVolumeModalOpen] = useState(false);
-  const [volumeName, setVolumeName] = useState('');
-  const [volumeNumber, setVolumeNumber] = useState('');
-  const [showChapterForm, setShowChapterForm] = useState(false);
-  const [selectedVolumeId, setSelectedVolumeId] = useState<string | undefined>();
-  const [editingChapter, setEditingChapter] = useState<ChapterListChapter | null>(null);
+export default function ChapterList({  chapters,  volumes,  editingChapterId,  onDeleteChapter,  onCreateVolume,  novelId,  userId,  onLoadChapters,  onChapterEdit}: ChapterListProps) {  const [searchQuery, setSearchQuery] = useState('');  const [isVolumeModalOpen, setIsVolumeModalOpen] = useState(false);  const [volumeName, setVolumeName] = useState('');  const [volumeNumber, setVolumeNumber] = useState('');
   const [deleteConfirmation, setDeleteConfirmation] = useState<{ isOpen: boolean; chapterId: string | null }>({
     isOpen: false,
     chapterId: null
@@ -170,19 +152,18 @@ export default function ChapterList({
     setIsVolumeModalOpen(false);
   };
 
+  // Remove the unused function
+
   const handleCreateChapter = (volumeId?: string) => {
-    setSelectedVolumeId(volumeId);
-    setEditingChapter(null);
-    setShowChapterForm(true);
-    if (onCreateChapter) {
-      onCreateChapter(volumeId);
+    if (onChapterEdit) {
+      onChapterEdit(undefined, volumeId);
     }
   };
 
   const handleEditChapter = (chapter: ChapterListChapter) => {
-    setSelectedVolumeId(chapter.volume_id || undefined);
-    setEditingChapter(chapter);
-    setShowChapterForm(true);
+    if (onChapterEdit) {
+      onChapterEdit(chapter.id, chapter.volume_id || undefined);
+    }
   };
 
   const handleDeleteClick = (chapterId: string) => {
@@ -574,202 +555,178 @@ export default function ChapterList({
 
   return (
     <div className="border border-border rounded-lg overflow-hidden flex flex-col h-[calc(100vh-16rem)]">
-      {showChapterForm ? (
-        <ChapterEditForm
-          novelId={novelId}
-          chapterId={editingChapter?.id}
-          userId={userId}
-          volumeId={selectedVolumeId}
-          onCancel={() => {
-            setShowChapterForm(false);
-            setEditingChapter(null);
-          }}
-          onSave={() => {
-            setShowChapterForm(false);
-            setEditingChapter(null);
-            if (onCreateChapter && !editingChapter) {
-              onCreateChapter(selectedVolumeId);
-            }
-            if (onLoadChapters) {
-              onLoadChapters();
-            }
-          }}
-          autoReleaseEnabled={globalSettings?.autoReleaseEnabled || false}
-        />
-      ) : (
-        <div className="flex flex-col h-full">
-          <div className="bg-accent/50 p-2 sm:p-3 border-b border-border sticky top-0 z-10">
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handleCreateChapter()}
-                  className="inline-flex items-center px-2.5 py-1.5 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors"
-                >
-                  Add Chapter
-                </button>
-                <ChapterBulkUpload
-                  novelId={novelId}
-                  userId={userId}
-                  onUploadComplete={() => {
-                    if (onLoadChapters) {
-                      onLoadChapters();
-                    }
-                  }}
+      <div className="flex flex-col flex-1 overflow-hidden">
+        <div className="bg-accent/50 p-2 sm:p-3 border-b border-border sticky top-0 z-10">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handleCreateChapter()}
+                className="inline-flex items-center px-2.5 py-1.5 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors"
+              >
+                Add Chapter
+              </button>
+              <ChapterBulkUpload
+                novelId={novelId}
+                userId={userId}
+                onUploadComplete={() => {
+                  if (onLoadChapters) {
+                    onLoadChapters();
+                  }
+                }}
+              />
+            </div>
+            <div className="flex items-center gap-4 flex-1">
+              <div className="relative w-64">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search chapters..."
+                  className="w-full pl-8 pr-3 py-1 text-sm bg-background text-foreground placeholder:text-muted-foreground border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors"
+                />
+                <Icon 
+                  icon="mdi:magnify"
+                  className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground"
                 />
               </div>
-              <div className="flex items-center gap-4 flex-1">
-                <div className="relative w-64">
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search chapters..."
-                    className="w-full pl-8 pr-3 py-1 text-sm bg-background text-foreground placeholder:text-muted-foreground border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors"
-                  />
-                  <Icon 
-                    icon="mdi:magnify"
-                    className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground"
-                  />
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                {isMassDeleting && chaptersToDelete.size > 0 && (
-                   <button
-                    onClick={() => setMassDeleteConfirmation(true)}
-                    className="inline-flex items-center px-2.5 py-1.5 text-sm font-medium text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-900/50 border border-red-300 dark:border-red-700 rounded-md hover:bg-red-200 dark:hover:bg-red-800/50 focus:outline-none focus:ring-2 focus:ring-red-500/50 transition-colors"
-                  >
-                    <Icon icon="mdi:delete-sweep-outline" className="w-4 h-4 mr-1.5" />
-                    Delete Selected ({chaptersToDelete.size})
-                  </button>
-                )}
-                {!isMassDeleting && (
-                  <button
-                    onClick={() => setIsVolumeModalOpen(true)}
-                    className="inline-flex items-center px-2.5 py-1.5 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors"
-                  >
-                    Add Volume
-                  </button>
-                )}
-                <button
-                  onClick={() => setIsMassDeleting(prev => !prev)}
-                  className={`inline-flex items-center px-2.5 py-1.5 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors ${isMassDeleting ? 'bg-red-500/20 text-red-700 dark:text-red-400' : ''}`}
+            </div>
+            <div className="flex items-center gap-2">
+              {isMassDeleting && chaptersToDelete.size > 0 && (
+                 <button
+                  onClick={() => setMassDeleteConfirmation(true)}
+                  className="inline-flex items-center px-2.5 py-1.5 text-sm font-medium text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-900/50 border border-red-300 dark:border-red-700 rounded-md hover:bg-red-200 dark:hover:bg-red-800/50 focus:outline-none focus:ring-2 focus:ring-red-500/50 transition-colors"
                 >
-                  {isMassDeleting ? 'Cancel Delete' : 'Delete Chapters'}
+                  <Icon icon="mdi:delete-sweep-outline" className="w-4 h-4 mr-1.5" />
+                  Delete Selected ({chaptersToDelete.size})
                 </button>
+              )}
+              {!isMassDeleting && (
                 <button
-                  onClick={handleOpenGlobalSettings}
-                  className="p-2 text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded-md transition-colors"
-                  title="Chapter Settings"
+                  onClick={() => setIsVolumeModalOpen(true)}
+                  className="inline-flex items-center px-2.5 py-1.5 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors"
                 >
-                  <Icon icon="mdi:cog" className="w-5 h-5" />
+                  Add Volume
                 </button>
-                <span className="text-sm text-muted-foreground ml-2 whitespace-nowrap">
-                  {chapters.length} {chapters.length === 1 ? 'chapter' : 'chapters'}
-                </span>
-              </div>
+              )}
+              <button
+                onClick={() => setIsMassDeleting(prev => !prev)}
+                className={`inline-flex items-center px-2.5 py-1.5 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors ${isMassDeleting ? 'bg-red-500/20 text-red-700 dark:text-red-400' : ''}`}
+              >
+                {isMassDeleting ? 'Cancel Delete' : 'Delete Chapters'}
+              </button>
+              <button
+                onClick={handleOpenGlobalSettings}
+                className="p-2 text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded-md transition-colors"
+                title="Chapter Settings"
+              >
+                <Icon icon="mdi:cog" className="w-5 h-5" />
+              </button>
+              <span className="text-sm text-muted-foreground ml-2 whitespace-nowrap">
+                {chapters.length} {chapters.length === 1 ? 'chapter' : 'chapters'}
+              </span>
             </div>
           </div>
-
-          <div className="overflow-y-auto scrollbar-hide flex-1">
-            {volumes.map(renderVolumeSection)}
-
-            {chaptersGroupedByVolume.noVolumeChapters.length > 0 && (
-              <div className="border-t border-border mt-4">
-                <div className="bg-accent/50 px-3 py-2 flex justify-between items-center">
-                  <h3 className="text-sm font-medium text-foreground">
-                    Unassigned Chapters
-                  </h3>
-                  <button
-                    onClick={() => handleCreateChapter()}
-                    className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-primary hover:text-primary/90 bg-primary/10 hover:bg-primary/20 rounded transition-colors"
-                  >
-                    <Icon icon="mdi:plus" className="w-3.5 h-3.5" />
-                    Add Chapter
-                  </button>
-                </div>
-                <div className="divide-y divide-border mt-2">
-                  {chaptersGroupedByVolume.noVolumeChapters
-                    .sort(sortChapters)
-                    .map(renderChapter)}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Modals */}
-          <VolumeModal
-            isOpen={isVolumeModalOpen}
-            volumeName={volumeName}
-            volumeNumber={volumeNumber}
-            onClose={() => setIsVolumeModalOpen(false)}
-            onSubmit={handleVolumeSubmit}
-            onVolumeNameChange={setVolumeName}
-            onVolumeNumberChange={setVolumeNumber}
-          />
-
-          <DeleteConfirmationModal
-            isOpen={deleteConfirmation.isOpen}
-            onClose={() => setDeleteConfirmation({ isOpen: false, chapterId: null })}
-            onConfirm={handleConfirmDelete}
-            title="Delete Chapter"
-            message="Are you sure you want to delete this chapter? This action cannot be undone."
-          />
-
-          <DeleteConfirmationModal
-            isOpen={deleteVolumeConfirmation.isOpen}
-            onClose={() => setDeleteVolumeConfirmation({ isOpen: false, volumeId: null })}
-            onConfirm={() => {
-              if (deleteVolumeConfirmation.volumeId) {
-                handleDeleteVolume(deleteVolumeConfirmation.volumeId);
-                setDeleteVolumeConfirmation({ isOpen: false, volumeId: null });
-              }
-            }}
-            title="Delete Volume"
-            message="Are you sure you want to delete this volume? All chapters in this volume will be unassigned. This action cannot be undone."
-          />
-
-          <MassDeleteConfirmationModal
-            isOpen={massDeleteConfirmation}
-            onClose={() => setMassDeleteConfirmation(false)}
-            onConfirm={handleMassDeleteChapters}
-            numberOfChaptersToDelete={chaptersToDelete.size}
-          />
-
-          <DefaultCoinsModal
-            isOpen={isDefaultCoinsModalOpen}
-            onClose={() => setIsDefaultCoinsModalOpen(false)}
-            onSubmit={handleDefaultCoinsSubmit}
-          />
-
-          <GlobalSettingsModal
-            isOpen={isGlobalSettingsModalOpen}
-            onClose={() => setIsGlobalSettingsModalOpen(false)}
-            onSubmit={handleGlobalSettingsSubmit}
-            initialSettings={globalSettings || {
-              releaseInterval: 7,
-              fixedPrice: 10,
-              autoReleaseEnabled: false,
-              fixedPriceEnabled: false,
-              publishingDays: [],
-              usePublishingDays: false
-            }}
-            isLoading={isLoadingSettings}
-            isSaving={isSavingSettings}
-            novelId={novelId}
-          />
-
-          <AssignChaptersModal
-            isOpen={isAssignChaptersModalOpen}
-            onClose={() => setIsAssignChaptersModalOpen(false)}
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            chapters={chapters.filter(chapter => chapter.volume_id !== assigningVolumeId)}
-            selectedChapterIds={selectedChapterIds}
-            toggleChapterSelection={toggleChapterSelection}
-            onAssign={handleAssignChapters}
-          />
         </div>
-      )}
+
+        <div className="overflow-y-auto scrollbar-hide flex-1">
+          {volumes.map(renderVolumeSection)}
+
+          {chaptersGroupedByVolume.noVolumeChapters.length > 0 && (
+            <div className="border-t border-border mt-4">
+              <div className="bg-accent/50 px-3 py-2 flex justify-between items-center">
+                <h3 className="text-sm font-medium text-foreground">
+                  Unassigned Chapters
+                </h3>
+                <button
+                  onClick={() => handleCreateChapter()}
+                  className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-primary hover:text-primary/90 bg-primary/10 hover:bg-primary/20 rounded transition-colors"
+                >
+                  <Icon icon="mdi:plus" className="w-3.5 h-3.5" />
+                  Add Chapter
+                </button>
+              </div>
+              <div className="divide-y divide-border mt-2">
+                {chaptersGroupedByVolume.noVolumeChapters
+                  .sort(sortChapters)
+                  .map(renderChapter)}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Modals */}
+        <VolumeModal
+          isOpen={isVolumeModalOpen}
+          volumeName={volumeName}
+          volumeNumber={volumeNumber}
+          onClose={() => setIsVolumeModalOpen(false)}
+          onSubmit={handleVolumeSubmit}
+          onVolumeNameChange={setVolumeName}
+          onVolumeNumberChange={setVolumeNumber}
+        />
+
+        <DeleteConfirmationModal
+          isOpen={deleteConfirmation.isOpen}
+          onClose={() => setDeleteConfirmation({ isOpen: false, chapterId: null })}
+          onConfirm={handleConfirmDelete}
+          title="Delete Chapter"
+          message="Are you sure you want to delete this chapter? This action cannot be undone."
+        />
+
+        <DeleteConfirmationModal
+          isOpen={deleteVolumeConfirmation.isOpen}
+          onClose={() => setDeleteVolumeConfirmation({ isOpen: false, volumeId: null })}
+          onConfirm={() => {
+            if (deleteVolumeConfirmation.volumeId) {
+              handleDeleteVolume(deleteVolumeConfirmation.volumeId);
+              setDeleteVolumeConfirmation({ isOpen: false, volumeId: null });
+            }
+          }}
+          title="Delete Volume"
+          message="Are you sure you want to delete this volume? All chapters in this volume will be unassigned. This action cannot be undone."
+        />
+
+        <MassDeleteConfirmationModal
+          isOpen={massDeleteConfirmation}
+          onClose={() => setMassDeleteConfirmation(false)}
+          onConfirm={handleMassDeleteChapters}
+          numberOfChaptersToDelete={chaptersToDelete.size}
+        />
+
+        <DefaultCoinsModal
+          isOpen={isDefaultCoinsModalOpen}
+          onClose={() => setIsDefaultCoinsModalOpen(false)}
+          onSubmit={handleDefaultCoinsSubmit}
+        />
+
+        <GlobalSettingsModal
+          isOpen={isGlobalSettingsModalOpen}
+          onClose={() => setIsGlobalSettingsModalOpen(false)}
+          onSubmit={handleGlobalSettingsSubmit}
+          initialSettings={globalSettings || {
+            releaseInterval: 7,
+            fixedPrice: 10,
+            autoReleaseEnabled: false,
+            fixedPriceEnabled: false,
+            publishingDays: [],
+            usePublishingDays: false
+          }}
+          isLoading={isLoadingSettings}
+          isSaving={isSavingSettings}
+          novelId={novelId}
+        />
+
+        <AssignChaptersModal
+          isOpen={isAssignChaptersModalOpen}
+          onClose={() => setIsAssignChaptersModalOpen(false)}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          chapters={chapters.filter(chapter => chapter.volume_id !== assigningVolumeId)}
+          selectedChapterIds={selectedChapterIds}
+          toggleChapterSelection={toggleChapterSelection}
+          onAssign={handleAssignChapters}
+        />
+      </div>
     </div>
   );
 }

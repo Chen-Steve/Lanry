@@ -7,6 +7,7 @@ import { fetchAuthorNovels, updateNovel } from '@/app/author/_services/novelMana
 import { deleteNovel } from '@/app/author/_services/novelUploadService';
 import { toast } from 'sonner';
 import NovelEditForm from './NovelEditForm';
+import ChapterEditForm from './ChapterEditForm';
 
 interface NovelWithChapters extends Novel {
   chapterCount: number;
@@ -53,8 +54,15 @@ export default function NovelManagement() {
   const [searchQuery, setSearchQuery] = useState('');
   const [novelToDelete, setNovelToDelete] = useState<NovelWithChapters | null>(null);
   const [novelToEdit, setNovelToEdit] = useState<NovelWithChapters | null>(null);
-  const [view, setView] = useState<'list' | 'edit'>('list');
+  const [view, setView] = useState<'list' | 'edit' | 'chapter'>('list');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [chapterEditData, setChapterEditData] = useState<{
+    novelId: string;
+    chapterId?: string;
+    userId: string;
+    volumeId?: string;
+    autoReleaseEnabled?: boolean;
+  } | null>(null);
 
   useEffect(() => {
     loadNovels();
@@ -80,6 +88,27 @@ export default function NovelManagement() {
   const handleEditCancel = () => {
     setNovelToEdit(null);
     setView('list');
+  };
+
+  const handleChapterEdit = (data: {
+    novelId: string;
+    chapterId?: string;
+    userId: string;
+    volumeId?: string;
+    autoReleaseEnabled?: boolean;
+  }) => {
+    setChapterEditData(data);
+    setView('chapter');
+  };
+
+  const handleChapterEditCancel = () => {
+    setChapterEditData(null);
+    setView('edit');
+  };
+
+  const handleChapterEditSave = () => {
+    setChapterEditData(null);
+    setView('edit');
   };
 
   const handleEditComplete = async (updatedNovel: Novel) => {
@@ -115,12 +144,23 @@ export default function NovelManagement() {
     }
   };
 
+  if (view === 'chapter' && chapterEditData) {
+    return (
+      <ChapterEditForm
+        {...chapterEditData}
+        onCancel={handleChapterEditCancel}
+        onSave={handleChapterEditSave}
+      />
+    );
+  }
+
   if (view === 'edit' && novelToEdit) {
     return (
       <NovelEditForm
         novel={novelToEdit}
         onCancel={handleEditCancel}
         onUpdate={handleEditComplete}
+        onChapterEdit={handleChapterEdit}
       />
     );
   }

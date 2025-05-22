@@ -25,7 +25,7 @@ interface NovelCharacter {
   orderIndex: number;
 }
 
-export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFormProps) {
+export default function NovelEditForm({ novel, onCancel, onUpdate, onChapterEdit }: NovelEditFormProps) {
   const { userId, isLoading: isAuthLoading } = useAuth();
   const [title, setTitle] = useState(novel.title);
   const [author, setAuthor] = useState(novel.author || '');
@@ -465,6 +465,15 @@ export default function NovelEditForm({ novel, onCancel, onUpdate }: NovelEditFo
                   novelId={novel.id}
                   userId={userId || ''}
                   onLoadChapters={loadChapters}
+                  onChapterEdit={(chapterId?: string, volumeId?: string) => {
+                    onChapterEdit({
+                      novelId: novel.id,
+                      chapterId,
+                      userId: userId || '',
+                      volumeId,
+                      autoReleaseEnabled: false // You might want to pass this from global settings
+                    });
+                  }}
                 />
               )}
             </div>

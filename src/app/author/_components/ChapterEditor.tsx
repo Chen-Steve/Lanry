@@ -311,9 +311,13 @@ export default function ChapterEditor({
             {/* Author's Thoughts Section */}
             {authorThoughts !== undefined && onAuthorThoughtsChange && !className.includes('flex-1') && (
               <div className="mt-4 md:mt-6 space-y-2">
-                <div className="flex items-center gap-2">
-                  <Icon icon="mdi:thought-bubble" className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
-                  <h3 className="text-base md:text-lg font-medium text-foreground">Your Thoughts</h3>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <Icon icon="mdi:thought-bubble" className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
+                    <h3 className="text-base md:text-lg font-medium text-foreground">Your Thoughts</h3>
+                  </div>
+                  <div className="h-4 w-px bg-border" />
+                  <SaveDefaultThoughtsCheckbox authorThoughts={authorThoughts} />
                 </div>
                 <textarea
                   value={authorThoughts}
@@ -321,8 +325,6 @@ export default function ChapterEditor({
                   className="w-full p-3 md:p-4 border border-border rounded-lg text-foreground min-h-[150px] focus:outline-none focus:ring-2 focus:ring-primary resize-y bg-background placeholder:text-muted-foreground"
                   placeholder="Share your thoughts about this chapter (it will be visible at the bottom of the chapter)"
                 />
-                {/* Save as default checkbox */}
-                <SaveDefaultThoughtsCheckbox authorThoughts={authorThoughts} />
               </div>
             )}
           </>
@@ -354,14 +356,14 @@ function SaveDefaultThoughtsCheckbox({ authorThoughts }: { authorThoughts: strin
   };
 
   return (
-    <label className="flex items-center gap-2 mt-2 select-none cursor-pointer text-sm text-muted-foreground">
+    <label className="flex items-center gap-2 select-none cursor-pointer text-sm text-muted-foreground">
       <input
         type="checkbox"
         checked={isChecked}
         onChange={handleChange}
         className="accent-primary"
       />
-      Save as default for new chapters
+      Save as default
     </label>
   );
 } 

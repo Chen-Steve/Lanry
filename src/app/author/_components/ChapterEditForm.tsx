@@ -252,34 +252,68 @@ export default function ChapterEditForm({
 
   return (
     <form onSubmit={handleSave} className="flex flex-col h-full">
-      <div className="flex justify-between items-center bg-background py-2 sticky top-0 z-10 px-4 border-b border-border">
+      <div className="flex justify-between items-center bg-background py-2 sticky top-0 z-10 px-4">
         <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="bg-muted text-foreground py-2 px-3 rounded-lg hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors border border-border inline-flex items-center gap-1"
+            aria-label="Go back"
+          >
+            <Icon icon="mdi:arrow-left" className="w-4 h-4" />
+            <span className="inline-flex items-center gap-1">Back</span>
+          </button>
           <h3 className="text-lg font-semibold text-foreground">
             {currentChapterId ? 'Edit Chapter' : 'Add New Chapter'}
           </h3>
+        </div>
+        <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => setIsExtraChapter(!isExtraChapter)}
-            className={`px-3 py-1.5 rounded-lg border border-border flex items-center gap-2 transition-colors ${
-              isExtraChapter 
-                ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300 border-purple-300 dark:border-purple-700' 
-                : 'text-muted-foreground hover:text-foreground hover:bg-accent'
-            }`}
-            title={isExtraChapter ? "Convert to regular chapter" : "Convert to extra chapter"}
+            onClick={handleSaveDraft}
+            disabled={isSaving}
+            className="bg-muted text-foreground py-2 px-3 rounded-lg hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors border border-border inline-flex items-center gap-2"
           >
-            <Icon icon={isExtraChapter ? "material-symbols:star-rounded" : "material-symbols:star-outline-rounded"} className="w-4 h-4" />
-            <span className="text-sm font-medium">Extra</span>
+            {isSaving && isDraft ? (
+              <span className="inline-flex items-center gap-1">
+                <Icon icon="mdi:loading" className="w-4 h-4 animate-spin" />
+                Saving...
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1">
+                <Icon icon="mdi:content-save-edit" className="w-4 h-4" />
+                Save Draft
+              </span>
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={isSaving}
+            className="bg-primary text-primary-foreground py-2 px-3 rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors inline-flex items-center gap-2"
+          >
+            {isSaving && !isDraft ? (
+              <span className="inline-flex items-center gap-1">
+                <Icon icon="mdi:loading" className="w-4 h-4 animate-spin" />
+                Saving...
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1">
+                <Icon icon="mdi:content-save" className="w-4 h-4" />
+                {isAlreadyPublished ? 'Save' : 'Publish'}
+              </span>
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={onCancel}
+            className="bg-muted text-foreground py-2 px-3 rounded-lg hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors border border-border inline-flex items-center gap-1"
+            aria-label="Close chapter editor"
+          >
+            <Icon icon="mdi:close" className="w-4 h-4" />
+            <span className="inline-flex items-center gap-1">Close</span>
           </button>
         </div>
-        <button
-          type="button"
-          onClick={onCancel}
-          className="text-muted-foreground hover:text-foreground transition-colors"
-          title="Close"
-          aria-label="Close chapter editor"
-        >
-          <Icon icon="mdi:close" className="w-6 h-6" />
-        </button>
       </div>
 
       {autoReleaseEnabled && !currentChapterId && (
@@ -293,8 +327,8 @@ export default function ChapterEditForm({
         </div>
       )}
 
-      <div className="flex gap-3 sticky z-10 bg-background py-2 px-4 border-b border-border">
-        <div className="w-32">
+      <div className="flex gap-3 sticky z-10 bg-background px-4">
+        <div className="w-24">
           <input
             id="chapterNumber"
             type="number"
@@ -308,7 +342,7 @@ export default function ChapterEditForm({
         </div>
 
         {!isExtraChapter && (
-          <div className="w-32">
+          <div className="w-24">
             <input
               id="partNumber"
               type="number"
@@ -320,6 +354,20 @@ export default function ChapterEditForm({
             />
           </div>
         )}
+
+        <button
+          type="button"
+          onClick={() => setIsExtraChapter(!isExtraChapter)}
+          className={`px-3 py-1.5 rounded-lg border border-border flex items-center gap-2 transition-colors ${
+            isExtraChapter 
+              ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300 border-purple-300 dark:border-purple-700' 
+              : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+          }`}
+          title={isExtraChapter ? "Convert to regular chapter" : "Convert to extra chapter"}
+        >
+          <Icon icon={isExtraChapter ? "material-symbols:star-rounded" : "material-symbols:star-outline-rounded"} className="w-4 h-4" />
+          <span className="text-sm font-medium">Extra</span>
+        </button>
 
         <input
           id="title"
@@ -360,7 +408,7 @@ export default function ChapterEditForm({
         </button>
       </div>
 
-      <div className={`${isExpanded ? 'fixed inset-0 z-50 bg-background overflow-hidden' : 'flex-1 overflow-y-auto px-4 py-4'}`}>
+      <div className={`${isExpanded ? 'fixed inset-0 z-50 bg-background overflow-hidden' : 'flex-1 overflow-y-auto px-4 pt-2'}`}>
         <div className={`${isExpanded ? 'h-full p-4 flex flex-col' : 'space-y-4'}`}>
           <div className={`relative ${isExpanded ? 'flex-1 flex flex-col overflow-hidden' : ''}`}>
             <button
@@ -397,47 +445,6 @@ export default function ChapterEditForm({
           )}
         </div>
       </div>
-
-      {!isExpanded && (
-        <div className="flex gap-4 bg-background py-2 px-4 sticky bottom-0 z-10 border-t border-border">
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={isSaving}
-            className="flex-1 bg-primary text-primary-foreground py-3 px-4 rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {isSaving && !isDraft ? (
-              <span className="inline-flex items-center gap-2">
-                <Icon icon="mdi:loading" className="w-5 h-5 animate-spin" />
-                Saving...
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-2">
-                <Icon icon="mdi:content-save" className="w-5 h-5" />
-                {isAlreadyPublished ? 'Save Chapter' : 'Publish Chapter'}
-              </span>
-            )}
-          </button>
-          <button
-            type="button"
-            onClick={handleSaveDraft}
-            disabled={isSaving}
-            className="flex-1 bg-muted text-foreground py-3 px-4 rounded-lg hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors border border-border"
-          >
-            {isSaving && isDraft ? (
-              <span className="inline-flex items-center gap-2">
-                <Icon icon="mdi:loading" className="w-5 h-5 animate-spin" />
-                Saving Draft...
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-2">
-                <Icon icon="mdi:content-save-edit" className="w-5 h-5" />
-                Save as Draft
-              </span>
-            )}
-          </button>
-        </div>
-      )}
     </form>
   );
 } 
