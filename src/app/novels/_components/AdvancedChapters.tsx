@@ -39,9 +39,9 @@ const AdvancedChapters = ({ initialNovels, initialTotal }: AdvancedChaptersProps
   
 
   return (
-    <div className="mb-8">
+    <div className="mb-2">
       <div className="bg-container rounded-lg p-4">
-        <div className="flex items-center mb-4">
+        <div className="flex items-start mb-4">
           <h2 
             style={{ fontFamily: "'Dancing Script', cursive" }} 
             className="text-indigo-600 dark:text-indigo-300 font-bold text-2xl"
@@ -55,9 +55,9 @@ const AdvancedChapters = ({ initialNovels, initialTotal }: AdvancedChaptersProps
             <Link
               key={novel.id}
               href={`/novels/${novel.slug}`}
-              className="group block py-1.5 hover:bg-accent/50 transition-colors"
+              className="group block mb-2 py-1 hover:bg-accent/50 transition-colors"
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-start gap-3">
                 <div className="relative w-12 h-16 flex-shrink-0">
                   <NovelCover
                     coverUrl={novel.coverImageUrl}
@@ -65,7 +65,7 @@ const AdvancedChapters = ({ initialNovels, initialTotal }: AdvancedChaptersProps
                     size="thumbnail"
                   />
                 </div>
-                <div className="flex-grow">
+                <div className="flex-grow pt-0">
                   <h3 className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">
                     {novel.title}
                   </h3>

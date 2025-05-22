@@ -11,6 +11,7 @@ import RegularNovels from './RegularNovels';
 import NovelStatistics from './NovelStatistics';
 import CuratedNovels from './CuratedNovels';
 import supabase from '@/lib/supabaseClient';
+import BulletinBoard from './BulletinBoard';
 
 const NovelListing = () => {
   const [novels, setNovels] = useState<Novel[]>([]);
@@ -130,6 +131,8 @@ const NovelListing = () => {
         }))}
         className="mb-2"
       />
+
+      <BulletinBoard />
 
       {isLoggedIn && <CuratedNovels 
         novels={curatedNovels} 

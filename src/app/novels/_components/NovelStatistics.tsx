@@ -35,11 +35,11 @@ const NovelStatistics = () => {
   ];
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 px-2 mb-4 mt-4">
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
       {stats.map((stat) => {
         const CardContent = (
           <div
-            className={`flex flex-col items-center p-2 sm:p-4 rounded-lg border-2 border-black relative overflow-hidden`}
+            className={`flex flex-col items-center p-4 sm:p-4 rounded-lg relative overflow-hidden`}
             style={stat.bgImage ? {
               backgroundImage: `url(${stat.bgImage})`,
               backgroundSize: 'cover',
