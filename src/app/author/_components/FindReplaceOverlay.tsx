@@ -15,6 +15,7 @@ interface FindReplaceState {
   currentMatch: number;
   matches: number[];
   draftValue: string;
+  caseSensitive: boolean;
 }
 
 export default function FindReplaceOverlay({ 
@@ -30,7 +31,8 @@ export default function FindReplaceOverlay({
     replaceText: '',
     currentMatch: -1,
     matches: [],
-    draftValue: value
+    draftValue: value,
+    caseSensitive: false
   });
 
   // Update draft value when main value changes
@@ -49,9 +51,19 @@ export default function FindReplaceOverlay({
     if (!searchText) return [];
     const matches: number[] = [];
     let index = -1;
-    while ((index = state.draftValue.indexOf(searchText, index + 1)) !== -1) {
-      matches.push(index);
+    
+    if (state.caseSensitive) {
+      while ((index = state.draftValue.indexOf(searchText, index + 1)) !== -1) {
+        matches.push(index);
+      }
+    } else {
+      const lowerSearchText = searchText.toLowerCase();
+      const lowerDraftValue = state.draftValue.toLowerCase();
+      while ((index = lowerDraftValue.indexOf(lowerSearchText, index + 1)) !== -1) {
+        matches.push(index);
+      }
     }
+    
     return matches;
   };
 
@@ -74,6 +86,20 @@ export default function FindReplaceOverlay({
       matches,
       currentMatch: matches.length > 0 ? 0 : -1
     }));
+  };
+
+  const handleCaseSensitiveToggle = () => {
+    setState(prev => {
+      const newCaseSensitive = !prev.caseSensitive;
+      // Re-run search with new case sensitivity setting
+      const matches = findAllMatches(prev.searchText);
+      return {
+        ...prev,
+        caseSensitive: newCaseSensitive,
+        matches,
+        currentMatch: matches.length > 0 ? 0 : -1
+      };
+    });
   };
 
   const handleReplace = (e: React.MouseEvent) => {
@@ -106,7 +132,16 @@ export default function FindReplaceOverlay({
     e.stopPropagation();
     
     if (!state.searchText) return;
-    const newText = state.draftValue.replaceAll(state.searchText, state.replaceText);
+    
+    let newText = state.draftValue;
+    
+    if (state.caseSensitive) {
+      newText = newText.replaceAll(state.searchText, state.replaceText);
+    } else {
+      // For case-insensitive replace all, we need to do it manually
+      const regex = new RegExp(state.searchText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+      newText = newText.replace(regex, state.replaceText);
+    }
     
     // Update draft value and parent
     setState(prev => ({ ...prev, draftValue: newText }));
@@ -198,6 +233,14 @@ export default function FindReplaceOverlay({
           type="button"
         >
           Replace All
+        </button>
+        <button
+          onClick={handleCaseSensitiveToggle}
+          className={`p-1 rounded transition-colors ${state.caseSensitive ? 'bg-primary/20 text-primary' : 'hover:bg-accent/50'}`}
+          title={state.caseSensitive ? "Case sensitive (on)" : "Case sensitive (off)"}
+          type="button"
+        >
+          <Icon icon="mdi:case-sensitive-alt" className="w-4 h-4" />
         </button>
         <div className="w-px h-4 bg-border mx-2" />
         <button
