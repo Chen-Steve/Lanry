@@ -5,6 +5,7 @@ import { Icon } from '@iconify/react';
 import type { Novel, Tag } from '@/types/database';
 import { NovelStatus } from '@prisma/client';
 import { debounce } from 'lodash';
+import { useSearchParams } from 'next/navigation';
 import TagSelector from './TagSelector';
 import CategorySelector from './CategorySelector';
 import NovelList from './NovelList';
@@ -19,12 +20,13 @@ interface SearchFilters {
 }
 
 export default function AdvancedSearch() {
+  const searchParams = useSearchParams();
   const [filters, setFilters] = useState<SearchFilters>({
-    query: '',
-    author: '',
+    query: searchParams.get('q') || '',
+    author: searchParams.get('author') || '',
     tags: [],
-    categories: [],
-    page: 1
+    categories: searchParams.getAll('categories') || [],
+    page: parseInt(searchParams.get('page') || '1'),
   });
   const [results, setResults] = useState<Novel[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -36,6 +38,7 @@ export default function AdvancedSearch() {
   const authorInputRef = useRef<HTMLInputElement>(null);
   const authorDropdownRef = useRef<HTMLDivElement>(null);
   const [showFilters, setShowFilters] = useState(false);
+  const isInitialMount = useRef(true);
 
   // Fetch author suggestions
   const debouncedFetchAuthors = useRef(
@@ -91,65 +94,52 @@ export default function AdvancedSearch() {
     };
   }, [debouncedFetchAuthors]);
 
+  // Load tags and initialize filters from URL
   useEffect(() => {
-    // Cache tags in localStorage with error handling
-    const getTags = () => {
+    const initializeFromUrl = async (tags: Tag[]) => {
+      const tagIds = searchParams.getAll('tags');
+      if (tagIds.length > 0) {
+        const selectedTags = tags.filter((tag: Tag) => tagIds.includes(tag.id));
+        setFilters(prev => ({ ...prev, tags: selectedTags }));
+      }
+    };
+
+    const loadTags = async () => {
       try {
+        // Try to get cached tags first
         const cachedTags = localStorage.getItem('availableTags');
-        if (cachedTags) {
-          setAvailableTags(JSON.parse(cachedTags));
+        const tagsTimestamp = localStorage.getItem('tagsTimestamp');
+        const ONE_HOUR = 60 * 60 * 1000;
+        
+        if (cachedTags && tagsTimestamp && Date.now() - parseInt(tagsTimestamp) <= ONE_HOUR) {
+          const tags = JSON.parse(cachedTags);
+          setAvailableTags(tags);
+          await initializeFromUrl(tags);
+          return;
         }
-        return !!cachedTags;
-      } catch (error) {
-        console.warn('Error reading from localStorage:', error);
-        return false;
-      }
-    };
 
-    const storeTags = (tags: Tag[]) => {
-      try {
-        // Try to store tags
-        localStorage.setItem('availableTags', JSON.stringify(tags));
-        localStorage.setItem('tagsTimestamp', Date.now().toString());
-      } catch (error: unknown) {
-        // If storage fails, try to clear old data first
-        if (error instanceof Error && error.name === 'QuotaExceededError') {
-          try {
-            // Clear potentially stale data
-            localStorage.removeItem('availableTags');
-            localStorage.removeItem('tagsTimestamp');
-            // Try storing again
-            localStorage.setItem('availableTags', JSON.stringify(tags));
-            localStorage.setItem('tagsTimestamp', Date.now().toString());
-          } catch (retryError) {
-            // If it still fails, just log and continue
-            console.warn('Unable to store tags in localStorage:', retryError);
-          }
-        }
-      }
-    };
-
-    // Fetch available tags if not cached or expired
-    const fetchTags = async () => {
-      try {
+        // If no cache or expired, fetch from API
         const response = await fetch('/api/tags');
         if (!response.ok) throw new Error('Failed to fetch tags');
-        const data = await response.json();
-        setAvailableTags(data);
-        storeTags(data);
+        const tags = await response.json();
+        
+        setAvailableTags(tags);
+        await initializeFromUrl(tags);
+
+        // Update cache
+        try {
+          localStorage.setItem('availableTags', JSON.stringify(tags));
+          localStorage.setItem('tagsTimestamp', Date.now().toString());
+        } catch (error) {
+          console.warn('Failed to cache tags:', error);
+        }
       } catch (error) {
-        console.error('Error fetching tags:', error);
+        console.error('Error loading tags:', error);
       }
     };
 
-    const hasValidCache = getTags();
-    const tagsTimestamp = localStorage.getItem('tagsTimestamp');
-    const ONE_HOUR = 60 * 60 * 1000;
-
-    if (!hasValidCache || !tagsTimestamp || Date.now() - parseInt(tagsTimestamp) > ONE_HOUR) {
-      fetchTags();
-    }
-  }, []);
+    loadTags();
+  }, []); // Only run on mount
 
   const handleSearch = useCallback(async (resetPage: boolean = false, searchFilters: SearchFilters = filters) => {
     const newPage = resetPage ? 1 : searchFilters.page;
@@ -201,17 +191,40 @@ export default function AdvancedSearch() {
     } finally {
       setIsLoading(false);
     }
-  }, [filters]);
+  }, []);  // Remove filters dependency
 
   // Effect to trigger search when filters change
   useEffect(() => {
-    handleSearch(false, filters);
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    const timeoutId = setTimeout(() => {
+      handleSearch(false, filters);
+    }, 300); // Debounce search to prevent rapid back and forth
+
+    return () => clearTimeout(timeoutId);
   }, [filters, handleSearch]);
 
-  // Initial load effect
+  // Update URL when filters change
   useEffect(() => {
-    handleSearch(true, filters);
-  }, []); // Empty dependency array for initial load only
+    if (isInitialMount.current) {
+      return;
+    }
+    const params = new URLSearchParams();
+
+    if (filters.query) params.set('q', filters.query);
+    if (filters.author) params.set('author', filters.author);
+    filters.tags.forEach(tag => params.append('tags', tag.id));
+    filters.categories.forEach(category => params.append('categories', category));
+    if (filters.status) params.set('status', filters.status);
+    if (filters.page > 1) params.set('page', filters.page.toString());
+
+    const newSearch = params.toString();
+    const currentPath = window.location.pathname;
+    const newUrl = newSearch ? `${currentPath}?${newSearch}` : currentPath;
+    window.history.replaceState({}, '', newUrl);
+  }, [filters]);
 
   const handlePageChange = (newPage: number) => {
     setFilters(prev => ({ ...prev, page: newPage }));
