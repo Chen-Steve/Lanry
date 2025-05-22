@@ -268,7 +268,7 @@ export default function ChapterEditor({
     const pastedText = e.clipboardData.getData('text');
     const formattedText = formatText(pastedText);
     const newText = textarea.value.substring(0, start) + formattedText + textarea.value.substring(end);
-    onChange(newText);
+    handleTextChange(newText);
     setTimeout(() => {
       const newPosition = start + formattedText.length;
       textarea.selectionStart = newPosition;
