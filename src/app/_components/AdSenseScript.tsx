@@ -15,7 +15,7 @@ export default function AdSenseScript() {
         const { data: transactions, error } = await supabase
           .from('coin_transactions')
           .select('amount')
-          .eq('profileId', user.id);
+          .eq('profile_id', user.id);
 
         if (error) {
           console.error('Error fetching coin transactions:', error);
