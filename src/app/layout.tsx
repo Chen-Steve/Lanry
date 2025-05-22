@@ -7,6 +7,7 @@ import Providers from './providers';
 import { Toaster } from 'sonner';
 import { ThemeProvider } from '@/lib/ThemeContext';
 import CookieConsent from './_components/CookieConsent';
+import AdSenseScript from './_components/AdSenseScript';
 
 export const metadata: Metadata = {
   title: "Lanry",
@@ -69,11 +70,7 @@ export default function RootLayout({
             gtag('config', 'G-PVZ6V89JEJ');
           `}
         </Script>
-        <Script 
-          async 
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7984663674761616"
-          crossOrigin="anonymous"
-        />
+        <AdSenseScript />
       </head>
       <body className="min-h-screen relative overflow-x-hidden">
         <Providers>
