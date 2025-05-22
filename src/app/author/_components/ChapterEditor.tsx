@@ -194,7 +194,8 @@ export default function ChapterEditor({
       offset = mark.length * 2;
     }
 
-    onChange(newText);
+    // Use handleTextChange instead of onChange
+    handleTextChange(newText);
     
     setTimeout(() => {
       if (!textareaRef.current) return;
@@ -284,7 +285,7 @@ export default function ChapterEditor({
 
     // Insert the image URL directly
     const newText = textareaRef.current.value.substring(0, start) + imageUrl + textareaRef.current.value.substring(end);
-    onChange(newText);
+    handleTextChange(newText);
 
     // Set cursor position after the inserted URL
     setTimeout(() => {
