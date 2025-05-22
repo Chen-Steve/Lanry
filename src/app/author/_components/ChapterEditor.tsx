@@ -1,7 +1,8 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Icon } from '@iconify/react';
 import FootnoteImageUploader from './FootnoteImageUploader';
 import MarkdownPreview from './MarkdownPreview';
+import FindReplaceOverlay from './FindReplaceOverlay';
 
 interface ChapterEditorProps {
   value: string;
@@ -36,6 +37,98 @@ export default function ChapterEditor({
 }: ChapterEditorProps) {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const [isFindReplaceOpen, setIsFindReplaceOpen] = useState(false);
+  const [matches, setMatches] = useState<{ start: number; end: number }[]>([]);
+  const [highlightOverlay, setHighlightOverlay] = useState<HTMLDivElement | null>(null);
+  const [draftValue, setDraftValue] = useState(value);
+
+  // Update draft value when main value changes
+  useEffect(() => {
+    if (!isFindReplaceOpen) {
+      setDraftValue(value);
+    }
+  }, [value, isFindReplaceOpen]);
+
+  // Add a new effect to sync changes when draftValue changes due to find/replace
+  useEffect(() => {
+    if (isFindReplaceOpen) {
+      onChange(draftValue);
+    }
+  }, [draftValue, isFindReplaceOpen, onChange]);
+
+  // Create and position the highlight overlay
+  useEffect(() => {
+    if (!textareaRef.current) return;
+
+    // Create overlay if it doesn't exist
+    if (!highlightOverlay) {
+      const overlay = document.createElement('div');
+      overlay.style.position = 'absolute';
+      overlay.style.pointerEvents = 'none';
+      overlay.style.backgroundColor = 'transparent';
+      overlay.style.whiteSpace = 'pre-wrap';
+      overlay.style.wordWrap = 'break-word';
+      overlay.style.color = 'transparent';
+      overlay.style.overflow = 'hidden';
+      textareaRef.current.parentElement?.appendChild(overlay);
+      setHighlightOverlay(overlay);
+    }
+
+    // Update overlay position and size
+    if (highlightOverlay && textareaRef.current) {
+      const textarea = textareaRef.current;
+      const computedStyle = window.getComputedStyle(textarea);
+      
+      Object.assign(highlightOverlay.style, {
+        top: `${textarea.offsetTop}px`,
+        left: `${textarea.offsetLeft}px`,
+        width: `${textarea.offsetWidth}px`,
+        height: `${textarea.offsetHeight}px`,
+        fontSize: computedStyle.fontSize,
+        fontFamily: computedStyle.fontFamily,
+        lineHeight: computedStyle.lineHeight,
+        padding: computedStyle.padding,
+        border: 'none',
+        boxSizing: 'border-box'
+      });
+    }
+  }, [textareaRef.current]);
+
+  // Update highlights when matches change
+  useEffect(() => {
+    if (!highlightOverlay || !textareaRef.current) return;
+
+    const text = value;
+    let html = text;
+    
+    // Apply highlights from end to start to maintain indices
+    [...matches].reverse().forEach(({ start, end }) => {
+      html = html.slice(0, start) +
+        `<span style="background-color: #ffd70066; color: transparent;">${html.slice(start, end)}</span>` +
+        html.slice(end);
+    });
+
+    // Replace newlines with <br> for proper display
+    html = html.replace(/\n/g, '<br>');
+    highlightOverlay.innerHTML = html;
+  }, [matches, value]);
+
+  // Clean up overlay on unmount
+  useEffect(() => {
+    return () => {
+      if (highlightOverlay) {
+        highlightOverlay.remove();
+      }
+    };
+  }, []);
+
+  // Handle textarea scroll
+  const handleScroll = () => {
+    if (highlightOverlay && textareaRef.current) {
+      highlightOverlay.scrollTop = textareaRef.current.scrollTop;
+      highlightOverlay.scrollLeft = textareaRef.current.scrollLeft;
+    }
+  };
 
   type FormatType = 'bold' | 'italic' | 'underline' | 'footnote' | 'link' | 'divider';
   
@@ -118,6 +211,12 @@ export default function ChapterEditor({
     }, 0);
   };
 
+  const handleTextChange = (newValue: string) => {
+    setDraftValue(newValue);
+    // Always update parent component with latest changes
+    onChange(newValue);
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.ctrlKey) {
       switch (e.key.toLowerCase()) {
@@ -135,7 +234,7 @@ export default function ChapterEditor({
           break;
         case 'f':
           e.preventDefault();
-          applyFormatting('footnote');
+          setIsFindReplaceOpen(prev => !prev);
           break;
         case 'k':
           e.preventDefault();
@@ -148,7 +247,10 @@ export default function ChapterEditor({
       const start = textarea.selectionStart;
       const end = textarea.selectionEnd;
       const newText = textarea.value.substring(0, start) + '\n' + textarea.value.substring(end);
-      onChange(newText);
+      
+      // Use handleTextChange instead of direct onChange
+      handleTextChange(newText);
+      
       setTimeout(() => {
         textarea.selectionStart = start + 1;
         textarea.selectionEnd = start + 1;
@@ -201,6 +303,23 @@ export default function ChapterEditor({
 
   return (
     <div className={`${className.includes('flex-1') ? 'flex flex-col h-full' : 'space-y-2'} w-full`}>
+      <FindReplaceOverlay
+        isOpen={isFindReplaceOpen}
+        onClose={() => {
+          // Force a final sync before closing
+          onChange(draftValue);
+          console.log('Syncing final value before closing overlay:', draftValue.slice(0, 50) + '...');
+          setIsFindReplaceOpen(false);
+          setMatches([]);
+        }}
+        value={draftValue}
+        onMatchUpdate={setMatches}
+        onDraftChange={(newDraft) => {
+          console.log('Draft changed to:', newDraft.slice(0, 50) + '...');
+          setDraftValue(newDraft);
+        }}
+      />
+
       {/* Formatting Toolbar */}
       <div className="flex flex-wrap items-center gap-1 p-1 bg-muted border border-border rounded-lg">
         {!isPreviewMode && (
@@ -232,10 +351,18 @@ export default function ChapterEditor({
             <button
               onClick={() => applyFormatting('footnote')}
               className="p-1.5 md:p-2 hover:bg-accent/50 rounded-lg transition-colors"
-              title="Add Footnote (Ctrl+F)"
+              title="Add Footnote"
               type="button"
             >
               <Icon icon="mdi:format-superscript" className="w-4 h-4 md:w-5 md:h-5 text-foreground" />
+            </button>
+            <button
+              onClick={() => setIsFindReplaceOpen(prev => !prev)}
+              className="p-1.5 md:p-2 hover:bg-accent/50 rounded-lg transition-colors"
+              title="Find and Replace (Ctrl+F)"
+              type="button"
+            >
+              <Icon icon="mdi:find-replace" className="w-4 h-4 md:w-5 md:h-5 text-foreground" />
             </button>
             <button
               onClick={() => applyFormatting('link')}
@@ -295,18 +422,21 @@ export default function ChapterEditor({
           </div>
         ) : (
           <>
-            <textarea
-              ref={textareaRef}
-              value={value}
-              onChange={e => onChange(e.target.value)}
-              onKeyDown={handleKeyDown}
-              onPaste={handlePaste}
-              className={`w-full p-3 md:p-4 border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary bg-background placeholder:text-muted-foreground ${
-                className.includes('flex-1') ? 'flex-1 absolute inset-0' : 'min-h-[400px] resize-y'
-              }`}
-              placeholder="Write your chapter here... (Ctrl or ⌘+B: Bold, Ctrl or ⌘+I: Italic, Ctrl or ⌘+U: Underline, Ctrl or ⌘+F: Footnote, Ctrl or ⌘+K: Link)"
-              style={className.includes('flex-1') ? { resize: 'none' } : undefined}
-            />
+            <div className="relative">
+              <textarea
+                ref={textareaRef}
+                value={draftValue}
+                onChange={e => handleTextChange(e.target.value)}
+                onKeyDown={handleKeyDown}
+                onPaste={handlePaste}
+                onScroll={handleScroll}
+                className={`w-full p-3 md:p-4 border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary bg-background placeholder:text-muted-foreground ${
+                  className.includes('flex-1') ? 'flex-1 absolute inset-0' : 'min-h-[400px] resize-y'
+                }`}
+                placeholder="Write your chapter here... (Ctrl+B: Bold, Ctrl+I: Italic, Ctrl+U: Underline, Ctrl+F: Find/Replace, Ctrl+K: Link)"
+                style={className.includes('flex-1') ? { resize: 'none' } : undefined}
+              />
+            </div>
 
             {/* Author's Thoughts Section */}
             {authorThoughts !== undefined && onAuthorThoughtsChange && !className.includes('flex-1') && (

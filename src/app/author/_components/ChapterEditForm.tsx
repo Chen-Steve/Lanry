@@ -127,6 +127,7 @@ export default function ChapterEditForm({
     if (e) {
       e.preventDefault();
     }
+    console.log('Saving chapter with content:', formData.content.slice(0, 50) + '...');
     setIsSaving(true);
     setIsDraft(false);
     try {
@@ -421,7 +422,10 @@ export default function ChapterEditForm({
             </button>
             <ChapterEditor
               value={formData.content}
-              onChange={(value) => setFormData(prev => ({ ...prev, content: value }))}
+              onChange={(value) => {
+                console.log('ChapterEditor onChange called with:', value.slice(0, 50) + '...');
+                setFormData(prev => ({ ...prev, content: value }));
+              }}
               authorThoughts={formData.authorThoughts}
               onAuthorThoughtsChange={(thoughts) => setFormData(prev => ({ ...prev, authorThoughts: thoughts }))}
               className={isExpanded ? 'flex-1 overflow-hidden' : ''}
