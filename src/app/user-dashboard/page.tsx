@@ -69,7 +69,7 @@ export default function UserDashboard() {
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [isUpgradeClicked, setIsUpgradeClicked] = useState(false);
   const searchParams = useSearchParams();
-  const userId = searchParams.get('id');
+  const userId = searchParams.get('userId') || searchParams.get('id');
   const [subscriptionStatus, setSubscriptionStatus] = useState<null | {
     hasSubscription: boolean;
     status?: string;
@@ -136,10 +136,10 @@ export default function UserDashboard() {
               {profile.username ? profile.username[0].toUpperCase() : '?'}
             </div>
           )}
-          <h1 className="text-2xl font-bold text-foreground">{profile.username || 'Anonymous User'}</h1>
+          <h1 className="text-2xl font-bold text-foreground mb-4">{profile.username || 'Anonymous User'}</h1>
           
           {profile.role === 'TRANSLATOR' && (
-            <div className="mt-8 w-full">
+            <div className="mt-4 w-full">
               <h2 className="text-xl font-semibold mb-4">Translated Novels</h2>
               <TranslatorNovels translatorId={profile.id} />
             </div>
