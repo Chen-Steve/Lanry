@@ -53,11 +53,10 @@ export function CommentItem({ comment, userId, authorId, onEdit, onDelete, chapt
             .from('chapter_thread_comment_likes')
             .select('id')
             .eq('comment_id', comment.id)
-            .eq('profile_id', userId)
-            .single();
+            .eq('profile_id', userId);
 
-          if (likeError && likeError.code !== 'PGRST116') throw likeError;
-          setIsLiked(!!data);
+          if (likeError) throw likeError;
+          setIsLiked(data && data.length > 0);
         }
       } catch (err) {
         console.error('Error fetching likes:', err);
