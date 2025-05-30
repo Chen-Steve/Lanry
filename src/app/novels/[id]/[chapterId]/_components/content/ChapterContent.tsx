@@ -6,7 +6,6 @@ import { getTextStyles, formatText, extractedFootnotes, ExtractedFootnote } from
 import { filterExplicitContent } from '@/lib/contentFiltering';
 import CommentPopover from '../interaction/comments/CommentBar';
 import { useComments } from '@/hooks/useComments';
-import { useChapterLikes } from '@/hooks/useChapterLikes';
 import { Icon } from '@iconify/react';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import type { ChapterComment as BaseChapterComment } from '@/types/database';
@@ -16,7 +15,9 @@ import ScreenshotProtection from '../ScreenshotProtection';
 import ChapterParagraph from './ChapterParagraph';
 import TranslatorChapterEdit from './TranslatorChapterEdit';
 import { TranslatorLinks } from '@/app/novels/[id]/_components/TranslatorLinks';
-interface ChapterComment extends Omit<BaseChapterComment, 'profile'> {
+import supabase from '@/lib/supabaseClient';
+
+interface ChapterCommentWithProfile extends Omit<BaseChapterComment, 'profile'> {
   profile?: {
     username: string | null;
     avatar_url?: string;
@@ -83,6 +84,9 @@ export default function ChapterContent({
   const contentRef = useRef<HTMLDivElement>(null);
   const [isChapterBarVisible, setIsChapterBarVisible] = useState(false);
   const [footnotes, setFootnotes] = useState<ExtractedFootnote[]>([]);
+  const [likeCount, setLikeCount] = useState(0);
+  const [isLiked, setIsLiked] = useState(false);
+  const [isLikeLoading, setIsLikeLoading] = useState(false);
   
   // Check if the chapter is indefinitely locked
   const isIndefinitelyLocked = publishAt && new Date(publishAt).getFullYear() > new Date().getFullYear() + 50;
@@ -275,20 +279,208 @@ export default function ChapterContent({
     };
   }, []);
 
-  const { likeCount, isLiked, toggleLike } = useChapterLikes({ 
-    chapterNumber,
-    novelId
-  });
+  // Fetch initial likes count and user's like status
+  useEffect(() => {
+    const fetchLikes = async () => {
+      try {
+        console.log('Fetching initial likes for chapter:', chapterNumber, 'novel:', novelId);
+        
+        // Get chapter data
+        const { data: chapter, error: chapterError } = await supabase
+          .from('chapters')
+          .select('id, like_count')
+          .eq('chapter_number', chapterNumber)
+          .eq('novel_id', novelId)
+          .single();
+
+        if (chapterError) throw chapterError;
+        
+        console.log('Initial chapter data:', chapter);
+        setLikeCount(chapter.like_count || 0);
+        console.log('Set initial like count to:', chapter.like_count || 0);
+
+        // Check if user has liked this chapter
+        const { data: session } = await supabase.auth.getSession();
+        if (session?.session?.user) {
+          const { data, error: likeError } = await supabase
+            .from('chapter_likes')
+            .select('id')
+            .eq('chapter_id', chapter.id)
+            .eq('profile_id', session.session.user.id);
+
+          if (likeError) throw likeError;
+          const userLiked = data && data.length > 0;
+          console.log('User liked status:', userLiked);
+          setIsLiked(userLiked);
+        }
+      } catch (err) {
+        console.error('Error fetching likes:', err);
+      }
+    };
+
+    fetchLikes();
+  }, [chapterNumber, novelId]);
 
   const handleLikeClick = async () => {
+    console.log('Chapter like button clicked');
+    
+    const { data: session } = await supabase.auth.getSession();
+    if (!session?.session?.user) {
+      toast.error('Must be logged in to like chapters');
+      return;
+    }
+
+    console.log('User authenticated:', session.session.user.id);
+
+    if (isLikeLoading) return;
+    setIsLikeLoading(true);
+
     try {
-      await toggleLike();
-    } catch (error) {
-      if (error instanceof Error && error.message === 'Must be logged in to like chapters') {
-        toast.error('Please log in to like chapters');
+      // Get chapter ID first
+      const { data: chapter, error: chapterError } = await supabase
+        .from('chapters')
+        .select('id')
+        .eq('chapter_number', chapterNumber)
+        .eq('novel_id', novelId)
+        .single();
+
+      if (chapterError) throw chapterError;
+      console.log('Found chapter:', chapter);
+
+      if (isLiked) {
+        console.log('Attempting to unlike chapter');
+        
+        // Unlike
+        const { error: deleteLikeError } = await supabase
+          .from('chapter_likes')
+          .delete()
+          .eq('chapter_id', chapter.id)
+          .eq('profile_id', session.session.user.id);
+
+        if (deleteLikeError) {
+          console.error('Delete like error:', deleteLikeError);
+          throw deleteLikeError;
+        }
+        console.log('Successfully deleted like record');
+
+        // Get current like count from database
+        const { data: currentChapter, error: getCurrentError } = await supabase
+          .from('chapters')
+          .select('like_count')
+          .eq('id', chapter.id)
+          .single();
+
+        if (getCurrentError) {
+          console.error('Error getting current count:', getCurrentError);
+          throw getCurrentError;
+        }
+
+        const currentCount = currentChapter?.like_count || 0;
+        const newCount = Math.max(0, currentCount - 1);
+        
+        console.log('Current count from DB:', currentCount, 'New count will be:', newCount);
+
+        // Update the like count in chapters table
+        const { error: updateError } = await supabase
+          .from('chapters')
+          .update({ like_count: newCount })
+          .eq('id', chapter.id);
+
+        if (updateError) {
+          console.error('Update chapter count error:', updateError);
+          throw updateError;
+        }
+        console.log('Successfully updated chapter like count (unlike)');
+
+        // Verify the update worked
+        const { data: verifyChapter, error: verifyError } = await supabase
+          .from('chapters')
+          .select('like_count')
+          .eq('id', chapter.id)
+          .single();
+
+        if (verifyError) {
+          console.error('Error verifying update:', verifyError);
+        } else {
+          console.log('Verified chapter like count in DB:', verifyChapter?.like_count);
+        }
+
+        setLikeCount(newCount);
+        setIsLiked(false);
+        console.log('Updated UI state: unliked, count:', newCount);
       } else {
-        toast.error('Failed to like chapter');
+        console.log('Attempting to like chapter');
+        
+        // Like
+        const now = new Date().toISOString();
+        const { error: createLikeError } = await supabase
+          .from('chapter_likes')
+          .insert({
+            id: crypto.randomUUID(),
+            profile_id: session.session.user.id,
+            chapter_id: chapter.id,
+            novel_id: novelId,
+            created_at: now,
+            updated_at: now
+          });
+
+        if (createLikeError) {
+          console.error('Create like error:', createLikeError);
+          throw createLikeError;
+        }
+        console.log('Successfully created like record');
+
+        // Get current like count from database
+        const { data: currentChapter, error: getCurrentError } = await supabase
+          .from('chapters')
+          .select('like_count')
+          .eq('id', chapter.id)
+          .single();
+
+        if (getCurrentError) {
+          console.error('Error getting current count:', getCurrentError);
+          throw getCurrentError;
+        }
+
+        const currentCount = currentChapter?.like_count || 0;
+        const newCount = currentCount + 1;
+        
+        console.log('Current count from DB:', currentCount, 'New count will be:', newCount);
+
+        // Update the like count in chapters table
+        const { error: updateError } = await supabase
+          .from('chapters')
+          .update({ like_count: newCount })
+          .eq('id', chapter.id);
+
+        if (updateError) {
+          console.error('Update chapter count error:', updateError);
+          throw updateError;
+        }
+        console.log('Successfully updated chapter like count (like)');
+
+        // Verify the update worked
+        const { data: verifyChapter, error: verifyError } = await supabase
+          .from('chapters')
+          .select('like_count')
+          .eq('id', chapter.id)
+          .single();
+
+        if (verifyError) {
+          console.error('Error verifying update:', verifyError);
+        } else {
+          console.log('Verified chapter like count in DB:', verifyChapter?.like_count);
+        }
+
+        setLikeCount(newCount);
+        setIsLiked(true);
+        console.log('Updated UI state: liked, count:', newCount);
       }
+    } catch (error) {
+      console.error('Error toggling like:', error);
+      toast.error('Failed to update like');
+    } finally {
+      setIsLikeLoading(false);
     }
   };
 
@@ -615,7 +807,7 @@ export default function ChapterContent({
                 id: comment.profile_id,
                 role: 'USER' as const
               }
-            } as ChapterComment))}
+            } as ChapterCommentWithProfile))}
             onClose={handleCloseComment}
             onAddComment={(content) => handleAddComment(selectedParagraphId, content)}
             onDeleteComment={deleteComment}
