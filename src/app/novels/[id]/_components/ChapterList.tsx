@@ -57,6 +57,8 @@ export const ChapterList = ({
   const [error, setError] = useState<string | null>(null);
   const [volumeCounts, setVolumeCounts] = useState(new Map<string, { total: number }>());
   const [isBulkPurchaseModalOpen, setIsBulkPurchaseModalOpen] = useState(false);
+  const [pageInputValue, setPageInputValue] = useState('');
+  const [showPageInput, setShowPageInput] = useState(false);
 
   // Calculate volume-specific counts
   useEffect(() => {
@@ -190,6 +192,25 @@ export const ChapterList = ({
     }
   }, [currentPage, totalPages]);
 
+  // Handle page input
+  const handlePageInputSubmit = useCallback((value: string) => {
+    const pageNum = parseInt(value);
+    if (!isNaN(pageNum) && pageNum >= 1 && pageNum <= totalPages) {
+      handlePageChange(pageNum);
+      setShowPageInput(false);
+      setPageInputValue('');
+    }
+  }, [handlePageChange, totalPages]);
+
+  const handlePageInputKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handlePageInputSubmit(pageInputValue);
+    } else if (e.key === 'Escape') {
+      setShowPageInput(false);
+      setPageInputValue('');
+    }
+  }, [pageInputValue, handlePageInputSubmit]);
+
   // Count of active filters to show
   const activeFilterCount = useMemo(() => {
     let count = 0;
@@ -214,10 +235,13 @@ export const ChapterList = ({
   // Calculate advanced chapters (locked chapters that can be purchased)
   const advancedChapters = useMemo(() => {
     return chapters.filter(chapter => {
-      // Only include published chapters that are locked (require purchase)
-      const isPublished = !chapter.publish_at || new Date(chapter.publish_at) <= getServerTime();
-      const isLocked = !chapter.isUnlocked;
-      return isPublished && isLocked && userProfile?.id !== novelAuthorId;
+      // Advanced chapters are: future publish date + cost coins + not unlocked
+      const hasFuturePublishDate = chapter.publish_at && new Date(chapter.publish_at) > getServerTime();
+      const hasCost = (chapter.coins || 0) > 0;
+      const isNotUnlocked = !chapter.isUnlocked;
+      const isNotAuthor = userProfile?.id !== novelAuthorId;
+      
+      return hasFuturePublishDate && hasCost && isNotUnlocked && isNotAuthor;
     });
   }, [chapters, getServerTime, userProfile?.id, novelAuthorId]);
 
@@ -252,7 +276,7 @@ export const ChapterList = ({
     }
 
     return (
-      <div className="flex items-center justify-center gap-2">
+      <div className="flex items-center justify-center gap-2 flex-wrap">
         <button
           onClick={() => handlePageChange(currentPage - 1)}
           disabled={currentPage === 1 || isLoading}
@@ -261,6 +285,7 @@ export const ChapterList = ({
         >
           <Icon icon="solar:arrow-left-linear" className="w-4 h-4" />
         </button>
+        
         {startPage > 1 && (
           <>
             <button
@@ -270,13 +295,87 @@ export const ChapterList = ({
             >
               1
             </button>
-            {startPage > 2 && <span className="text-muted-foreground">...</span>}
+            {startPage > 2 && (
+              showPageInput ? (
+                <div className="flex items-center gap-1">
+                  <input
+                    type="number"
+                    min="1"
+                    max={totalPages}
+                    value={pageInputValue}
+                    onChange={(e) => setPageInputValue(e.target.value)}
+                    onKeyDown={handlePageInputKeyDown}
+                    onBlur={() => {
+                      if (pageInputValue) {
+                        handlePageInputSubmit(pageInputValue);
+                      } else {
+                        setShowPageInput(false);
+                      }
+                    }}
+                    placeholder="Page"
+                    className="w-16 px-2 py-1 text-sm border border-border rounded bg-background focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    autoFocus
+                  />
+                  <span className="text-xs text-muted-foreground">/{totalPages}</span>
+                </div>
+              ) : (
+                <button
+                  onClick={() => {
+                    setShowPageInput(true);
+                    setPageInputValue(currentPage.toString());
+                  }}
+                  className="px-2 py-1 text-muted-foreground hover:text-foreground hover:bg-accent rounded transition-colors"
+                  disabled={isLoading}
+                  title="Click to jump to page"
+                >
+                  ...
+                </button>
+              )
+            )}
           </>
         )}
+        
         {pages}
+        
         {endPage < totalPages && (
           <>
-            {endPage < totalPages - 1 && <span className="text-muted-foreground">...</span>}
+            {endPage < totalPages - 1 && (
+              showPageInput ? (
+                <div className="flex items-center gap-1">
+                  <input
+                    type="number"
+                    min="1"
+                    max={totalPages}
+                    value={pageInputValue}
+                    onChange={(e) => setPageInputValue(e.target.value)}
+                    onKeyDown={handlePageInputKeyDown}
+                    onBlur={() => {
+                      if (pageInputValue) {
+                        handlePageInputSubmit(pageInputValue);
+                      } else {
+                        setShowPageInput(false);
+                      }
+                    }}
+                    placeholder="Page"
+                    className="w-16 px-2 py-1 text-sm border border-border rounded bg-background focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    autoFocus
+                  />
+                  <span className="text-xs text-muted-foreground">/{totalPages}</span>
+                </div>
+              ) : (
+                <button
+                  onClick={() => {
+                    setShowPageInput(true);
+                    setPageInputValue(currentPage.toString());
+                  }}
+                  className="px-2 py-1 text-muted-foreground hover:text-foreground hover:bg-accent rounded transition-colors"
+                  disabled={isLoading}
+                  title="Click to jump to page"
+                >
+                  ...
+                </button>
+              )
+            )}
             <button
               onClick={() => handlePageChange(totalPages)}
               className="px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-accent text-muted-foreground hover:text-foreground"
@@ -286,6 +385,7 @@ export const ChapterList = ({
             </button>
           </>
         )}
+        
         <button
           onClick={() => handlePageChange(currentPage + 1)}
           disabled={currentPage === totalPages || isLoading}
@@ -296,7 +396,7 @@ export const ChapterList = ({
         </button>
       </div>
     );
-  }, [currentPage, totalPages, handlePageChange, isLoading]);
+  }, [currentPage, totalPages, handlePageChange, isLoading, showPageInput, pageInputValue, handlePageInputKeyDown, handlePageInputSubmit]);
 
   return (
     <>
