@@ -343,6 +343,7 @@ enum NovelStatus {
   COMPLETED
   HIATUS
   DROPPED
+  DRAFT
 }
 
 enum UserRole {

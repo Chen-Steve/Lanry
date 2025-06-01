@@ -2,12 +2,18 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 import { generateNovelSlug } from '@/lib/utils';
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
 
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
+    const cookieStore = cookies();
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    const { data: { session } } = await supabase.auth.getSession();
+
     const novel = await prisma.novel.findUnique({
       where: { id: params.id },
       select: {
@@ -19,6 +25,7 @@ export async function GET(
         status: true,
         createdAt: true,
         updatedAt: true,
+        authorProfileId: true,
         chapters: {
           orderBy: { createdAt: 'desc' },
           take: 3,
@@ -36,6 +43,13 @@ export async function GET(
 
     if (!novel) {
       return NextResponse.json(null, { status: 404 });
+    }
+
+    // Check if the novel is a draft and if the user has access
+    if (novel.status === 'DRAFT') {
+      if (!session?.user || session.user.id !== novel.authorProfileId) {
+        return NextResponse.json(null, { status: 404 });
+      }
     }
 
     return NextResponse.json({

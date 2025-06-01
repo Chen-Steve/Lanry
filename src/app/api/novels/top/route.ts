@@ -4,6 +4,11 @@ import { prisma } from '@/lib/prisma';
 export async function GET() {
   try {
     const topNovels = await prisma.novel.findMany({
+      where: {
+        status: {
+          not: 'DRAFT'
+        }
+      },
       take: 5,
       orderBy: {
         views: 'desc'

@@ -3,14 +3,25 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET() {
   try {
-    // Get total count of novels
-    const count = await prisma.novel.count();
+    // Get total count of novels (excluding drafts)
+    const count = await prisma.novel.count({
+      where: {
+        status: {
+          not: 'DRAFT'
+        }
+      }
+    });
     
     // Skip a random number of novels
     const skip = Math.floor(Math.random() * count);
     
-    // Get one random novel
+    // Get one random novel (excluding drafts)
     const novel = await prisma.novel.findFirst({
+      where: {
+        status: {
+          not: 'DRAFT'
+        }
+      },
       skip,
       take: 1,
       select: {

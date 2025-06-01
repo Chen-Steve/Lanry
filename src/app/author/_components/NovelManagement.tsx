@@ -18,7 +18,7 @@ const emptyNovel: NovelWithChapters = {
   title: '',
   description: '',
   author: '',
-  status: 'ONGOING',
+  status: 'DRAFT',
   ageRating: 'EVERYONE',
   slug: '',
   coverImageUrl: '',
@@ -260,11 +260,13 @@ export default function NovelManagement() {
                       ${novel.status === 'ONGOING' ? 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300' :
                         novel.status === 'COMPLETED' ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300' :
                         novel.status === 'DROPPED' ? 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300' :
+                        novel.status === 'DRAFT' ? 'bg-gray-100 dark:bg-gray-900/50 text-gray-800 dark:text-gray-300' :
                         'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-300'}`}>
                       <Icon icon={
                         novel.status === 'ONGOING' ? 'mdi:pencil' :
                         novel.status === 'COMPLETED' ? 'mdi:check-circle' :
                         novel.status === 'DROPPED' ? 'mdi:close-circle' :
+                        novel.status === 'DRAFT' ? 'mdi:file-document-outline' :
                         'mdi:pause-circle'
                       } className="w-2.5 xs:w-3 h-2.5 xs:h-3" />
                       {novel.status}

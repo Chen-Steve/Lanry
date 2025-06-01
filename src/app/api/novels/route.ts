@@ -81,6 +81,11 @@ export async function POST(request: Request) {
 export async function GET() {
   try {
     const novels = await prisma.novel.findMany({
+      where: {
+        status: {
+          not: 'DRAFT'
+        }
+      },
       include: {
         _count: {
           select: { chapters: true },

@@ -37,13 +37,19 @@ export async function GET(request: NextRequest) {
     const isBasicSearch = searchParams.get('basic') === 'true';
 
     // Build the where clause
-    let where: Prisma.NovelWhereInput = {};
+    let where: Prisma.NovelWhereInput = {
+      // Exclude draft novels from public search results
+      status: {
+        not: 'DRAFT'
+      }
+    };
 
     // Optimize search query based on the search term
     if (query) {
       if (isBasicSearch) {
         // For basic search, match only distinct words or parts
         where = {
+          ...where,
           OR: [
             { title: { mode: 'insensitive', startsWith: query } },
             { title: { mode: 'insensitive', endsWith: query } },
@@ -113,10 +119,22 @@ export async function GET(request: NextRequest) {
 
     // Add status filtering
     if (status) {
-      where = {
-        ...where,
-        status
-      };
+      // If user is specifically searching for a status, use that (but still exclude DRAFT unless explicitly searched for)
+      if (status === 'DRAFT') {
+        // Only allow DRAFT search if explicitly requested - this could be restricted further if needed
+        where = {
+          ...where,
+          status: 'DRAFT'
+        };
+      } else {
+        where = {
+          ...where,
+          status
+        };
+      }
+    } else {
+      // If no specific status filter, just maintain the existing DRAFT exclusion
+      // (already set in the initial where clause)
     }
 
     // Get total count for pagination using optimized count query

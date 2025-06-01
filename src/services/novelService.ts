@@ -99,8 +99,13 @@ export async function getNovel(id: string, userId?: string): Promise<Novel | nul
 
     if (error || !data) return null;
 
-    // Check if user has translator access (matches author_profile_id)
+    // Check if user has translator/author access
     const hasTranslatorAccess = userId ? data.author_profile_id === userId : false;
+
+    // If the novel is a draft and the user is not the author, deny access
+    if (data.status === 'DRAFT' && !hasTranslatorAccess) {
+      return null;
+    }
 
     // Process chapters to include unlock status and translator access
     const chapters = (data.chapters || [])
@@ -276,6 +281,7 @@ export async function getNovels(options: GetNovelsOptions = {}): Promise<{ novel
           )
         )
       `, { count: 'exact' })
+      .neq('status', 'DRAFT')
       .order('created_at', { ascending: false });
 
     // Apply category filters if provided
@@ -338,7 +344,7 @@ export async function getNovelsWithRecentUnlocks(
       return { novels: [], total: 0 };
     }
 
-    // Then fetch the full novel data in the correct order
+    // Then fetch the full novel data in the correct order, excluding drafts
     const { data: novels, error, count } = await supabase
       .from('novels')
       .select(`
@@ -353,7 +359,8 @@ export async function getNovelsWithRecentUnlocks(
           created_at
         )
       `, { count: 'exact' })
-      .in('id', orderedNovelIds);
+      .in('id', orderedNovelIds)
+      .neq('status', 'DRAFT');
 
     if (error) throw error;
 
@@ -476,6 +483,7 @@ export async function getTopNovels(): Promise<Novel[]> {
           )
         )
       `)
+      .neq('status', 'DRAFT')
       .order('views', { ascending: false })
       .limit(5);
 
@@ -604,6 +612,7 @@ export async function getCuratedNovels(limit: number = 10): Promise<Novel[]> {
         )
       `)
       .not('id', 'in', `(${userInteractedNovelIds.join(',')})`)
+      .neq('status', 'DRAFT')
       .order('rating', { ascending: false })
       .limit(limit);
 

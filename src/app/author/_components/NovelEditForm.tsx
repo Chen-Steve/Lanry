@@ -256,6 +256,7 @@ export default function NovelEditForm({ novel, onCancel, onUpdate, onChapterEdit
   };
 
   const statusOptions = [
+    { value: 'DRAFT', label: 'Draft', icon: 'mdi:file-document-outline' },
     { value: 'ONGOING', label: 'Ongoing', icon: 'mdi:pencil' },
     { value: 'COMPLETED', label: 'Completed', icon: 'mdi:check-circle' },
     { value: 'HIATUS', label: 'Hiatus', icon: 'mdi:pause-circle' },
