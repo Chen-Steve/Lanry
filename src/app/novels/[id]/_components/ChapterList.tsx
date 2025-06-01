@@ -232,18 +232,16 @@ export const ChapterList = ({
     };
   }, []);
 
-  // Calculate advanced chapters (locked chapters that can be purchased)
-  const advancedChapters = useMemo(() => {
-    return chapters.filter(chapter => {
-      // Advanced chapters are: future publish date + cost coins + not unlocked
+  // Get all advanced chapters in the novel for bulk purchase modal
+  const allAdvancedChapters = useMemo(() => {
+    return filteredInitialChapters.filter(chapter => {
       const hasFuturePublishDate = chapter.publish_at && new Date(chapter.publish_at) > getServerTime();
       const hasCost = (chapter.coins || 0) > 0;
-      const isNotUnlocked = !chapter.isUnlocked;
       const isNotAuthor = userProfile?.id !== novelAuthorId;
       
-      return hasFuturePublishDate && hasCost && isNotUnlocked && isNotAuthor;
+      return hasFuturePublishDate && hasCost && isNotAuthor;
     });
-  }, [chapters, getServerTime, userProfile?.id, novelAuthorId]);
+  }, [filteredInitialChapters, getServerTime, userProfile?.id, novelAuthorId]);
 
   // Volume Description (only show when a volume is selected)
   const selectedVolume = volumes.find(v => v.id === selectedVolumeId);
@@ -457,7 +455,7 @@ export const ChapterList = ({
               </Link>
 
               {/* Bulk Purchase Button */}
-              {isAuthenticated && userProfile && advancedChapters.length > 0 && (
+              {isAuthenticated && userProfile && allAdvancedChapters.length > 0 && (
                 <button
                   onClick={() => setIsBulkPurchaseModalOpen(true)}
                   className="px-3 py-1.5 bg-primary text-primary-foreground border border-primary rounded-lg text-sm font-medium flex items-center gap-2 whitespace-nowrap hover:bg-primary/90 transition-colors"
@@ -590,7 +588,7 @@ export const ChapterList = ({
       <BulkPurchaseModal
         isOpen={isBulkPurchaseModalOpen}
         onClose={() => setIsBulkPurchaseModalOpen(false)}
-        advancedChapters={advancedChapters}
+        advancedChapters={allAdvancedChapters}
         userProfileId={userProfile?.id}
         novelId={novelId}
         novelAuthorId={novelAuthorId}
