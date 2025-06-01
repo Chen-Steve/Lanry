@@ -7,6 +7,7 @@ import { getChaptersForList, ChapterListItem } from '@/services/chapterService';
 import { useServerTimeContext } from '@/providers/ServerTimeProvider';
 import { BulkPurchaseModal } from './BulkPurchaseModal';
 import Link from 'next/link';
+import supabase from '@/lib/supabaseClient';
 
 interface ChapterListProps {
   initialChapters: ChapterListItem[];
@@ -59,6 +60,7 @@ export const ChapterList = ({
   const [isBulkPurchaseModalOpen, setIsBulkPurchaseModalOpen] = useState(false);
   const [pageInputValue, setPageInputValue] = useState('');
   const [showPageInput, setShowPageInput] = useState(false);
+  const [userUnlocks, setUserUnlocks] = useState<{ chapter_number: number; part_number: number | null; }[]>([]);
 
   // Calculate volume-specific counts
   useEffect(() => {
@@ -232,16 +234,50 @@ export const ChapterList = ({
     };
   }, []);
 
+  // Fetch user unlocks for bulk purchase filtering
+  useEffect(() => {
+    const fetchUserUnlocks = async () => {
+      if (!isAuthenticated || !userProfile?.id) {
+        setUserUnlocks([]);
+        return;
+      }
+
+      try {
+        const { data: unlocks } = await supabase
+          .from('chapter_unlocks')
+          .select('chapter_number, part_number')
+          .eq('novel_id', novelId)
+          .eq('profile_id', userProfile.id);
+
+        setUserUnlocks(unlocks || []);
+      } catch (error) {
+        console.error('Error fetching user unlocks:', error);
+        setUserUnlocks([]);
+      }
+    };
+
+    fetchUserUnlocks();
+  }, [isAuthenticated, userProfile?.id, novelId]);
+
+  // Helper function to check if a chapter is unlocked
+  const isChapterUnlocked = useCallback((chapter: { chapter_number: number; part_number?: number | null }) => {
+    return userUnlocks.some(unlock => 
+      unlock.chapter_number === chapter.chapter_number && 
+      unlock.part_number === (chapter.part_number ?? null)
+    );
+  }, [userUnlocks]);
+
   // Get all advanced chapters in the novel for bulk purchase modal
   const allAdvancedChapters = useMemo(() => {
     return filteredInitialChapters.filter(chapter => {
       const hasFuturePublishDate = chapter.publish_at && new Date(chapter.publish_at) > getServerTime();
       const hasCost = (chapter.coins || 0) > 0;
       const isNotAuthor = userProfile?.id !== novelAuthorId;
+      const isNotUnlocked = !isChapterUnlocked(chapter);
       
-      return hasFuturePublishDate && hasCost && isNotAuthor;
+      return hasFuturePublishDate && hasCost && isNotAuthor && isNotUnlocked;
     });
-  }, [filteredInitialChapters, getServerTime, userProfile?.id, novelAuthorId]);
+  }, [filteredInitialChapters, getServerTime, userProfile?.id, novelAuthorId, isChapterUnlocked]);
 
   // Volume Description (only show when a volume is selected)
   const selectedVolume = volumes.find(v => v.id === selectedVolumeId);
@@ -556,7 +592,7 @@ export const ChapterList = ({
                         isAuthenticated={isAuthenticated}
                         novelAuthorId={novelAuthorId}
                         hasTranslatorAccess={chapter.hasTranslatorAccess}
-                        isUnlocked={chapter.isUnlocked}
+                        isUnlocked={isChapterUnlocked(chapter)}
                         isPublished={!chapter.publish_at || new Date(chapter.publish_at) <= getServerTime()}
                       />
                     </div>
