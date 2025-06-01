@@ -211,6 +211,16 @@ export const ChapterList = ({
     };
   }, []);
 
+  // Calculate advanced chapters (locked chapters that can be purchased)
+  const advancedChapters = useMemo(() => {
+    return chapters.filter(chapter => {
+      // Only include published chapters that are locked (require purchase)
+      const isPublished = !chapter.publish_at || new Date(chapter.publish_at) <= getServerTime();
+      const isLocked = !chapter.isUnlocked;
+      return isPublished && isLocked && userProfile?.id !== novelAuthorId;
+    });
+  }, [chapters, getServerTime, userProfile?.id, novelAuthorId]);
+
   // Volume Description (only show when a volume is selected)
   const selectedVolume = volumes.find(v => v.id === selectedVolumeId);
 
@@ -346,6 +356,16 @@ export const ChapterList = ({
                 <span>Back</span>
               </Link>
 
+              {/* Bulk Purchase Button */}
+              {isAuthenticated && userProfile && advancedChapters.length > 0 && (
+                <button
+                  onClick={() => setIsBulkPurchaseModalOpen(true)}
+                  className="px-3 py-1.5 bg-primary text-primary-foreground border border-primary rounded-lg text-sm font-medium flex items-center gap-2 whitespace-nowrap hover:bg-primary/90 transition-colors"
+                >
+                  <span>Bulk Purchase</span>
+                </button>
+              )}
+
               {volumes.length > 0 && (
                 <div className="relative inline-block flex-shrink-0" ref={volumeDropdownRef}>
                   <button 
@@ -470,7 +490,7 @@ export const ChapterList = ({
       <BulkPurchaseModal
         isOpen={isBulkPurchaseModalOpen}
         onClose={() => setIsBulkPurchaseModalOpen(false)}
-        advancedChapters={[]}
+        advancedChapters={advancedChapters}
         userProfileId={userProfile?.id}
         novelId={novelId}
         novelAuthorId={novelAuthorId}
