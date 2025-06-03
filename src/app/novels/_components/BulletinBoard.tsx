@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
+import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 
 const BulletinBoard = () => {
-  const [supporterText, setSupporterText] = useState('Supporter Page!');
+  const router = useRouter();
 
   return (
     <div className="my-2 flex gap-2">
@@ -16,14 +17,14 @@ const BulletinBoard = () => {
           backgroundSize: 'cover',
           backgroundPosition: 'center'
         }}
-        onClick={() => setSupporterText('Almost here!')}
+        onClick={() => router.push('/supporters')}
       >
         <div className="absolute inset-0 bg-black/40" />
         <Icon 
           icon="ph:confetti-bold" 
           className="text-white text-3xl mb-2 relative z-10" 
         />
-        <p className="text-white font-medium relative z-10">{supporterText}</p>
+        <p className="text-white font-medium relative z-10">Top Supporters</p>
       </div>
 
       {/* Forum Link Container */}
