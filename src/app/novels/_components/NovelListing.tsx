@@ -12,6 +12,7 @@ import NovelStatistics from './NovelStatistics';
 import CuratedNovels from './CuratedNovels';
 import supabase from '@/lib/supabaseClient';
 import BulletinBoard from './BulletinBoard';
+import CompletedNovels from './CompletedNovels';
 
 const NovelListing = () => {
   const [novels, setNovels] = useState<Novel[]>([]);
@@ -25,7 +26,7 @@ const NovelListing = () => {
   const [curatedNovels, setCuratedNovels] = useState<Novel[]>([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  const ITEMS_PER_PAGE = 12;
+  const ITEMS_PER_PAGE = 15;
 
   useEffect(() => {
     // Check if user is logged in
@@ -145,6 +146,8 @@ const NovelListing = () => {
         totalPages={totalPages}
         onPageChange={handlePageChange}
       />
+
+      <CompletedNovels />
 
       <AdvancedChapters
         initialNovels={advancedNovels}

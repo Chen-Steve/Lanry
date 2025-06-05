@@ -665,3 +665,47 @@ export async function getCuratedNovels(limit: number = 10): Promise<Novel[]> {
     return getTopNovels(); // Fallback to top novels on error
   }
 }
+
+export async function getCompletedNovels(
+  page: number = 1,
+  limit: number = 35
+): Promise<{ novels: Novel[]; total: number }> {
+  try {
+    // Calculate offset
+    const offset = (page - 1) * limit;
+
+    // Get novels with completed status
+    const { data, error, count } = await supabase
+      .from('novels')
+      .select(`
+        *,
+        chapters (
+          id,
+          chapter_number,
+          part_number,
+          title,
+          publish_at,
+          coins,
+          created_at
+        )
+      `, { count: 'exact' })
+      .eq('status', 'COMPLETED')
+      .order('updated_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    if (error) throw error;
+
+    return {
+      novels: (data || []).map(novel => ({
+        ...novel,
+        coverImageUrl: novel.cover_image_url,
+        slug: novel.slug,
+        chapters: novel.chapters || []
+      })),
+      total: count || 0
+    };
+  } catch (error) {
+    console.error('Error fetching completed novels:', error);
+    return { novels: [], total: 0 };
+  }
+}
