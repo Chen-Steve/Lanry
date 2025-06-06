@@ -58,6 +58,9 @@ export default function ChapterPurchaseHistory() {
   const [totalCount, setTotalCount] = useState(0);
   const [pageInputValue, setPageInputValue] = useState('');
 
+  // Cutoff timestamp - only show records created before this moment
+  const cutoffTimestamp = new Date().toISOString();
+
   const fetchPurchaseHistory = async (pageNumber = 1) => {
     try {
       setIsLoading(true);
@@ -94,6 +97,7 @@ export default function ChapterPurchaseHistory() {
           novels:novel_id(title)
         `, { count: 'exact' })
         .in('novel_id', novelIds)
+        .lt('created_at', cutoffTimestamp) // Only fetch records created before the cutoff
         .order('created_at', { ascending: false })
         .range(from, to);
 
