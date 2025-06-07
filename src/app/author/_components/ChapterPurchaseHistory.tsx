@@ -57,9 +57,8 @@ export default function ChapterPurchaseHistory() {
   const pageSize = 50; // Changed back to 50 records to reduce egress
   const [totalCount, setTotalCount] = useState(0);
   const [pageInputValue, setPageInputValue] = useState('');
-
-  // Cutoff timestamp - only show records created before this moment
-  const cutoffTimestamp = new Date().toISOString();
+  // Fixed cutoff timestamp - only show records created before this date
+  const cutoffTimestamp = '2025-06-07T10:30:00.000Z'; // Set to current time to stop getting new records
 
   const fetchPurchaseHistory = async (pageNumber = 1) => {
     try {
