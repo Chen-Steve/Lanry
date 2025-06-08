@@ -2,6 +2,8 @@ import { getTopSupporters, TopSupporter } from './actions';
 import { SupporterCard } from './components/SupporterCard';
 import { Icon } from '@iconify/react';
 
+export const dynamic = 'force-dynamic'
+
 export default async function SupportersPage() {
   const topSupporters = await getTopSupporters();
 

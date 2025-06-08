@@ -5,6 +5,8 @@ import { Icon } from "@iconify/react"
 import Link from "next/link"
 import { Profile, Novel, NovelCategory } from "@prisma/client"
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: "Translators - Lanry",
   description: "Browse all translators and their novels",
