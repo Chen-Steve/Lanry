@@ -290,9 +290,6 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
           <h1 className="text-xl font-semibold text-gray-900 mb-2">
             Unlock Chapter {chapter.chapter_number}{chapter.part_number ? `.${chapter.part_number}` : ''}
           </h1>
-          <p className="text-gray-600 mb-6">
-            This chapter requires {chapter.coins} coins to unlock.
-          </p>
           <ChapterPurchaseButton
             novelId={novelId}
             chapterNumber={chapter.chapter_number}

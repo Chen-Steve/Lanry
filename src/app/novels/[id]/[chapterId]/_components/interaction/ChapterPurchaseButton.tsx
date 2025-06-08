@@ -219,7 +219,7 @@ export default function ChapterPurchaseButton({
       ) : (
         <>
           <Icon icon="ph:coins" className="text-xl" />
-          <span>Unlock for {coins} coins</span>
+          <span>{coins} coins</span>
         </>
       )}
     </button>
