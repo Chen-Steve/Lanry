@@ -4,12 +4,32 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTheme, Theme } from '@/lib/ThemeContext';
 import supabase from '@/lib/supabaseClient';
-import ChapterPurchaseHistory from '@/app/author/_components/ChapterPurchaseHistory';
-import NovelStatistics from '@/app/author/_components/NovelStatistics';
-import TranslatorLinks from '@/app/author/_components/TranslatorLinks';
-import NovelManagement from '@/app/author/_components/NovelManagement';
-import NovelComments from '@/app/author/_components/NovelComments';
+import dynamic from 'next/dynamic';
 import { Icon } from '@iconify/react';
+
+// Dynamic imports with loading fallbacks
+const NovelManagement = dynamic(() => import('@/app/author/_components/NovelManagement'), {
+  loading: () => <LoadingSpinner />
+});
+const ChapterPurchaseHistory = dynamic(() => import('@/app/author/_components/ChapterPurchaseHistory'), {
+  loading: () => <LoadingSpinner />
+});
+const NovelComments = dynamic(() => import('@/app/author/_components/NovelComments'), {
+  loading: () => <LoadingSpinner />
+});
+const NovelStatistics = dynamic(() => import('@/app/author/_components/NovelStatistics'), {
+  loading: () => <LoadingSpinner />
+});
+const TranslatorLinks = dynamic(() => import('@/app/author/_components/TranslatorLinks'), {
+  loading: () => <LoadingSpinner />
+});
+
+// Loading spinner component
+const LoadingSpinner = () => (
+  <div className="flex justify-center items-center min-h-[50vh]">
+    <Icon icon="mdi:loading" className="animate-spin text-3xl text-gray-500" />
+  </div>
+);
 
 const themeIcons: Record<Theme, string> = {
   'light': 'ph:sun-bold',
