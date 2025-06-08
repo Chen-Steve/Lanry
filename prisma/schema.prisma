@@ -104,7 +104,6 @@ model Chapter {
   @@index([chapterNumber])
   @@index([partNumber])
   @@index([volumeId])
-  @@index([slug])
   @@index([publishAt])
   @@map("chapters")
 }
@@ -158,12 +157,8 @@ model BookmarkFolder {
   profile     Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
   profileId   String    @map("profile_id")
   bookmarks   Bookmark[]
-  parentFolder BookmarkFolder?  @relation("FolderHierarchy", fields: [parentFolderId], references: [id])
-  parentFolderId String?        @map("parent_folder_id")
-  subFolders   BookmarkFolder[] @relation("FolderHierarchy")
 
-  @@unique([profileId, name, parentFolderId])
-  @@index([profileId])
+  @@unique([profileId, name])
   @@map("bookmark_folders")
 }
 
@@ -179,6 +174,7 @@ model Bookmark {
   folderId  String?   @map("folder_id")
 
   @@unique([profileId, novelId])
+  @@index([novelId])
   @@index([folderId])
   @@map("bookmarks")
 }
@@ -196,7 +192,6 @@ model ChapterComment {
   novel         Novel     @relation(fields: [novel_id], references: [id], onDelete: Cascade)
 
   @@index([chapterNumber])
-  @@index([paragraphId])
   @@index([profileId])
   @@index([novel_id])
   @@map("chapter_comments")
@@ -234,6 +229,7 @@ model CoinTransaction {
   orderId     String?   @map("order_id") // PayPal order ID
   profile     Profile   @relation(fields: [profileId], references: [id])
 
+  @@index([profileId])
   @@map("coin_transactions")
 }
 
@@ -250,6 +246,7 @@ model ChapterUnlock {
 
   @@unique([profile_id, novel_id, chapter_number, part_number])
   @@index([profile_id, novel_id, chapter_number, part_number])
+  @@index([novel_id])
   @@map("chapter_unlocks")
 }
 
@@ -311,6 +308,7 @@ model CategoriesOnNovels {
   assignedAt  DateTime      @default(now())
 
   @@id([novelId, categoryId])
+  @@index([categoryId])
   @@map("categories_on_novels")
 }
 
@@ -404,7 +402,6 @@ model CommentLike {
 
   @@unique([profileId, commentId])
   @@index([commentId])
-  @@index([profileId])
   @@map("comment_likes")
 }
 
@@ -416,7 +413,6 @@ model NovelViewLog {
   novelId     String   @map("novel_id")
 
   @@index([novelId])
-  @@index([viewedAt])
   @@map("novel_view_logs")
 }
 
@@ -496,7 +492,6 @@ model ForumThread {
 
   @@index([discussionId])
   @@index([authorId])
-  @@index([lastMessageAt])
   @@map("forum_threads")
 }
 
@@ -531,8 +526,6 @@ model Subscription {
   transactions         SubscriptionTransaction[]
 
   @@index([profileId])
-  @@index([status])
-  @@index([endDate])
   @@map("subscriptions")
 }
 
@@ -549,6 +542,5 @@ model SubscriptionTransaction {
 
   @@index([subscriptionId])
   @@index([profileId])
-  @@index([type])
   @@map("subscription_transactions")
 }

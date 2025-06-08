@@ -22,8 +22,11 @@ const NotificationButton = () => {
   useEffect(() => {
     if (!userId) return;
 
+    // Use a more specific channel name to avoid conflicts
+    const channelName = `notifications-button-${userId}`;
+    
     const subscription = supabase
-      .channel('notifications')
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -33,6 +36,10 @@ const NotificationButton = () => {
           filter: `recipient_id=eq.${userId}`
         },
         async (payload: RealtimePostgresInsertPayload<Notification>) => {
+          // Only fetch if we don't already have this notification
+          const existingNotification = notifications.find(n => n.id === payload.new.id);
+          if (existingNotification) return;
+
           // Fetch the complete notification with sender and novel data
           const { data: newNotification } = await supabase
             .from('notifications')
@@ -61,9 +68,10 @@ const NotificationButton = () => {
       .subscribe();
 
     return () => {
-      subscription.unsubscribe();
+      // Ensure proper cleanup
+      supabase.removeChannel(subscription);
     };
-  }, [userId]);
+  }, [userId, notifications]); // Add notifications to dependency to prevent duplicates
 
   // Fetch notifications when dropdown opens
   useEffect(() => {

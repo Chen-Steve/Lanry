@@ -71,10 +71,14 @@ export function useComments(novelId: string, chapterNumber: number) {
   // Comments fetching and real-time updates
   useEffect(() => {
     let channel: RealtimeChannel;
+    let mounted = true;
 
     const setupRealtimeSubscription = () => {
+      // Use a more specific channel name
+      const channelName = `comments-${novelId}-${chapterNumber}`;
+      
       channel = supabase
-        .channel(`novel-${novelId}-chapter-${chapterNumber}-comments`)
+        .channel(channelName)
         .on(
           'postgres_changes',
           {
@@ -84,32 +88,44 @@ export function useComments(novelId: string, chapterNumber: number) {
             filter: `novel_id=eq.${novelId} and chapter_number=eq.${chapterNumber}`
           },
           (payload: RealtimePostgresChangesPayload<DatabaseComment>) => {
+            if (!mounted) return; // Prevent updates if component unmounted
+            
             if (payload.eventType === 'DELETE') return;
             
             const newComment = payload.new;
             if (!newComment) return;
 
-            setComments((prev) => ({
-              ...prev,
-              [newComment.paragraph_id]: [
-                ...(prev[newComment.paragraph_id] || []),
-                {
-                  ...newComment,
-                  novel_id: novelId,
-                  profile: {
-                    username: newComment.profile?.username ?? 'Anonymous',
-                    avatar_url: newComment.profile?.avatar_url,
-                    role: newComment.profile?.role ?? 'USER'
-                  }
-                } as ChapterComment
-              ]
-            }));
+            // Check if comment already exists to prevent duplicates
+            setComments((prev) => {
+              const existingComments = prev[newComment.paragraph_id] || [];
+              const commentExists = existingComments.some(c => c.id === newComment.id);
+              
+              if (commentExists) return prev;
+
+              return {
+                ...prev,
+                [newComment.paragraph_id]: [
+                  ...existingComments,
+                  {
+                    ...newComment,
+                    novel_id: novelId,
+                    profile: {
+                      username: newComment.profile?.username ?? 'Anonymous',
+                      avatar_url: newComment.profile?.avatar_url,
+                      role: newComment.profile?.role ?? 'USER'
+                    }
+                  } as ChapterComment
+                ]
+              };
+            });
           }
         )
         .subscribe();
     };
 
     const fetchComments = async () => {
+      if (!mounted) return;
+      
       const { data, error } = await supabase
         .from('chapter_comments')
         .select(`
@@ -124,7 +140,7 @@ export function useComments(novelId: string, chapterNumber: number) {
         .eq('chapter_number', chapterNumber)
         .order('created_at', { ascending: true });
 
-      if (error) {
+      if (error || !mounted) {
         console.error('Error fetching comments:', error);
         return;
       }
@@ -148,13 +164,16 @@ export function useComments(novelId: string, chapterNumber: number) {
         return acc;
       }, {} as CommentsByParagraph);
 
-      setComments(grouped);
+      if (mounted) {
+        setComments(grouped);
+      }
     };
 
     fetchComments();
     setupRealtimeSubscription();
 
     return () => {
+      mounted = false;
       if (channel) {
         supabase.removeChannel(channel);
       }

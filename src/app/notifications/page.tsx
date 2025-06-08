@@ -47,9 +47,12 @@ const NotificationsPage = () => {
 
     fetchNotifications();
 
-    // Set up real-time subscription for new notifications
+    // Set up real-time subscription for new notifications with rate limiting
+    let lastUpdate = 0;
+    const RATE_LIMIT_MS = 1000; // Limit updates to once per second
+    
     const subscription = supabase
-      .channel('notifications')
+      .channel(`notifications-page-${userId}`) // Unique channel name
       .on(
         'postgres_changes',
         {
@@ -59,6 +62,14 @@ const NotificationsPage = () => {
           filter: `recipient_id=eq.${userId}`
         },
         async (payload: RealtimePostgresInsertPayload<Notification>) => {
+          const now = Date.now();
+          if (now - lastUpdate < RATE_LIMIT_MS) return; // Rate limit
+          lastUpdate = now;
+
+          // Check if notification already exists
+          const existingNotification = notifications.find(n => n.id === payload.new.id);
+          if (existingNotification) return;
+
           // Fetch the complete notification with sender and novel data
           const { data: newNotification } = await supabase
             .from('notifications')
@@ -85,14 +96,14 @@ const NotificationsPage = () => {
       )
       .subscribe();
 
-    // Set up polling as a fallback (every 30 seconds)
-    const pollInterval = setInterval(fetchNotifications, 30000);
+    // Reduce polling frequency from 30s to 60s
+    const pollInterval = setInterval(fetchNotifications, 60000);
 
     return () => {
-      subscription.unsubscribe();
+      supabase.removeChannel(subscription);
       clearInterval(pollInterval);
     };
-  }, [userId]);
+  }, [userId, notifications]); // Add notifications to deps to prevent duplicates
 
   const handleMarkAsRead = async (notificationId: string) => {
     try {
