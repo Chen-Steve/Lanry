@@ -7,7 +7,6 @@ import supabase from '@/lib/supabaseClient';
 import { formatRelativeDate, generateUUID } from '@/lib/utils';
 import type { NovelComment } from '@/types/database';
 import { CommentReplies } from './CommentReplies';
-import { notificationService } from '@/services/notificationService';
 
 interface CommentItemProps {
   comment: NovelComment & {
@@ -97,25 +96,6 @@ export const CommentItem = ({
           .eq('id', comment.id);
 
         if (updateError) throw updateError;
-
-        // Create notification for the comment author if it's not their own comment
-        if (comment.profile_id !== currentUserId) {
-          const { data: currentUser } = await supabase
-            .from('profiles')
-            .select('username')
-            .eq('id', currentUserId)
-            .single();
-
-          await notificationService.createNotification({
-            recipientId: comment.profile_id,
-            senderId: currentUserId,
-            type: 'like',
-            content: `${currentUser?.username || 'Someone'} liked your comment: "${comment.content.substring(0, 50)}${comment.content.length > 50 ? '...' : ''}"`,
-            link: `/novels/${novelSlug}?tab=comments`,
-            novelId: comment.novel_id,
-            commentId: comment.id
-          });
-        }
 
         setIsLiked(true);
         setLikeCount(prev => prev + 1);

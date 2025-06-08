@@ -4,10 +4,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
 import { useRouter } from 'next/navigation';
-import { notificationService, type Notification } from '@/services/notificationService';
 import { useAuth } from '@/hooks/useAuth';
-import { toast } from 'sonner';
-import { formatRelativeDate } from '@/lib/utils';
 
 interface UserProfile {
   username: string;
@@ -37,10 +34,6 @@ const UserProfileButton = ({
 }: UserProfileButtonProps) => {
   const router = useRouter();
   const [isRandomizing, setIsRandomizing] = useState(false);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [showNotifications, setShowNotifications] = useState(false);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
   const { userId } = useAuth();
   const [subscriptionStatus, setSubscriptionStatus] = useState<null | {
@@ -64,7 +57,6 @@ const UserProfileButton = ({
         isProfileDropdownOpen
       ) {
         setIsProfileDropdownOpen(false);
-        setShowNotifications(false);
       }
     };
 
@@ -77,47 +69,7 @@ const UserProfileButton = ({
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isProfileDropdownOpen, setIsProfileDropdownOpen, setShowNotifications]);
-
-  // Fetch unread count on mount and when userId changes
-  useEffect(() => {
-    const fetchUnreadCount = async () => {
-      if (!userId) return;
-      try {
-        const count = await notificationService.getUnreadCount(userId);
-        setUnreadCount(count);
-      } catch (error) {
-        console.error('Error fetching unread count:', error);
-      }
-    };
-
-    fetchUnreadCount();
-    // Set up polling for unread count every 30 seconds
-    const interval = setInterval(fetchUnreadCount, 30000);
-    return () => clearInterval(interval);
-  }, [userId]);
-
-  // Fetch notifications when dropdown opens
-  useEffect(() => {
-    const fetchNotifications = async () => {
-      if (!userId || !showNotifications) return;
-      
-      setIsLoading(true);
-      try {
-        const data = await notificationService.getNotifications(userId, 5);
-        setNotifications(data);
-        // Update unread count when notifications are fetched
-        const count = await notificationService.getUnreadCount(userId);
-        setUnreadCount(count);
-      } catch (error) {
-        console.error('Error fetching notifications:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchNotifications();
-  }, [userId, showNotifications]);
+  }, [isProfileDropdownOpen, setIsProfileDropdownOpen]);
 
   useEffect(() => {
     const fetchSubscriptionStatus = async () => {
@@ -135,83 +87,6 @@ const UserProfileButton = ({
     };
     fetchSubscriptionStatus();
   }, [userId]);
-
-  // Mark notification as read when clicked
-  const handleNotificationClick = async (notificationId: string) => {
-    try {
-      await notificationService.markAsRead(notificationId);
-      setNotifications(notifications.map(n => 
-        n.id === notificationId ? { ...n, read: true } : n
-      ));
-      // Update unread count after marking as read
-      setUnreadCount(prev => Math.max(0, prev - 1));
-    } catch (error) {
-      console.error('Error marking notification as read:', error);
-    }
-  };
-
-  const getNotificationIcon = (type: Notification['type']) => {
-    switch (type) {
-      case 'comment_reply':
-        return 'mdi:reply';
-      case 'like':
-        return 'mdi:heart';
-      case 'system':
-        return 'mdi:information';
-      default:
-        return 'mdi:bell';
-    }
-  };
-
-  const NotificationItem = ({ notification }: { notification: Notification }) => {
-    const handleDelete = async (e: React.MouseEvent) => {
-      e.preventDefault(); // Prevent the Link from navigating
-      e.stopPropagation(); // Prevent event bubbling
-      
-      try {
-        await notificationService.deleteNotification(notification.id);
-        setNotifications(notifications.filter(n => n.id !== notification.id));
-        // Update unread count if the notification was unread
-        if (!notification.read) {
-          setUnreadCount(prev => Math.max(0, prev - 1));
-        }
-      } catch (error) {
-        console.error('Error deleting notification:', error);
-        toast.error('Failed to delete notification');
-      }
-    };
-
-    return (
-      <Link 
-        href={notification.link} 
-        className={`group block p-3 ${notification.read ? 'opacity-70' : ''} hover:bg-secondary/50 relative`}
-        role="menuitem"
-        onClick={() => handleNotificationClick(notification.id)}
-      >
-        <div className="flex gap-3">
-          <div className="flex-shrink-0">
-            <Icon 
-              icon={getNotificationIcon(notification.type)} 
-              className="w-5 h-5 text-muted-foreground"
-            />
-          </div>
-          <div className="flex flex-col gap-1 min-w-0">
-            <p className="text-sm line-clamp-2">{notification.content}</p>
-            <p className="text-xs text-muted-foreground">
-              {formatRelativeDate(notification.created_at)}
-            </p>
-          </div>
-          <button
-            onClick={handleDelete}
-            className="opacity-0 group-hover:opacity-100 transition-opacity absolute right-2 top-2 p-1.5 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-full"
-            aria-label="Delete notification"
-          >
-            <Icon icon="ph:trash-bold" className="w-4 h-4" />
-          </button>
-        </div>
-      </Link>
-    );
-  };
 
   const getInitial = (username: string) => {
     return username.charAt(0).toUpperCase();
@@ -244,22 +119,12 @@ const UserProfileButton = ({
                 }
               }}
             />
-            {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                {unreadCount > 9 ? '9+' : unreadCount}
-              </span>
-            )}
           </div>
         ) : (
           <div className="relative">
             <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
               {userProfile?.username ? getInitial(userProfile.username) : '?'}
             </div>
-            {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                {unreadCount > 9 ? '9+' : unreadCount}
-              </span>
-            )}
           </div>
         )}
       </div>
@@ -320,60 +185,6 @@ const UserProfileButton = ({
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Notifications Section */}
-      <div className="border-t border-border pt-2">
-        <button
-          onClick={() => setShowNotifications(!showNotifications)}
-          className="flex items-center justify-between w-full px-3 py-2 text-sm text-foreground rounded-md hover:bg-accent transition-colors"
-        >
-          <div className="flex items-center gap-2">
-            <Icon icon="ph:bell-bold" className="text-lg" />
-            <span>Notifications</span>
-          </div>
-          {unreadCount > 0 && (
-            <span className="bg-red-500 text-white text-xs rounded-full px-2 py-0.5">
-              {unreadCount}
-            </span>
-          )}
-        </button>
-
-        {showNotifications && (
-          <div className="mt-2 border-t border-border">
-            <div className="p-3 flex items-center justify-between">
-              <div className="font-medium text-sm">Recent Notifications</div>
-              <Link 
-                href="/notifications" 
-                className="text-xs text-muted-foreground hover:text-foreground"
-                onClick={() => {
-                  setShowNotifications(false);
-                  setIsProfileDropdownOpen(false);
-                }}
-              >
-                View All
-              </Link>
-            </div>
-            
-            <div className="max-h-64 overflow-y-auto">
-              {isLoading ? (
-                <div className="p-4 text-center text-muted-foreground">
-                  <Icon icon="mdi:loading" className="w-6 h-6 mx-auto mb-2 animate-spin" />
-                  <p className="text-sm">Loading notifications...</p>
-                </div>
-              ) : notifications.length === 0 ? (
-                <div className="p-4 text-center text-muted-foreground">
-                  <Icon icon="ph:bell-slash" className="w-6 h-6 mx-auto mb-2" />
-                  <p className="text-sm">No notifications yet</p>
-                </div>
-              ) : (
-                notifications.map((notification) => (
-                  <NotificationItem key={notification.id} notification={notification} />
-                ))
-              )}
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Main Actions */}

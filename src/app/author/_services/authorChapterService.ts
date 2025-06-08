@@ -1,7 +1,5 @@
 import supabase from '@/lib/supabaseClient';
 import { generateChapterSlug, generateUUID } from '@/lib/utils';
-import { notificationService } from '@/services/notificationService';
-import { PostgrestError } from '@supabase/supabase-js';
 
 export async function fetchAuthorNovels(userId: string, authorOnly: boolean) {
   let query = supabase
@@ -94,12 +92,6 @@ export async function updateChapter(
     .eq('novel_id', novelId);
 
   if (error) throw error;
-
-  // Check if we should send notifications
-  const { shouldNotify, chapterData: notificationData } = await shouldNotifyForChapter(chapterId);
-  if (shouldNotify && notificationData) {
-    await sendChapterNotifications(notificationData);
-  }
 }
 
 export async function createChapter(
@@ -203,12 +195,6 @@ export async function createChapter(
     });
 
   if (error) throw error;
-
-  // Check if we should send notifications
-  const { shouldNotify, chapterData: notificationData } = await shouldNotifyForChapter(chapterId);
-  if (shouldNotify && notificationData) {
-    await sendChapterNotifications(notificationData);
-  }
 
   // Only apply auto-release schedule if conditions are met
   if (shouldApplyAutoRelease) {
@@ -647,183 +633,5 @@ async function verifyNovelAuthor(novelId: string, userId: string) {
 
   if (novel?.author_profile_id !== userId) {
     throw new Error('Not authorized to modify chapters for this novel');
-  }
-}
-
-// Helper function to check if a chapter should trigger notifications
-async function shouldNotifyForChapter(chapterId: string): Promise<{
-  shouldNotify: boolean;
-  chapterData?: {
-    title: string;
-    chapterNumber: number;
-    partNumber: number | null;
-    novelId: string;
-    novelTitle: string;
-    novelSlug: string;
-    authorId: string;
-    coins: number;
-    publishAt: string | null;
-  };
-}> {
-  type ChapterWithNovel = {
-    title: string;
-    chapter_number: number;
-    part_number: number | null;
-    novel_id: string;
-    coins: number;
-    publish_at: string | null;
-    created_at: string;
-    updated_at: string;
-    novels: {
-      title: string;
-      author_profile_id: string;
-      slug: string;
-    };
-  };
-
-  console.log('Checking notifications for chapter:', chapterId);
-
-  const { data: chapter, error: chapterError } = await supabase
-    .from('chapters')
-    .select(`
-      title,
-      chapter_number,
-      part_number,
-      novel_id,
-      coins,
-      publish_at,
-      created_at,
-      updated_at,
-      novels:novels!inner (
-        title,
-        author_profile_id,
-        slug
-      )
-    `)
-    .eq('id', chapterId)
-    .single() as { data: ChapterWithNovel | null; error: PostgrestError | null };
-
-  if (chapterError || !chapter) {
-    console.error('Error fetching chapter for notification check:', chapterError);
-    return { shouldNotify: false };
-  }
-
-  // Get current time in UTC
-  const now = new Date();
-  const createdAt = new Date(chapter.created_at);
-  const publishAt = chapter.publish_at ? new Date(chapter.publish_at) : null;
-
-  // Convert all times to UTC timestamps for comparison
-  const nowUTCTimestamp = Date.UTC(
-    now.getUTCFullYear(),
-    now.getUTCMonth(),
-    now.getUTCDate(),
-    now.getUTCHours(),
-    now.getUTCMinutes(),
-    now.getUTCSeconds()
-  );
-
-  const createdAtUTCTimestamp = Date.UTC(
-    createdAt.getUTCFullYear(),
-    createdAt.getUTCMonth(),
-    createdAt.getUTCDate(),
-    createdAt.getUTCHours(),
-    createdAt.getUTCMinutes(),
-    createdAt.getUTCSeconds()
-  );
-
-  const publishAtUTCTimestamp = publishAt ? Date.UTC(
-    publishAt.getUTCFullYear(),
-    publishAt.getUTCMonth(),
-    publishAt.getUTCDate(),
-    publishAt.getUTCHours(),
-    publishAt.getUTCMinutes(),
-    publishAt.getUTCSeconds()
-  ) : null;
-
-  // Log detailed timezone information
-  console.log('Detailed time information:', {
-    currentTime: {
-      local: now.toLocaleString(),
-      utc: now.toUTCString(),
-      iso: now.toISOString(),
-      timestamp: nowUTCTimestamp,
-      timezoneOffset: now.getTimezoneOffset()
-    },
-    createdAt: {
-      original: chapter.created_at,
-      parsed: createdAt.toISOString(),
-      utc: createdAt.toUTCString(),
-      timestamp: createdAtUTCTimestamp
-    },
-    publishAt: publishAt ? {
-      original: chapter.publish_at,
-      parsed: publishAt.toISOString(),
-      utc: publishAt.toUTCString(),
-      timestamp: publishAtUTCTimestamp
-    } : null
-  });
-
-  // Check conditions using UTC timestamps
-  const isNewlyCreated = nowUTCTimestamp - createdAtUTCTimestamp <= 60 * 1000;
-  const isPublishedAndFree = (!publishAtUTCTimestamp || publishAtUTCTimestamp <= nowUTCTimestamp) && chapter.coins === 0;
-
-  console.log('Notification check results:', {
-    isNewlyCreated,
-    isPublishedAndFree,
-    timeSinceCreation: nowUTCTimestamp - createdAtUTCTimestamp,
-    coins: chapter.coins
-  });
-
-  if (isNewlyCreated || isPublishedAndFree) {
-    const reason = isNewlyCreated ? 'newly created chapter' : 'published and free chapter';
-    console.log(`Will send notification for chapter - ${reason}`);
-    return {
-      shouldNotify: true,
-      chapterData: {
-        title: chapter.title,
-        chapterNumber: chapter.chapter_number,
-        partNumber: chapter.part_number,
-        novelId: chapter.novel_id,
-        novelTitle: chapter.novels.title,
-        novelSlug: chapter.novels.slug,
-        authorId: chapter.novels.author_profile_id,
-        coins: chapter.coins,
-        publishAt: chapter.publish_at
-      }
-    };
-  }
-
-  console.log('Will NOT send notification for chapter - not newly created and not published/free');
-  return { shouldNotify: false };
-}
-
-// Helper function to send notifications for a published chapter
-async function sendChapterNotifications(chapterData: {
-  title: string;
-  chapterNumber: number;
-  partNumber: number | null;
-  novelId: string;
-  novelTitle: string;
-  novelSlug: string;
-  authorId: string;
-  coins: number;
-  publishAt: string | null;
-}) {
-  try {
-    await notificationService.sendChapterReleaseNotifications({
-      novelId: chapterData.novelId,
-      chapterNumber: chapterData.chapterNumber,
-      partNumber: chapterData.partNumber,
-      chapterTitle: chapterData.title,
-      novelTitle: chapterData.novelTitle,
-      novelSlug: chapterData.novelSlug,
-      authorId: chapterData.authorId,
-      coins: chapterData.coins,
-      publishAt: chapterData.publishAt ? new Date(chapterData.publishAt) : null
-    });
-  } catch (error) {
-    console.error('Error sending chapter notifications:', error);
-    // Don't throw error to prevent blocking chapter creation
   }
 } 

@@ -6,7 +6,6 @@ import { toast } from 'sonner';
 import supabase from '@/lib/supabaseClient';
 import { formatRelativeDate, generateUUID } from '@/lib/utils';
 import type { NovelComment } from '@/types/database';
-import { notificationService } from '@/services/notificationService';
 
 interface ReplyData {
   id: string;
@@ -51,7 +50,6 @@ export const CommentReplies = ({
   isAuthenticated,
   isExpanded,
   novelId,
-  novelSlug,
   onReplyAdded,
   currentUserId
 }: CommentRepliesProps) => {
@@ -186,19 +184,6 @@ export const CommentReplies = ({
         }
       };
       
-      // Create notification for the parent comment author
-      if (parentComment.profile_id !== user.id) {
-        await notificationService.createNotification({
-          recipientId: parentComment.profile_id,
-          senderId: user.id,
-          type: 'comment_reply',
-          content: `${profile.username} replied to your comment: "${newReply.trim().substring(0, 50)}${newReply.length > 50 ? '...' : ''}"`,
-          link: `/novels/${novelSlug}?tab=comments`,
-          novelId,
-          commentId: parentCommentId
-        });
-      }
-      
       setReplies([...replies, newReplyWithProfile]);
       setNewReply('');
       onReplyAdded?.();
@@ -301,25 +286,6 @@ export const CommentReplies = ({
           .eq('id', replyId);
 
         if (updateError) throw updateError;
-
-        // Create notification for the reply author if it's not their own reply
-        if (reply.profile_id !== currentUserId) {
-          const { data: currentUser } = await supabase
-            .from('profiles')
-            .select('username')
-            .eq('id', currentUserId)
-            .single();
-
-          await notificationService.createNotification({
-            recipientId: reply.profile_id,
-            senderId: currentUserId,
-            type: 'like',
-            content: `${currentUser?.username || 'Someone'} liked your reply: "${reply.content.substring(0, 50)}${reply.content.length > 50 ? '...' : ''}"`,
-            link: `/novels/${novelSlug}?tab=comments`,
-            novelId,
-            commentId: reply.id
-          });
-        }
 
         setReplies(prevReplies => 
           prevReplies.map(r => 

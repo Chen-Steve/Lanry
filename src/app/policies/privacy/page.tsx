@@ -28,7 +28,6 @@ const PrivacyPolicy = () => {
               <li>Provide and maintain our services</li>
               <li>Track your reading progress</li>
               <li>Recommend novels based on your preferences</li>
-              <li>Send notifications about new chapters (if enabled)</li>
               <li>Improve our website and user experience</li>
             </ul>
           </div>

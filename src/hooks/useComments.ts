@@ -82,7 +82,7 @@ export function useComments(novelId: string, chapterNumber: number) {
         .on(
           'postgres_changes',
           {
-            event: '*',
+            event: 'INSERT',
             schema: 'public',
             table: 'chapter_comments',
             filter: `novel_id=eq.${novelId} and chapter_number=eq.${chapterNumber}`
@@ -90,29 +90,31 @@ export function useComments(novelId: string, chapterNumber: number) {
           (payload: RealtimePostgresChangesPayload<DatabaseComment>) => {
             if (!mounted) return; // Prevent updates if component unmounted
             
-            if (payload.eventType === 'DELETE') return;
-            
             const newComment = payload.new;
-            if (!newComment) return;
+            if (!newComment || typeof newComment !== 'object') return;
+
+            // Type guard to ensure we have a valid comment
+            const comment = newComment as DatabaseComment;
+            if (!comment.id || !comment.paragraph_id) return;
 
             // Check if comment already exists to prevent duplicates
             setComments((prev) => {
-              const existingComments = prev[newComment.paragraph_id] || [];
-              const commentExists = existingComments.some(c => c.id === newComment.id);
+              const existingComments = prev[comment.paragraph_id] || [];
+              const commentExists = existingComments.some(c => c.id === comment.id);
               
               if (commentExists) return prev;
 
               return {
                 ...prev,
-                [newComment.paragraph_id]: [
+                [comment.paragraph_id]: [
                   ...existingComments,
                   {
-                    ...newComment,
+                    ...comment,
                     novel_id: novelId,
                     profile: {
-                      username: newComment.profile?.username ?? 'Anonymous',
-                      avatar_url: newComment.profile?.avatar_url,
-                      role: newComment.profile?.role ?? 'USER'
+                      username: comment.profile?.username ?? 'Anonymous',
+                      avatar_url: comment.profile?.avatar_url,
+                      role: comment.profile?.role ?? 'USER'
                     }
                   } as ChapterComment
                 ]
