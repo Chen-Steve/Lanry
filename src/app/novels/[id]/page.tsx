@@ -47,7 +47,7 @@ export default function NovelPage({ params }: { params: { id: string } }) {
           });
           
           // Log the view in novel_view_logs and increment the views counter
-          const [{ error: viewLogError }, { error: viewCountError }] = await Promise.all([
+          const [{ error: viewLogError }] = await Promise.all([
             supabase
               .from('novel_view_logs')
               .insert({
@@ -56,15 +56,13 @@ export default function NovelPage({ params }: { params: { id: string } }) {
                 created_at: new Date().toISOString(),
                 viewed_at: new Date().toISOString()
               }),
-            supabase
-              .rpc('increment_novel_views', { novel_id: data.id })
+            fetch(`/api/novels/${data.id}/views`, {
+              method: 'POST'
+            })
           ]);
 
           if (viewLogError) {
             console.error('Error logging view:', viewLogError);
-          }
-          if (viewCountError) {
-            console.error('Error incrementing view count:', viewCountError);
           }
         }
       } catch (error) {

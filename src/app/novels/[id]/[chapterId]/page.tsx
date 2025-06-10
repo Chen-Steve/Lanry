@@ -166,7 +166,7 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
     const logView = async () => {
       try {
         const novelUUID = chapter.novel.id;
-        const [{ error: viewLogError }, { error: viewCountError }] = await Promise.all([
+        const [{ error: viewLogError }] = await Promise.all([
           supabase
             .from('novel_view_logs')
             .insert({
@@ -175,11 +175,11 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
               created_at: new Date().toISOString(),
               viewed_at: new Date().toISOString()
             }),
-          supabase
-            .rpc('increment_novel_views', { novel_id: novelUUID })
+          fetch(`/api/novels/${novelUUID}/views`, {
+            method: 'POST'
+          })
         ]);
         if (viewLogError) console.error('ViewLog Insert Error:', viewLogError);
-        if (viewCountError) console.error('ViewCount RPC Error:', viewCountError);
       } catch (error) {
         console.error('Error logging/incrementing novel view from chapter page:', error);
       }
