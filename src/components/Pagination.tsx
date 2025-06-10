@@ -4,9 +4,10 @@ interface PaginationProps {
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
+  isLoading?: boolean;
 }
 
-const Pagination = ({ currentPage, totalPages, onPageChange }: PaginationProps) => {
+const Pagination = ({ currentPage, totalPages, onPageChange, isLoading = false }: PaginationProps) => {
   const getPageNumbers = () => {
     const pages = [];
     const maxPagesToShow = 5;
@@ -59,7 +60,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }: PaginationProps) 
     <div className="flex justify-center items-center gap-1">
       <button
         onClick={() => onPageChange(currentPage - 1)}
-        disabled={currentPage === 1}
+        disabled={currentPage === 1 || isLoading}
         className="p-2 rounded-lg hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
         aria-label="Previous page"
       >
@@ -70,7 +71,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }: PaginationProps) 
         <button
           key={index}
           onClick={() => typeof page === 'number' ? onPageChange(page) : null}
-          disabled={page === '...'}
+          disabled={page === '...' || isLoading}
           className={`min-w-[32px] h-8 px-2 rounded-lg ${
             page === currentPage
               ? 'bg-primary text-primary-foreground'
@@ -83,7 +84,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }: PaginationProps) 
 
       <button
         onClick={() => onPageChange(currentPage + 1)}
-        disabled={currentPage === totalPages}
+        disabled={currentPage === totalPages || isLoading}
         className="p-2 rounded-lg hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
         aria-label="Next page"
       >

@@ -5,8 +5,9 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Icon } from '@iconify/react';
 import { getChaptersForList, ChapterListItem } from '@/services/chapterService';
 import { useServerTimeContext } from '@/providers/ServerTimeProvider';
-import { BulkPurchaseModal } from './BulkPurchaseModal';
-import Link from 'next/link';
+import dynamic from 'next/dynamic';
+import Pagination from '@/components/Pagination';
+import { ChapterFilterBar } from './ChapterFilterBar';
 import supabase from '@/lib/supabaseClient';
 
 interface ChapterListProps {
@@ -19,6 +20,9 @@ interface ChapterListProps {
   volumes?: Volume[];
 }
 
+// Lazy-load BulkPurchaseModal so it's removed from the initial bundle
+const BulkPurchaseModal = dynamic(() => import('./BulkPurchaseModal').then(m => m.BulkPurchaseModal), { ssr: false });
+
 export const ChapterList = ({
   initialChapters,
   novelId,
@@ -28,24 +32,13 @@ export const ChapterList = ({
   novelAuthorId,
   volumes = []
 }: ChapterListProps) => {
-  const loadingRef = useRef(false);
-  const isInitialMount = useRef(true);
-  const volumeDropdownRef = useRef<HTMLDivElement>(null);
-  const volumeDropdownMenuRef = useRef<HTMLDivElement>(null);
-  const volumeButtonRef = useRef<HTMLButtonElement>(null);
-  const [volumeButtonWidth, setVolumeButtonWidth] = useState<number>(0);
+  const latestRequestRef = useRef(0);
   const { getServerTime } = useServerTimeContext();
   
   const [selectedVolumeId, setSelectedVolumeId] = useState<string | null>(null);
-  const [showVolumeDescription, setShowVolumeDescription] = useState(false);
-  
-  // Update button width when it changes
-  useEffect(() => {
-    if (volumeButtonRef.current) {
-      // Add a small buffer (20px) to ensure text fits comfortably
-      setVolumeButtonWidth(volumeButtonRef.current.offsetWidth + 20);
-    }
-  }, [volumes, selectedVolumeId]); // Update when volumes or selection changes
+
+  // Track first render for certain effects
+  const isInitialMount = useRef(true);
 
   // Filter out draft chapters (negative chapter_number) from initialChapters
   const filteredInitialChapters = useMemo(() => {
@@ -59,8 +52,6 @@ export const ChapterList = ({
   const [error, setError] = useState<string | null>(null);
   const [volumeCounts, setVolumeCounts] = useState(new Map<string, { total: number }>());
   const [isBulkPurchaseModalOpen, setIsBulkPurchaseModalOpen] = useState(false);
-  const [pageInputValue, setPageInputValue] = useState('');
-  const [showPageInput, setShowPageInput] = useState(false);
   const [userUnlocks, setUserUnlocks] = useState<{ chapter_number: number; part_number: number | null; }[]>([]);
 
   // Calculate volume-specific counts
@@ -96,32 +87,45 @@ export const ChapterList = ({
     });
   }, [novelId, userProfile?.id, isAuthenticated]);
 
-  // Function to load chapters and update state
-  const loadChapters = useCallback(async (pageNum: number) => {
-    if (loadingRef.current) return;
-    
-    loadingRef.current = true;
-    setIsLoading(true);
-    setError(null);
+  // Function to load chapters and update state with a race-condition guard
+  const loadChapters = useCallback(
+    async (pageNum: number) => {
+      // Increment the request token; any previous in-flight requests with a
+      // smaller token will be considered stale when they resolve.
+      const requestToken = ++latestRequestRef.current;
 
-    try {
-      const result = await fetchChapters(pageNum, selectedVolumeId);
-      setChapters(result.chapters);
-      setCurrentPage(result.currentPage);
-      setTotalPages(result.totalPages);
-    } catch (error) {
-      console.error('Error loading chapters:', error);
-      setError('Failed to load chapters. Please try again.');
-    } finally {
-      setIsLoading(false);
-      loadingRef.current = false;
-    }
-  }, [fetchChapters, selectedVolumeId]);
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const result = await fetchChapters(pageNum, selectedVolumeId);
+
+        // Ignore the response if it's not from the latest request
+        if (requestToken !== latestRequestRef.current) return;
+
+        setChapters(result.chapters);
+        setCurrentPage(result.currentPage);
+        setTotalPages(result.totalPages);
+      } catch (error) {
+        // Only surface the error if this request is still the latest
+        if (requestToken === latestRequestRef.current) {
+          console.error('Error loading chapters:', error);
+          setError('Failed to load chapters. Please try again.');
+        }
+      } finally {
+        // Only clear the loading state if this request is still the latest
+        if (requestToken === latestRequestRef.current) {
+          setIsLoading(false);
+        }
+      }
+    },
+    [fetchChapters, selectedVolumeId]
+  );
 
   // Initial load effect
   useEffect(() => {
     if (!isInitialMount.current) return;
-    
+
     if (filteredInitialChapters && filteredInitialChapters.length > 0) {
       // Calculate total pages based on 50 chapters per page
       const limit = 50;
@@ -139,9 +143,32 @@ export const ChapterList = ({
     } else {
       loadChapters(1);
     }
-    
+
     isInitialMount.current = false;
   }, [filteredInitialChapters, loadChapters]);
+
+  // Helper to apply client-side pagination on initial chapters (includes advanced)
+  const getLocalChapters = useCallback(
+    (pageNum: number, volId: string | null) => {
+      if (!filteredInitialChapters || filteredInitialChapters.length === 0) return null;
+
+      let source = filteredInitialChapters;
+      if (volId) {
+        source = source.filter(ch => ch.volume_id === volId);
+      }
+
+      const limit = 50;
+      const start = (pageNum - 1) * limit;
+      const end = Math.min(start + limit, source.length);
+      const paginated = source.slice(start, end);
+
+      return {
+        chapters: paginated,
+        totalPages: Math.ceil(source.length / limit)
+      };
+    },
+    [filteredInitialChapters]
+  );
 
   // Effect to handle filter changes
   const prevFiltersRef = useRef({
@@ -150,42 +177,42 @@ export const ChapterList = ({
   
   useEffect(() => {
     if (isInitialMount.current) return;
-    
+
     const prevFilters = prevFiltersRef.current;
     
     if (prevFilters.selectedVolumeId !== selectedVolumeId) {
       setCurrentPage(1);
-      loadChapters(1);
+
+      const local = getLocalChapters(1, selectedVolumeId);
+      if (local) {
+        setChapters(local.chapters);
+        setTotalPages(local.totalPages);
+      } else {
+        loadChapters(1);
+      }
       
       prevFiltersRef.current = {
         selectedVolumeId
       };
     }
-  }, [selectedVolumeId, loadChapters]);
+  }, [selectedVolumeId, loadChapters, getLocalChapters]);
 
   // Effect to handle page changes
   const prevPageRef = useRef(currentPage);
   useEffect(() => {
     if (isInitialMount.current) return;
-    
+
     if (prevPageRef.current !== currentPage) {
-      // If a volume is selected, always use API to get filtered results
-      if (selectedVolumeId) {
-        loadChapters(currentPage);
-      } else if (filteredInitialChapters && filteredInitialChapters.length > 0) {
-        // Handle pagination for initial chapters when no volume filter is applied
-        const limit = 50;
-        const start = (currentPage - 1) * limit;
-        const end = Math.min(start + limit, filteredInitialChapters.length);
-        const paginatedChapters = filteredInitialChapters.slice(start, end);
-        setChapters(paginatedChapters);
+      const local = getLocalChapters(currentPage, selectedVolumeId);
+      if (local) {
+        setChapters(local.chapters);
+        setTotalPages(local.totalPages);
       } else {
-        // Load from API
         loadChapters(currentPage);
       }
       prevPageRef.current = currentPage;
     }
-  }, [currentPage, loadChapters, filteredInitialChapters, selectedVolumeId]);
+  }, [currentPage, loadChapters, selectedVolumeId, getLocalChapters]);
 
   const handlePageChange = useCallback((newPage: number) => {
     if (newPage >= 1 && newPage <= totalPages && newPage !== currentPage) {
@@ -198,51 +225,12 @@ export const ChapterList = ({
     }
   }, [currentPage, totalPages]);
 
-  // Handle page input
-  const handlePageInputSubmit = useCallback((value: string) => {
-    const pageNum = parseInt(value);
-    if (!isNaN(pageNum) && pageNum >= 1 && pageNum <= totalPages) {
-      handlePageChange(pageNum);
-      setShowPageInput(false);
-      setPageInputValue('');
-    }
-  }, [handlePageChange, totalPages]);
-
-  const handlePageInputKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      handlePageInputSubmit(pageInputValue);
-    } else if (e.key === 'Escape') {
-      setShowPageInput(false);
-      setPageInputValue('');
-    }
-  }, [pageInputValue, handlePageInputSubmit]);
-
   // Count of active filters to show
   const activeFilterCount = useMemo(() => {
     let count = 0;
     if (volumes.length > 0 && selectedVolumeId) count++;
     return count;
   }, [selectedVolumeId, volumes.length]);
-
-  // Add click outside handler
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        (volumeDropdownRef.current && volumeDropdownRef.current.contains(event.target as Node)) ||
-        (volumeDropdownMenuRef.current && volumeDropdownMenuRef.current.contains(event.target as Node))
-      ) {
-        // Click is inside the volume button or dropdown; do nothing.
-        return;
-      }
-      // Click outside dropdown and button
-      setShowVolumeDescription(false);
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
 
   // Fetch user unlocks for bulk purchase filtering
   useEffect(() => {
@@ -296,270 +284,28 @@ export const ChapterList = ({
     });
   }, [filteredInitialChapters, getServerTime, userProfile?.id, novelAuthorId, isChapterUnlocked, selectedVolumeId]);
 
-  // Volume Description (only show when a volume is selected)
-  const selectedVolume = volumes.find(v => v.id === selectedVolumeId);
-
-  const renderPagination = useCallback(() => {
-    const pages = [];
-    const maxVisiblePages = 5;
-    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-    const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-
-    if (endPage - startPage + 1 < maxVisiblePages) {
-      startPage = Math.max(1, endPage - maxVisiblePages + 1);
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(
-        <button
-          key={i}
-          onClick={() => handlePageChange(i)}
-          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors
-            ${currentPage === i
-              ? 'bg-primary text-primary-foreground'
-              : 'hover:bg-accent text-muted-foreground hover:text-foreground'
-            }`}
-          disabled={isLoading}
-        >
-          {i}
-        </button>
-      );
-    }
-
-    return (
-      <div className="flex items-center justify-center gap-2 flex-wrap">
-        <button
-          onClick={() => handlePageChange(currentPage - 1)}
-          disabled={currentPage === 1 || isLoading}
-          className="p-1.5 rounded-lg hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
-          aria-label="Previous page"
-        >
-          <Icon icon="solar:arrow-left-linear" className="w-4 h-4" />
-        </button>
-        
-        {startPage > 1 && (
-          <>
-            <button
-              onClick={() => handlePageChange(1)}
-              className="px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-accent text-muted-foreground hover:text-foreground"
-              disabled={isLoading}
-            >
-              1
-            </button>
-            {startPage > 2 && (
-              showPageInput ? (
-                <div className="flex items-center gap-1">
-                  <input
-                    type="number"
-                    min="1"
-                    max={totalPages}
-                    value={pageInputValue}
-                    onChange={(e) => setPageInputValue(e.target.value)}
-                    onKeyDown={handlePageInputKeyDown}
-                    onBlur={() => {
-                      if (pageInputValue) {
-                        handlePageInputSubmit(pageInputValue);
-                      } else {
-                        setShowPageInput(false);
-                      }
-                    }}
-                    placeholder="Page"
-                    className="w-16 px-2 py-1 text-sm border border-border rounded bg-background focus:outline-none focus:ring-2 focus:ring-primary/50"
-                    autoFocus
-                  />
-                  <span className="text-xs text-muted-foreground">/{totalPages}</span>
-                </div>
-              ) : (
-                <button
-                  onClick={() => {
-                    setShowPageInput(true);
-                    setPageInputValue(currentPage.toString());
-                  }}
-                  className="px-2 py-1 text-muted-foreground hover:text-foreground hover:bg-accent rounded transition-colors"
-                  disabled={isLoading}
-                  title="Click to jump to page"
-                >
-                  ...
-                </button>
-              )
-            )}
-          </>
-        )}
-        
-        {pages}
-        
-        {endPage < totalPages && (
-          <>
-            {endPage < totalPages - 1 && (
-              showPageInput ? (
-                <div className="flex items-center gap-1">
-                  <input
-                    type="number"
-                    min="1"
-                    max={totalPages}
-                    value={pageInputValue}
-                    onChange={(e) => setPageInputValue(e.target.value)}
-                    onKeyDown={handlePageInputKeyDown}
-                    onBlur={() => {
-                      if (pageInputValue) {
-                        handlePageInputSubmit(pageInputValue);
-                      } else {
-                        setShowPageInput(false);
-                      }
-                    }}
-                    placeholder="Page"
-                    className="w-16 px-2 py-1 text-sm border border-border rounded bg-background focus:outline-none focus:ring-2 focus:ring-primary/50"
-                    autoFocus
-                  />
-                  <span className="text-xs text-muted-foreground">/{totalPages}</span>
-                </div>
-              ) : (
-                <button
-                  onClick={() => {
-                    setShowPageInput(true);
-                    setPageInputValue(currentPage.toString());
-                  }}
-                  className="px-2 py-1 text-muted-foreground hover:text-foreground hover:bg-accent rounded transition-colors"
-                  disabled={isLoading}
-                  title="Click to jump to page"
-                >
-                  ...
-                </button>
-              )
-            )}
-            <button
-              onClick={() => handlePageChange(totalPages)}
-              className="px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-accent text-muted-foreground hover:text-foreground"
-              disabled={isLoading}
-            >
-              {totalPages}
-            </button>
-          </>
-        )}
-        
-        <button
-          onClick={() => handlePageChange(currentPage + 1)}
-          disabled={currentPage === totalPages || isLoading}
-          className="p-1.5 rounded-lg hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
-          aria-label="Next page"
-        >
-          <Icon icon="solar:arrow-right-linear" className="w-4 h-4" />
-        </button>
-      </div>
-    );
-  }, [currentPage, totalPages, handlePageChange, isLoading, showPageInput, pageInputValue, handlePageInputKeyDown, handlePageInputSubmit]);
+  // Memoised lookup so we don't run .find on every render
+  const selectedVolume = useMemo(() => {
+    return volumes.find(v => v.id === selectedVolumeId);
+  }, [volumes, selectedVolumeId]);
 
   return (
     <>
       <div className="mt-6 md:-mt-0 flex flex-col gap-4">
         <div className="overflow-visible relative">
-          {/* Unified Filter Bar */}
-          <div className="p-3 bg-accent/50 border-b border-border flex flex-col md:flex-row gap-3 relative">
-            {/* Dropdown Containers - Positioned outside the scroll container */}
-            {showVolumeDescription && volumes.length > 0 && (
-              <div 
-                className="absolute left-3 top-[calc(100%-0.5rem)] bg-background border border-border rounded-lg shadow-lg max-h-[400px] overflow-y-auto z-50"
-                style={{ width: volumeButtonWidth || 200, minWidth: 200 }}
-                ref={volumeDropdownMenuRef}
-              >
-                <div className="p-1">
-                  <button
-                    onClick={() => {
-                      setSelectedVolumeId(null);
-                      setShowVolumeDescription(false);
-                    }}
-                    className={`w-full px-3 py-2 text-left rounded-md text-sm ${!selectedVolumeId ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'}`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span>All Volumes</span>
-                      <span className="text-xs opacity-70">{volumeCounts.get('all')?.total || 0}</span>
-                    </div>
-                  </button>
-                  
-                  {volumes.map(volume => (
-                    <button
-                      key={volume.id}
-                      onClick={() => {
-                        setSelectedVolumeId(volume.id);
-                        setShowVolumeDescription(false);
-                      }}
-                      className={`w-full px-3 py-2 text-left rounded-md text-sm ${selectedVolumeId === volume.id ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'}`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span>
-                          {volume.title 
-                            ? `Vol ${volume.volume_number}: ${volume.title}` 
-                            : `Volume ${volume.volume_number}`}
-                        </span>
-                        <span className="text-xs opacity-70">{volumeCounts.get(volume.id)?.total || 0}</span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="flex items-center gap-2 overflow-x-auto overflow-y-visible no-scrollbar">
-              <Link 
-                href={`/novels/${novelSlug}`}
-                className="px-3 py-1.5 bg-background border border-border rounded-lg text-sm font-medium flex items-center gap-2 whitespace-nowrap hover:border-primary/50 transition-colors"
-              >
-                <Icon icon="solar:arrow-left-linear" className="w-4 h-4" />
-                <span>Back</span>
-              </Link>
-
-              {/* Bulk Purchase Button */}
-              {isAuthenticated && userProfile && allAdvancedChapters.length > 0 && (
-                <button
-                  onClick={() => setIsBulkPurchaseModalOpen(true)}
-                  className="px-3 py-1.5 bg-primary text-primary-foreground border border-primary rounded-lg text-sm font-medium flex items-center gap-2 whitespace-nowrap hover:bg-primary/90 transition-colors"
-                >
-                  <span>Bulk Purchase</span>
-                </button>
-              )}
-
-              {volumes.length > 0 && (
-                <div className="relative inline-block flex-shrink-0" ref={volumeDropdownRef}>
-                  <button 
-                    ref={volumeButtonRef}
-                    className="px-3 py-1.5 bg-background border border-border rounded-lg text-sm font-medium flex items-center gap-2 whitespace-nowrap hover:border-primary/50 transition-colors"
-                    onClick={() => {
-                      setShowVolumeDescription(!showVolumeDescription);
-                    }}
-                  >
-                    <Icon icon="solar:book-broken" className="w-4 h-4" />
-                    <span>
-                      {selectedVolumeId 
-                        ? volumes.find(v => v.id === selectedVolumeId)?.title 
-                          ? `Vol ${volumes.find(v => v.id === selectedVolumeId)?.volume_number}: ${volumes.find(v => v.id === selectedVolumeId)?.title}`
-                          : `Volume ${volumes.find(v => v.id === selectedVolumeId)?.volume_number}`
-                        : 'All Volumes'}
-                    </span>
-                    <Icon icon="solar:alt-arrow-down-linear" className="w-4 h-4 opacity-70" />
-                  </button>
-                </div>
-              )}
-              
-              {/* Active filter indicator */}
-              {activeFilterCount > 0 && (
-                <span className="bg-primary/20 text-primary text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0">
-                  {activeFilterCount} filter{activeFilterCount > 1 ? 's' : ''} active
-                </span>
-              )}
-              
-              {/* Reset filters button */}
-              {activeFilterCount > 0 && (
-                <button 
-                  onClick={() => {
-                    setSelectedVolumeId(null);
-                  }}
-                  className="text-xs text-muted-foreground hover:text-foreground flex-shrink-0"
-                >
-                  Reset
-                </button>
-              )}
-            </div>
-          </div>
+          {/* Filter Bar */}
+          <ChapterFilterBar
+            novelSlug={novelSlug}
+            volumes={volumes}
+            volumeCounts={volumeCounts}
+            selectedVolumeId={selectedVolumeId}
+            setSelectedVolumeId={setSelectedVolumeId}
+            isAuthenticated={isAuthenticated}
+            userProfile={userProfile}
+            allAdvancedChapters={allAdvancedChapters}
+            onOpenBulkPurchase={() => setIsBulkPurchaseModalOpen(true)}
+            activeFilterCount={activeFilterCount}
+          />
 
           {/* Volume Description (only show when a volume is selected) */}
           {selectedVolume?.description && selectedVolumeId && (
@@ -616,7 +362,12 @@ export const ChapterList = ({
                     </div>
                   ))}
                 </div>
-                {renderPagination()}
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                  isLoading={isLoading}
+                />
               </>
             ) : (
               <div className="py-8 text-center text-muted-foreground">
