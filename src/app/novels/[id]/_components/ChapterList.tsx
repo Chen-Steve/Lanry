@@ -31,6 +31,7 @@ export const ChapterList = ({
   const loadingRef = useRef(false);
   const isInitialMount = useRef(true);
   const volumeDropdownRef = useRef<HTMLDivElement>(null);
+  const volumeDropdownMenuRef = useRef<HTMLDivElement>(null);
   const volumeButtonRef = useRef<HTMLButtonElement>(null);
   const [volumeButtonWidth, setVolumeButtonWidth] = useState<number>(0);
   const { getServerTime } = useServerTimeContext();
@@ -168,8 +169,11 @@ export const ChapterList = ({
     if (isInitialMount.current) return;
     
     if (prevPageRef.current !== currentPage) {
-      if (filteredInitialChapters && filteredInitialChapters.length > 0) {
-        // Handle pagination for initial chapters
+      // If a volume is selected, always use API to get filtered results
+      if (selectedVolumeId) {
+        loadChapters(currentPage);
+      } else if (filteredInitialChapters && filteredInitialChapters.length > 0) {
+        // Handle pagination for initial chapters when no volume filter is applied
         const limit = 50;
         const start = (currentPage - 1) * limit;
         const end = Math.min(start + limit, filteredInitialChapters.length);
@@ -181,7 +185,7 @@ export const ChapterList = ({
       }
       prevPageRef.current = currentPage;
     }
-  }, [currentPage, loadChapters, filteredInitialChapters]);
+  }, [currentPage, loadChapters, filteredInitialChapters, selectedVolumeId]);
 
   const handlePageChange = useCallback((newPage: number) => {
     if (newPage >= 1 && newPage <= totalPages && newPage !== currentPage) {
@@ -223,9 +227,15 @@ export const ChapterList = ({
   // Add click outside handler
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (volumeDropdownRef.current && !volumeDropdownRef.current.contains(event.target as Node)) {
-        setShowVolumeDescription(false);
+      if (
+        (volumeDropdownRef.current && volumeDropdownRef.current.contains(event.target as Node)) ||
+        (volumeDropdownMenuRef.current && volumeDropdownMenuRef.current.contains(event.target as Node))
+      ) {
+        // Click is inside the volume button or dropdown; do nothing.
+        return;
       }
+      // Click outside dropdown and button
+      setShowVolumeDescription(false);
     };
 
     document.addEventListener('mousedown', handleClickOutside);
@@ -269,7 +279,14 @@ export const ChapterList = ({
 
   // Get all advanced chapters in the novel for bulk purchase modal
   const allAdvancedChapters = useMemo(() => {
-    return filteredInitialChapters.filter(chapter => {
+    let chaptersToFilter = filteredInitialChapters;
+    
+    // If a volume is selected, filter chapters by volume
+    if (selectedVolumeId) {
+      chaptersToFilter = filteredInitialChapters.filter(chapter => chapter.volume_id === selectedVolumeId);
+    }
+    
+    return chaptersToFilter.filter(chapter => {
       const hasFuturePublishDate = chapter.publish_at && new Date(chapter.publish_at) > getServerTime();
       const hasCost = (chapter.coins || 0) > 0;
       const isNotAuthor = userProfile?.id !== novelAuthorId;
@@ -277,7 +294,7 @@ export const ChapterList = ({
       
       return hasFuturePublishDate && hasCost && isNotAuthor && isNotUnlocked;
     });
-  }, [filteredInitialChapters, getServerTime, userProfile?.id, novelAuthorId, isChapterUnlocked]);
+  }, [filteredInitialChapters, getServerTime, userProfile?.id, novelAuthorId, isChapterUnlocked, selectedVolumeId]);
 
   // Volume Description (only show when a volume is selected)
   const selectedVolume = volumes.find(v => v.id === selectedVolumeId);
@@ -441,8 +458,9 @@ export const ChapterList = ({
             {/* Dropdown Containers - Positioned outside the scroll container */}
             {showVolumeDescription && volumes.length > 0 && (
               <div 
-                className="absolute left-3 top-[calc(100%-0.5rem)] bg-background border border-border rounded-lg shadow-lg max-h-[400px] overflow-y-auto"
-                style={{ width: `${volumeButtonWidth}px`, minWidth: '200px' }}
+                className="absolute left-3 top-[calc(100%-0.5rem)] bg-background border border-border rounded-lg shadow-lg max-h-[400px] overflow-y-auto z-50"
+                style={{ width: volumeButtonWidth || 200, minWidth: 200 }}
+                ref={volumeDropdownMenuRef}
               >
                 <div className="p-1">
                   <button
