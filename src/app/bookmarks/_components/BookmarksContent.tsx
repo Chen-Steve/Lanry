@@ -175,7 +175,7 @@ export default function BookmarksContent() {
                   : 'bg-container hover:bg-[#faf7f2] dark:hover:bg-zinc-700'
               }`}
             >
-              All Bookmarks
+              Bookmarks
             </button>
             <button
               onClick={() => setActiveTab('folders')}
