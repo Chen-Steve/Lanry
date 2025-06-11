@@ -1,26 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import supabase from '@/lib/supabaseClient';
 import type { ChapterComment, CommentsByParagraph } from '@/types/database';
-import { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { generateUUID } from '@/lib/utils';
-
-// Type for our comment data
-interface DatabaseComment {
-  id: string;
-  created_at: string;
-  updated_at: string;
-  chapter_number: number;
-  paragraph_id: string;
-  content: string;
-  profile_id: string;
-  profile?: {
-    username: string;
-    avatar_url: string;
-    role: 'USER' | 'AUTHOR' | 'TRANSLATOR';
-  };
-}
 
 export function useComments(novelId: string, chapterNumber: number) {
   const [comments, setComments] = useState<CommentsByParagraph>({});
@@ -68,119 +51,54 @@ export function useComments(novelId: string, chapterNumber: number) {
     };
   }, []);
 
-  // Comments fetching and real-time updates
-  useEffect(() => {
-    let channel: RealtimeChannel;
-    let mounted = true;
-
-    const setupRealtimeSubscription = () => {
-      // Use a more specific channel name
-      const channelName = `comments-${novelId}-${chapterNumber}`;
-      
-      channel = supabase
-        .channel(channelName)
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'chapter_comments',
-            filter: `novel_id=eq.${novelId} and chapter_number=eq.${chapterNumber}`
-          },
-          (payload: RealtimePostgresChangesPayload<DatabaseComment>) => {
-            if (!mounted) return; // Prevent updates if component unmounted
-            
-            const newComment = payload.new;
-            if (!newComment || typeof newComment !== 'object') return;
-
-            // Type guard to ensure we have a valid comment
-            const comment = newComment as DatabaseComment;
-            if (!comment.id || !comment.paragraph_id) return;
-
-            // Check if comment already exists to prevent duplicates
-            setComments((prev) => {
-              const existingComments = prev[comment.paragraph_id] || [];
-              const commentExists = existingComments.some(c => c.id === comment.id);
-              
-              if (commentExists) return prev;
-
-              return {
-                ...prev,
-                [comment.paragraph_id]: [
-                  ...existingComments,
-                  {
-                    ...comment,
-                    novel_id: novelId,
-                    profile: {
-                      username: comment.profile?.username ?? 'Anonymous',
-                      avatar_url: comment.profile?.avatar_url,
-                      role: comment.profile?.role ?? 'USER'
-                    }
-                  } as ChapterComment
-                ]
-              };
-            });
-          }
+  // ------------------------------------------------------------
+  // Comments fetching (single fetch, no realtime)
+  const fetchComments = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('chapter_comments')
+      .select(`
+        *,
+        profile:profiles (
+          username,
+          avatar_url,
+          role
         )
-        .subscribe();
-    };
+      `)
+      .eq('novel_id', novelId)
+      .eq('chapter_number', chapterNumber)
+      .order('created_at', { ascending: true });
 
-    const fetchComments = async () => {
-      if (!mounted) return;
-      
-      const { data, error } = await supabase
-        .from('chapter_comments')
-        .select(`
-          *,
-          profile:profiles (
-            username,
-            avatar_url,
-            role
-          )
-        `)
-        .eq('novel_id', novelId)
-        .eq('chapter_number', chapterNumber)
-        .order('created_at', { ascending: true });
+    if (error) {
+      console.error('Error fetching comments:', error);
+      return;
+    }
 
-      if (error || !mounted) {
-        console.error('Error fetching comments:', error);
-        return;
+    // Group comments by paragraph with profile handling
+    const grouped = data.reduce((acc, comment) => {
+      if (!acc[comment.paragraph_id]) {
+        acc[comment.paragraph_id] = [];
       }
 
-      // Group comments by paragraph with profile handling
-      const grouped = data.reduce((acc, comment) => {
-        if (!acc[comment.paragraph_id]) {
-          acc[comment.paragraph_id] = [];
+      const processedComment = {
+        ...comment,
+        profile: {
+          username: comment.profile?.username ?? 'Anonymous',
+          avatar_url: comment.profile?.avatar_url,
+          role: comment.profile?.role ?? 'USER'
         }
-        // Ensure each comment has a valid profile
-        const processedComment = {
-          ...comment,
-          profile: {
-            username: comment.profile?.username ?? 'Anonymous',
-            avatar_url: comment.profile?.avatar_url,
-            role: comment.profile?.role ?? 'USER'
-          }
-        } as ChapterComment;
-        
-        acc[comment.paragraph_id].push(processedComment);
-        return acc;
-      }, {} as CommentsByParagraph);
+      } as ChapterComment;
 
-      if (mounted) {
-        setComments(grouped);
-      }
-    };
+      acc[comment.paragraph_id].push(processedComment);
+      return acc;
+    }, {} as CommentsByParagraph);
 
-    fetchComments();
-    setupRealtimeSubscription();
-
-    return () => {
-      mounted = false;
-      if (channel) {
-        supabase.removeChannel(channel);
-      }
-    };
+    setComments(grouped);
   }, [novelId, chapterNumber]);
+
+  // Fetch once when chapter changes
+  useEffect(() => {
+    fetchComments();
+  }, [fetchComments]);
 
   const addComment = async (paragraphId: string, content: string) => {
     if (!userId) return;
