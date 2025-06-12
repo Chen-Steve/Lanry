@@ -24,6 +24,7 @@ export default function DiscussionList() {
             <input
               type="text"
               placeholder="Search discussions..."
+              value={searchTerm}
               className="w-full pl-11 pr-4 py-2 bg-secondary text-foreground placeholder:text-muted-foreground border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all"
               disabled
             />

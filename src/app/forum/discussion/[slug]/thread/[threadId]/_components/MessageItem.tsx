@@ -7,6 +7,8 @@ import { Avatar } from '@/components/ui/avatar'
 import { useAuth } from '@/hooks/useAuth'
 import { useForumMutations } from '@/hooks/forum/useForumMutations'
 import { formatRelativeDate } from '@/lib/utils'
+import MarkdownPreview from '@/app/author/_components/MarkdownPreview'
+import SimpleMarkdownEditor from '@/components/SimpleMarkdownEditor'
 
 interface MessageItemProps {
   message: ForumMessage
@@ -81,11 +83,11 @@ const MessageItem = forwardRef<HTMLDivElement, MessageItemProps>(
           
           {isEditing ? (
             <div className="space-y-2">
-              <textarea
+              <SimpleMarkdownEditor
                 value={editContent}
-                onChange={(e) => setEditContent(e.target.value)}
-                className="w-full min-h-[100px] p-2 rounded-md bg-background border resize-none focus:outline-none focus:ring-2 focus:ring-primary text-sm sm:text-base"
-                placeholder="Edit your message..."
+                onChange={setEditContent}
+                disabled={updateMessage.isPending}
+                className="min-h-[100px]"
               />
               <div className="flex justify-end gap-2">
                 <button
@@ -115,9 +117,10 @@ const MessageItem = forwardRef<HTMLDivElement, MessageItemProps>(
             </div>
           ) : (
             <>
-              <div className="text-sm sm:text-base text-foreground whitespace-pre-wrap break-words">
-                {message.content}
-              </div>
+              <MarkdownPreview 
+                content={message.content}
+                className="text-sm sm:text-base"
+              />
               {isAuthor && (
                 <div className="flex items-center justify-end gap-1 sm:gap-2">
                   <button

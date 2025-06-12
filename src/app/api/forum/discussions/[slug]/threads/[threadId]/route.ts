@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { threadId: string } }
+  { params }: { params: { slug: string; threadId: string } }
 ) {
   try {
     const supabase = createRouteHandlerClient({ cookies })
@@ -15,8 +15,14 @@ export async function DELETE(
       return new NextResponse('Unauthorized', { status: 401 })
     }
 
-    const thread = await prisma.forumThread.findUnique({
-      where: { id: params.threadId },
+    // Ensure the thread exists and belongs to the specified discussion via slug
+    const thread = await prisma.forumThread.findFirst({
+      where: {
+        id: params.threadId,
+        discussion: {
+          slug: params.slug
+        }
+      },
       select: {
         authorId: true,
         discussion: {
@@ -40,12 +46,12 @@ export async function DELETE(
       where: { id: params.threadId }
     })
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       success: true,
-      discussionSlug: thread.discussion.slug 
+      discussionSlug: thread.discussion.slug
     })
   } catch (error) {
-    console.error('[THREAD_DELETE]', error)
+    console.error('[DISCUSSION_THREAD_DELETE]', error)
     return new NextResponse('Internal Error', { status: 500 })
   }
 } 

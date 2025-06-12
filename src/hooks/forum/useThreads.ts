@@ -9,23 +9,16 @@ interface ThreadsResponse {
 }
 
 async function getThreads(slug: string): Promise<ThreadsResponse> {
-  // First get the discussion by slug
-  const discussionRes = await fetch(`/api/forum/discussions/${slug}`)
-  if (!discussionRes.ok) {
-    throw new Error('Failed to fetch discussion')
-  }
-  const discussion = await discussionRes.json()
-
-  // Then get threads using the discussion ID
-  const threadsRes = await fetch(`/api/forum/threads?discussionId=${discussion.id}`)
-  if (!threadsRes.ok) {
+  // Get discussion and its threads in one request
+  const res = await fetch(`/api/forum/discussions/${slug}/threads`)
+  if (!res.ok) {
     throw new Error('Failed to fetch threads')
   }
-  const { threads, total, pages } = await threadsRes.json()
+  const { discussion, threads, total, pages } = await res.json()
 
   return {
-    threads,
     discussion,
+    threads,
     total,
     pages
   }

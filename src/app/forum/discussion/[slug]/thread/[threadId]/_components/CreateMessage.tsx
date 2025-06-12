@@ -6,6 +6,7 @@ import { Icon } from '@iconify/react'
 import { useAuth } from '@/hooks/useAuth'
 import { useForumMutations } from '@/hooks/forum/useForumMutations'
 import { Button } from '@/components/ui/button'
+import SimpleMarkdownEditor from '@/components/SimpleMarkdownEditor'
 
 interface CreateMessageProps {
   threadId: string
@@ -59,12 +60,11 @@ export default function CreateMessage({ threadId }: CreateMessageProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <textarea
+      <SimpleMarkdownEditor
         value={content}
-        onChange={(e) => setContent(e.target.value)}
-        placeholder="Write your message..."
-        className="w-full min-h-[100px] p-3 bg-background text-foreground placeholder:text-muted-foreground rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all resize-y"
+        onChange={setContent}
         disabled={isSubmitting}
+        className="min-h-[100px]"
       />
       <div className="flex justify-end gap-2">
         {content.trim() && (
