@@ -6,6 +6,7 @@ import { useTheme, Theme } from '@/lib/ThemeContext';
 import supabase from '@/lib/supabaseClient';
 import dynamic from 'next/dynamic';
 import { Icon } from '@iconify/react';
+import Image from 'next/image';
 
 // Dynamic imports with loading fallbacks
 const NovelManagement = dynamic(() => import('@/app/author/_components/NovelManagement'), {
@@ -57,6 +58,7 @@ export default function AuthorDashboard() {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const { theme, setTheme } = useTheme();
+  const [isSidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   useEffect(() => {
     const checkAuthorization = async () => {
@@ -117,14 +119,29 @@ export default function AuthorDashboard() {
       )}
 
       {/* Left Sidebar */}
-      <div className={`w-64 bg-background border-r border-border fixed left-0 h-full z-40 transition-transform duration-300 lg:translate-x-0 ${
+      <div className={`${isSidebarCollapsed ? 'w-20' : 'w-64'} bg-background border-r border-border fixed left-0 h-full z-40 transition-all duration-300 lg:translate-x-0 ${
         isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
         <div className="flex flex-col h-full">
           <nav className="flex-1 p-4">
-            <a href="https://lanry.space/" className="text-2xl font-bold mb-6 block text-center text-foreground">
-              Lanry
+            <a href="https://lanry.space/" className="mb-6 block text-center" aria-label="Lanry Home">
+              <Image
+                src="/lanry.jpg"
+                alt="Lanry Logo"
+                width={isSidebarCollapsed ? 40 : 60}
+                height={isSidebarCollapsed ? 40 : 60}
+                className="mx-auto rounded-lg object-cover"
+                priority
+              />
             </a>
+            {/* Collapse / Expand button (desktop only) */}
+            <button
+              onClick={() => setSidebarCollapsed(!isSidebarCollapsed)}
+              className="hidden lg:flex items-center gap-2 w-full py-2 px-4 mb-4 rounded-lg transition-colors text-left text-muted-foreground hover:bg-accent/50"
+            >
+              <Icon icon={isSidebarCollapsed ? 'mdi:menu' : 'mdi:menu-open'} className="w-5 h-5" />
+              {!isSidebarCollapsed && <span>Collapse</span>}
+            </button>
             <button
               onClick={() => setActiveTab('manage-novels')}
               className={`w-full py-2 px-4 rounded-lg transition-colors text-left ${
@@ -135,7 +152,7 @@ export default function AuthorDashboard() {
             >
               <span className="flex items-center gap-2">
                 <Icon icon="mdi:bookshelf" />
-                Manage Novels
+                {!isSidebarCollapsed && 'Manage Novels'}
               </span>
             </button>
             <button
@@ -148,7 +165,7 @@ export default function AuthorDashboard() {
             >
               <span className="flex items-center gap-2">
                 <Icon icon="mdi:currency-usd" />
-                Earnings History
+                {!isSidebarCollapsed && 'Earnings History'}
               </span>
             </button>
             <button
@@ -161,7 +178,7 @@ export default function AuthorDashboard() {
             >
               <span className="flex items-center gap-2">
                 <Icon icon="mdi:comment-text-multiple" />
-                Comments
+                {!isSidebarCollapsed && 'Comments'}
               </span>
             </button>
             <button
@@ -174,7 +191,7 @@ export default function AuthorDashboard() {
             >
               <span className="flex items-center gap-2">
                 <Icon icon="mdi:chart-bar" />
-                Statistics
+                {!isSidebarCollapsed && 'Statistics'}
               </span>
             </button>
             <button
@@ -187,7 +204,7 @@ export default function AuthorDashboard() {
             >
               <span className="flex items-center gap-2">
                 <Icon icon="mdi:link-variant" />
-                Support Links
+                {!isSidebarCollapsed && 'Support Links'}
               </span>
             </button>
             
@@ -202,7 +219,7 @@ export default function AuthorDashboard() {
                     <span className="flex items-center justify-between">
                       <span className="flex items-center gap-2">
                         <Icon icon={themeIcons[theme]} className="w-5 h-5" />
-                        {themeNames[theme]}
+                        {!isSidebarCollapsed && themeNames[theme]}
                       </span>
                       <Icon 
                         icon={isThemeDropdownOpen ? "mdi:chevron-up" : "mdi:chevron-down"} 
@@ -240,7 +257,7 @@ export default function AuthorDashboard() {
       </div>
 
       {/* Main Content */}
-      <div className="lg:ml-64 flex-1 min-w-0">
+      <div className={`${isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'} flex-1 min-w-0`}>
         <div className="pt-10 h-full">
             {activeTab === 'manage-novels' && (
               <NovelManagement />
