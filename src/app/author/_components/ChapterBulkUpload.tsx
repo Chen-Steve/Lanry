@@ -38,6 +38,7 @@ export default function ChapterBulkUpload({ novelId, userId, onUploadComplete, v
   const [showHelp, setShowHelp] = useState(false);
   const [bulkPublishDate, setBulkPublishDate] = useState<string>('');
   const [useAutoRelease, setUseAutoRelease] = useState(true);
+  const [defaultAuthorThoughts, setDefaultAuthorThoughts] = useState<string>('');
 
   useEffect(() => {
     setMounted(true);
@@ -54,6 +55,15 @@ export default function ChapterBulkUpload({ novelId, userId, onUploadComplete, v
       document.body.style.overflow = 'unset';
     };
   }, [isOpen]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('defaultAuthorThoughts');
+      if (saved) {
+        setDefaultAuthorThoughts(saved);
+      }
+    }
+  }, []);
 
   const processZipFile = async (file: File): Promise<FileToProcess[]> => {
     const zip = new JSZip();
@@ -298,6 +308,7 @@ export default function ChapterBulkUpload({ novelId, userId, onUploadComplete, v
             content,
             publish_at: !useAutoRelease && bulkPublishDate ? bulkPublishDate : null,
             coins: 0,
+            author_thoughts: defaultAuthorThoughts || undefined,
             volume_id: volumeId
           });
 
