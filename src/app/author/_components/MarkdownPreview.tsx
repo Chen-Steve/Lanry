@@ -42,6 +42,37 @@ export default function MarkdownPreview({ content, className = '' }: MarkdownPre
     // First process footnotes
     text = processFootnotes(text);
 
+    // Process spoiler boxes [spoiler]Content[/spoiler] or [spoiler=Title]Content[/spoiler]
+    const processSpoilers = (content: string): string => {
+      const simpleFormat = (inner: string): string => {
+        return inner
+          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+          .replace(/\*(.*?)\*/g, '<em>$1</em>')
+          .replace(/_(.*?)_/g, '<u>$1</u>')
+          .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (__, linkText, url) => {
+            let safeUrl = url
+            try {
+              const u = new URL(url)
+              if (!u.protocol.startsWith('http')) safeUrl = `https://${url}`
+            } catch {
+              safeUrl = `https://${url}`
+            }
+            return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors">${linkText}</a>`
+          })
+      }
+
+      return content.replace(/\[spoiler(?:=(.*?))?\]([\s\S]*?)\[\/spoiler\]/gi, (_m, title, spoilerContent) => {
+        const spoilerTitle = title ? title.trim() : 'Spoiler'
+        const formattedContent = simpleFormat(spoilerContent.trim())
+        return `<details class="spoiler my-2">
+  <summary class="cursor-pointer select-none bg-muted rounded p-2 text-foreground">${spoilerTitle}</summary>
+  <div class="mt-2 border-l border-border pl-2">${formattedContent}</div>
+</details>`
+      })
+    }
+
+    text = processSpoilers(text);
+
     // Then process other formatting
     text = text
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold
@@ -97,6 +128,17 @@ export default function MarkdownPreview({ content, className = '' }: MarkdownPre
         .footnote-tooltip {
           width: 250px;
           pointer-events: none;
+        }
+        details.spoiler > summary::-webkit-details-marker {
+          display: none;
+        }
+        details.spoiler > summary::after {
+          content: '▼';
+          float: right;
+          transition: transform 0.2s ease;
+        }
+        details.spoiler[open] > summary::after {
+          transform: rotate(-180deg);
         }
       `}</style>
     </div>

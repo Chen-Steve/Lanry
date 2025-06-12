@@ -10,7 +10,7 @@ interface SimpleMarkdownEditorProps {
   className?: string
 }
 
-type FormatType = 'bold' | 'italic' | 'underline' | 'link' | 'divider'
+type FormatType = 'bold' | 'italic' | 'underline' | 'link' | 'divider' | 'spoiler'
 
 export default function SimpleMarkdownEditor({
   value,
@@ -39,6 +39,10 @@ export default function SimpleMarkdownEditor({
       divider: {
         mark: '',
         wrap: () => `---`
+      },
+      spoiler: {
+        mark: '',
+        wrap: (sel) => `[spoiler]${sel || 'Spoiler text'}[/spoiler]`
       }
     }
 
@@ -70,22 +74,27 @@ export default function SimpleMarkdownEditor({
     <div className={`space-y-2 ${className}`}>
       {/* toolbar */}
       <div className="flex items-center gap-1 bg-muted/50 border border-border rounded-lg p-1">
-        {(['bold', 'italic', 'underline', 'link', 'divider'] as FormatType[]).map((t) => (
+        {(['bold', 'italic', 'underline', 'link', 'divider', 'spoiler'] as FormatType[]).map((t) => (
           <button
             key={t}
             type="button"
             onClick={() => applyFormatting(t)}
-            className="p-1.5 hover:bg-accent/50 rounded transition-colors"
+            className="p-1.5 hover:bg-accent/50 rounded transition-colors flex items-center justify-center"
             disabled={disabled || isPreview}
             title={t.charAt(0).toUpperCase() + t.slice(1)}
           >
-            <Icon icon={
-              t === 'bold' ? 'mdi:format-bold' :
-              t === 'italic' ? 'mdi:format-italic' :
-              t === 'underline' ? 'mdi:format-underline' :
-              t === 'link' ? 'mdi:link' :
-              'mdi:minus'
-            } className="w-4 h-4" />
+            {t === 'spoiler' ? (
+              <span className="text-xs font-medium px-2 py-1 bg-secondary text-secondary-foreground rounded">Spoiler</span>
+            ) : (
+              <Icon icon={
+                t === 'bold' ? 'mdi:format-bold' :
+                t === 'italic' ? 'mdi:format-italic' :
+                t === 'underline' ? 'mdi:format-underline' :
+                t === 'link' ? 'mdi:link' :
+                t === 'divider' ? 'mdi:minus' :
+                'mdi:eye-off'
+              } className="w-4 h-4" />
+            )}
           </button>
         ))}
         <div className="flex-1" />
