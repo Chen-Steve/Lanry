@@ -7,19 +7,24 @@ type ChapterWithNovel = Chapter & {
   hasTranslatorAccess?: boolean;
 };
 
-// Helper function to check if a chapter is published based on server time
+// Helper function to check if a chapter is published.
+// Instead of making a separate RPC call for every chapter, we simply
+// compare the provided publish date with the *current* time on the
+// client. This removes hundreds of network round-trips per page while
+// remaining accurate enough for typical use-cases (Supabase timestamps
+// are stored in UTC, and `Date` parses ISO strings as UTC).
+export function isChapterPublishedSync(publishAt: string | null): boolean {
+  // No publish date means the chapter is immediately visible.
+  if (!publishAt) return true;
+
+  return new Date(publishAt).getTime() <= Date.now();
+}
+
+// Backwards-compat: keep the original async signature so existing code that
+// does `await isChapterPublished(...)` continues to compile without edits.
+// It now resolves *immediately* without hitting the network.
 export async function isChapterPublished(publishAt: string | null): Promise<boolean> {
-  if (!publishAt) return true; // No publish date means it's published immediately
-  
-  // Use the is_chapter_published RPC function
-  const { data, error } = await supabase.rpc('is_chapter_published', { publish_at: publishAt });
-  
-  if (error) {
-    console.error('Error checking if chapter is published:', error);
-    return false;
-  }
-  
-  return data;
+  return isChapterPublishedSync(publishAt);
 }
 
 export async function getChapter(novelId: string, chapterNumber: number, partNumber?: number | null): Promise<ChapterWithNovel | null> {
