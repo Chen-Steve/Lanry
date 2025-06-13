@@ -64,7 +64,10 @@ async function getThreads(slug: string): Promise<ThreadsResponse> {
       ...thread,
       _count: {
         messages: thread._count?.[0]?.count || 0
-      }
+      },
+      lastMessageAt: new Date(thread.last_message_at).toISOString(),
+      createdAt: new Date(thread.created_at).toISOString(),
+      updatedAt: new Date(thread.updated_at).toISOString()
     })),
     total: count || 0,
     pages: Math.ceil((count || 0) / 20)
