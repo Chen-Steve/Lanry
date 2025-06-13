@@ -29,11 +29,19 @@ export async function getNovel(id: string, userId?: string): Promise<Novel | nul
     // Try to get from cache with metadata
     const { data: cachedNovel, metadata } = await cacheHelpers.getWithMetadata<Novel>(cacheKey);
     
-    // If we have cached data, update visit metadata
+    // If we have cached data, update visit metadata **without an extra read**.
     if (cachedNovel) {
-      // Update visit metadata in the background
-      cacheHelpers.updateVisitMetadata(cacheKey).catch(console.error);
-      
+      // Lightweight metadata write-back in the background (max once per minute)
+      if (metadata) {
+        const now = Date.now();
+        const timeSinceLast = now - metadata.lastVisited;
+        // Only persist if at least 60s have passed to avoid excessive writes
+        if (timeSinceLast > 60_000) {
+          const newMeta = { ...metadata, lastVisited: now, visitCount: metadata.visitCount + 1 };
+          redis.set(`${cacheKey}:meta`, newMeta, { ex: CACHE_TTL.NOVEL }).catch(console.error);
+        }
+      }
+
       // If cache is still fresh and no bypass conditions, return cached data
       if (!shouldBypassCache.isAuthorRequest(userId, cachedNovel.author_profile_id) && 
           !shouldBypassCache.isDraftContent(cachedNovel.status) &&
