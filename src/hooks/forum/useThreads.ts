@@ -27,6 +27,9 @@ async function getThreads(slug: string): Promise<ThreadsResponse> {
 export function useThreads(slug: string) {
   return useQuery({
     queryKey: ['forum', 'threads', slug],
-    queryFn: () => getThreads(slug)
+    queryFn: () => getThreads(slug),
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true
   })
 } 

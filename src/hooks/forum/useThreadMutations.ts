@@ -102,7 +102,16 @@ export function useThreadMutations() {
       return thread as CreateThreadResponse
     },
     onSuccess: (thread, { discussionSlug }) => {
-      queryClient.invalidateQueries({ queryKey: ['forum', 'threads', discussionSlug] })
+      queryClient.invalidateQueries({ 
+        queryKey: ['forum', 'threads', discussionSlug],
+        refetchType: 'active',
+        exact: true
+      })
+      queryClient.refetchQueries({ 
+        queryKey: ['forum', 'threads', discussionSlug],
+        exact: true,
+        type: 'active'
+      })
     }
   })
 
@@ -176,7 +185,16 @@ export function useThreadMutations() {
       }
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['forum', 'threads', data.discussionSlug] })
+      queryClient.invalidateQueries({ 
+        queryKey: ['forum', 'threads', data.discussionSlug],
+        refetchType: 'active',
+        exact: true
+      })
+      queryClient.refetchQueries({ 
+        queryKey: ['forum', 'threads', data.discussionSlug],
+        exact: true,
+        type: 'active'
+      })
     }
   })
 
