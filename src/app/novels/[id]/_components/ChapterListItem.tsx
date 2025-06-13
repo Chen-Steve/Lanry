@@ -310,6 +310,7 @@ export const ChapterListItem = memo(function ChapterListItem({
     return (
       <Link
         href={`/novels/${novelSlug}/c${chapter.chapter_number}${chapter.part_number ? `-p${chapter.part_number}` : ''}`}
+        prefetch={false}
         className="w-full hover:bg-accent/50 transition-colors"
       >
         {chapterContent}
