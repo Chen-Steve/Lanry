@@ -2,6 +2,7 @@ import { Novel, Chapter, ChapterUnlock, NovelCategory } from '@/types/database';
 import supabase from '@/lib/supabaseClient';
 import { generateUUID } from '@/lib/utils';
 import { cache } from 'react';
+import { redis, CACHE_KEYS, CACHE_TTL, shouldBypassCache, cacheHelpers } from '@/lib/redis';
 
 interface NovelCharacterFromDB {
   id: string;
@@ -23,6 +24,28 @@ interface GetNovelsOptions {
 
 export async function getNovel(id: string, userId?: string): Promise<Novel | null> {
   try {
+    const cacheKey = CACHE_KEYS.NOVEL(id);
+    
+    // Try to get from cache with metadata
+    const { data: cachedNovel, metadata } = await cacheHelpers.getWithMetadata<Novel>(cacheKey);
+    
+    // If we have cached data, update visit metadata
+    if (cachedNovel) {
+      // Update visit metadata in the background
+      cacheHelpers.updateVisitMetadata(cacheKey).catch(console.error);
+      
+      // If cache is still fresh and no bypass conditions, return cached data
+      if (!shouldBypassCache.isAuthorRequest(userId, cachedNovel.author_profile_id) && 
+          !shouldBypassCache.isDraftContent(cachedNovel.status) &&
+          !cacheHelpers.shouldRevalidate(metadata)) {
+        console.log('Cache hit for novel:', id);
+        return cachedNovel;
+      }
+    }
+
+    console.log('Cache miss or revalidating novel:', id);
+
+    // Fetch fresh data
     const isNumericId = !isNaN(Number(id));
     const { data, error } = await supabase
       .from('novels')
@@ -157,7 +180,7 @@ export async function getNovel(id: string, userId?: string): Promise<Novel | nul
       orderIndex: char.order_index,
     })) || [];
 
-    return {
+    const novel = {
       ...data,
       translator: data.translator ? {
         username: data.translator.username,
@@ -181,6 +204,11 @@ export async function getNovel(id: string, userId?: string): Promise<Novel | nul
       characters,
       ageRating: data.age_rating
     };
+
+    // Cache the new data in the background
+    cacheHelpers.setWithMetadata(cacheKey, novel, CACHE_TTL.NOVEL).catch(console.error);
+
+    return novel;
   } catch (error) {
     console.error('Error fetching novel:', error);
     return null;
@@ -258,26 +286,31 @@ export async function getNovels(options: GetNovelsOptions = {}): Promise<{ novel
   try {
     const { limit = 12, offset = 0, categories } = options;
     
-    // Build the base query
+    // Generate cache key based on options
+    const cacheKey = `${CACHE_KEYS.NOVEL_LIST}:${limit}:${offset}:${categories?.included?.join(',') || ''}:${categories?.excluded?.join(',') || ''}`;
+    
+    // Try to get from cache
+    const cachedResult = await redis.get(cacheKey);
+    if (cachedResult) {
+      return cachedResult as { novels: Novel[]; total: number };
+    }
+    
+    // Build the base query with minimal fields
     let query = supabase
       .from('novels')
       .select(`
-        *,
-        translator:author_profile_id (
-          id,
-          username,
-          kofi_url,
-          patreon_url,
-          custom_url,
-          custom_url_label,
-          author_bio
-        ),
+        id,
+        title,
+        slug,
+        cover_image_url,
+        status,
+        created_at,
+        updated_at,
+        author_profile_id,
         categories:categories_on_novels (
           category:category_id (
             id,
-            name,
-            created_at,
-            updated_at
+            name
           )
         )
       `, { count: 'exact' })
@@ -299,23 +332,58 @@ export async function getNovels(options: GetNovelsOptions = {}): Promise<{ novel
 
     if (error) throw error;
 
-    return {
-      novels: data?.map(novel => ({
-        ...novel,
-        coverImageUrl: novel.cover_image_url,
-        translator: novel.translator ? {
-          username: novel.translator.username,
-          profile_id: novel.translator.id,
-          kofiUrl: novel.translator.kofi_url,
-          patreonUrl: novel.translator.patreon_url,
-          customUrl: novel.translator.custom_url,
-          customUrlLabel: novel.translator.custom_url_label,
-          author_bio: novel.translator.author_bio
-        } : null,
-        categories: novel.categories?.map((item: { category: NovelCategory }) => item.category) || []
-      })) || [],
+    const result = {
+      novels: (data || []).map((novel: unknown) => {
+        const n = novel as {
+          id: string;
+          title: string;
+          slug: string;
+          cover_image_url: string | null;
+          status: string;
+          created_at: string;
+          updated_at: string;
+          author_profile_id: string;
+          categories: Array<{
+            category: {
+              id: string;
+              name: string;
+            };
+          }>;
+        };
+        return {
+          id: n.id,
+          title: n.title,
+          slug: n.slug,
+          coverImageUrl: n.cover_image_url,
+          status: n.status as Novel['status'],
+          created_at: n.created_at,
+          updated_at: n.updated_at,
+          author_profile_id: n.author_profile_id,
+          author: '', // Required by Novel type
+          description: '', // Required by Novel type
+          ageRating: 'EVERYONE' as const, // Required by Novel type
+          views: 0, // Required by Novel type
+          rating: 0, // Required by Novel type
+          ratingCount: 0, // Required by Novel type
+          bookmarkCount: 0, // Required by Novel type
+          chapters: [], // Required by Novel type
+          categories: n.categories?.map(item => ({
+            id: item.category.id,
+            name: item.category.name,
+            created_at: n.created_at,
+            updated_at: n.updated_at
+          })) || []
+        };
+      }) as Novel[],
       total: count || 0
     };
+
+    // Cache the result
+    await redis.set(cacheKey, result, {
+      ex: CACHE_TTL.NOVEL_LIST
+    });
+
+    return result;
   } catch (error) {
     console.error('Error fetching novels:', error);
     return { novels: [], total: 0 };

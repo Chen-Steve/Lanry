@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { Prisma, NovelStatus } from '@prisma/client';
 import { type NextRequest } from 'next/server';
+import { redis, CACHE_KEYS, CACHE_TTL } from '@/lib/redis';
 
 // Mark this route as dynamic
 export const dynamic = 'force-dynamic';
@@ -26,22 +27,38 @@ type FullNovel = MinimalNovel & {
 
 export async function GET(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams;
-    const query = searchParams.get('q')?.trim();
+    const { searchParams } = new URL(request.url);
+    const query = searchParams.get('q')?.trim().toLowerCase() || '';
     const author = searchParams.get('author')?.trim();
     const tags = searchParams.getAll('tags');
     const status = searchParams.get('status') as NovelStatus | null;
     const categories = searchParams.getAll('categories');
     const page = parseInt(searchParams.get('page') || '1');
-    const skip = (page - 1) * ITEMS_PER_PAGE;
     const isBasicSearch = searchParams.get('basic') === 'true';
+    
+    const skip = (page - 1) * ITEMS_PER_PAGE;
+    
+    // Generate cache key
+    const cacheKey = CACHE_KEYS.SEARCH(`${query}:${page}:${isBasicSearch}`);
+    
+    // Try to get from cache
+    const cachedResult = await redis.get(cacheKey);
+    if (cachedResult) {
+      return NextResponse.json(cachedResult);
+    }
 
     // Build the where clause
     let where: Prisma.NovelWhereInput = {
-      // Exclude draft novels from public search results
-      status: {
-        not: 'DRAFT'
-      }
+      AND: [
+        {
+          OR: [
+            { title: { contains: query, mode: 'insensitive' } },
+            { description: { contains: query, mode: 'insensitive' } },
+            { author: { contains: query, mode: 'insensitive' } }
+          ]
+        },
+        { status: { not: 'DRAFT' } }
+      ]
     };
 
     // Optimize search query based on the search term
@@ -241,11 +258,18 @@ export async function GET(request: NextRequest) {
       return baseNovel;
     });
 
-    return NextResponse.json({
+    const result = {
       novels: transformedNovels,
       totalPages,
       totalCount
+    };
+
+    // Cache the result
+    await redis.set(cacheKey, result, {
+      ex: CACHE_TTL.SEARCH
     });
+
+    return NextResponse.json(result);
   } catch (error) {
     console.error('Search error:', error);
     return NextResponse.json(
