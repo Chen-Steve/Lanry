@@ -1,5 +1,6 @@
 import supabase from '@/lib/supabaseClient';
 import { Chapter, Novel } from '@/types/database';
+import { redis, CACHE_KEYS, CACHE_TTL, cacheHelpers } from '@/lib/redis';
 
 type ChapterWithNovel = Chapter & {
   novel: Novel;
@@ -31,7 +32,7 @@ export async function getChapter(novelId: string, chapterNumber: number, partNum
   try {
     const { data: { user } } = await supabase.auth.getUser();
 
-    // First get the novel to check if user is author
+    // First resolve the novel to obtain its numeric id (needed for the canonical cache key)
     const { data: novel, error: novelError } = await supabase
       .from('novels')
       .select('id, author_profile_id')
@@ -40,32 +41,74 @@ export async function getChapter(novelId: string, chapterNumber: number, partNum
 
     if (novelError || !novel) return null;
 
-    // Get the chapter
-    let query = supabase
-      .from('chapters')
-      .select(`
-        *,
-        novel:novels(
-          id,
-          title,
-          author,
-          author_profile_id
-        )
-      `)
-      .eq('novel_id', novel.id)
-      .eq('chapter_number', chapterNumber)
-      .gte('chapter_number', 0); // Filter out negative chapter numbers (drafts)
+    // -------------------------------------------------
+    // Redis caching layer (public chapters only)
+    // -------------------------------------------------
+    const chapterCacheKey = `${CACHE_KEYS.CHAPTER(novel.id, chapterNumber)}:${partNumber ?? 'null'}`;
 
-    // Handle part number filter differently for null values
-    if (partNumber === null || partNumber === undefined) {
-      query = query.is('part_number', null);
-    } else {
-      query = query.eq('part_number', partNumber);
+    // Attempt to fetch cached base chapter
+    const { data: cachedBaseChapter, metadata: cacheMeta } = await cacheHelpers.getWithMetadata<ChapterWithNovel>(chapterCacheKey);
+
+    let chapterBase: ChapterWithNovel | null = null;
+
+    if (cachedBaseChapter && !cacheHelpers.shouldRevalidate(cacheMeta)) {
+      // Update visit metadata with 60-second write-throttle
+      if (cacheMeta && Date.now() - cacheMeta.lastVisited > 60_000) {
+        const newMeta = { ...cacheMeta, lastVisited: Date.now(), visitCount: cacheMeta.visitCount + 1 };
+        redis.set(`${chapterCacheKey}:meta`, newMeta, { ex: CACHE_TTL.CHAPTER }).catch(console.error);
+      }
+
+      chapterBase = cachedBaseChapter;
     }
 
-    const { data: chapter, error } = await query.single();
+    // If no suitable cache, query Supabase
+    if (!chapterBase) {
+      // Get the chapter
+      let query = supabase
+        .from('chapters')
+        .select(`
+          *,
+          novel:novels(
+            id,
+            title,
+            author,
+            author_profile_id
+          )
+        `)
+        .eq('novel_id', novel.id)
+        .eq('chapter_number', chapterNumber)
+        .gte('chapter_number', 0); // Filter out negative chapter numbers (drafts)
 
-    if (error || !chapter) return null;
+      // Handle part number filter differently for null values
+      if (partNumber === null || partNumber === undefined) {
+        query = query.is('part_number', null);
+      } else {
+        query = query.eq('part_number', partNumber);
+      }
+
+      const { data: chapter, error } = await query.single();
+
+      if (error || !chapter) return null;
+
+      chapterBase = chapter;
+
+      // Determine if chapter is safe to cache (published & free)
+      const isPublished = isChapterPublishedSync(chapter.publish_at ?? null);
+      const isFree = !chapter.coins || chapter.coins === 0;
+
+      if (isPublished && isFree) {
+        cacheHelpers.setWithMetadata(chapterCacheKey, chapterBase, CACHE_TTL.CHAPTER).catch(console.error);
+      }
+    }
+
+    // ------------------------------------------------------------------
+    // From here on we have the base chapter (from cache or DB). Apply
+    // user-specific access checks without touching Redis again.
+    // ------------------------------------------------------------------
+
+    if (!chapterBase) return null; // Safety check for TypeScript
+
+    const chapter: ChapterWithNovel = chapterBase;
 
     // Get user's profile to check role
     let hasTranslatorAccess = false;
@@ -118,7 +161,7 @@ export async function getChapter(novelId: string, chapterNumber: number, partNum
     }
 
     // Check if chapter is published or free
-    const isPublished = await isChapterPublished(chapter.publish_at);
+    const isPublished = await isChapterPublished(chapter.publish_at ?? null);
     const isFree = !chapter.coins || chapter.coins === 0;
     
     // Chapter is accessible if:
@@ -309,7 +352,7 @@ export async function getTotalChapters(novelId: string): Promise<number> {
 
     // Count chapters that are either published or unlocked
     const accessibleChapters = await Promise.all(chapters.map(async chapter => {
-      const isPublished = !chapter.publish_at || await isChapterPublished(chapter.publish_at);
+      const isPublished = !chapter.publish_at || await isChapterPublished(chapter.publish_at ?? null);
       const isUnlocked = isChapterUnlocked(chapter);
       return isPublished || isUnlocked;
     }));
