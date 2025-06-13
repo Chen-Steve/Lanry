@@ -4,6 +4,8 @@ import ThreadList from '../../_components/ThreadList'
 import CreateThreadButton from '../../_components/CreateThreadButton'
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
+import Link from 'next/link'
+import { Icon } from '@iconify/react'
 
 interface DiscussionPageProps {
   params: {
@@ -36,14 +38,25 @@ async function DiscussionHeader({ slug }: { slug: string }) {
   if (!discussion) return null
 
   return (
-    <div className="mb-8">
-      <h1 className="text-2xl sm:text-3xl font-semibold text-foreground mb-2">
-        {discussion.title}
-      </h1>
-      <p className="text-muted-foreground">
-        {discussion.description}
-      </p>
-    </div>
+    <>
+      <div className="flex flex-wrap items-center gap-2 text-muted-foreground text-sm md:text-base mb-4">
+        <Link href="/forum" className="hover:text-foreground transition-colors">
+          Forum
+        </Link>
+        <Icon icon="ph:caret-right-bold" className="w-3 h-3 md:w-4 md:h-4 flex-shrink-0" />
+        <span className="text-foreground line-clamp-1">
+          {discussion.title}
+        </span>
+      </div>
+      <div className="mb-8">
+        <h1 className="text-2xl sm:text-3xl font-semibold text-foreground mb-2">
+          {discussion.title}
+        </h1>
+        <p className="text-muted-foreground">
+          {discussion.description}
+        </p>
+      </div>
+    </>
   )
 }
 
