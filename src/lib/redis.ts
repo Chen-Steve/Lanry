@@ -1,12 +1,5 @@
 import { Redis } from '@upstash/redis'
 
-console.log('Environment variables:', {
-  UPSTASH_REDIS_URL: process.env.UPSTASH_REDIS_URL,
-  UPSTASH_REDIS_TOKEN: process.env.UPSTASH_REDIS_TOKEN,
-  // Log all env variables to check naming
-  ALL_ENV: process.env
-});
-
 if (!process.env.UPSTASH_REDIS_URL) {
   throw new Error('UPSTASH_REDIS_URL is not defined');
 }
