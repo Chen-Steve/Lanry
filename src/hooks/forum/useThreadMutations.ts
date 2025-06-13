@@ -10,11 +10,6 @@ interface CreateThreadVariables {
   discussionSlug: string
 }
 
-interface DeleteThreadResponse {
-  success: boolean
-  discussionSlug: string
-}
-
 interface ThreadsQueryData {
   threads: ForumThread[]
   discussion: {
@@ -24,27 +19,6 @@ interface ThreadsQueryData {
   }
   total: number
   pages: number
-}
-
-interface CreateThreadResponse {
-  id: string
-  title: string
-  discussion_id: string
-  author_id: string
-  created_at: string
-  updated_at: string
-  last_message_at: string
-  is_pinned: boolean
-  is_locked: boolean
-  view_count: number
-  author: {
-    id: string
-    username: string
-    avatar_url: string | null
-  }
-  discussion: {
-    slug: string
-  }
 }
 
 export function useThreadMutations() {
@@ -61,10 +35,7 @@ export function useThreadMutations() {
         .eq('slug', discussionSlug)
         .single()
 
-      if (discussionError) {
-        console.error('[DISCUSSION_FETCH_ERROR]', discussionError)
-        throw new Error(discussionError.message ?? 'Discussion not found')
-      }
+      if (discussionError) throw discussionError
       if (!discussion) throw new Error('Discussion not found')
 
       const threadId = generateUUID()
@@ -94,29 +65,34 @@ export function useThreadMutations() {
         `)
         .single()
 
-      if (threadError) {
-        console.error('[CREATE_THREAD_ERROR]', threadError)
-        throw new Error(threadError.message ?? 'Failed to create thread')
-      }
+      if (threadError) throw threadError
 
-      return thread as CreateThreadResponse
+      return thread
     },
     onSuccess: (thread, { discussionSlug }) => {
-      queryClient.invalidateQueries({ 
-        queryKey: ['forum', 'threads', discussionSlug],
-        refetchType: 'active',
-        exact: true
-      })
-      queryClient.refetchQueries({ 
-        queryKey: ['forum', 'threads', discussionSlug],
-        exact: true,
-        type: 'active'
-      })
+      // Get current data from cache
+      const currentData = queryClient.getQueryData<ThreadsQueryData>(['forum', 'threads', discussionSlug])
+      
+      if (currentData) {
+        // Update cache with new thread
+        queryClient.setQueryData(['forum', 'threads', discussionSlug], {
+          ...currentData,
+          threads: [thread, ...currentData.threads],
+          total: currentData.total + 1,
+          pages: Math.ceil((currentData.total + 1) / 20)
+        })
+      } else {
+        // If no cache exists, invalidate to trigger refetch
+        queryClient.invalidateQueries({ 
+          queryKey: ['forum', 'threads', discussionSlug],
+          exact: true
+        })
+      }
     }
   })
 
   const deleteThread = useMutation({
-    mutationFn: async (threadId: string): Promise<DeleteThreadResponse> => {
+    mutationFn: async (threadId: string) => {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session?.user) throw new Error('Unauthorized')
 
@@ -132,10 +108,7 @@ export function useThreadMutations() {
         .eq('id', threadId)
         .single()
 
-      if (threadError) {
-        console.error('[THREAD_FETCH_ERROR]', threadError)
-        throw new Error(threadError.message ?? 'Thread not found')
-      }
+      if (threadError) throw threadError
       if (!thread) throw new Error('Thread not found')
       if (thread.author_id !== session.user.id) {
         throw new Error('Not authorized to delete this thread')
@@ -146,10 +119,7 @@ export function useThreadMutations() {
         .delete()
         .eq('id', threadId)
 
-      if (deleteError) {
-        console.error('[DELETE_THREAD_ERROR]', deleteError)
-        throw new Error(deleteError.message ?? 'Failed to delete thread')
-      }
+      if (deleteError) throw deleteError
 
       return {
         success: true,
@@ -157,43 +127,45 @@ export function useThreadMutations() {
       }
     },
     onMutate: async (threadId: string) => {
-      // Cancel outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['forum', 'threads'] })
-
       // Get the current thread from cache
       const thread = queryClient.getQueryData<ForumThread>(['forum', 'thread', threadId])
       if (!thread?.discussion?.slug) return { threadId }
 
-      // Optimistically remove the thread from the list
-      const previousThreads = queryClient.getQueryData<ThreadsQueryData>(['forum', 'threads', thread.discussion.slug])
-      if (previousThreads) {
-        queryClient.setQueryData(['forum', 'threads', thread.discussion.slug], (old: ThreadsQueryData) => ({
-          ...old,
-          threads: old.threads.filter((t: ForumThread) => t.id !== threadId)
-        }))
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ 
+        queryKey: ['forum', 'threads', thread.discussion.slug],
+        exact: true
+      })
+
+      // Get current data
+      const previousData = queryClient.getQueryData<ThreadsQueryData>(['forum', 'threads', thread.discussion.slug])
+      
+      if (previousData) {
+        // Optimistically remove thread
+        queryClient.setQueryData(['forum', 'threads', thread.discussion.slug], {
+          ...previousData,
+          threads: previousData.threads.filter(t => t.id !== threadId),
+          total: previousData.total - 1,
+          pages: Math.ceil((previousData.total - 1) / 20)
+        })
       }
 
-      return { previousThreads, threadId, discussionSlug: thread.discussion.slug }
+      return { previousData, threadId, discussionSlug: thread.discussion.slug }
     },
     onError: (err, threadId, context) => {
-      // Rollback on error
-      if (context?.previousThreads && context.discussionSlug) {
+      if (context?.previousData && context.discussionSlug) {
+        // Restore previous data on error
         queryClient.setQueryData(
           ['forum', 'threads', context.discussionSlug],
-          context.previousThreads
+          context.previousData
         )
       }
     },
     onSuccess: (data) => {
+      // Ensure cache is up to date
       queryClient.invalidateQueries({ 
         queryKey: ['forum', 'threads', data.discussionSlug],
-        refetchType: 'active',
         exact: true
-      })
-      queryClient.refetchQueries({ 
-        queryKey: ['forum', 'threads', data.discussionSlug],
-        exact: true,
-        type: 'active'
       })
     }
   })
