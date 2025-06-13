@@ -3,6 +3,7 @@ import supabase from '@/lib/supabaseClient';
 import { generateUUID } from '@/lib/utils';
 import { cache } from 'react';
 import { redis, CACHE_KEYS, CACHE_TTL, shouldBypassCache, cacheHelpers } from '@/lib/redis';
+import supabaseAdmin from '@/lib/supabaseAdmin';
 
 interface NovelCharacterFromDB {
   id: string;
@@ -747,13 +748,28 @@ export async function getCompletedNovels(
   limit: number = 35
 ): Promise<{ novels: Novel[]; total: number }> {
   try {
+    // Build cache key for this page/limit combination
+    const cacheKey = `${CACHE_KEYS.COMPLETED_NOVELS}:${page}:${limit}`;
+
+    // 1. Try Redis first (stale-while-revalidate style)
+    const {
+      data: cached,
+      metadata,
+    } = await cacheHelpers.getWithMetadata<{ novels: Novel[]; total: number }>(cacheKey);
+
+    if (cached && !cacheHelpers.shouldRevalidate(metadata)) {
+      // Cache hit & still fresh
+      return cached;
+    }
+
+    // 2. Cache miss or stale – fetch from Supabase
     // Calculate offset
     const offset = (page - 1) * limit;
 
-    // Get novels with completed status
-    const { data, error, count } = await supabase
+    const { data, error, count } = await supabaseAdmin
       .from('novels')
-      .select(`
+      .select(
+        `
         *,
         chapters (
           id,
@@ -764,22 +780,31 @@ export async function getCompletedNovels(
           coins,
           created_at
         )
-      `, { count: 'exact' })
+      `,
+        { count: 'exact' }
+      )
       .eq('status', 'COMPLETED')
       .order('updated_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
     if (error) throw error;
 
-    return {
-      novels: (data || []).map(novel => ({
+    const response = {
+      novels: (data || []).map((novel) => ({
         ...novel,
         coverImageUrl: novel.cover_image_url,
         slug: novel.slug,
-        chapters: novel.chapters || []
+        chapters: novel.chapters || [],
       })),
-      total: count || 0
-    };
+      total: count || 0,
+    } as { novels: Novel[]; total: number };
+
+    // 3. Store in Redis (fire-and-forget)
+    cacheHelpers
+      .setWithMetadata(cacheKey, response, CACHE_TTL.COMPLETED_NOVELS)
+      .catch(console.error);
+
+    return response;
   } catch (error) {
     console.error('Error fetching completed novels:', error);
     return { novels: [], total: 0 };

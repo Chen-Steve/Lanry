@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { Novel } from '@/types/database';
 import CompletedNovelList from './_components/CompletedNovelList';
 import LoadingGrid from '../_components/LoadingGrid';
-import { getCompletedNovels } from '@/services/novelService';
 
 const ITEMS_PER_PAGE = 35;
 
@@ -18,7 +17,9 @@ export default function CompletedNovelsPage() {
     const fetchNovels = async () => {
       try {
         setIsLoading(true);
-        const { novels, total } = await getCompletedNovels(currentPage, ITEMS_PER_PAGE);
+        const res = await fetch(`/api/novels/completed?page=${currentPage}&limit=${ITEMS_PER_PAGE}`);
+        if (!res.ok) throw new Error('Failed to load completed novels');
+        const { novels, total } = await res.json();
         setNovels(novels);
         setTotalNovels(total);
       } catch (error) {
