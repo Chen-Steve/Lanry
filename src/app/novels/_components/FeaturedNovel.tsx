@@ -77,7 +77,7 @@ const FeaturedNovel = ({ novels }: FeaturedNovelProps) => {
     <div className="col-span-2 sm:col-span-2 md:col-span-3 lg:col-span-3 flex flex-col">
       <Link
         href={`/novels/${novels[featuredIndex].slug}`}
-        className={`group relative flex flex-row gap-4 p-2 sm:p-2 hover:bg-accent/20 rounded-lg transition-colors touch-pan-y overflow-hidden min-h-[200px] sm:min-h-[300px] bg-container`}
+        className={`group relative flex flex-row gap-4 p-2 sm:p-2 hover:bg-accent/20 rounded-lg transition-colors touch-pan-y overflow-hidden min-h-[180px] sm:min-h-[260px] bg-container`}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -129,9 +129,9 @@ const FeaturedNovel = ({ novels }: FeaturedNovelProps) => {
             </h3>
 
             {/* Synopsis */}
-            <div className="h-[80px] sm:h-[120px] overflow-hidden">
+            <div className="h-[60px] sm:h-[100px] overflow-hidden">
               <div 
-                className="prose prose-sm sm:prose-lg max-w-none text-black dark:text-white dark:prose-invert line-clamp-3 sm:line-clamp-4 whitespace-pre-line"
+                className="prose prose-sm sm:prose-lg max-w-none text-black dark:text-white dark:prose-invert line-clamp-2 sm:line-clamp-3 whitespace-pre-line"
                 dangerouslySetInnerHTML={{ 
                   __html: formatText(novels[featuredIndex].description) 
                 }}
@@ -139,7 +139,7 @@ const FeaturedNovel = ({ novels }: FeaturedNovelProps) => {
             </div>
 
             {/* Navigation Dots */}
-            <div className="flex justify-center gap-2 sm:gap-3 mt-auto pt-2 sm:pt-4">
+            <div className="flex justify-center gap-2 sm:gap-4 mt-auto">
               {novels.map((_, idx) => (
                 <button
                   key={idx}
@@ -148,7 +148,7 @@ const FeaturedNovel = ({ novels }: FeaturedNovelProps) => {
                     setIsAutoRotationPaused(true);
                     setFeaturedIndex(idx);
                   }}
-                  className={`w-2 sm:w-3 h-2 sm:h-3 rounded-full transition-all duration-200 border border-black ${
+                  className={`w-3 sm:w-4 h-3 sm:h-4 rounded-full transition-all duration-200 border-2 border-black ${
                     idx === featuredIndex 
                       ? 'bg-primary scale-110' 
                       : 'bg-muted-foreground/40 hover:bg-muted-foreground/60 hover:scale-105'
