@@ -50,7 +50,10 @@ async function getThreads(slug: string): Promise<ThreadsResponse> {
 
   // Increment view count (non-critical)
   try {
-    await supabase.rpc('increment_discussion_views', { discussion_id: discussion.id })
+    await supabase
+      .from('forum_discussions')
+      .update({ view_count: discussion.view_count + 1 })
+      .eq('id', discussion.id)
   } catch (error) {
     console.error('[INCREMENT_VIEWS_ERROR]', error)
   }
