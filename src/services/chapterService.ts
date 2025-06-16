@@ -570,4 +570,38 @@ export async function getChaptersForList({
     console.error('Error getting chapters:', error);
     throw error;
   }
+}
+
+export async function getTotalChaptersForNovels(novelIds: string[]): Promise<Record<string, number>> {
+  // Early return if the caller passes an empty array
+  if (novelIds.length === 0) {
+    return {};
+  }
+
+  try {
+    // PostgREST grouping (`group=column`) isn't exposed in supabase-js typings yet, so
+    // we'll fetch only the novel_id column for the requested novels and aggregate in JS.
+    // This is still **one** network request instead of N, and the payload is minimal.
+
+    const { data, error } = await supabase
+      .from('chapters')
+      .select('novel_id')
+      .gte('chapter_number', 0) // ignore drafts (negative chapter numbers)
+      .in('novel_id', novelIds);
+
+    if (error) throw error;
+
+    const counts: Record<string, number> = {};
+    // Initialize all counts to 0 so that missing novels are represented.
+    novelIds.forEach((id) => (counts[id] = 0));
+
+    (data as { novel_id: string }[]).forEach((row) => {
+      counts[row.novel_id] = (counts[row.novel_id] || 0) + 1;
+    });
+
+    return counts;
+  } catch (err) {
+    console.error('Error fetching chapter counts in bulk:', err);
+    return {};
+  }
 } 

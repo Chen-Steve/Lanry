@@ -3,7 +3,8 @@
 import { Novel } from '@/types/database';
 import NovelCard from './NovelCard';
 import { Icon } from '@iconify/react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { getTotalChaptersForNovels } from '@/services/chapterService';
 
 interface RegularNovelsProps {
   novels: Novel[];
@@ -18,6 +19,21 @@ const RegularNovels = ({
   totalPages,
   onPageChange,
 }: RegularNovelsProps) => {
+  const [chapterCounts, setChapterCounts] = useState<Record<string, number>>({});
+
+  // Fetch chapter counts for all novels in one request
+  useEffect(() => {
+    const fetchCounts = async () => {
+      const ids = novels.map((n) => n.id);
+      const counts = await getTotalChaptersForNovels(ids);
+      setChapterCounts(counts);
+    };
+
+    if (novels.length) {
+      fetchCounts();
+    }
+  }, [novels]);
+
   // Add Google Fonts link via useEffect
   useEffect(() => {
     // Create a link element for Google Fonts
@@ -37,6 +53,15 @@ const RegularNovels = ({
     return (
       <div className="text-center py-12">
         <p className="text-gray-500">No novels found.</p>
+      </div>
+    );
+  }
+
+  // Show a minimal loader while we fetch batch chapter counts to avoid per-card requests
+  if (Object.keys(chapterCounts).length !== novels.length) {
+    return (
+      <div className="py-12 flex justify-center">
+        <Icon icon="mdi:loading" className="animate-spin text-3xl text-primary/60" />
       </div>
     );
   }
@@ -63,6 +88,7 @@ const RegularNovels = ({
                 isPriority={index < 6}
                 size="small"
                 className="mt-1.5 sm:mt-2"
+                chapterCount={chapterCounts[novel.id]}
               />
             ))}
           </div>

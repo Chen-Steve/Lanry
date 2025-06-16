@@ -3,7 +3,9 @@
 import { Novel } from '@/types/database';
 import NovelCard from '../../_components/NovelCard';
 import Pagination from '@/components/Pagination';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { getTotalChaptersForNovels } from '@/services/chapterService';
+import { Icon } from '@iconify/react';
 
 interface CompletedNovelListProps {
   novels: Novel[];
@@ -18,6 +20,21 @@ const CompletedNovelList = ({
   totalPages,
   onPageChange,
 }: CompletedNovelListProps) => {
+  const [chapterCounts, setChapterCounts] = useState<Record<string, number>>({});
+
+  // Batch fetch counts for completed novels
+  useEffect(() => {
+    const fetchCounts = async () => {
+      const ids = novels.map((n) => n.id);
+      const counts = await getTotalChaptersForNovels(ids);
+      setChapterCounts(counts);
+    };
+
+    if (novels.length) {
+      fetchCounts();
+    }
+  }, [novels]);
+
   // Add Google Fonts link via useEffect
   useEffect(() => {
     const link = document.createElement('link');
@@ -45,11 +62,21 @@ const CompletedNovelList = ({
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {novels.map((novel) => (
-              <NovelCard key={novel.id} novel={novel} />
-            ))}
-          </div>
+          {Object.keys(chapterCounts).length !== novels.length ? (
+            <div className="flex justify-center py-6">
+              <Icon icon="mdi:loading" className="animate-spin text-3xl text-primary/60" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {novels.map((novel) => (
+                <NovelCard
+                  key={novel.id}
+                  novel={novel}
+                  chapterCount={chapterCounts[novel.id]}
+                />
+              ))}
+            </div>
+          )}
 
           {totalPages > 1 && (
             <div className="mt-8">

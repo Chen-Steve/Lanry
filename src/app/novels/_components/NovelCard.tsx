@@ -11,12 +11,30 @@ interface NovelCardProps {
   isPriority?: boolean;
   size?: 'thumbnail' | 'small' | 'medium' | 'large';
   className?: string;
+  /**
+   * Pass a pre-computed chapter count to avoid the component doing its own
+   * network request. If this is undefined the component will fall back to the
+   * old behaviour of fetching the count itself (useful for legacy call-sites).
+   */
+  chapterCount?: number;
 }
 
-const NovelCard = ({ novel, isPriority = false, size = 'small', className = '' }: NovelCardProps) => {
-  const [totalChapters, setTotalChapters] = useState(0);
+const NovelCard = ({
+  novel,
+  isPriority = false,
+  size = 'small',
+  className = '',
+  chapterCount
+}: NovelCardProps) => {
+  const [totalChapters, setTotalChapters] = useState<number>(chapterCount ?? 0);
 
   useEffect(() => {
+    // If the parent provided a chapterCount we can skip the fetch.
+    if (typeof chapterCount === 'number') {
+      setTotalChapters(chapterCount);
+      return;
+    }
+
     const fetchData = async () => {
       try {
         const total = await getTotalAllChapters(novel.id);
@@ -27,7 +45,7 @@ const NovelCard = ({ novel, isPriority = false, size = 'small', className = '' }
     };
 
     fetchData();
-  }, [novel.id]);
+  }, [novel.id, chapterCount]);
 
   const handleClick = async () => {
     try {
