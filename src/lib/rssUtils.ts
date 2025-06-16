@@ -19,7 +19,7 @@ export function generateNovelFeedXML(novels: Novel[], baseUrl: string) {
       <guid>${baseUrl}/novels/${novel.slug}</guid>
       <description>${escapeXml(novel.description || '')}</description>
       <pubDate>${new Date(novel.createdAt).toUTCString()}</pubDate>
-      <author>${escapeXml(novel.author)}</author>
+      <author>contact@lanry.space (${escapeXml(novel.author)})</author>
     </item>`).join('')}
   </channel>
 </rss>`;
@@ -30,7 +30,7 @@ export function generateChapterFeedXML(novel: Novel | null, chapters: (Chapter &
   const title = novel ? `${escapeXml(novel.title)} Chapters` : 'All Latest Chapters';
   const link = novel ? `${baseUrl}/novels/${novel.slug}` : baseUrl;
   const description = novel ? `Latest chapters for ${escapeXml(novel.title)} on Lanry` : 'Latest chapters from all novels on Lanry';
-  const feedUrl = novel ? `novels/${novel.slug}/chapters` : 'freechapters';
+  const feedUrl = novel ? `novels/${novel.slug}/chapters` : 'novelupdates';
   
   return `<?xml version="1.0" encoding="UTF-8" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
@@ -44,26 +44,19 @@ export function generateChapterFeedXML(novel: Novel | null, chapters: (Chapter &
     ${chapters.map(chapter => `
     <item>
       <title>${novel ? '' : `[${escapeXml(chapter.novel.title)}] `}Chapter ${chapter.chapterNumber}${chapter.title ? `: ${escapeXml(chapter.title)}` : ''}</title>
-      <link>${baseUrl}/novels/${novel ? novel.slug : chapter.novel.slug}/c${chapter.chapterNumber}</link>
-      <guid>${baseUrl}/novels/${novel ? novel.slug : chapter.novel.slug}/c${chapter.chapterNumber}</guid>
+      ${(() => {
+        const chapterSlug = chapter.slug ?? `c${chapter.chapterNumber}`;
+        const chapterBase = `${baseUrl}/novels/${novel ? novel.slug : chapter.novel.slug}/${chapterSlug}`;
+        return `\n      <link>${chapterBase}</link>\n      <guid>${chapterBase}</guid>`;
+      })()}
       <description><![CDATA[
-        <div style="font-family: Arial, sans-serif; padding: 15px;">
-          <h3>${novel ? `Chapter ${chapter.chapterNumber}` : `Chapter ${chapter.chapterNumber} of ${escapeXml(chapter.novel.title)}`}</h3>
-          <a href="${baseUrl}/novels/${novel ? novel.slug : chapter.novel.slug}/c${chapter.chapterNumber}" 
-             style="display: inline-block; 
-                    background-color: #4a5568; 
-                    color: white; 
-                    padding: 10px 20px; 
-                    text-decoration: none; 
-                    border-radius: 5px; 
-                    font-weight: bold;
-                    margin-top: 10px;">
-            Read Chapter
-          </a>
+        <div>
+          <p><strong>${novel ? `Chapter ${chapter.chapterNumber}` : `Chapter ${chapter.chapterNumber} of ${escapeXml(chapter.novel.title)}`}</strong></p>
+          <p>Read it on Lanry: <a href="${baseUrl}/novels/${novel ? novel.slug : chapter.novel.slug}/${chapter.slug ?? `c${chapter.chapterNumber}`}">Open Chapter</a></p>
         </div>
       ]]></description>
       <pubDate>${new Date(chapter.createdAt).toUTCString()}</pubDate>
-      <author>${escapeXml(novel ? novel.author : chapter.novel.author)}</author>
+      <author>contact@lanry.space (${escapeXml(novel ? novel.author : chapter.novel.author)})</author>
     </item>`).join('')}
   </channel>
 </rss>`;
