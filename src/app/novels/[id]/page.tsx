@@ -33,7 +33,7 @@ export default function NovelPage({ params }: { params: { id: string } }) {
         const { data: { session } } = await supabase.auth.getSession();
         setIsAuthenticated(!!session?.user);
         
-        const data = await getNovel(id, session?.user?.id);
+        const data = await getNovel(id, session?.user?.id, false);
         if (data) {
           setNovel(data);
           setIsBookmarked(data.isBookmarked || false);

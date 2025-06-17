@@ -232,6 +232,7 @@ export const ChapterListItem = memo(function ChapterListItem({
         )}
       </div>
       <div className="flex items-center gap-1.5 text-xs whitespace-nowrap flex-shrink-0 ml-2">
+        {/* Show Translator Access badge when the viewer has translator access */}
         {isAdvancedChapter && hasTranslatorAccess ? (
           <div className="flex items-center gap-1.5">
             <span className="text-emerald-600 dark:text-emerald-400">

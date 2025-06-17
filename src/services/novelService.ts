@@ -23,32 +23,34 @@ interface GetNovelsOptions {
   };
 }
 
-export async function getNovel(id: string, userId?: string): Promise<Novel | null> {
+export async function getNovel(id: string, userId?: string, useCache: boolean = true): Promise<Novel | null> {
   try {
     const cacheKey = CACHE_KEYS.NOVEL(id);
     
-    // Try to get from cache with metadata
-    const { data: cachedNovel, metadata } = await cacheHelpers.getWithMetadata<Novel>(cacheKey);
-    
-    // If we have cached data, update visit metadata **without an extra read**.
-    if (cachedNovel) {
-      // Lightweight metadata write-back in the background (max once per minute)
-      if (metadata) {
-        const now = Date.now();
-        const timeSinceLast = now - metadata.lastVisited;
-        // Only persist if at least 60s have passed to avoid excessive writes
-        if (timeSinceLast > 60_000) {
-          const newMeta = { ...metadata, lastVisited: now, visitCount: metadata.visitCount + 1 };
-          redis.set(`${cacheKey}:meta`, newMeta, { ex: CACHE_TTL.NOVEL }).catch(console.error);
+    if (useCache) {
+      // Try to get from cache with metadata
+      const { data: cachedNovel, metadata } = await cacheHelpers.getWithMetadata<Novel>(cacheKey);
+      
+      // If we have cached data, update visit metadata **without an extra read**.
+      if (cachedNovel) {
+        // Lightweight metadata write-back in the background (max once per minute)
+        if (metadata) {
+          const now = Date.now();
+          const timeSinceLast = now - metadata.lastVisited;
+          // Only persist if at least 60s have passed to avoid excessive writes
+          if (timeSinceLast > 60_000) {
+            const newMeta = { ...metadata, lastVisited: now, visitCount: metadata.visitCount + 1 };
+            redis.set(`${cacheKey}:meta`, newMeta, { ex: CACHE_TTL.NOVEL }).catch(console.error);
+          }
         }
-      }
 
-      // If cache is still fresh and no bypass conditions, return cached data
-      if (!shouldBypassCache.isAuthorRequest(userId, cachedNovel.author_profile_id) && 
-          !shouldBypassCache.isDraftContent(cachedNovel.status) &&
-          !cacheHelpers.shouldRevalidate(metadata)) {
-        console.log('Cache hit for novel:', id);
-        return cachedNovel;
+        // If cache is still fresh and no bypass conditions, return cached data
+        if (!shouldBypassCache.isAuthorRequest(userId, cachedNovel.author_profile_id) && 
+            !shouldBypassCache.isDraftContent(cachedNovel.status) &&
+            !cacheHelpers.shouldRevalidate(metadata)) {
+          console.log('Cache hit for novel:', id);
+          return cachedNovel;
+        }
       }
     }
 
@@ -131,8 +133,15 @@ export async function getNovel(id: string, userId?: string): Promise<Novel | nul
 
     if (error || !data) return null;
 
-    // Check if user has translator/author access
-    const hasTranslatorAccess = userId ? data.author_profile_id === userId : false;
+    // Determine if the signed-in user is the author **or** translator
+    const hasTranslatorAccess = !!userId && (
+      // Original author
+      data.author_profile_id === userId ||
+      // Dedicated translator column matches
+      data.translator_id === userId ||
+      // Novel created by a translator under custom author name
+      (data.author_profile_id === userId && data.is_author_name_custom === true)
+    );
 
     // If the novel is a draft and the user is not the author, deny access
     if (data.status === 'DRAFT' && !hasTranslatorAccess) {
@@ -214,8 +223,10 @@ export async function getNovel(id: string, userId?: string): Promise<Novel | nul
       ageRating: data.age_rating
     };
 
-    // Cache the new data in the background
-    cacheHelpers.setWithMetadata(cacheKey, novel, CACHE_TTL.NOVEL).catch(console.error);
+    // Cache the new data in the background if caching is enabled
+    if (useCache) {
+      cacheHelpers.setWithMetadata(cacheKey, novel, CACHE_TTL.NOVEL).catch(console.error);
+    }
 
     return novel;
   } catch (error) {

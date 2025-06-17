@@ -50,7 +50,7 @@ export default function ChaptersPage({ params }: { params: { id: string } }) {
           setUserProfile(profile);
         }
         
-        const data = await getNovel(novelSlug, session?.user?.id);
+        const data = await getNovel(novelSlug, session?.user?.id, false);
         if (data) {
           setNovel(data);
         }

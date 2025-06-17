@@ -35,7 +35,7 @@ export async function getChapter(novelId: string, chapterNumber: number, partNum
     // First resolve the novel to obtain its numeric id (needed for the canonical cache key)
     const { data: novel, error: novelError } = await supabase
       .from('novels')
-      .select('id, author_profile_id')
+      .select('id, author_profile_id, translator_id, is_author_name_custom')
       .or(`id.eq.${novelId},slug.eq.${novelId}`)
       .single();
 
@@ -110,18 +110,11 @@ export async function getChapter(novelId: string, chapterNumber: number, partNum
 
     const chapter: ChapterWithNovel = chapterBase;
 
-    // Get user's profile to check role
+    // Determine if user is author or translator
     let hasTranslatorAccess = false;
     if (user) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single();
-
-      // Check if user is the author or a translator with matching author_profile_id
       const isAuthor = novel.author_profile_id === user.id;
-      const isTranslator = profile?.role === 'TRANSLATOR' && novel.author_profile_id === user.id;
+      const isTranslator = novel.translator_id === user.id || (novel.author_profile_id === user.id && novel.is_author_name_custom === true);
       hasTranslatorAccess = isAuthor || isTranslator;
     }
 
@@ -437,7 +430,7 @@ export async function getChaptersForList({
     const [novelResult, userResult] = await Promise.all([
       supabase
         .from('novels')
-        .select('id, author_profile_id')
+        .select('id, author_profile_id, translator_id, is_author_name_custom')
         .or(`id.eq.${novelId},slug.eq.${novelId}`)
         .single(),
       includeAccess && userId ? supabase.auth.getUser() : Promise.resolve({ data: { user: null } })
@@ -452,14 +445,8 @@ export async function getChaptersForList({
     // Check translator access only if needed
     let hasTranslatorAccess = false;
     if (includeAccess && userResult.data.user) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', userResult.data.user.id)
-        .single();
-
       const isAuthor = novel.author_profile_id === userResult.data.user.id;
-      const isTranslator = profile?.role === 'TRANSLATOR' && novel.author_profile_id === userResult.data.user.id;
+      const isTranslator = novel.translator_id === userResult.data.user.id || (novel.author_profile_id === userResult.data.user.id && novel.is_author_name_custom === true);
       hasTranslatorAccess = isAuthor || isTranslator;
     }
 
