@@ -8,6 +8,7 @@ import UserProfileButton from '@/app/_components/UserProfileButton';
 import ThemeToggle from '@/app/_components/ThemeToggle';
 import { useAuth } from '@/hooks/useAuth';
 import { usePathname } from 'next/navigation';
+import { useUserProfile } from '@/hooks/useUserProfile';
 
 const MobileMenu = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
   const pathname = usePathname();
@@ -96,8 +97,8 @@ const Header = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { isAuthenticated, isLoading, handleSignOut } = useAuth();
-  const userProfile = null;
+  const { isAuthenticated, userId, isLoading, handleSignOut } = useAuth();
+  const { userProfile } = useUserProfile(userId);
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
 
