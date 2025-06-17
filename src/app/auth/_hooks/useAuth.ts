@@ -40,7 +40,6 @@ export function useAuth() {
         username,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        current_streak: 0,
         role: 'USER',
         coins: 0
       }]);

@@ -39,7 +39,6 @@ export async function middleware(req: NextRequest) {
           username: session.user.email?.split('@')[0] || `user_${Math.random().toString(36).slice(2, 7)}`,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
-          current_streak: 0,
           role: 'USER',
           coins: 0
         }]);

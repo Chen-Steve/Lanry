@@ -6,7 +6,6 @@ import { Icon } from '@iconify/react';
 import SearchSection from '@/app/_components/SearchSection';
 import UserProfileButton from '@/app/_components/UserProfileButton';
 import ThemeToggle from '@/app/_components/ThemeToggle';
-import { useStreak } from '@/hooks/useStreak';
 import { useAuth } from '@/hooks/useAuth';
 import { usePathname } from 'next/navigation';
 
@@ -97,8 +96,8 @@ const Header = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { isAuthenticated, userId, isLoading, handleSignOut } = useAuth();
-  const { userProfile } = useStreak(userId);
+  const { isAuthenticated, isLoading, handleSignOut } = useAuth();
+  const userProfile = null;
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
 

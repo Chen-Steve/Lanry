@@ -85,7 +85,6 @@ export interface Bookmark {
 export interface UserProfile {
   id: string;
   username: string | null;
-  current_streak: number;
   last_visit: string | null;
   role: 'USER' | 'AUTHOR' | 'TRANSLATOR';
   coins: number;

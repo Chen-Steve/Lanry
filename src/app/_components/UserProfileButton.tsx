@@ -8,7 +8,6 @@ import { useAuth } from '@/hooks/useAuth';
 
 interface UserProfile {
   username: string;
-  current_streak: number;
   last_visit: string | null;
   coins: number;
   avatar_url?: string;
