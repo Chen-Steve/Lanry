@@ -60,10 +60,23 @@ export default function ChapterList({  chapters,  volumes,  editingChapterId,  o
   const [isLoadingSettings, setIsLoadingSettings] = useState(false);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
 
+  // New state: track sort order (ascending by default)
+  const [isDescending, setIsDescending] = useState(false);
+
   // State for mass delete
   const [isMassDeleting, setIsMassDeleting] = useState(false);
   const [chaptersToDelete, setChaptersToDelete] = useState<Set<string>>(new Set());
   const [massDeleteConfirmation, setMassDeleteConfirmation] = useState(false);
+
+  // Load saved sort order preference from localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem(`chapterSortDescending_${novelId}`);
+      if (stored !== null) {
+        setIsDescending(stored === 'true');
+      }
+    }
+  }, [novelId]);
 
   const fetchGlobalSettings = useCallback(async () => {
     setIsLoadingSettings(true);
@@ -348,6 +361,16 @@ export default function ChapterList({  chapters,  volumes,  editingChapterId,  o
     }
   };
 
+  const toggleSortOrder = () => {
+    setIsDescending(prev => {
+      const newVal = !prev;
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`chapterSortDescending_${novelId}`, newVal.toString());
+      }
+      return newVal;
+    });
+  };
+
   const renderChapter = (chapter: ChapterListChapter) => (
     <div
       key={chapter.id}
@@ -463,6 +486,20 @@ export default function ChapterList({  chapters,  volumes,  editingChapterId,  o
     const volumeChapters = chaptersGroupedByVolume.volumeChapters.get(volume.id) || [];
     const isCollapsed = collapsedVolumes.has(volume.id);
 
+    // Sort chapters (ascending first)
+    const sortedVolumeChapters = [...volumeChapters].sort((a, b) => {
+      if (a.chapter_number !== b.chapter_number) {
+        return a.chapter_number - b.chapter_number;
+      }
+      const partA = a.part_number || 0;
+      const partB = b.part_number || 0;
+      return partA - partB;
+    });
+
+    if (isDescending) {
+      sortedVolumeChapters.reverse();
+    }
+
     return (
       <div key={volume.id} className="border-t border-border first:border-t-0">
         <div className="bg-accent/50 px-3 py-2 flex justify-between items-center">
@@ -516,17 +553,7 @@ export default function ChapterList({  chapters,  volumes,  editingChapterId,  o
           </div>
         </div>
         <div className={`divide-y divide-border ${isCollapsed ? 'hidden' : ''}`}>
-          {volumeChapters
-            .sort((a, b) => {
-              if (a.chapter_number !== b.chapter_number) {
-                return a.chapter_number - b.chapter_number;
-              }
-              // If chapter numbers are equal, sort by part number
-              const partA = a.part_number || 0;
-              const partB = b.part_number || 0;
-              return partA - partB;
-            })
-            .map(renderChapter)}
+          {sortedVolumeChapters.map(renderChapter)}
         </div>
       </div>
     );
@@ -601,12 +628,23 @@ export default function ChapterList({  chapters,  volumes,  editingChapterId,  o
                 </button>
               )}
               {!isMassDeleting && (
-                <button
-                  onClick={() => setIsVolumeModalOpen(true)}
-                  className="inline-flex items-center px-2.5 py-1.5 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors"
-                >
-                  Add Volume
-                </button>
+                <>
+                  {/* Flip Order Button */}
+                  <button
+                    onClick={toggleSortOrder}
+                    className="inline-flex items-center px-2.5 py-1.5 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors"
+                    title={isDescending ? 'Oldest → Newest' : 'Newest → Oldest'}
+                    aria-label="Flip chapter order"
+                  >
+                    <Icon icon={isDescending ? 'mdi:sort-ascending' : 'mdi:sort-descending'} className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setIsVolumeModalOpen(true)}
+                    className="inline-flex items-center px-2.5 py-1.5 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors"
+                  >
+                    Add Volume
+                  </button>
+                </>
               )}
               <button
                 onClick={() => setIsMassDeleting(prev => !prev)}
@@ -646,9 +684,13 @@ export default function ChapterList({  chapters,  volumes,  editingChapterId,  o
                 </button>
               </div>
               <div className="divide-y divide-border mt-2">
-                {chaptersGroupedByVolume.noVolumeChapters
-                  .sort(sortChapters)
-                  .map(renderChapter)}
+                {(() => {
+                  const sorted = [...chaptersGroupedByVolume.noVolumeChapters].sort(sortChapters);
+                  if (isDescending) {
+                    sorted.reverse();
+                  }
+                  return sorted.map(renderChapter);
+                })()}
               </div>
             </div>
           )}
