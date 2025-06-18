@@ -46,6 +46,7 @@ export const ChapterList = ({
   }, [initialChapters]);
 
   const [chapters, setChapters] = useState<ChapterListItem[]>(filteredInitialChapters);
+  const [isDescending, setIsDescending] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
@@ -225,6 +226,16 @@ export const ChapterList = ({
     }
   }, [currentPage, totalPages]);
 
+  // Chapters to display respecting order
+  const displayedChapters = useMemo(() => {
+    if (isDescending) {
+      return [...chapters].slice().reverse();
+    }
+    return chapters;
+  }, [chapters, isDescending]);
+
+  const toggleSortOrder = () => setIsDescending(prev => !prev);
+
   // Count of active filters to show
   const activeFilterCount = useMemo(() => {
     let count = 0;
@@ -307,6 +318,17 @@ export const ChapterList = ({
             activeFilterCount={activeFilterCount}
           />
 
+          {/* Flip Order Button */}
+          {chapters.length > 0 && (
+            <button
+              onClick={toggleSortOrder}
+              className="absolute top-2 right-2 p-2 bg-background border border-border rounded-md hover:bg-accent/50 transition-colors"
+              title={isDescending ? 'Oldest → Newest' : 'Newest → Oldest'}
+            >
+              <Icon icon={isDescending ? 'mdi:sort-ascending' : 'mdi:sort-descending'} className="w-5 h-5" />
+            </button>
+          )}
+
           {/* Volume Description (only show when a volume is selected) */}
           {selectedVolume?.description && selectedVolumeId && (
             <div className="px-4 py-3 border-b border-border bg-accent/20">
@@ -340,7 +362,7 @@ export const ChapterList = ({
             ) : chapters.length > 0 ? (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  {chapters.map(chapter => (
+                  {displayedChapters.map(chapter => (
                     <div key={chapter.id} className="hover:bg-accent/20 transition-all rounded-md">
                       <ChapterListItemComponent
                         chapter={{
