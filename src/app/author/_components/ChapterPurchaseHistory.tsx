@@ -81,8 +81,8 @@ export default function ChapterPurchaseHistory() {
 
       const { data, error, count } = await supabase
         .from('chapter_unlocks')
-        .select(`
-          id,
+        .select(
+          `id,
           created_at,
           cost,
           chapter_number,
@@ -90,9 +90,11 @@ export default function ChapterPurchaseHistory() {
           profile_id,
           novel_id,
           profiles:profile_id(username),
-          novels:novel_id(title)
-        `, { count: 'exact' })
+          novels:novel_id(title)`,
+          { count: 'exact' }
+        )
         .in('novel_id', novelIds)
+        .gt('cost', 0) // Exclude zero-share unlocks
         .order('created_at', { ascending: false })
         .range(from, to);
 
