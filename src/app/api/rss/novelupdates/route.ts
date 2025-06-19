@@ -38,7 +38,7 @@ export async function GET(request: Request) {
     if (!chapters.length) {
       console.log('No chapters found for NovelUpdates RSS feed');
       // Return empty feed with proper structure
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || new URL(request.url).origin;
+      const baseUrl = new URL(request.url).origin;
       const xml = generateChapterFeedXML(null, [], baseUrl);
       return new NextResponse(xml, {
         headers: {
@@ -50,7 +50,7 @@ export async function GET(request: Request) {
 
     console.log(`Found ${chapters.length} chapters for NovelUpdates RSS feed`);
     
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || new URL(request.url).origin;
+    const baseUrl = new URL(request.url).origin;
     const xml = generateChapterFeedXML(null, chapters, baseUrl);
 
     return new NextResponse(xml, {
