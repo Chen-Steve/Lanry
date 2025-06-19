@@ -39,10 +39,12 @@ export async function GET(request: Request) {
         json_build_object(
           'title',  n.title,
           'slug',   n.slug,
-          'author', n.author
+          'author', COALESCE(tp.username, (CASE WHEN n.is_author_name_custom THEN ap.username END), n.author)
         ) AS novel
       FROM   chapters AS c
       JOIN   novels   AS n ON n.id = c.novel_id
+      LEFT   JOIN profiles AS tp ON tp.id = n.translator_id
+      LEFT   JOIN profiles AS ap ON ap.id = n.author_profile_id
       WHERE  (c.coins = 0 OR c.publish_at <= NOW())
         AND  COALESCE(c.publish_at, c.created_at) >= date_trunc('day', NOW())
       ORDER  BY COALESCE(c.publish_at, c.created_at) DESC
