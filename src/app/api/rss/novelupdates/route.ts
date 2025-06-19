@@ -44,8 +44,9 @@ export async function GET(request: Request) {
       FROM   chapters AS c
       JOIN   novels   AS n ON n.id = c.novel_id
       WHERE  (c.coins = 0 OR c.publish_at <= NOW())
+        AND  COALESCE(c.publish_at, c.created_at) >= date_trunc('day', NOW())
       ORDER  BY COALESCE(c.publish_at, c.created_at) DESC
-      LIMIT  50;
+      LIMIT  200;
     `;
 
     if (!latestChapters.length) {
