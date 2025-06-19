@@ -12,18 +12,10 @@ export async function GET(request: Request) {
     const chapters = await prisma.chapter.findMany({
       where: {
         OR: [
-          // Free chapters
-          {
-            coins: {
-              equals: 0
-            }
-          },
-          // Published chapters (timer has expired)
-          {
-            publishAt: {
-              lte: new Date()
-            }
-          }
+          // Chapters that are completely free (coins = 0)
+          { coins: { equals: 0 } },
+          // Chapters that were premium but whose timer has expired
+          { publishAt: { lte: new Date() } }
         ]
       },
       // Order so that:
