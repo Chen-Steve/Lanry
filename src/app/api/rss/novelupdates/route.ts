@@ -26,9 +26,14 @@ export async function GET(request: Request) {
           }
         ]
       },
-      orderBy: {
-        publishAt: 'desc' // Most recently published first
-      },
+      // Order so that:
+      // 1. Chapters with a non-null publishAt are sorted newest-first
+      // 2. Chapters whose publishAt is NULL (free/instant releases) are
+      //    then sorted by their creation time.
+      orderBy: [
+        { publishAt: 'desc' },
+        { createdAt: 'desc' }
+      ],
       take: 50, // Limit to latest 50 chapters
       include: {
         novel: true // Include novel data for the feed
