@@ -218,7 +218,8 @@ export async function getNovel(id: string, userId?: string, useCache: boolean = 
       chapters,
       volumes: data.volumes || [],
       categories,
-      tags: data.tags?.map((t: { tag: { id: string; name: string; description: string | null } }) => t.tag) || [],
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any
+      tags: (data.tags || []).map((t: unknown) => (t as any).tag) || [],
       characters,
       ageRating: data.age_rating
     };
@@ -322,15 +323,23 @@ export async function getNovels(options: GetNovelsOptions = {}): Promise<{ novel
         id,
         title,
         slug,
-        cover_image_url,
+        author,
+        description,
         status,
+        age_rating,
         created_at,
         updated_at,
+        cover_image_url,
+        bookmark_count,
+        rating,
+        rating_count,
+        views,
         author_profile_id,
-        categories:categories_on_novels (
-          category:category_id (
+        tags:tags_on_novels (
+          tag:tag_id (
             id,
-            name
+            name,
+            description
           )
         )
       `, { count: 'exact' })
@@ -352,51 +361,15 @@ export async function getNovels(options: GetNovelsOptions = {}): Promise<{ novel
 
     if (error) throw error;
 
+    /* eslint-disable @typescript-eslint/no-explicit-any */
     const result = {
-      novels: (data || []).map((novel: unknown) => {
-        const n = novel as {
-          id: string;
-          title: string;
-          slug: string;
-          cover_image_url: string | null;
-          status: string;
-          created_at: string;
-          updated_at: string;
-          author_profile_id: string;
-          categories: Array<{
-            category: {
-              id: string;
-              name: string;
-            };
-          }>;
-        };
-        return {
-          id: n.id,
-          title: n.title,
-          slug: n.slug,
-          coverImageUrl: n.cover_image_url,
-          status: n.status as Novel['status'],
-          created_at: n.created_at,
-          updated_at: n.updated_at,
-          author_profile_id: n.author_profile_id,
-          author: '', // Required by Novel type
-          description: '', // Required by Novel type
-          ageRating: 'EVERYONE' as const, // Required by Novel type
-          views: 0, // Required by Novel type
-          rating: 0, // Required by Novel type
-          ratingCount: 0, // Required by Novel type
-          bookmarkCount: 0, // Required by Novel type
-          chapters: [], // Required by Novel type
-          categories: n.categories?.map(item => ({
-            id: item.category.id,
-            name: item.category.name,
-            created_at: n.created_at,
-            updated_at: n.updated_at
-          })) || []
-        };
-      }) as Novel[],
+      novels: (data as any[]).map(novel => ({
+        ...novel,
+        coverImageUrl: novel.cover_image_url
+      })) as unknown as Novel[],
       total: count || 0
     };
+    /* eslint-enable @typescript-eslint/no-explicit-any */
 
     // Cache the result
     await redis.set(cacheKey, result, {
@@ -552,22 +525,26 @@ export async function getTopNovels(): Promise<Novel[]> {
     const { data, error } = await supabase
       .from('novels')
       .select(`
-        *,
-        translator:author_profile_id (
-          id,
-          username,
-          kofi_url,
-          patreon_url,
-          custom_url,
-          custom_url_label,
-          author_bio
-        ),
-        categories:categories_on_novels (
-          category:category_id (
+        id,
+        title,
+        slug,
+        cover_image_url,
+        author,
+        description,
+        status,
+        age_rating,
+        created_at,
+        updated_at,
+        bookmark_count,
+        rating,
+        rating_count,
+        views,
+        author_profile_id,
+        tags:tags_on_novels (
+          tag:tag_id (
             id,
             name,
-            created_at,
-            updated_at
+            description
           )
         )
       `)
@@ -577,20 +554,14 @@ export async function getTopNovels(): Promise<Novel[]> {
 
     if (error) throw error;
 
-    return (data || []).map(novel => ({
+    /* eslint-disable @typescript-eslint/no-explicit-any */
+    return (data as any[]).map(novel => ({
       ...novel,
       coverImageUrl: novel.cover_image_url,
-      translator: novel.translator ? {
-        username: novel.translator.username,
-        profile_id: novel.translator.id,
-        kofiUrl: novel.translator.kofi_url,
-        patreonUrl: novel.translator.patreon_url,
-        customUrl: novel.translator.custom_url,
-        customUrlLabel: novel.translator.custom_url_label,
-        author_bio: novel.translator.author_bio
-      } : null,
-      categories: novel.categories?.map((item: { category: NovelCategory }) => item.category) || []
-    }));
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any
+      tags: (novel.tags || []).map((t: unknown) => (t as any).tag) || []
+    })) as unknown as Novel[];
+    /* eslint-enable @typescript-eslint/no-explicit-any */
   } catch (error) {
     console.error('Error fetching top novels:', error);
     return [];
@@ -746,7 +717,8 @@ export async function getCuratedNovels(limit: number = 10): Promise<Novel[]> {
           author_bio: novel.translator.author_bio
         } : null,
         categories: novel.categories?.map((item: { category: NovelCategory }) => item.category) || [],
-        tags: novel.tags?.map((t: { tag: { id: string; name: string; description: string | null } }) => t.tag) || []
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any
+        tags: (novel.tags || []).map((t: unknown) => (t as any).tag) || []
       }));
   } catch (error) {
     console.error('Error fetching curated novels:', error);
