@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Icon } from '@iconify/react';
 import { Novel } from '@/types/database';
 import { useState } from 'react';
 import { getNovelsWithAdvancedChapters } from '@/services/novelService';
@@ -14,7 +15,7 @@ const AdvancedChapters = ({ initialNovels, initialTotal }: AdvancedChaptersProps
   const [total, setTotal] = useState<number>(initialTotal);
   const [page, setPage] = useState<number>(1);
   const [isLoading, setIsLoading] = useState(false);
-  const ITEMS_PER_PAGE = 10;
+  const ITEMS_PER_PAGE = 8;
 
   const loadMore = async () => {
     try {
@@ -50,48 +51,41 @@ const AdvancedChapters = ({ initialNovels, initialTotal }: AdvancedChaptersProps
           </h2>
         </div>
 
-        <div className="divide-y divide-border">
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {novels.map(novel => (
             <Link
               key={novel.id}
               href={`/novels/${novel.slug}`}
-              className="group block mb-2 py-1 hover:bg-accent/50 transition-colors"
+              className="flex gap-3 rounded-lg border border-border bg-container p-3 transition-shadow hover:shadow-md"
+              draggable={false}
             >
-              <div className="flex items-start gap-3">
-                <div className="relative w-12 h-16 flex-shrink-0">
-                  <NovelCover
-                    coverUrl={novel.coverImageUrl}
-                    title={novel.title}
-                    size="thumbnail"
-                  />
-                </div>
-                <div className="flex-grow pt-0">
-                  <h3 className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">
-                    {novel.title}
-                  </h3>
-                  
-                  <div className="flex flex-wrap gap-x-4">
-                    {novel.chapters?.map((chapter, index) => (
-                      <div key={index} className="flex items-center gap-2 text-xs">
-                        <span className="text-muted-foreground">
-                          Ch.{chapter.chapter_number}
-                          {chapter.part_number && `.${chapter.part_number}`}
-                        </span>
-                        <span className="text-primary">
-                          {chapter.publish_at && new Date(chapter.publish_at).toLocaleDateString(undefined, { 
-                            month: 'short', 
-                            day: 'numeric' 
-                          })}
-                        </span>
-                      </div>
-                    ))}
-                    {novel.chapters?.length === 5 && (
-                      <div className="flex items-center gap-2 text-xs">
-                        <span className="text-muted-foreground">. . .</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
+              {/* Cover */}
+              <div className="relative w-24 h-32 flex-shrink-0">
+                <NovelCover
+                  coverUrl={novel.coverImageUrl}
+                  title={novel.title}
+                  size="thumbnail"
+                />
+              </div>
+
+              {/* Details */}
+              <div className="flex flex-1 flex-col overflow-hidden">
+                <h3 className="line-clamp-2 text-sm font-semibold text-foreground sm:text-base">
+                  {novel.title}
+                </h3>
+
+                <ul className="mt-2 space-y-1">
+                  {novel.chapters?.slice(0, 4).map((chapter, index) => (
+                    <li
+                      key={index}
+                      className="flex items-center gap-1 text-xs sm:text-sm text-amber-700 dark:text-amber-400"
+                    >
+                      <Icon icon="ph:lock" className="h-3 w-3" />
+                      Ch.{chapter.chapter_number}
+                      {chapter.part_number && `.${chapter.part_number}`}
+                    </li>
+                  ))}
+                </ul>
               </div>
             </Link>
           ))}

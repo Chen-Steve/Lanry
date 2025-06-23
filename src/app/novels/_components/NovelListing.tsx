@@ -81,7 +81,8 @@ const NovelListing = () => {
   useEffect(() => {
     const fetchAdvancedNovels = async () => {
       try {
-        const { novels, total } = await getNovelsWithAdvancedChapters(1, 10);
+        // Fetch only 8 novels to align with the ITEMS_PER_PAGE in AdvancedChapters
+        const { novels, total } = await getNovelsWithAdvancedChapters(1, 8);
         console.log('Fetched Advanced Novels:', {
           novelsCount: novels.length,
           total

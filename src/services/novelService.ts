@@ -452,7 +452,7 @@ export async function getNovelsWithRecentUnlocks(
 
 export async function getNovelsWithAdvancedChapters(
   page: number = 1,
-  limit: number = 10
+  limit: number = 8
 ): Promise<{ novels: Novel[]; total: number }> {
   try {    
     interface DBNovel {
