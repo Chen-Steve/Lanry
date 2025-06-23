@@ -341,3 +341,18 @@ a[data-back-to-ref]:hover {
   color: var(--primary-foreground);
   text-decoration: underline;
 }
+
+/* Profanity censoring */
+.censored-word {
+  background-color: #000;
+  color: transparent; /* hide text */
+  border-radius: 2px;
+  padding: 0 0.15em;
+  cursor: pointer;
+}
+
+/* When user enables visibility (e.g., via adding 'revealed' class) */
+.censored-word.revealed {
+  background: none;
+  color: inherit;
+}

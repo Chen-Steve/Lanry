@@ -30,6 +30,8 @@ interface ChapterProgressBarProps {
   novelTitle?: string;
   hideComments: boolean;
   onHideCommentsChange: (hide: boolean) => void;
+  showProfanity: boolean;
+  onShowProfanityChange: (show: boolean) => void;
   settingsButtonRef?: React.RefObject<HTMLButtonElement>;
   floatingDesktopModal?: boolean;
 }
@@ -45,6 +47,8 @@ export default function ChapterProgressBar({
   novelTitle,
   hideComments,
   onHideCommentsChange,
+  showProfanity,
+  onShowProfanityChange,
   settingsButtonRef,
   floatingDesktopModal = false,
 }: ChapterProgressBarProps) {
@@ -159,7 +163,7 @@ export default function ChapterProgressBar({
             currentFont={currentFont}
             currentSize={currentSize}
           />
-          <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+          <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 space-y-3">
             <div className="flex items-center justify-between">
               <div className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
                 <Icon icon="mdi:comment-outline" className="w-4 h-4" />
@@ -180,6 +184,32 @@ export default function ChapterProgressBar({
                 <span 
                   className={`inline-block w-4 h-4 transform rounded-full bg-white transition-transform ${
                     hideComments ? 'translate-x-1.5' : 'translate-x-6'
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* Profanity Toggle */}
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
+                <Icon icon="mdi:eye-off-outline" className="w-4 h-4" />
+                <span>Profanity</span>
+              </div>
+              <button 
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onShowProfanityChange(!showProfanity);
+                }}
+                className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none ${
+                  showProfanity ? 'bg-primary' : 'bg-gray-300 dark:bg-gray-700'
+                }`}
+                aria-label="Toggle profanity visibility"
+              >
+                <span 
+                  className={`inline-block w-4 h-4 transform rounded-full bg-white transition-transform ${
+                    showProfanity ? 'translate-x-6' : 'translate-x-1.5'
                   }`}
                 />
               </button>
@@ -277,8 +307,8 @@ export default function ChapterProgressBar({
             currentSize={currentSize}
           />
           
-          {/* Comment Icons Toggle */}
-          <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+          {/* Toggles */}
+          <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 space-y-3">
             <div className="flex items-center justify-between">
               <div className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
                 <Icon icon="mdi:comment-outline" className="w-4 h-4" />
@@ -300,6 +330,33 @@ export default function ChapterProgressBar({
                 <span 
                   className={`inline-block w-4 h-4 transform rounded-full bg-white transition-transform ${
                     hideComments ? 'translate-x-1.5' : 'translate-x-6'
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* Profanity Toggle */}
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
+                <Icon icon="mdi:eye-off-outline" className="w-4 h-4" />
+                <span>Profanity</span>
+              </div>
+              <button 
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onShowProfanityChange(!showProfanity);
+                }}
+                onPointerDown={(e) => e.stopPropagation()}
+                onTouchStart={(e) => e.stopPropagation()}
+                className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none ${
+                  showProfanity ? 'bg-primary' : 'bg-gray-300 dark:bg-gray-700'
+                }`}
+                aria-label="Toggle profanity visibility"
+              >
+                <span 
+                  className={`inline-block w-4 h-4 transform rounded-full bg-white transition-transform ${
+                    showProfanity ? 'translate-x-6' : 'translate-x-1.5'
                   }`}
                 />
               </button>

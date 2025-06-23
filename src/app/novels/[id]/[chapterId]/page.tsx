@@ -39,6 +39,7 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
   const [navigation, setNavigation] = useState<ChapterNavigation>(initialNavigation);
   const [isCommentOpen, setIsCommentOpen] = useState(false);
   const [hideComments, setHideComments] = useLocalStorage('chapter-hide-comments', false);
+  const [showProfanity, setShowProfanity] = useLocalStorage('chapter-show-profanity', false);
   const [fontFamily, setFontFamily] = useLocalStorage(
     'chapter-font-family',
     'ui-sans-serif, system-ui, sans-serif'
@@ -433,6 +434,7 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
         publishAt={chapter.publish_at}
         authorProfile={chapter.authorProfile}
         hideComments={hideComments}
+        showProfanity={showProfanity}
         settingsButtonRef={settingsButtonRef}
       />
 
@@ -477,6 +479,8 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
         novelTitle={chapter.novel.title}
         hideComments={hideComments}
         onHideCommentsChange={setHideComments}
+        showProfanity={showProfanity}
+        onShowProfanityChange={setShowProfanity}
         settingsButtonRef={settingsButtonRef}
         floatingDesktopModal
       />

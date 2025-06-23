@@ -43,6 +43,7 @@ interface ChapterContentProps {
   isTranslator?: boolean;
   publishAt?: string;
   hideComments?: boolean;
+  showProfanity?: boolean;
   authorProfile?: {
     username: string;
     avatar_url?: string;
@@ -74,6 +75,7 @@ export default function ChapterContent({
   publishAt,
   authorProfile,
   hideComments = false,
+  showProfanity = false,
   settingsButtonRef
 }: ChapterContentProps) {
   const [selectedParagraphId, setSelectedParagraphId] = useState<string | null>(null);
@@ -111,7 +113,7 @@ export default function ChapterContent({
   }, [onCommentStateChange]);
 
   // Extract paragraphs and footnotes
-  const paragraphs = filterExplicitContent(content)
+  const paragraphs = filterExplicitContent(content, !showProfanity)
     .split('\n\n')
     .filter(p => p.trim());
 
@@ -528,6 +530,19 @@ export default function ChapterContent({
     };
   }, []);
 
+  // Handle click to reveal individual censored words
+  useEffect(() => {
+    const handleReveal = (e: MouseEvent) => {
+      const target = (e.target as HTMLElement).closest('.censored-word');
+      if (target && !showProfanity) {
+        e.preventDefault();
+        target.classList.toggle('revealed');
+      }
+    };
+    document.addEventListener('click', handleReveal);
+    return () => document.removeEventListener('click', handleReveal);
+  }, [showProfanity]);
+
   return (
     <div className="max-w-2xl mx-auto" ref={contentRef}>
       <div 
@@ -572,6 +587,11 @@ export default function ChapterContent({
               {!hideComments && !isIndefinitelyLocked && (
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   You can turn off comments in settings
+                </p>
+              )}
+              {!showProfanity && !isIndefinitelyLocked && (
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  You can turn off the profanity filter in settings
                 </p>
               )}
             </div>
@@ -776,7 +796,7 @@ export default function ChapterContent({
               <div 
                 className="prose prose-sm md:prose-base text-foreground dark:prose-invert mb-6"
                 style={getTextStyles(fontFamily, fontSize - 1)}
-                dangerouslySetInnerHTML={{ __html: formatText(filterExplicitContent(authorThoughts)) }}
+                dangerouslySetInnerHTML={{ __html: formatText(filterExplicitContent(authorThoughts, !showProfanity)) }}
               />
 
               {authorProfile && (
