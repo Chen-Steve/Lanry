@@ -34,14 +34,14 @@ export const formatText = (text: string, extractFootnotes = false): string => {
     // Replace **text** with <strong>text</strong> for bold
     content = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     
-    // Replace *text* with <em>text</em> for italics
-    content = content.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    // Replace horizontal lines (--- or ***) FIRST to avoid conflict with italic formatting
+    content = content.replace(/^\s*(?:-{3}|\*{3})\s*$/gm, '<div class="border-t border-gray-300 leading-[1em] my-[1em]"></div>');
+    
+    // Replace *text* with <em>text</em> for italics (ensure at least one non-asterisk character inside)
+    content = content.replace(/\*([^*]+)\*/g, '<em>$1</em>');
     
     // Replace _text_ with <u>text</u> for underline
-    content = content.replace(/_(.*?)_/g, '<u>$1</u>');
-    
-    // Replace horizontal lines (---)
-    content = content.replace(/^---$/gm, '<div class="border-t border-gray-300 leading-[1em] my-[1em]"></div>');
+    content = content.replace(/_([^_]+)_/g, '<u>$1</u>');
     
     // Replace [text](url) with <a> links - using non-greedy match and balanced brackets
     content = content.replace(/\[([^\[\]]+)\]\(([^()]+)\)/g, (_match, linkText, url) => {
