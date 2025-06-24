@@ -140,9 +140,10 @@ export default function ChapterContent({
             el.classList.remove('footnote-highlight');
           });
           
-          // Smooth scroll to the footnote
+          // Smooth scroll to the footnote, accounting for the full page offset
+          const yOffset = footnoteElement.getBoundingClientRect().top + window.scrollY - 100; // Add some space above
           window.scrollTo({
-            top: footnoteElement.offsetTop - 100, // Add some space above
+            top: yOffset,
             behavior: 'smooth'
           });
           
@@ -167,9 +168,10 @@ export default function ChapterContent({
             el.classList.remove('footnote-highlight');
           });
           
-          // Smooth scroll to the reference
+          // Smooth scroll to the reference, accounting for the full page offset
+          const yOffset = refElement.getBoundingClientRect().top + window.scrollY - 100; // Add some space above
           window.scrollTo({
-            top: refElement.offsetTop - 100, // Add some space above
+            top: yOffset,
             behavior: 'smooth'
           });
           
@@ -197,17 +199,16 @@ export default function ChapterContent({
             el.classList.remove('footnote-highlight');
           });
           
+          const yOffset = element.getBoundingClientRect().top + window.scrollY - 100;
+          window.scrollTo({
+            top: yOffset,
+            behavior: 'smooth'
+          });
+          
+          element.classList.add('footnote-highlight');
           setTimeout(() => {
-            window.scrollTo({
-              top: element.offsetTop - 100,
-              behavior: 'smooth'
-            });
-            
-            element.classList.add('footnote-highlight');
-            setTimeout(() => {
-              element.classList.remove('footnote-highlight');
-            }, 2000);
-          }, 300); // Small delay to ensure page is fully loaded
+            element.classList.remove('footnote-highlight');
+          }, 2000);
         }
       }
     };
