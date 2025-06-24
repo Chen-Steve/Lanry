@@ -96,14 +96,23 @@ export const ChapterListItem = memo(function ChapterListItem({
 
   const handleLockedChapterClick = useCallback(async () => {
     if (!isAuthenticated) {
-      toast.error('Create an account to unlock advance chapters', {
-        duration: 3000,
+      // Show a persistent toast with a sign-up link
+      toast.custom((t) => (
+        <div className="bg-background shadow-lg rounded-lg p-4 max-w-md mx-auto border-2 border-destructive flex items-center gap-3">
+          <Icon icon="mdi:alert-circle" className="w-5 h-5 text-amber-400 flex-shrink-0" />
+          <span className="text-foreground text-sm flex-1">Create an account to unlock.</span>
+          <Link
+            href="/auth"
+            onClick={() => toast.dismiss(t)}
+            className="text-primary hover:text-primary/80 flex items-center"
+            aria-label="Sign up"
+          >
+            <Icon icon="mdi:arrow-right" className="w-5 h-5" />
+          </Link>
+        </div>
+      ), {
+        duration: 5000,
         position: 'top-center',
-        style: {
-          background: '#F87171',
-          color: 'white',
-          padding: '16px',
-        },
       });
       return;
     }
