@@ -57,6 +57,8 @@ export function generateChapterFeedXML(novel: Novel | null, chapters: (Chapter &
       ]]></description>
       <pubDate>${new Date(chapter.createdAt).toUTCString()}</pubDate>
       <author>contact@lanry.space (${escapeXml(novel ? novel.author : chapter.novel.author)})</author>
+      <novelTitle>${escapeXml(novel ? novel.title : chapter.novel.title)}</novelTitle>
+      <chapterTitle>${`Chapter ${chapter.chapterNumber}${chapter.title ? `: ${escapeXml(chapter.title)}` : ''}`}</chapterTitle>
     </item>`).join('')}
   </channel>
 </rss>`;
