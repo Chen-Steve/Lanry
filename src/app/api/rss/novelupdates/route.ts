@@ -46,7 +46,7 @@ export async function GET(request: Request) {
       LEFT   JOIN profiles AS tp ON tp.id = n.translator_id
       LEFT   JOIN profiles AS ap ON ap.id = n.author_profile_id
       WHERE  (c.coins = 0 OR c.publish_at <= NOW())
-        AND  COALESCE(c.publish_at, c.created_at) >= date_trunc('day', NOW())
+        AND  COALESCE(c.publish_at, c.created_at) >= NOW() - INTERVAL '24 hours'
       ORDER  BY COALESCE(c.publish_at, c.created_at) DESC
       LIMIT  200;
     `;
