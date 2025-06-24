@@ -85,7 +85,7 @@ export default function NovelPage({ params }: { params: { id: string } }) {
 
   const handleBookmark = async () => {
     if (!isAuthenticated) {
-      toast.error('Please create an account to bookmark', {
+      toast.error('Create an account to bookmark', {
         duration: 3000,
         position: 'bottom-center',
         style: {

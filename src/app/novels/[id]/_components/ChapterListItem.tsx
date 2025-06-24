@@ -96,7 +96,7 @@ export const ChapterListItem = memo(function ChapterListItem({
 
   const handleLockedChapterClick = useCallback(async () => {
     if (!isAuthenticated) {
-      toast.error('Please create an account to unlock advance chapters', {
+      toast.error('Create an account to unlock advance chapters', {
         duration: 3000,
         position: 'top-center',
         style: {

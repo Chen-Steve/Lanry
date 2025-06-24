@@ -37,7 +37,7 @@ export default function ShopPage() {
     return (
       <div className="py-10">
         <div className="text-center">
-          <p className="text-muted-foreground">Please create an account or sign in to access this page.</p>
+          <p className="text-muted-foreground">Create an account or sign in to access this page.</p>
         </div>
       </div>
     );
