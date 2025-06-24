@@ -90,6 +90,9 @@ export default function ChapterContent({
   const [isLiked, setIsLiked] = useState(false);
   const [isLikeLoading, setIsLikeLoading] = useState(false);
   
+  // Determine the display publication date
+  const displayDate = publishAt || createdAt;
+
   // Check if the chapter is indefinitely locked
   const isIndefinitelyLocked = publishAt && new Date(publishAt).getFullYear() > new Date().getFullYear() + 50;
 
@@ -583,7 +586,7 @@ export default function ChapterContent({
                 )}
               </div>
               <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400">
-                {isIndefinitelyLocked ? 'Not yet available' : `Published ${formatDate(createdAt)}`}
+                {isIndefinitelyLocked ? 'Not yet available' : `Published ${formatDate(displayDate)}`}
               </p>
               {!hideComments && !isIndefinitelyLocked && (
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">

@@ -2,30 +2,34 @@
 export function formatLocalDateTime(date: string | null): string {
   if (!date) return '';
   
-  // Parse date and time directly from ISO string
-  const [datePart, timePart] = date.split('T');
-  const [year, month, day] = datePart.split('-');
-  const [hours, minutes] = timePart.split(':');
-  
-  // Convert hours to 12-hour format
-  const hour = parseInt(hours);
-  const period = hour < 12 ? 'AM' : 'PM';
-  const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-  
-  // Format date using the parsed components
-  return `${month}/${day}/${year} ${displayHour}:${minutes} ${period}`;
+  const local = new Date(date);
+
+  const year = local.getFullYear();
+  const month = (local.getMonth() + 1).toString().padStart(2, '0');
+  const day = local.getDate().toString().padStart(2, '0');
+
+  let hours = local.getHours();
+  const minutes = local.getMinutes().toString().padStart(2, '0');
+
+  const period = hours < 12 ? 'AM' : 'PM';
+  hours = hours % 12;
+  if (hours === 0) hours = 12;
+
+  return `${month}/${day}/${year} ${hours}:${minutes} ${period}`;
 }
 
-// Convert a date to local datetime-local value for input
+// Convert a UTC/ISO date string to a value usable for <input type="datetime-local">
 export function toLocalDatetimeValue(date: string | null): string {
   if (!date) return '';
   
-  // Parse date and time directly from ISO string
-  const [datePart, timePart] = date.split('T');
-  const [year, month, day] = datePart.split('-');
-  const [hours] = timePart.split(':');
-  
-  return `${year}-${month}-${day}T${hours}:${timePart.split(':')[1]}`;
+  const d = new Date(date);
+  const year = d.getFullYear();
+  const month = (d.getMonth() + 1).toString().padStart(2, '0');
+  const day = d.getDate().toString().padStart(2, '0');
+  const hours = d.getHours().toString().padStart(2, '0');
+  const minutes = d.getMinutes().toString().padStart(2, '0');
+
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
 // Store date exactly as selected without timezone conversion

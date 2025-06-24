@@ -6,7 +6,6 @@ import { toast } from 'sonner';
 import ChapterEditor from './ChapterEditor';
 import ChapterPublishSettings from './ChapterPublishSettings';
 import * as authorChapterService from '../_services/authorChapterService';
-import { toLocalDatetimeValue } from '@/utils/dateUtils';
 import { isChapterPublished } from '@/services/chapterService';
 
 interface ChapterEditFormProps {
@@ -181,7 +180,7 @@ export default function ChapterEditForm({
           title: chapter.title || '',
           content: chapter.content || '',
           slug: chapter.slug || '',
-          publishAt: chapter.publish_at ? toLocalDatetimeValue(chapter.publish_at) : '',
+          publishAt: chapter.publish_at || '',
           coins: chapter.coins?.toString() || '0',
           authorThoughts: chapter.author_thoughts || '',
           ageRating: chapter.age_rating || 'EVERYONE',

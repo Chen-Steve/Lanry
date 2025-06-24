@@ -47,69 +47,68 @@ export default function ChapterPublishSettings({
     }
   }, [publishAt, hasBeenTouched]);
 
-  // Generate time options in 30-minute intervals
-  const timeOptions = useMemo(() => {
-    const options = [];
+  // Generate hour options (24-hour format for value, 12-hour format for label)
+  const hourOptions = useMemo(() => {
+    const options: { value: string; label: string }[] = [];
     for (let hour = 0; hour < 24; hour++) {
-      for (const minute of [0, 30]) {
-        const period = hour < 12 ? 'AM' : 'PM';
-        const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-        const hourStr = displayHour.toString();
-        const minStr = minute.toString().padStart(2, '0');
-        // Store in 24h format but display in 12h
-        const value = `${hour.toString().padStart(2, '0')}:${minStr}`;
-        const label = `${hourStr}:${minStr} ${period}`;
-        options.push({ value, label });
-      }
+      const period = hour < 12 ? 'AM' : 'PM';
+      const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+      options.push({
+        value: hour.toString().padStart(2, '0'),
+        label: `${displayHour} ${period}`
+      });
     }
     return options;
   }, []);
 
-  const getCurrentTimeValue = (date: string | null) => {
+  // Generate minute options (0-59)
+  const minuteOptions = useMemo(() => {
+    return Array.from({ length: 60 }, (_, i) => {
+      const value = i.toString().padStart(2, '0');
+      return { value, label: value };
+    });
+  }, []);
+
+  const getCurrentHourValue = (date: string | null) => {
     if (!date) return '';
-    // Parse time directly from ISO string to avoid timezone conversion
-    const timeStr = date.split('T')[1];
-    const [hours, minutes] = timeStr.split(':');
-    return `${hours}:${minutes}`;
+    const d = new Date(date);
+    return d.getHours().toString().padStart(2, '0');
+  };
+
+  const getCurrentMinuteValue = (date: string | null) => {
+    if (!date) return '';
+    const d = new Date(date);
+    return d.getMinutes().toString().padStart(2, '0');
+  };
+
+  const handleHourChange = (hour: string) => {
+    const minute = getCurrentMinuteValue(publishAt) || '00';
+    handleDateTimeChange('time', `${hour}:${minute}`);
+  };
+
+  const handleMinuteChange = (minute: string) => {
+    const hour = getCurrentHourValue(publishAt) || '00';
+    handleDateTimeChange('time', `${hour}:${minute}`);
   };
 
   const handleDateTimeChange = (type: 'date' | 'time', value: string) => {
     setHasBeenTouched(true);
-    let year, month, day, hours, minutes;
 
-    if (publishAt) {
-      // Parse existing date
-      const [datePart, timePart] = publishAt.split('T');
-      [year, month, day] = datePart.split('-').map(Number);
-      [hours, minutes] = timePart.split(':').map(Number);
-    } else {
-      // Use current date
-      const now = new Date();
-      year = now.getFullYear();
-      month = now.getMonth() + 1;
-      day = now.getDate();
-      hours = now.getHours();
-      minutes = now.getMinutes();
-    }
+    // Get existing date or now
+    let baseDate = publishAt ? new Date(publishAt) : new Date();
 
     if (type === 'date') {
-      // Update just the date portion
-      [year, month, day] = value.split('-').map(Number);
+      // value in format YYYY-MM-DD
+      const [y, m, d] = value.split('-').map(Number);
+      baseDate = new Date(y, m - 1, d, 0, 0); // reset to midnight
     } else if (type === 'time') {
-      // Update just the time portion
-      [hours, minutes] = value.split(':').map(Number);
+      // value HH:MM (24h)
+      const [h, min] = value.split(':').map(Number);
+      baseDate.setHours(h, min, 0, 0);
     }
 
-    // Create ISO string without timezone suffix to keep it local
-    const isoString = `${year}-${
-      month.toString().padStart(2, '0')
-    }-${
-      day.toString().padStart(2, '0')
-    }T${
-      hours.toString().padStart(2, '0')
-    }:${
-      minutes.toString().padStart(2, '0')
-    }:00.000`;
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    const isoString = `${baseDate.getFullYear()}-${pad(baseDate.getMonth() + 1)}-${pad(baseDate.getDate())}T${pad(baseDate.getHours())}:${pad(baseDate.getMinutes())}:00`;
 
     onSettingsChange({
       publishAt: isoString,
@@ -294,22 +293,41 @@ export default function ChapterPublishSettings({
                             </div>
                             
                             <select
-                              value={getCurrentTimeValue(publishAt)}
-                              onChange={(e) => handleDateTimeChange('time', e.target.value)}
+                              value={getCurrentHourValue(publishAt)}
+                              onChange={(e) => handleHourChange(e.target.value)}
                               className="flex-1 p-2 text-sm border border-border rounded bg-background text-foreground focus:ring-primary relative hover:cursor-pointer"
                               style={{ colorScheme: 'dark' }}
-                              aria-label="Publication time"
+                              aria-label="Publication hour"
                               disabled={isIndefinitelyLocked}
                             >
-                              <option value="">Select time</option>
-                              {timeOptions.map((time) => (
-                                <option key={time.value} value={time.value}>
-                                  {time.label}
+                              <option value="">Select hour</option>
+                              {hourOptions.map((hour) => (
+                                <option key={hour.value} value={hour.value}>
+                                  {hour.label}
                                 </option>
                               ))}
                             </select>
                           </div>
                         
+                          <div className="flex items-center gap-2">
+                            <div className="relative flex-1">
+                              <select
+                                value={getCurrentMinuteValue(publishAt)}
+                                onChange={(e) => handleMinuteChange(e.target.value)}
+                                className="flex-1 p-2 text-sm border border-border rounded bg-background text-foreground focus:ring-primary relative hover:cursor-pointer"
+                                style={{ colorScheme: 'dark' }}
+                                aria-label="Publication minute"
+                                disabled={isIndefinitelyLocked}
+                              >
+                                <option value="">Min</option>
+                                {minuteOptions.map((minute) => (
+                                  <option key={minute.value} value={minute.value}>
+                                    {minute.label}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
