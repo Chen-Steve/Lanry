@@ -26,6 +26,7 @@ export async function GET(request: Request) {
         slug: true,
         description: true,
         author: true,
+        coverImageUrl: true,
       },
     });
 

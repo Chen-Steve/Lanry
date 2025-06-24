@@ -20,6 +20,7 @@ export function generateNovelFeedXML(novels: Novel[], baseUrl: string) {
       <description>${escapeXml(novel.description || '')}</description>
       <pubDate>${new Date(novel.createdAt).toUTCString()}</pubDate>
       <author>contact@lanry.space (${escapeXml(novel.author)})</author>
+      ${novel.coverImageUrl ? `<enclosure url="${escapeXml(novel.coverImageUrl)}" type="image/jpeg" />` : ''}
     </item>`).join('')}
   </channel>
 </rss>`;
@@ -57,6 +58,10 @@ export function generateChapterFeedXML(novel: Novel | null, chapters: (Chapter &
       ]]></description>
       <pubDate>${new Date(chapter.createdAt).toUTCString()}</pubDate>
       <author>contact@lanry.space (${escapeXml(novel ? novel.author : chapter.novel.author)})</author>
+      ${(() => {
+        const cover = novel ? novel.coverImageUrl : chapter.novel.coverImageUrl;
+        return cover ? `<enclosure url="${escapeXml(cover)}" type="image/jpeg" />` : '';
+      })()}
       <novelTitle>${escapeXml(novel ? novel.title : chapter.novel.title)}</novelTitle>
       <chapterTitle>${`Chapter ${chapter.chapterNumber}${chapter.title ? `: ${escapeXml(chapter.title)}` : ''}`}</chapterTitle>
     </item>`).join('')}
