@@ -1,4 +1,16 @@
 import { Novel, Chapter } from '@prisma/client';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+// Prefer translator name if provided, otherwise fallback to original author.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getAuthorName(novel: any): string {
+  if (typeof novel === 'object' && novel) {
+    if (novel.translatorUsername) return novel.translatorUsername;
+    if (novel.isAuthorNameCustom && novel.authorProfileUsername) return novel.authorProfileUsername;
+    return novel.author ?? '';
+  }
+  return '';
+}
 
 export function generateNovelFeedXML(novels: Novel[], baseUrl: string) {
   const now = new Date().toUTCString();
@@ -19,7 +31,7 @@ export function generateNovelFeedXML(novels: Novel[], baseUrl: string) {
       <guid>${baseUrl}/novels/${novel.slug}</guid>
       <description>${escapeXml(novel.description || '')}</description>
       <pubDate>${new Date(novel.createdAt).toUTCString()}</pubDate>
-      <author>contact@lanry.space (${escapeXml(novel.author)})</author>
+      <author>${escapeXml(getAuthorName(novel))}</author>
       ${novel.coverImageUrl ? `<enclosure url="${escapeXml(novel.coverImageUrl)}" type="image/jpeg" />` : ''}
     </item>`).join('')}
   </channel>
@@ -56,8 +68,8 @@ export function generateChapterFeedXML(novel: Novel | null, chapters: (Chapter &
           <p>Read it on Lanry: <a href="${baseUrl}/novels/${novel ? novel.slug : chapter.novel.slug}/${chapter.slug ?? `c${chapter.chapterNumber}`}">Open Chapter</a></p>
         </div>
       ]]></description>
-      <pubDate>${new Date(chapter.createdAt).toUTCString()}</pubDate>
-      <author>contact@lanry.space (${escapeXml(novel ? novel.author : chapter.novel.author)})</author>
+      <pubDate>${new Date((chapter as any).publishAt ?? chapter.createdAt).toUTCString()}</pubDate>
+      <author>${escapeXml(novel ? getAuthorName(novel) : getAuthorName(chapter.novel))}</author>
       ${(() => {
         const cover = novel ? novel.coverImageUrl : chapter.novel.coverImageUrl;
         return cover ? `<enclosure url="${escapeXml(cover)}" type="image/jpeg" />` : '';

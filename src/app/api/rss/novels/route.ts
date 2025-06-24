@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: Request) {
   try {
     // Fetch the 10 most recent novels by creation date
-    const latestNovels = await prisma.novel.findMany({
+    const latestNovelsRaw = await prisma.novel.findMany({
       orderBy: {
         createdAt: 'desc',
       },
@@ -27,7 +27,30 @@ export async function GET(request: Request) {
         description: true,
         author: true,
         coverImageUrl: true,
+        translator: {
+          select: {
+            username: true,
+          },
+        },
+        isAuthorNameCustom: true,
+        authorProfile: {
+          select: {
+            username: true,
+          },
+        },
       },
+    });
+
+    const latestNovels = latestNovelsRaw.map(n => {
+      // Remove the nested translator object to align with Novel type shape
+      // and attach its username as translatorUsername.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { translator, authorProfile, ...rest } = n as any;
+      return {
+        ...rest,
+        translatorUsername: translator?.username ?? null,
+        authorProfileUsername: authorProfile?.username ?? null,
+      };
     });
 
     const baseUrl = new URL(request.url).origin;
