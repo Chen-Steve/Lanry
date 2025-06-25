@@ -21,6 +21,12 @@ export async function POST(req: Request) {
     const endDate = new Date();
     endDate.setMonth(endDate.getMonth() + 1);
 
+    // Check for an existing subscription BEFORE upsert so we can decide
+    // whether the user already received coins for the current billing cycle.
+    const existingSub = await prisma.subscription.findUnique({
+      where: { profileId: userId },
+    });
+
     // Create or update subscription record
     const subscription = await prisma.subscription.upsert({
       where: {
@@ -55,6 +61,41 @@ export async function POST(req: Request) {
       },
     });
 
+    // Decide if we should award the initial 55-coin bonus.
+    // Award when:
+    //   • No previous subscription exists, OR
+    //   • Previous subscription endDate is in the past (new billing cycle)
+    let shouldAwardCoins = false;
+    if (!existingSub) {
+      shouldAwardCoins = true;
+    } else if (existingSub.endDate < startDate) {
+      shouldAwardCoins = true;
+    }
+
+    if (shouldAwardCoins) {
+      const awardedCoins = 55;
+
+      // Update the user's coin balance
+      await prisma.profile.update({
+        where: { id: userId },
+        data: {
+          coins: {
+            increment: awardedCoins,
+          },
+        },
+      });
+
+      // Record the coin award transaction
+      await prisma.coinTransaction.create({
+        data: {
+          profileId: userId,
+          amount: awardedCoins,
+          type: "SUBSCRIPTION_BONUS",
+          orderId: subscriptionId,
+        },
+      });
+    }
+
     return NextResponse.json({ 
       success: true, 
       subscription,
@@ -76,8 +117,8 @@ function getMembershipAmount(tierIdAsNumber: number): number {
       return 5;
     case 2: // Patron
       return 9;
-    case 3: // VIP
-      return 19;
+    case 3: // Super Patron
+      return 20;
     default:
       return 0;
   }

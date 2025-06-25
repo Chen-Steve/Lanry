@@ -74,8 +74,8 @@ export default function UserDashboard() {
     hasSubscription: boolean;
     status?: string;
     plan?: string;
-    amount?: number;
-    currency?: string;
+    membershipTierId?: number;
+    latestBillingAmount?: number;
     startDate?: string;
     endDate?: string;
     latestBillingDate?: string;
@@ -168,19 +168,27 @@ export default function UserDashboard() {
                 <>
                   <h1 className="text-2xl font-bold text-primary mb-1">
                     {subscriptionStatus.status === 'ACTIVE' ? (
-                      subscriptionStatus.amount === 5 ? 'Supporter Membership' :
-                      subscriptionStatus.amount === 9 ? 'Patron Membership' :
-                      subscriptionStatus.amount === 20 ? 'Super Patron Membership' :
-                      'Active Membership'
+                      ({
+                        1: 'Supporter Membership',
+                        2: 'Patron Membership',
+                        3: 'Super Patron Membership'
+                      } as Record<number, string>)[
+                        subscriptionStatus.membershipTierId ?? (
+                          subscriptionStatus.latestBillingAmount === 5 ? 1 :
+                          subscriptionStatus.latestBillingAmount === 9 ? 2 :
+                          subscriptionStatus.latestBillingAmount === 20 ? 3 :
+                          0
+                        )
+                      ] || 'Membership'
                     ) : 'Cancelled Membership'}
                   </h1>
                   <p className="text-sm text-muted-foreground mb-3">
                     {subscriptionStatus.status === 'CANCELLED' ? (
                       `Your membership will continue `
                     ) : (
-                      `Your next bill is ${subscriptionStatus.amount && subscriptionStatus.currency ? 
-                        `for ${subscriptionStatus.currency}${subscriptionStatus.amount.toFixed(2)}` : 
-                        ''} ${subscriptionStatus.endDate ? `on ${new Date(subscriptionStatus.endDate).toLocaleDateString()}` : 'on your next billing date'}.`
+                      `Your next bill is ${subscriptionStatus.membershipTierId ? 
+                        `for $${({ 1: 5, 2: 9, 3: 20 } as Record<number, number>)[subscriptionStatus.membershipTierId]}` : 
+                        subscriptionStatus.latestBillingAmount ? `for $${subscriptionStatus.latestBillingAmount}` : ''} ${subscriptionStatus.endDate ? `on ${new Date(subscriptionStatus.endDate).toLocaleDateString()}` : 'on your next billing date'}.`
                     )}
                     {subscriptionStatus.status === 'CANCELLED' && (
                       <>

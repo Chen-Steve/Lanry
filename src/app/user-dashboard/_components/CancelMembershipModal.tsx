@@ -39,9 +39,9 @@ export function CancelMembershipModal({ isOpen, onClose }: CancelMembershipModal
         <DialogHeader>
           <DialogTitle>Cancel Membership</DialogTitle>
         </DialogHeader>
-        <div className="py-4">
+        <div>
           <p className="text-muted-foreground mb-4">
-            Are you sure you want to cancel your membership? You&apos;ll continue to have access until the end of your current billing period.
+            You&apos;ll continue to have access until the end of your current billing period.
           </p>
           <div className="flex gap-3 justify-end">
             <button 

@@ -2,20 +2,32 @@
 
 import { useAuth } from '@/hooks/useAuth';
 import { PayPalScriptProvider } from "@paypal/react-paypal-js";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Coins from './Coins';
 import Membership from './Membership';
+import { useSearchParams } from 'next/navigation';
 
 export default function ShopPage() {
   const { isAuthenticated, userId } = useAuth();
-  const [showMembership, setShowMembership] = useState(false);
+  const searchParams = useSearchParams();
+  const [showMembership, setShowMembership] = useState(() => {
+    return searchParams?.get('tab') === 'membership';
+  });
+
+  // Keep UI in sync if the query param changes client-side (e.g., via router.push)
+  useEffect(() => {
+    const isMembershipParam = searchParams?.get('tab') === 'membership';
+    setShowMembership(isMembershipParam);
+  }, [searchParams]);
 
   if (typeof window === 'undefined') {
     return null; // Prevent hydration issues
   }
 
   const baseOptions = {
-    clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID!,
+    clientId: process.env.NODE_ENV === 'production'
+      ? process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID!
+      : (process.env.NEXT_PUBLIC_PAYPAL_SANDBOX_CLIENT_ID || process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID)!,
     currency: "USD",
     components: "buttons,marks",
     vault: true,

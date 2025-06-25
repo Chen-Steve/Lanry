@@ -228,13 +228,8 @@ async function handleSubscriptionPayment(payload: PayPalWebhookEvent) {
       }
     });
     
-    // Award monthly bonus coins based on subscription tier
-    // This would require you to store the tier ID in the subscription record
-    // For now, we'll just determine based on amount
-    let bonusCoins = 0;
-    if (amountValue >= 1) {
-      bonusCoins = 60; // For testing: award Supporter bonus for all $1 payments
-    }
+    // Determine monthly bonus coins; currently a flat 55 coins per renewal
+    const bonusCoins = 55;
     
     if (bonusCoins > 0) {
       // Award the bonus coins to the user
