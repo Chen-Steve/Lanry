@@ -2,7 +2,6 @@ import { Novel, Chapter, ChapterUnlock, NovelCategory } from '@/types/database';
 import supabase from '@/lib/supabaseClient';
 import { generateUUID } from '@/lib/utils';
 import { cache } from 'react';
-import { redis, CACHE_KEYS, CACHE_TTL, shouldBypassCache, cacheHelpers } from '@/lib/redis';
 import supabaseAdmin from '@/lib/supabaseAdmin';
 
 interface NovelCharacterFromDB {
@@ -23,36 +22,10 @@ interface GetNovelsOptions {
   };
 }
 
-export async function getNovel(id: string, userId?: string, useCache: boolean = true): Promise<Novel | null> {
+export async function getNovel(id: string, userId?: string, _useCache: boolean = true): Promise<Novel | null> {
   try {
-    const cacheKey = CACHE_KEYS.NOVEL(id);
-    
-    if (useCache) {
-      // Try to get from cache with metadata
-      const { data: cachedNovel, metadata } = await cacheHelpers.getWithMetadata<Novel>(cacheKey);
-      
-      // If we have cached data, update visit metadata **without an extra read**.
-      if (cachedNovel) {
-        // Lightweight metadata write-back in the background (max once per minute)
-        if (metadata) {
-          const now = Date.now();
-          const timeSinceLast = now - metadata.lastVisited;
-          // Only persist if at least 60s have passed to avoid excessive writes
-          if (timeSinceLast > 60_000) {
-            const newMeta = { ...metadata, lastVisited: now, visitCount: metadata.visitCount + 1 };
-            redis.set(`${cacheKey}:meta`, newMeta, { ex: CACHE_TTL.NOVEL }).catch(console.error);
-          }
-        }
-
-        // If cache is still fresh and no bypass conditions, return cached data
-        if (!shouldBypassCache.isAuthorRequest(userId, cachedNovel.author_profile_id) && 
-            !shouldBypassCache.isDraftContent(cachedNovel.status) &&
-            !cacheHelpers.shouldRevalidate(metadata)) {
-          console.log('Cache hit for novel:', id);
-          return cachedNovel;
-        }
-      }
-    }
+    // Mark parameter as intentionally unused after removing caching logic
+    void _useCache;
 
     console.log('Cache miss or revalidating novel:', id);
 
@@ -224,11 +197,7 @@ export async function getNovel(id: string, userId?: string, useCache: boolean = 
       ageRating: data.age_rating
     };
 
-    // Cache the new data in the background if caching is enabled
-    if (useCache) {
-      cacheHelpers.setWithMetadata(cacheKey, novel, CACHE_TTL.NOVEL).catch(console.error);
-    }
-
+    // Note: Redis caching removed – returning fresh data each time
     return novel;
   } catch (error) {
     console.error('Error fetching novel:', error);
@@ -307,19 +276,11 @@ export async function getNovels(options: GetNovelsOptions = {}): Promise<{ novel
   try {
     const { limit = 12, offset = 0, categories } = options;
     
-    // Generate cache key based on options
-    const cacheKey = `${CACHE_KEYS.NOVEL_LIST}:${limit}:${offset}:${categories?.included?.join(',') || ''}:${categories?.excluded?.join(',') || ''}`;
-    
-    // Try to get from cache
-    const cachedResult = await redis.get(cacheKey);
-    if (cachedResult) {
-      return cachedResult as { novels: Novel[]; total: number };
-    }
-    
-    // Build the base query with minimal fields
+    // Build the base query with minimal fields (exclude drafts)
     let query = supabase
       .from('novels')
-      .select(`
+      .select(
+        `
         id,
         title,
         slug,
@@ -342,7 +303,9 @@ export async function getNovels(options: GetNovelsOptions = {}): Promise<{ novel
             description
           )
         )
-      `, { count: 'exact' })
+      `,
+        { count: 'exact' }
+      )
       .neq('status', 'DRAFT')
       .order('created_at', { ascending: false });
 
@@ -363,19 +326,17 @@ export async function getNovels(options: GetNovelsOptions = {}): Promise<{ novel
 
     /* eslint-disable @typescript-eslint/no-explicit-any */
     const result = {
-      novels: (data as any[]).map(novel => ({
+      novels: (data as any[]).map((novel) => ({
         ...novel,
-        coverImageUrl: novel.cover_image_url
+        coverImageUrl: novel.cover_image_url,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any
+        tags: (novel.tags || []).map((t: unknown) => (t as any).tag) || [],
       })) as unknown as Novel[],
-      total: count || 0
+      total: count || 0,
     };
     /* eslint-enable @typescript-eslint/no-explicit-any */
 
-    // Cache the result
-    await redis.set(cacheKey, result, {
-      ex: CACHE_TTL.NOVEL_LIST
-    });
-
+    // Redis caching removed – simply return query result
     return result;
   } catch (error) {
     console.error('Error fetching novels:', error);
@@ -731,22 +692,7 @@ export async function getCompletedNovels(
   limit: number = 35
 ): Promise<{ novels: Novel[]; total: number }> {
   try {
-    // Build cache key for this page/limit combination
-    const cacheKey = `${CACHE_KEYS.COMPLETED_NOVELS}:${page}:${limit}`;
-
-    // 1. Try Redis first (stale-while-revalidate style)
-    const {
-      data: cached,
-      metadata,
-    } = await cacheHelpers.getWithMetadata<{ novels: Novel[]; total: number }>(cacheKey);
-
-    if (cached && !cacheHelpers.shouldRevalidate(metadata)) {
-      // Cache hit & still fresh
-      return cached;
-    }
-
-    // 2. Cache miss or stale – fetch from Supabase
-    // Calculate offset
+    // Calculate offset for pagination
     const offset = (page - 1) * limit;
 
     const { data, error, count } = await supabaseAdmin
@@ -781,11 +727,6 @@ export async function getCompletedNovels(
       })),
       total: count || 0,
     } as { novels: Novel[]; total: number };
-
-    // 3. Store in Redis (fire-and-forget)
-    cacheHelpers
-      .setWithMetadata(cacheKey, response, CACHE_TTL.COMPLETED_NOVELS)
-      .catch(console.error);
 
     return response;
   } catch (error) {
