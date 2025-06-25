@@ -98,7 +98,7 @@ const Header = () => {
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { isAuthenticated, userId, isLoading, handleSignOut } = useAuth();
-  const { userProfile } = useUserProfile(userId);
+  const { userProfile, isLoading: profileLoading } = useUserProfile(userId);
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
 
@@ -148,6 +148,7 @@ const Header = () => {
         <div className="flex items-center gap-3">
           <UserProfileButton
             userProfile={userProfile}
+            profileLoading={profileLoading}
             isProfileDropdownOpen={isProfileDropdownOpen}
             setIsProfileDropdownOpen={setIsProfileDropdownOpen}
             onSignOut={() => {

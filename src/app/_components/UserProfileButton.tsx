@@ -16,6 +16,7 @@ interface UserProfile {
 
 interface UserProfileButtonProps {
   userProfile: UserProfile | null | undefined;
+  profileLoading?: boolean;
   isProfileDropdownOpen: boolean;
   setIsProfileDropdownOpen: (isOpen: boolean) => void;
   onSignOut: () => void;
@@ -25,6 +26,7 @@ interface UserProfileButtonProps {
 
 const UserProfileButton = ({
   userProfile,
+  profileLoading = false,
   isProfileDropdownOpen,
   setIsProfileDropdownOpen,
   onSignOut,
@@ -159,10 +161,14 @@ const UserProfileButton = ({
         <div className="flex items-center gap-3">
           {renderAvatar()}
           <div>
-            <div className="font-medium">{userProfile?.username || 'Error loading profile'}</div>
+            <div className="font-medium">
+              {profileLoading
+                ? 'Loading...'
+                : userProfile?.username || 'Error loading profile'}
+            </div>
             <div className="flex items-center gap-2 text-sm">
               <div className="flex items-center gap-1 text-muted-foreground">
-                {userProfile?.coins || 0} coins
+                {profileLoading ? '...' : (userProfile?.coins ?? 0)} coins
               </div>
               <span className="text-muted-foreground">•</span>
               {isSubLoading ? (

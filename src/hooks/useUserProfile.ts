@@ -18,7 +18,7 @@ export function useUserProfile(userId: string | null) {
         .from('profiles')
         .select('username, last_visit, coins, avatar_url, role')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
       if (error) throw error;
       return data;
     },

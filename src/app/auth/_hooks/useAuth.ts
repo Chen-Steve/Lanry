@@ -3,6 +3,7 @@ import { useRouter } from 'next/navigation';
 import supabase from '@/lib/supabaseClient';
 import { generateUsername } from '@/utils/username';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 
 type AuthMode = 'signin' | 'signup';
 
@@ -25,6 +26,7 @@ export function useAuth() {
   const [discordLoading, setDiscordLoading] = useState(false);
   const [emailError, setEmailError] = useState('');
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const createUserProfile = async (userId: string, email?: string) => {
     console.log('[Profile] Starting profile creation for user:', userId);
@@ -50,6 +52,9 @@ export function useAuth() {
     }
 
     console.log('[Profile] Successfully created profile for:', userId);
+
+    // Invalidate cached user profile so components refetch with fresh data
+    queryClient.invalidateQueries({ queryKey: ['profile', userId] });
   };
 
   const handleSignup = async (captchaToken?: string) => {
@@ -68,8 +73,8 @@ export function useAuth() {
     if (signUpError) throw new Error(signUpError.message);
     
     if (data.user) {
-      console.log('[Auth] User created, creating profile...');
-      await createUserProfile(data.user.id, data.user.email);
+      // Profile creation will occur after automatic sign-in via the
+      // onAuthStateChange listener, so we only need to trigger sign-in here.
       await autoSignIn();
     }
   };
@@ -94,13 +99,17 @@ export function useAuth() {
         // Google sign-in profile creation is handled in the callback route
         if (session.user.app_metadata.provider !== 'google') {
           // Check if profile exists
-          const { error: profileCheckError } = await supabase
+          const { data: existingProfile, error: profileCheckError } = await supabase
             .from('profiles')
             .select('id')
             .eq('id', session.user.id)
-            .single();
+            .maybeSingle();
 
-          if (profileCheckError && profileCheckError.code === 'PGRST116') {
+          if (profileCheckError) {
+            console.error('[Auth] Profile check error:', profileCheckError);
+          }
+
+          if (!existingProfile) {
             console.log('[Auth] Creating profile for email user');
             await createUserProfile(session.user.id, session.user.email);
           }
