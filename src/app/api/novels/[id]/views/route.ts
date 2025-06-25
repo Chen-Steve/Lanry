@@ -1,23 +1,46 @@
 import { NextResponse } from "next/server";
-import { redis } from '@/lib/redis';
+import { prisma } from '@/lib/prisma';
 
 // Run at the edge for lower latency & memory
 export const runtime = "edge";
 
 /**
- * Increment novel views using Upstash Redis.
- * We use the Upstash Redis SDK (which works over HTTP and is Edge-compatible)
- * to increment a counter. Credentials are picked up from UPSTASH_REDIS_URL &
- * UPSTASH_REDIS_TOKEN, the same ones already used everywhere else in the app.
+ * Novel views endpoint - Database-based view tracking.
+ * Increments the views count on the Novel model and creates a view log entry.
+ * This replaces the previous Redis implementation to avoid rate limits.
  */
 export async function POST(_request: Request, { params }: { params: { id: string } }) {
   const { id } = params;
 
   try {
-    const views = await redis.incr(`novel:views:${id}`);
-    return NextResponse.json({ views });
+    // Use a transaction to ensure both operations succeed or fail together
+    const result = await prisma.$transaction(async (tx) => {
+      // Increment the views count on the novel
+      const updatedNovel = await tx.novel.update({
+        where: { id },
+        data: {
+          views: {
+            increment: 1
+          }
+        },
+        select: {
+          views: true
+        }
+      });
+
+      // Create a view log entry
+      await tx.novelViewLog.create({
+        data: {
+          novelId: id
+        }
+      });
+
+      return updatedNovel;
+    });
+
+    return NextResponse.json({ views: result.views });
   } catch (error) {
-    console.error("Failed to increment views via Upstash:", error);
+    console.error("Failed to increment views:", error);
     return NextResponse.json({ error: "Failed to increment views" }, { status: 500 });
   }
 } 

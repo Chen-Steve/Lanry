@@ -1,6 +1,6 @@
 import supabase from '@/lib/supabaseClient';
 import { Chapter, Novel } from '@/types/database';
-import { redis, CACHE_KEYS, CACHE_TTL, cacheHelpers } from '@/lib/redis';
+// Redis/Upstash caching removed to avoid hitting request limits
 
 type ChapterWithNovel = Chapter & {
   novel: Novel;
@@ -42,73 +42,37 @@ export async function getChapter(novelId: string, chapterNumber: number, partNum
     if (novelError || !novel) return null;
 
     // -------------------------------------------------
-    // Redis caching layer (public chapters only)
+    // Fetch chapter directly from Supabase (caching disabled)
     // -------------------------------------------------
-    const chapterCacheKey = `${CACHE_KEYS.CHAPTER(novel.id, chapterNumber)}:${partNumber ?? 'null'}`;
 
-    // Attempt to fetch cached base chapter
-    const { data: cachedBaseChapter, metadata: cacheMeta } = await cacheHelpers.getWithMetadata<ChapterWithNovel>(chapterCacheKey);
+    // Get the chapter
+    let query = supabase
+      .from('chapters')
+      .select(`
+        *,
+        novel:novels(
+          id,
+          title,
+          author,
+          author_profile_id
+        )
+      `)
+      .eq('novel_id', novel.id)
+      .eq('chapter_number', chapterNumber)
+      .gte('chapter_number', 0); // Filter out negative chapter numbers (drafts)
 
-    let chapterBase: ChapterWithNovel | null = null;
-
-    if (cachedBaseChapter && !cacheHelpers.shouldRevalidate(cacheMeta)) {
-      // Update visit metadata with 60-second write-throttle
-      if (cacheMeta && Date.now() - cacheMeta.lastVisited > 60_000) {
-        const newMeta = { ...cacheMeta, lastVisited: Date.now(), visitCount: cacheMeta.visitCount + 1 };
-        redis.set(`${chapterCacheKey}:meta`, newMeta, { ex: CACHE_TTL.CHAPTER }).catch(console.error);
-      }
-
-      chapterBase = cachedBaseChapter;
+    // Handle part number filter differently for null values
+    if (partNumber === null || partNumber === undefined) {
+      query = query.is('part_number', null);
+    } else {
+      query = query.eq('part_number', partNumber);
     }
 
-    // If no suitable cache, query Supabase
-    if (!chapterBase) {
-      // Get the chapter
-      let query = supabase
-        .from('chapters')
-        .select(`
-          *,
-          novel:novels(
-            id,
-            title,
-            author,
-            author_profile_id
-          )
-        `)
-        .eq('novel_id', novel.id)
-        .eq('chapter_number', chapterNumber)
-        .gte('chapter_number', 0); // Filter out negative chapter numbers (drafts)
+    const { data: chapter, error } = await query.single();
 
-      // Handle part number filter differently for null values
-      if (partNumber === null || partNumber === undefined) {
-        query = query.is('part_number', null);
-      } else {
-        query = query.eq('part_number', partNumber);
-      }
+    if (error || !chapter) return null;
 
-      const { data: chapter, error } = await query.single();
-
-      if (error || !chapter) return null;
-
-      chapterBase = chapter;
-
-      // Determine if chapter is safe to cache (published & free)
-      const isPublished = isChapterPublishedSync(chapter.publish_at ?? null);
-      const isFree = !chapter.coins || chapter.coins === 0;
-
-      if (isPublished && isFree) {
-        cacheHelpers.setWithMetadata(chapterCacheKey, chapterBase, CACHE_TTL.CHAPTER).catch(console.error);
-      }
-    }
-
-    // ------------------------------------------------------------------
-    // From here on we have the base chapter (from cache or DB). Apply
-    // user-specific access checks without touching Redis again.
-    // ------------------------------------------------------------------
-
-    if (!chapterBase) return null; // Safety check for TypeScript
-
-    const chapter: ChapterWithNovel = chapterBase;
+    const chapterBase: ChapterWithNovel = chapter;
 
     // Determine if user is author or translator
     let hasTranslatorAccess = false;
@@ -120,7 +84,7 @@ export async function getChapter(novelId: string, chapterNumber: number, partNum
 
     // Add translator access information to the chapter data
     const chapterWithAccess = {
-      ...chapter,
+      ...chapterBase,
       hasTranslatorAccess
     };
 
