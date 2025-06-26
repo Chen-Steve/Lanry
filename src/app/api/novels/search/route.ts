@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { Prisma, NovelStatus } from '@prisma/client';
 import { type NextRequest } from 'next/server';
-import { redis, CACHE_KEYS, CACHE_TTL } from '@/lib/redis';
 
 // Mark this route as dynamic
 export const dynamic = 'force-dynamic';
@@ -38,15 +37,6 @@ export async function GET(request: NextRequest) {
     
     const skip = (page - 1) * ITEMS_PER_PAGE;
     
-    // Generate cache key
-    const cacheKey = CACHE_KEYS.SEARCH(`${query}:${page}:${isBasicSearch}`);
-    
-    // Try to get from cache
-    const cachedResult = await redis.get(cacheKey);
-    if (cachedResult) {
-      return NextResponse.json(cachedResult);
-    }
-
     // Build the where clause
     let where: Prisma.NovelWhereInput = {
       AND: [
@@ -64,18 +54,24 @@ export async function GET(request: NextRequest) {
     // Optimize search query based on the search term
     if (query) {
       if (isBasicSearch) {
-        // For basic search, match only distinct words or parts
+        // For basic search, use a simple, case-insensitive substring search across
+        // title, description and author. This is more forgiving and prevents
+        // cases where perfectly valid queries like "brave" return no results.
         where = {
-          ...where,
-          OR: [
-            { title: { mode: 'insensitive', startsWith: query } },
-            { title: { mode: 'insensitive', endsWith: query } },
-            { title: { mode: 'insensitive', contains: ` ${query}` } },
-            { title: { mode: 'insensitive', contains: `${query} ` } }
+          // Keep the draft exclusion
+          AND: [
+            { status: { not: 'DRAFT' } },
+            {
+              OR: [
+                { title: { contains: query, mode: 'insensitive' } },
+                { description: { contains: query, mode: 'insensitive' } },
+                { author: { contains: query, mode: 'insensitive' } }
+              ]
+            }
           ]
         };
       } else {
-        // For advanced search, keep the flexible matching
+        // Advanced search keeps flexible matching on the title field
         where = {
           ...where,
           title: {
@@ -263,11 +259,6 @@ export async function GET(request: NextRequest) {
       totalPages,
       totalCount
     };
-
-    // Cache the result
-    await redis.set(cacheKey, result, {
-      ex: CACHE_TTL.SEARCH
-    });
 
     return NextResponse.json(result);
   } catch (error) {
