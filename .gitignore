@@ -13,3 +13,6 @@ next-env.d.ts
 
 # prisma
 /prisma/generated/
+
+src/app/api/translators/chapter-unlocks/route.ts
+src/app/translator-unlocks/page.tsx
