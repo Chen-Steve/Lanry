@@ -68,6 +68,10 @@ export default function ChapterList({  chapters,  volumes,  editingChapterId,  o
   const [chaptersToDelete, setChaptersToDelete] = useState<Set<string>>(new Set());
   const [massDeleteConfirmation, setMassDeleteConfirmation] = useState(false);
 
+  // State for volume editing
+  const [editingVolumeId, setEditingVolumeId] = useState<string | null>(null);
+  const [editingVolumeTitle, setEditingVolumeTitle] = useState('');
+
   // Load saved sort order preference from localStorage
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -371,6 +375,43 @@ export default function ChapterList({  chapters,  volumes,  editingChapterId,  o
     });
   };
 
+  const handleEditVolume = (volume: Volume) => {
+    setEditingVolumeId(volume.id);
+    setEditingVolumeTitle(volume.title || '');
+  };
+
+  const handleCancelVolumeEdit = () => {
+    setEditingVolumeId(null);
+    setEditingVolumeTitle('');
+  };
+
+  const handleSaveVolumeEdit = async () => {
+    if (!editingVolumeId || !editingVolumeTitle.trim()) return;
+
+    try {
+      await authorChapterService.updateVolume(editingVolumeId, novelId, userId, {
+        title: editingVolumeTitle.trim()
+      });
+      if (onLoadChapters) {
+        await onLoadChapters();
+      }
+      toast.success('Volume updated successfully');
+      setEditingVolumeId(null);
+      setEditingVolumeTitle('');
+    } catch (error) {
+      console.error('Error updating volume:', error);
+      toast.error('Failed to update volume');
+    }
+  };
+
+  const handleVolumeEditKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSaveVolumeEdit();
+    } else if (e.key === 'Escape') {
+      handleCancelVolumeEdit();
+    }
+  };
+
   const renderChapter = (chapter: ChapterListChapter) => (
     <div
       key={chapter.id}
@@ -485,6 +526,7 @@ export default function ChapterList({  chapters,  volumes,  editingChapterId,  o
   const renderVolumeSection = (volume: Volume) => {
     const volumeChapters = chaptersGroupedByVolume.volumeChapters.get(volume.id) || [];
     const isCollapsed = collapsedVolumes.has(volume.id);
+    const isEditing = editingVolumeId === volume.id;
 
     // Sort chapters (ascending first)
     const sortedVolumeChapters = [...volumeChapters].sort((a, b) => {
@@ -514,16 +556,54 @@ export default function ChapterList({  chapters,  volumes,  editingChapterId,  o
                 className="w-4 h-4"
               />
             </button>
-            <h3 className="text-sm font-medium text-foreground">
-              Volume {volume.volumeNumber}{volume.title ? `: ${volume.title}` : ''}
-            </h3>
-            <button
-              onClick={() => setDeleteVolumeConfirmation({ isOpen: true, volumeId: volume.id })}
-              className="p-1 text-muted-foreground hover:text-red-500 dark:hover:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-full transition-colors"
-              title="Delete volume"
-            >
-              <Icon icon="mdi:delete-outline" className="w-4 h-4" />
-            </button>
+            {isEditing ? (
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-foreground">Volume {volume.volumeNumber}:</span>
+                <input
+                  type="text"
+                  value={editingVolumeTitle}
+                  onChange={(e) => setEditingVolumeTitle(e.target.value)}
+                  onKeyDown={handleVolumeEditKeyPress}
+                  className="px-2 py-1 text-sm bg-background text-foreground border border-border rounded focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  autoFocus
+                  placeholder="Volume title"
+                />
+                <button
+                  onClick={handleSaveVolumeEdit}
+                  className="p-1 text-green-600 hover:text-green-700 hover:bg-green-100 dark:hover:bg-green-900/50 rounded-full transition-colors"
+                  title="Save changes"
+                >
+                  <Icon icon="mdi:check" className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={handleCancelVolumeEdit}
+                  className="p-1 text-red-600 hover:text-red-700 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-full transition-colors"
+                  title="Cancel editing"
+                >
+                  <Icon icon="mdi:close" className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <>
+                <h3 className="text-sm font-medium text-foreground">
+                  Volume {volume.volumeNumber}{volume.title ? `: ${volume.title}` : ''}
+                </h3>
+                <button
+                  onClick={() => handleEditVolume(volume)}
+                  className="p-1 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-full transition-colors"
+                  title="Edit volume name"
+                >
+                  <Icon icon="mdi:pencil" className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setDeleteVolumeConfirmation({ isOpen: true, volumeId: volume.id })}
+                  className="p-1 text-muted-foreground hover:text-red-500 dark:hover:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-full transition-colors"
+                  title="Delete volume"
+                >
+                  <Icon icon="mdi:delete-outline" className="w-4 h-4" />
+                </button>
+              </>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <button
