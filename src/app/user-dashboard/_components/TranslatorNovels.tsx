@@ -29,6 +29,7 @@ const fetchUserNovels = async (userId: string, page: number): Promise<NovelsResp
       cover_image_url
     `, { count: 'exact' })
     .or(`translator_id.eq.${userId},author_profile_id.eq.${userId}`)
+    .neq('status', 'DRAFT')
     .order('updated_at', { ascending: false })
     .range((page - 1) * ITEMS_PER_PAGE, (page * ITEMS_PER_PAGE) - 1);
 
