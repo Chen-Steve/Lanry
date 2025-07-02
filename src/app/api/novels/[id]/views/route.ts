@@ -1,9 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from '@/lib/prisma';
 
-// Run at the edge for lower latency & memory
-export const runtime = "edge";
-
 /**
  * Novel views endpoint - Database-based view tracking.
  * Increments the views count on the Novel model and creates a view log entry.
