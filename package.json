@@ -10,6 +10,7 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@google-analytics/data": "^5.1.0",
     "@hcaptcha/react-hcaptcha": "^1.11.1",
     "@iconify/react": "^5.1.0",
     "@paypal/checkout-server-sdk": "^1.0.3",

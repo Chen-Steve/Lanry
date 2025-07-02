@@ -11,6 +11,8 @@ interface NovelStats {
   total_chapters: number;
   total_comments: number;
   total_views: number;
+  ga_views?: number; // Google Analytics views
+  data_source?: 'google_analytics' | 'database_fallback';
 }
 
 // First, let's define the interface for the raw data from Supabase
@@ -25,10 +27,20 @@ interface NovelData {
   chapters_thread_comments: { chapter_thread_comments: { count: number; }[]; }[];
 }
 
+interface AnalyticsData {
+  novelId: string;
+  title: string;
+  pageViews: number;
+  uniquePageViews: number;
+  averageSessionDuration: number;
+}
+
 export default function NovelStatistics() {
   const [stats, setStats] = useState<NovelStats[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedNovel, setSelectedNovel] = useState<string | null>(null);
+  const [timePeriod, setTimePeriod] = useState<string>('30daysAgo');
+  const [analyticsError, setAnalyticsError] = useState<string | null>(null);
 
   const fetchStats = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -54,11 +66,41 @@ export default function NovelStatistics() {
       return;
     }
 
-    const formattedStats = (data as NovelData[]).map(novel => {
+    const novelData = data as NovelData[];
+    const novelIds = novelData.map(novel => novel.id);
+
+    // Fetch Google Analytics data
+    let analyticsData: AnalyticsData[] = [];
+    let dataSource: 'google_analytics' | 'database_fallback' = 'database_fallback';
+    
+    try {
+      const analyticsResponse = await fetch(`/api/analytics/novels?novelIds=${novelIds.join(',')}&startDate=${timePeriod}&endDate=today`);
+      if (analyticsResponse.ok) {
+        const analyticsResult = await analyticsResponse.json();
+        if (analyticsResult.success) {
+          analyticsData = analyticsResult.data;
+          dataSource = analyticsResult.source;
+          setAnalyticsError(null);
+        } else {
+          setAnalyticsError(analyticsResult.note || 'Failed to fetch analytics data');
+        }
+      } else {
+        setAnalyticsError('Analytics service unavailable');
+      }
+    } catch (error) {
+      console.warn('Failed to fetch Google Analytics data:', error);
+      setAnalyticsError('Failed to connect to analytics service');
+    }
+
+    const formattedStats = novelData.map(novel => {
       // Calculate total thread comments by summing up counts from each chapter
       const totalThreadComments = novel.chapters_thread_comments.reduce((sum, chapter) => {
         return sum + (chapter.chapter_thread_comments[0]?.count || 0);
       }, 0);
+
+      // Find corresponding analytics data
+      const analyticsEntry = analyticsData.find(entry => entry.novelId === novel.id);
+      const gaViews = analyticsEntry?.pageViews || 0;
 
       return {
         id: novel.id,
@@ -68,7 +110,9 @@ export default function NovelStatistics() {
         total_comments: (novel.chapter_comments_count[0]?.count || 0) + 
                        (novel.novel_comments_count[0]?.count || 0) + 
                        totalThreadComments,
-        total_views: novel.views || 0
+        total_views: gaViews > 0 ? gaViews : (novel.views || 0), // Prefer GA data
+        ga_views: gaViews,
+        data_source: dataSource
       };
     });
 
@@ -77,7 +121,7 @@ export default function NovelStatistics() {
       setSelectedNovel(formattedStats[0].id);
     }
     setIsLoading(false);
-  }, [selectedNovel]);
+  }, [selectedNovel, timePeriod]);
 
   const handleNovelClick = async (novelId: string) => {
     setSelectedNovel(novelId);
@@ -98,8 +142,59 @@ export default function NovelStatistics() {
   return (
     <section className="p-4">      
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-semibold text-foreground">Novel Statistic</h2>
-        <p className="text-sm text-muted-foreground italic">Note: Views counts are lower than they actually are.</p>
+        <h2 className="text-2xl font-semibold text-foreground">Novel Statistics</h2>
+        <div className="text-right">
+          <div className="flex items-center gap-4 mb-2">
+            <div className="flex items-center gap-2">
+              <label htmlFor="time-period" className="text-sm text-muted-foreground">
+                Time Period:
+              </label>
+              <select
+                id="time-period"
+                value={timePeriod}
+                onChange={(e) => setTimePeriod(e.target.value)}
+                className="px-3 py-1 text-sm border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+              >
+                <option value="7daysAgo">Last 7 days</option>
+                <option value="30daysAgo">Last 30 days</option>
+                <option value="90daysAgo">Last 3 months</option>
+                <option value="365daysAgo">Last year</option>
+              </select>
+            </div>
+            <button
+              onClick={() => {
+                setIsLoading(true);
+                fetchStats();
+              }}
+              disabled={isLoading}
+              className="flex items-center gap-1 px-3 py-1 text-sm bg-primary/10 hover:bg-primary/20 text-primary rounded-md transition-colors disabled:opacity-50"
+              title="Refresh data"
+            >
+              <Icon icon={isLoading ? "mdi:loading" : "mdi:refresh"} className={`text-sm ${isLoading ? 'animate-spin' : ''}`} />
+              Refresh
+            </button>
+          </div>
+          <p className="text-sm text-muted-foreground italic">
+            {stats.length > 0 && stats[0].data_source === 'google_analytics' 
+              ? 'Views from Google Analytics' 
+              : stats.length > 0 && stats[0].data_source === 'database_fallback'
+              ? 'Views from database (GA unavailable)'
+              : 'View counts may be lower than actual'
+            }
+          </p>
+          {stats.length > 0 && stats[0].data_source === 'google_analytics' && (
+            <p className="text-xs text-green-600 dark:text-green-400 mt-1 flex items-center justify-end gap-1">
+              <Icon icon="mdi:google-analytics" className="text-sm" />
+              Google Analytics Active
+            </p>
+          )}
+          {analyticsError && (
+            <p className="text-xs text-orange-600 dark:text-orange-400 mt-1 flex items-center justify-end gap-1">
+              <Icon icon="mdi:alert-circle-outline" className="text-sm" />
+              {analyticsError}
+            </p>
+          )}
+        </div>
       </div>
 
       <div className="flex flex-col gap-6">
