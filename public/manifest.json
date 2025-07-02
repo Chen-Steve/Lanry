@@ -1,0 +1,46 @@
+{
+  "name": "Lanry - Light Novel Reader",
+  "short_name": "Lanry",
+  "description": "Read light novels online with Lanry - your favorite light novel reading platform",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en",
+  "categories": ["books", "entertainment", "education"],
+  "icons": [
+    {
+      "src": "/lanry.ico",
+      "sizes": "any",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/lanry.jpg",
+      "sizes": "any",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Browse Novels",
+      "short_name": "Browse",
+      "description": "Browse all available novels",
+      "url": "/novels"
+    },
+    {
+      "name": "Search",
+      "short_name": "Search",
+      "description": "Search for novels",
+      "url": "/search"
+    },
+    {
+      "name": "My Library",
+      "short_name": "Library",
+      "description": "View your bookmarked novels",
+      "url": "/bookmarks"
+    }
+  ]
+} 

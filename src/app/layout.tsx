@@ -1,8 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import "./globals.css";
-import Header from './_components/Header';
-import Footer from './_components/Footer';
+import ConditionalLayout from './_components/ConditionalLayout';
 import Providers from './providers';
 import { Toaster } from 'sonner';
 import { ThemeProvider } from '@/lib/ThemeContext';
@@ -45,6 +44,11 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#3b82f6" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="Lanry" />
         <Script id="google-analytics-init" strategy="beforeInteractive">
           {`
             window.dataLayer = window.dataLayer || [];
@@ -75,16 +79,9 @@ export default function RootLayout({
       <body className="min-h-screen relative overflow-x-hidden">
         <Providers>
           <ThemeProvider>
-            <div className="flex flex-col min-h-screen max-w-[100vw]">
-              <Header />
-              <div className="flex-grow flex justify-between w-full">
-                {/* Main Content */}
-                <main className="flex-grow max-w-full overflow-x-hidden pr-2">
-                  {children}
-                </main>
-              </div>
-              <Footer />
-            </div>
+            <ConditionalLayout>
+              {children}
+            </ConditionalLayout>
             <Toaster position="bottom-right" />
             <CookieConsent />
           </ThemeProvider>
