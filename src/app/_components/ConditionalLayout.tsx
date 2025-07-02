@@ -15,14 +15,14 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
   return (
     <div className="flex flex-col min-h-screen max-w-[100vw]">
       {!isPWA && <Header />}
-      <div className={`flex-grow flex justify-between w-full ${isPWA ? 'pb-16' : 'pb-16 md:pb-0'}`}>
+      <div className={`flex-grow flex justify-between w-full ${isPWA ? 'pb-16' : ''}`}>
         {/* Main Content */}
         <main className="flex-grow max-w-full overflow-x-hidden pr-2">
           {children}
         </main>
       </div>
       {!isPWA && <Footer />}
-      <BottomBar />
+      {isPWA && <BottomBar />}
     </div>
   );
 } 
