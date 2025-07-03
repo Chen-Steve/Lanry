@@ -39,7 +39,6 @@ export default function NovelStatistics() {
   const [stats, setStats] = useState<NovelStats[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedNovel, setSelectedNovel] = useState<string | null>(null);
-  const [timePeriod, setTimePeriod] = useState<string>('30daysAgo');
   const [analyticsError, setAnalyticsError] = useState<string | null>(null);
 
   const fetchStats = useCallback(async () => {
@@ -74,9 +73,14 @@ export default function NovelStatistics() {
     let dataSource: 'google_analytics' | 'database_fallback' = 'database_fallback';
     
     try {
-      const analyticsResponse = await fetch(`/api/analytics/novels?novelIds=${novelIds.join(',')}&startDate=${timePeriod}&endDate=today`);
+      const analyticsUrl = `/api/analytics/novels?novelIds=${novelIds.join(',')}&startDate=30daysAgo&endDate=today`;
+      console.log('Fetching analytics data:', analyticsUrl);
+      
+      const analyticsResponse = await fetch(analyticsUrl);
       if (analyticsResponse.ok) {
         const analyticsResult = await analyticsResponse.json();
+        console.log('Analytics response:', analyticsResult);
+        
         if (analyticsResult.success) {
           analyticsData = analyticsResult.data;
           dataSource = analyticsResult.source;
@@ -116,12 +120,13 @@ export default function NovelStatistics() {
       };
     });
 
+    console.log('Formatted stats:', formattedStats);
     setStats(formattedStats);
     if (formattedStats.length > 0 && !selectedNovel) {
       setSelectedNovel(formattedStats[0].id);
     }
     setIsLoading(false);
-  }, [selectedNovel, timePeriod]);
+  }, []);
 
   const handleNovelClick = async (novelId: string) => {
     setSelectedNovel(novelId);
@@ -144,36 +149,6 @@ export default function NovelStatistics() {
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-semibold text-foreground">Novel Statistics</h2>
         <div className="text-right">
-          <div className="flex items-center gap-4 mb-2">
-            <div className="flex items-center gap-2">
-              <label htmlFor="time-period" className="text-sm text-muted-foreground">
-                Time Period:
-              </label>
-              <select
-                id="time-period"
-                value={timePeriod}
-                onChange={(e) => setTimePeriod(e.target.value)}
-                className="px-3 py-1 text-sm border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-              >
-                <option value="7daysAgo">Last 7 days</option>
-                <option value="30daysAgo">Last 30 days</option>
-                <option value="90daysAgo">Last 3 months</option>
-                <option value="365daysAgo">Last year</option>
-              </select>
-            </div>
-            <button
-              onClick={() => {
-                setIsLoading(true);
-                fetchStats();
-              }}
-              disabled={isLoading}
-              className="flex items-center gap-1 px-3 py-1 text-sm bg-primary/10 hover:bg-primary/20 text-primary rounded-md transition-colors disabled:opacity-50"
-              title="Refresh data"
-            >
-              <Icon icon={isLoading ? "mdi:loading" : "mdi:refresh"} className={`text-sm ${isLoading ? 'animate-spin' : ''}`} />
-              Refresh
-            </button>
-          </div>
           <p className="text-sm text-muted-foreground italic">
             {stats.length > 0 && stats[0].data_source === 'google_analytics' 
               ? 'Views from Google Analytics' 
