@@ -1,16 +1,18 @@
 import { Novel, Chapter, ChapterUnlock, NovelCategory } from '@/types/database';
 import supabase from '@/lib/supabaseClient';
-import { generateUUID } from '@/lib/utils';
-import { cache } from 'react';
 import supabaseAdmin from '@/lib/supabaseAdmin';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
-interface NovelCharacterFromDB {
-  id: string;
-  name: string;
-  role: string;
-  image_url: string;
-  description: string | null;
-  order_index: number;
+// Utility to map DB novel rows to application Novel objects
+function mapNovelRow<T extends { cover_image_url: string | null | undefined; tags?: unknown[] }>(row: T): Novel {
+  return {
+    ...row,
+    // Rename snake_case DB field to camelCase expected by UI
+    coverImageUrl: (row as any).cover_image_url ?? null,
+    // Flatten tags structure if present
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any
+    tags: ((row as any).tags || []).map((t: unknown) => (t as any).tag) || [],
+  } as unknown as Novel;
 }
 
 interface GetNovelsOptions {
@@ -20,6 +22,10 @@ interface GetNovelsOptions {
     included: string[];
     excluded: string[];
   };
+  /** Column to sort by, defaults to 'created_at' */
+  sortBy?: string;
+  /** Whether to sort ascending (default false / descending) */
+  ascending?: boolean;
 }
 
 export async function getNovel(id: string, userId?: string, _useCache: boolean = true): Promise<Novel | null> {
@@ -205,76 +211,55 @@ export async function getNovel(id: string, userId?: string, _useCache: boolean =
   }
 }
 
-export async function toggleBookmark(novelId: string, userId: string, isCurrentlyBookmarked: boolean): Promise<boolean> {
+export async function toggleBookmark(
+  novelId: string,
+  userId: string,
+  isCurrentlyBookmarked: boolean
+): Promise<boolean> {
   try {
-    const isNumericId = !isNaN(Number(novelId));
-    const { data: novelData, error: novelError } = await supabase
-      .from('novels')
-      .select('id, bookmark_count')
-      .eq(isNumericId ? 'id' : 'slug', isNumericId ? Number(novelId) : novelId)
-      .single();
+    // Supabase RPC expects a UUID. If we received a slug, resolve it first.
+    const isUUID = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/i.test(
+      novelId
+    );
 
-    if (novelError || !novelData) {
-      console.error('Error getting novel:', novelError);
-      throw new Error('Novel not found');
+    let novelUUID = novelId;
+    if (!isUUID) {
+      const { data: novelRow, error: fetchError } = await supabase
+        .from('novels')
+        .select('id')
+        .eq('slug', novelId)
+        .single();
+
+      if (fetchError || !novelRow?.id) {
+        throw fetchError || new Error('Novel not found');
+      }
+      novelUUID = novelRow.id as string;
     }
 
-    if (isCurrentlyBookmarked) {
-      // Delete bookmark
-      const { error } = await supabase
-        .from('bookmarks')
-        .delete()
-        .eq('profile_id', userId)
-        .eq('novel_id', novelData.id);
+    // Single atomic RPC ensures race-free toggle and counter update in DB
+    const { data, error } = await supabase.rpc('toggle_bookmark', {
+      p_novel_id: novelUUID,
+      p_profile_id: userId,
+      p_is_bookmarked: isCurrentlyBookmarked,
+    });
 
-      if (error) throw error;
+    if (error) throw error;
 
-      // Update bookmark count
-      await supabase
-        .from('novels')
-        .update({ 
-          bookmark_count: Math.max(0, (novelData.bookmark_count || 0) - 1)
-        })
-        .eq('id', novelData.id);
-
-      return false;
-    } else {
-      // Insert bookmark with UUID from our utility function
-      const { error } = await supabase
-        .from('bookmarks')
-        .insert({
-          id: generateUUID(),
-          profile_id: userId,
-          novel_id: novelData.id,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        });
-
-      if (error) throw error;
-
-      // Update bookmark count
-      await supabase
-        .from('novels')
-        .update({ 
-          bookmark_count: (novelData.bookmark_count || 0) + 1
-        })
-        .eq('id', novelData.id);
-
-      return true;
-    }
+    // Expecting RPC to return the new bookmark status, fallback to inversion
+    return (
+      (data as { new_is_bookmarked?: boolean } | null)?.new_is_bookmarked ??
+      (data as boolean | null) ??
+      !isCurrentlyBookmarked
+    );
   } catch (error) {
-    console.error('Error toggling bookmark:', error);
+    console.error('Error toggling bookmark via RPC:', error);
     throw error;
   }
 }
 
-export const getCachedNovels = cache(async (options: GetNovelsOptions = {}): Promise<{ novels: Novel[]; total: number }> => {
-  return getNovels(options);
-});
-
 export async function getNovels(options: GetNovelsOptions = {}): Promise<{ novels: Novel[]; total: number }> {
   try {
-    const { limit = 12, offset = 0, categories } = options;
+    const { limit = 12, offset = 0, categories, sortBy = 'created_at', ascending = false } = options;
     
     // Build the base query with minimal fields (exclude drafts)
     let query = supabase
@@ -307,7 +292,7 @@ export async function getNovels(options: GetNovelsOptions = {}): Promise<{ novel
         { count: 'exact' }
       )
       .neq('status', 'DRAFT')
-      .order('created_at', { ascending: false });
+      .order(sortBy, { ascending });
 
     // Apply category filters if provided
     if (categories?.included && categories.included.length > 0) {
@@ -324,17 +309,10 @@ export async function getNovels(options: GetNovelsOptions = {}): Promise<{ novel
 
     if (error) throw error;
 
-    /* eslint-disable @typescript-eslint/no-explicit-any */
     const result = {
-      novels: (data as any[]).map((novel) => ({
-        ...novel,
-        coverImageUrl: novel.cover_image_url,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any
-        tags: (novel.tags || []).map((t: unknown) => (t as any).tag) || [],
-      })) as unknown as Novel[],
+      novels: (data as any[]).map(mapNovelRow) as unknown as Novel[],
       total: count || 0,
     };
-    /* eslint-enable @typescript-eslint/no-explicit-any */
 
     // Redis caching removed – simply return query result
     return result;
@@ -398,11 +376,7 @@ export async function getNovelsWithRecentUnlocks(
 
     // Process and return novels
     return {
-      novels: (paginatedNovels || []).map(novel => ({
-        ...novel,
-        coverImageUrl: novel.cover_image_url,
-        slug: novel.slug
-      })),
+      novels: (paginatedNovels || []).map(mapNovelRow),
       total: count || 0
     };
   } catch (error) {
@@ -459,13 +433,10 @@ export async function getNovelsWithAdvancedChapters(
 
     if (novelsError) throw novelsError;
 
-    const novels = (result || []).map((novel: DBNovel) => {
-      return {
-        ...novel,
-        coverImageUrl: novel.cover_image_url,
-        chapters: novel.chapters || []
-      };
-    }) as Novel[];
+    const novels = (result || []).map((novel: DBNovel) => ({
+      ...mapNovelRow(novel as any),
+      chapters: novel.chapters || []
+    })) as Novel[];
 
     const response = {
       novels,
@@ -481,52 +452,9 @@ export async function getNovelsWithAdvancedChapters(
   }
 }
 
-export async function getTopNovels(): Promise<Novel[]> {
-  try {
-    const { data, error } = await supabase
-      .from('novels')
-      .select(`
-        id,
-        title,
-        slug,
-        cover_image_url,
-        author,
-        description,
-        status,
-        age_rating,
-        created_at,
-        updated_at,
-        bookmark_count,
-        rating,
-        rating_count,
-        views,
-        author_profile_id,
-        tags:tags_on_novels (
-          tag:tag_id (
-            id,
-            name,
-            description
-          )
-        )
-      `)
-      .neq('status', 'DRAFT')
-      .order('views', { ascending: false })
-      .limit(5);
-
-    if (error) throw error;
-
-    /* eslint-disable @typescript-eslint/no-explicit-any */
-    return (data as any[]).map(novel => ({
-      ...novel,
-      coverImageUrl: novel.cover_image_url,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any
-      tags: (novel.tags || []).map((t: unknown) => (t as any).tag) || []
-    })) as unknown as Novel[];
-    /* eslint-enable @typescript-eslint/no-explicit-any */
-  } catch (error) {
-    console.error('Error fetching top novels:', error);
-    return [];
-  }
+export async function getTopNovels(limit: number = 5): Promise<Novel[]> {
+  const { novels } = await getNovels({ limit, sortBy: 'views', ascending: false });
+  return novels;
 }
 
 export async function getCuratedNovels(limit: number = 10): Promise<Novel[]> {
@@ -720,8 +648,7 @@ export async function getCompletedNovels(
 
     const response = {
       novels: (data || []).map((novel) => ({
-        ...novel,
-        coverImageUrl: novel.cover_image_url,
+        ...mapNovelRow(novel),
         slug: novel.slug,
         chapters: novel.chapters || [],
       })),
@@ -733,4 +660,13 @@ export async function getCompletedNovels(
     console.error('Error fetching completed novels:', error);
     return { novels: [], total: 0 };
   }
+}
+
+interface NovelCharacterFromDB {
+  id: string;
+  name: string;
+  role: string;
+  image_url: string;
+  description: string | null;
+  order_index: number;
 }

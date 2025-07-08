@@ -2,7 +2,7 @@
 
 import { Novel } from '@/types/database';
 import { useEffect, useState } from 'react';
-import { getCachedNovels, getNovelsWithAdvancedChapters, getTopNovels, getCuratedNovels, getNovelsWithRecentUnlocks } from '@/services/novelService';
+import { getNovels, getNovelsWithAdvancedChapters, getTopNovels, getCuratedNovels, getNovelsWithRecentUnlocks } from '@/services/novelService';
 import LoadingGrid from './LoadingGrid';
 import AdvancedChapters from './AdvancedChapters';
 import NewReleases from './NewestNovels';
@@ -56,7 +56,7 @@ const NovelListing = () => {
           setFeaturedNovels(topNovels);
           
           // Fetch newest novels (no pagination needed since we only show top 10)
-          const { novels: recentNovelsList } = await getCachedNovels({
+          const { novels: recentNovelsList } = await getNovels({
             limit: 10,
             offset: 0
           });
