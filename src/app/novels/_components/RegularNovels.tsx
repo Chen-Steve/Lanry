@@ -4,7 +4,7 @@ import { Novel } from '@/types/database';
 import NovelCard from './NovelCard';
 import { Icon } from '@iconify/react';
 import { useEffect, useState } from 'react';
-import { getTotalChaptersForNovels } from '@/services/chapterService';
+import { getTotalAllChapters } from '@/services/chapterService';
 
 interface RegularNovelsProps {
   novels: Novel[];
@@ -21,11 +21,19 @@ const RegularNovels = ({
 }: RegularNovelsProps) => {
   const [chapterCounts, setChapterCounts] = useState<Record<string, number>>({});
 
-  // Fetch chapter counts for all novels in one request
+  // Fetch chapter counts for all novels (per-novel) so the numbers match the
+  // counts displayed on each novel page header.
   useEffect(() => {
     const fetchCounts = async () => {
-      const ids = novels.map((n) => n.id);
-      const counts = await getTotalChaptersForNovels(ids);
+      const counts: Record<string, number> = {};
+
+      await Promise.all(
+        novels.map(async (novel) => {
+          const total = await getTotalAllChapters(novel.id);
+          counts[novel.id] = total;
+        })
+      );
+
       setChapterCounts(counts);
     };
 

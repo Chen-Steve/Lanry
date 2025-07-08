@@ -4,7 +4,7 @@ import { Novel } from '@/types/database';
 import NovelCard from '../../_components/NovelCard';
 import Pagination from '@/components/Pagination';
 import { useEffect, useState } from 'react';
-import { getTotalChaptersForNovels } from '@/services/chapterService';
+import { getTotalAllChapters } from '@/services/chapterService';
 import { Icon } from '@iconify/react';
 
 interface CompletedNovelListProps {
@@ -22,11 +22,18 @@ const CompletedNovelList = ({
 }: CompletedNovelListProps) => {
   const [chapterCounts, setChapterCounts] = useState<Record<string, number>>({});
 
-  // Batch fetch counts for completed novels
+  // Fetch counts per novel to keep logic consistent with other components.
   useEffect(() => {
     const fetchCounts = async () => {
-      const ids = novels.map((n) => n.id);
-      const counts = await getTotalChaptersForNovels(ids);
+      const counts: Record<string, number> = {};
+
+      await Promise.all(
+        novels.map(async (novel) => {
+          const total = await getTotalAllChapters(novel.id);
+          counts[novel.id] = total;
+        })
+      );
+
       setChapterCounts(counts);
     };
 
