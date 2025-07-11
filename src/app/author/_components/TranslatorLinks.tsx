@@ -183,6 +183,8 @@ export default function TranslatorLinks() {
         </div>
       </div>
 
+      {/* Google Drive integration will be added in a separate component later */}
+
       <div className="flex justify-end pt-2">
         <button
           type="submit"

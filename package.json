@@ -19,11 +19,14 @@
     "@supabase/auth-helpers-nextjs": "^0.10.0",
     "@supabase/supabase-js": "^2.46.1",
     "@tanstack/react-query": "^5.67.2",
+    "@types/turndown": "^5.0.5",
     "@types/uuid": "^10.0.0",
     "autoprefixer": "^10.4.20",
+    "googleapis": "^152.0.0",
+    "html-to-text": "^9.0.5",
     "jszip": "^3.10.1",
     "lodash": "^4.17.21",
-    "mammoth": "^1.9.0",
+    "mammoth": "^1.9.1",
     "nanoid": "^5.0.6",
     "next": "^14.2.25",
     "react": "^18.2.0",
@@ -31,6 +34,7 @@
     "react-dropzone": "^14.3.5",
     "react-use": "^17.5.1",
     "sonner": "^2.0.3",
+    "turndown": "^7.2.0",
     "uuid": "^11.0.3"
   },
   "devDependencies": {

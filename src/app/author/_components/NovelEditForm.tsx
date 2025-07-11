@@ -15,6 +15,7 @@ import { ChapterListChapter, NovelEditFormProps, Volume, NovelCategory } from '.
 import { Tag } from '@/types/database';
 import supabase from '@/lib/supabaseClient';
 import { CharacterManagement } from './CharacterManagement';
+import AuthorDriveSection from './AuthorDriveSection';
 
 interface NovelCharacter {
   id: string;
@@ -447,9 +448,16 @@ export default function NovelEditForm({ novel, onCancel, onUpdate, onChapterEdit
             </div>
           )}
 
+          {/* Google Drive Import Section */}
+          {novel.id && (
+            <div className="mt-4">
+              <AuthorDriveSection novelId={novel.id} />
+            </div>
+          )}
+
           {/* Chapter List */}
           {novel.id && (
-            <div className="mt-6">
+            <div className="mt-4">
               {isLoadingChapters ? (
                 <div className="text-center py-8">
                   <Icon icon="mdi:loading" className="w-6 h-6 animate-spin mx-auto text-primary/60" />
