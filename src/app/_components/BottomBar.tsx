@@ -78,8 +78,8 @@ export default function BottomBar() {
   const navItems = [...baseNavItems, profileItem];
 
   return (
-    <div className={`fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 md:hidden${isIOS ? ' mb-4' : ''}`}>
-      <nav className="flex justify-around items-center py-2 px-4 safe-area-inset-bottom">
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 md:hidden">
+      <nav className={`flex justify-around items-center py-2 px-4 safe-area-inset-bottom${isIOS ? ' pb-4' : ''}`}>
         {navItems.map((item) => {
           const isAuthenticatedProfile = 'hasAvatar' in item && item.hasAvatar;
           
