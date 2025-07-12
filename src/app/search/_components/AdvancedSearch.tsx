@@ -21,12 +21,13 @@ interface SearchFilters {
 
 export default function AdvancedSearch() {
   const searchParams = useSearchParams();
+  // 1. Use hardcoded defaults for filters
   const [filters, setFilters] = useState<SearchFilters>({
-    query: searchParams.get('q') || '',
-    author: searchParams.get('author') || '',
+    query: '',
+    author: '',
     tags: [],
-    categories: searchParams.getAll('categories') || [],
-    page: parseInt(searchParams.get('page') || '1'),
+    categories: [],
+    page: 1,
   });
   const [results, setResults] = useState<Novel[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -38,7 +39,23 @@ export default function AdvancedSearch() {
   const authorInputRef = useRef<HTMLInputElement>(null);
   const authorDropdownRef = useRef<HTMLDivElement>(null);
   const [showFilters, setShowFilters] = useState(false);
-  const isInitialMount = useRef(true);
+
+  // 2. On mount, set filters from URL (except tags, which are handled in tag loader)
+  useEffect(() => {
+    const query = searchParams.get('q') || '';
+    const author = searchParams.get('author') || '';
+    const categories = searchParams.getAll('categories') || [];
+    const page = parseInt(searchParams.get('page') || '1');
+    setFilters(prev => ({
+      ...prev,
+      query,
+      author,
+      categories,
+      page,
+    }));
+    // Tags are handled in the tag loading effect
+    // eslint-disable-next-line
+  }, []); // Only on mount
 
   // Fetch author suggestions
   const debouncedFetchAuthors = useRef(
@@ -141,6 +158,20 @@ export default function AdvancedSearch() {
     loadTags();
   }, []); // Only run on mount
 
+  // After tag loading and filter initialization, add:
+  useEffect(() => {
+    // Only run on first mount
+    handleSearch(true, {
+      query: '',
+      author: '',
+      tags: [],
+      categories: [],
+      page: 1,
+      // status: undefined, // if needed by SearchFilters
+    });
+    // eslint-disable-next-line
+  }, []);
+
   const handleSearch = useCallback(async (resetPage: boolean = false, searchFilters: SearchFilters = filters) => {
     const newPage = resetPage ? 1 : searchFilters.page;
     
@@ -180,6 +211,12 @@ export default function AdvancedSearch() {
 
       queryParams.append('page', newPage.toString());
 
+      // Update the URL only when a search is performed
+      const newSearch = queryParams.toString();
+      const currentPath = window.location.pathname;
+      const newUrl = newSearch ? `${currentPath}?${newSearch}` : currentPath;
+      window.history.replaceState({}, '', newUrl);
+
       const response = await fetch(`/api/novels/search?${queryParams.toString()}`);
       if (!response.ok) throw new Error('Search failed');
       const data = await response.json();
@@ -191,43 +228,19 @@ export default function AdvancedSearch() {
     } finally {
       setIsLoading(false);
     }
-  }, []);  // Remove filters dependency
+  }, [filters]);  // Remove filters dependency
 
   // Effect to trigger search when filters change
-  useEffect(() => {
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      return;
-    }
-    const timeoutId = setTimeout(() => {
-      handleSearch(false, filters);
-    }, 300); // Debounce search to prevent rapid back and forth
-
-    return () => clearTimeout(timeoutId);
-  }, [filters, handleSearch]);
+  // This effect is removed as per the edit hint.
 
   // Update URL when filters change
-  useEffect(() => {
-    if (isInitialMount.current) {
-      return;
-    }
-    const params = new URLSearchParams();
-
-    if (filters.query) params.set('q', filters.query);
-    if (filters.author) params.set('author', filters.author);
-    filters.tags.forEach(tag => params.append('tags', tag.id));
-    filters.categories.forEach(category => params.append('categories', category));
-    if (filters.status) params.set('status', filters.status);
-    if (filters.page > 1) params.set('page', filters.page.toString());
-
-    const newSearch = params.toString();
-    const currentPath = window.location.pathname;
-    const newUrl = newSearch ? `${currentPath}?${newSearch}` : currentPath;
-    window.history.replaceState({}, '', newUrl);
-  }, [filters]);
+  // This effect is removed as per the edit hint.
 
   const handlePageChange = (newPage: number) => {
-    setFilters(prev => ({ ...prev, page: newPage }));
+    // Update the page in filters and immediately trigger a search
+    const newFilters = { ...filters, page: newPage };
+    setFilters(newFilters);
+    handleSearch(false, newFilters);
   };
 
   // Handle tag selection

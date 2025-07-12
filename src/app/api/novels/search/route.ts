@@ -193,7 +193,7 @@ export async function GET(request: NextRequest) {
       take: ITEMS_PER_PAGE,
       skip,
       orderBy: [
-        { updatedAt: 'desc' }
+        { title: 'asc' }
       ]
     });
 
