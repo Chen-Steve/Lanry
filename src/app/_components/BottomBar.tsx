@@ -5,11 +5,20 @@ import { usePathname } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { useEffect, useState } from 'react';
 
 export default function BottomBar() {
   const pathname = usePathname();
   const { isAuthenticated, userId } = useAuth();
   const { userProfile } = useUserProfile(userId);
+
+  // iOS detection
+  const [isIOS, setIsIOS] = useState(false);
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsIOS(/iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as unknown as { MSStream?: unknown }).MSStream);
+    }
+  }, []);
 
   const getInitial = (username: string) => {
     return username.charAt(0).toUpperCase();
@@ -69,7 +78,7 @@ export default function BottomBar() {
   const navItems = [...baseNavItems, profileItem];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 md:hidden">
+    <div className={`fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 md:hidden${isIOS ? ' mb-4' : ''}`}>
       <nav className="flex justify-around items-center py-2 px-4 safe-area-inset-bottom">
         {navItems.map((item) => {
           const isAuthenticatedProfile = 'hasAvatar' in item && item.hasAvatar;
