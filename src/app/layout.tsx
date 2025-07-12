@@ -74,7 +74,6 @@ export default function RootLayout({
             gtag('config', 'G-PVZ6V89JEJ');
           `}
         </Script>
-        <AdSenseConditional />
       </head>
       <body className="min-h-screen relative overflow-x-hidden">
         <Providers>
@@ -84,6 +83,7 @@ export default function RootLayout({
             </ConditionalLayout>
             <Toaster position="bottom-right" />
             <CookieConsent />
+            <AdSenseConditional />
           </ThemeProvider>
         </Providers>
       </body>
