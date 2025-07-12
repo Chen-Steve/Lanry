@@ -37,13 +37,14 @@ export default function BottomBar() {
       activeIcon: 'heroicons:bookmark-solid',
       isActive: pathname.startsWith('/bookmarks')
     },
-    {
+    // Store button only for authenticated users
+    ...(isAuthenticated ? [{
       href: '/shop',
       label: 'Store',
       icon: 'heroicons:shopping-bag',
       activeIcon: 'heroicons:shopping-bag-solid',
       isActive: pathname.startsWith('/shop')
-    }
+    }] : [])
   ];
 
   // Profile item changes based on authentication status
