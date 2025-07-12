@@ -6,7 +6,7 @@ import Providers from './providers';
 import { Toaster } from 'sonner';
 import { ThemeProvider } from '@/lib/ThemeContext';
 import CookieConsent from './_components/CookieConsent';
-import AdSenseScript from './_components/AdSenseScript';
+import AdSenseConditional from './_components/AdSenseConditional';
 
 export const metadata: Metadata = {
   title: "Lanry",
@@ -74,7 +74,7 @@ export default function RootLayout({
             gtag('config', 'G-PVZ6V89JEJ');
           `}
         </Script>
-        <AdSenseScript />
+        <AdSenseConditional />
       </head>
       <body className="min-h-screen relative overflow-x-hidden">
         <Providers>
