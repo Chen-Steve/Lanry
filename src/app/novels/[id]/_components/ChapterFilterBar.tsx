@@ -84,23 +84,25 @@ export const ChapterFilterBar = ({
                 <span className="text-xs opacity-70">{volumeCounts.get('all')?.total || 0}</span>
               </div>
             </button>
-            {volumes.map(volume => (
-              <button
-                key={volume.id}
-                onClick={() => {
-                  setSelectedVolumeId(volume.id);
-                  setShowVolumeDescription(false);
-                }}
-                className={`w-full px-3 py-2 text-left rounded-md text-sm ${selectedVolumeId === volume.id ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'}`}
-              >
-                <div className="flex items-center justify-between">
-                  <span>
-                    {volume.title ? `Vol ${volume.volume_number}: ${volume.title}` : `Volume ${volume.volume_number}`}
-                  </span>
-                  <span className="text-xs opacity-70">{volumeCounts.get(volume.id)?.total || 0}</span>
-                </div>
-              </button>
-            ))}
+            {volumes
+              .sort((a, b) => a.volume_number - b.volume_number)
+              .map(volume => (
+                <button
+                  key={volume.id}
+                  onClick={() => {
+                    setSelectedVolumeId(volume.id);
+                    setShowVolumeDescription(false);
+                  }}
+                  className={`w-full px-3 py-2 text-left rounded-md text-sm ${selectedVolumeId === volume.id ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'}`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span>
+                      {volume.title ? `Vol ${volume.volume_number}: ${volume.title}` : `Volume ${volume.volume_number}`}
+                    </span>
+                    <span className="text-xs opacity-70">{volumeCounts.get(volume.id)?.total || 0}</span>
+                  </div>
+                </button>
+              ))}
           </div>
         </div>
       )}
