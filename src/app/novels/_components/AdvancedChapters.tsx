@@ -56,11 +56,11 @@ const AdvancedChapters = ({ initialNovels, initialTotal }: AdvancedChaptersProps
             <Link
               key={novel.id}
               href={`/novels/${novel.slug}`}
-              className="flex gap-3 rounded-lg border border-border bg-container p-3 transition-shadow hover:shadow-md"
+              className="flex gap-3 rounded-lg bg-container transition-shadow hover:shadow-md min-h-0"
               draggable={false}
             >
               {/* Cover */}
-              <div className="relative w-24 h-32 flex-shrink-0">
+              <div className="relative w-20 h-28 sm:w-24 sm:h-32 flex-shrink-0">
                 <NovelCover
                   coverUrl={novel.coverImageUrl}
                   title={novel.title}
@@ -69,7 +69,7 @@ const AdvancedChapters = ({ initialNovels, initialTotal }: AdvancedChaptersProps
               </div>
 
               {/* Details */}
-              <div className="flex flex-1 flex-col overflow-hidden">
+              <div className="flex flex-1 flex-col overflow-hidden min-w-0">
                 <h3 className="line-clamp-2 text-sm font-semibold text-foreground sm:text-base">
                   {novel.title}
                 </h3>
@@ -80,9 +80,9 @@ const AdvancedChapters = ({ initialNovels, initialTotal }: AdvancedChaptersProps
                       key={index}
                       className="flex items-center gap-1 text-xs sm:text-sm text-amber-700 dark:text-amber-400"
                     >
-                      <Icon icon="ph:lock" className="h-3 w-3" />
-                      Ch.{chapter.chapter_number}
-                      {chapter.part_number && `.${chapter.part_number}`}
+                      <Icon icon="ph:lock" className="h-3 w-3 flex-shrink-0" />
+                      <span className="truncate">Ch.{chapter.chapter_number}
+                      {chapter.part_number && `.${chapter.part_number}`}</span>
                     </li>
                   ))}
                 </ul>
