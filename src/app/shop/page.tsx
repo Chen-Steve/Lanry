@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import Coins from './Coins';
 import Membership from './Membership';
 import { useSearchParams } from 'next/navigation';
+import { Icon } from '@iconify/react';
 
 export default function ShopPage() {
   const { isAuthenticated, userId } = useAuth();
@@ -78,6 +79,7 @@ export default function ShopPage() {
         {showMembership ? <Membership /> : <Coins />}
       </PayPalScriptProvider>
 
+
       <div className="mt-8 text-center text-muted-foreground">
         <p className="text-sm">
           Questions or issues with your funds? Contact us on{' '}
@@ -91,6 +93,34 @@ export default function ShopPage() {
           {' '}for support.
         </p>
       </div>
+      
+      {/* Payment Info */}
+      <div className="bg-muted/50 rounded-lg p-4 text-center mt-6">
+        <Icon
+          icon="ph:shield-check"
+          className="h-6 w-6 text-green-600 mx-auto mb-2"
+        />
+        <h3 className="font-medium mb-2 text-sm">Secure Payment</h3>
+        <p className="text-xs text-muted-foreground mb-3">
+          All transactions are encrypted and processed securely through trusted
+          payment providers.
+        </p>
+        <div className="flex justify-center gap-4 items-center mb-2">
+          <div className="flex items-center gap-1">
+            <Icon icon="logos:paypal" className="h-5 w-5" />
+            <span className="text-xs font-medium text-foreground">PayPal</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Icon icon="simple-icons:wise" className="h-5 w-5 text-green-600" />
+            <span className="text-xs font-medium text-foreground">Wise</span>
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          More payment options coming soon
+        </p>
+      </div>
+
+      
     </div>
   );
 } 

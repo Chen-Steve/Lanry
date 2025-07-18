@@ -5,12 +5,14 @@ import { usePathname } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { useIsPWA } from '@/hooks/useIsPWA';
 import { useEffect, useState } from 'react';
 
 export default function BottomBar() {
   const pathname = usePathname();
   const { isAuthenticated, userId } = useAuth();
   const { userProfile } = useUserProfile(userId);
+  const isPWA = useIsPWA();
 
   // iOS detection
   const [isIOS, setIsIOS] = useState(false);
@@ -19,6 +21,11 @@ export default function BottomBar() {
       setIsIOS(/iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as unknown as { MSStream?: unknown }).MSStream);
     }
   }, []);
+
+  // Only render in PWA mode
+  if (!isPWA) {
+    return null;
+  }
 
   const getInitial = (username: string) => {
     return username.charAt(0).toUpperCase();

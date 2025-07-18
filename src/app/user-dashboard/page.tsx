@@ -6,6 +6,7 @@ import { useTheme, Theme } from '@/lib/ThemeContext';
 import { ChangePasswordModal } from './_components/ChangePasswordModal';
 import { UpdateProfileModal } from './_components/UpdateProfileModal';
 import { TranslatorNovels } from './_components/TranslatorNovels';
+import { WiseTagModal } from './_components/WiseTagModal';
 import { useAuth } from '@/hooks/useAuth';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
@@ -68,6 +69,7 @@ export default function UserDashboard() {
   const [isDailyRewardsClicked, setIsDailyRewardsClicked] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [isUpgradeClicked, setIsUpgradeClicked] = useState(false);
+  const [isWiseTagModalOpen, setIsWiseTagModalOpen] = useState(false);
   const searchParams = useSearchParams();
   const userId = searchParams.get('userId') || searchParams.get('id');
   const [subscriptionStatus, setSubscriptionStatus] = useState<null | {
@@ -83,7 +85,7 @@ export default function UserDashboard() {
   }>(null);
   const [isSubLoading, setIsSubLoading] = useState(false);
 
-  const { data: profile, isLoading } = useQuery({
+  const { data: profile, isLoading, refetch } = useQuery({
     queryKey: ['profile', userId],
     queryFn: () => fetchProfile(userId || undefined),
   });
@@ -303,6 +305,22 @@ export default function UserDashboard() {
               <Icon icon="ph:caret-right" className="text-xl text-muted-foreground" />
             </button>
 
+            <button 
+              onClick={() => setIsWiseTagModalOpen(true)}
+              className="w-full flex items-center justify-between p-4 hover:bg-[#faf7f2] dark:hover:bg-zinc-800 transition-colors rounded-lg"
+            >
+              <div className="flex items-center">
+                <Icon icon="simple-icons:wise" className="text-xl mr-4 text-green-600" />
+                <div className="flex flex-col items-start">
+                  <span>Wise Tag</span>
+                  <span className="text-xs text-muted-foreground">
+                    {profile?.wise_tag ? `@${profile.wise_tag}` : 'Not connected'}
+                  </span>
+                </div>
+              </div>
+              <Icon icon="ph:caret-right" className="text-xl text-muted-foreground" />
+            </button>
+
             <div className="p-4 bg-container rounded-lg">
               <div>
                 <div className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-3">Theme</div>
@@ -358,6 +376,15 @@ export default function UserDashboard() {
           toast.success('Profile updated successfully!');
         }}
         profile={profile}
+      />
+
+      <WiseTagModal
+        isOpen={isWiseTagModalOpen}
+        onClose={() => setIsWiseTagModalOpen(false)}
+        onSuccess={() => {
+          refetch();
+        }}
+        currentWiseTag={profile?.wise_tag}
       />
 
       <CancelMembershipModal

@@ -91,6 +91,7 @@ export interface UserProfile {
   avatar_url?: string;
   created_at: string;
   updated_at: string;
+  wise_tag?: string | null;
 }
 
 export interface ChapterComment {
