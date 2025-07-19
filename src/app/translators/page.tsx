@@ -1,9 +1,8 @@
 import { Metadata } from "next"
-import { prisma } from "@/lib/prisma"
+import { createServerClient } from "@/lib/supabaseServer"
 import { TranslatorCard } from "./_components/TranslatorCard"
 import { Icon } from "@iconify/react"
 import Link from "next/link"
-import { Profile, Novel, NovelCategory } from "@prisma/client"
 
 export const dynamic = 'force-dynamic'
 
@@ -21,101 +20,261 @@ type PageInfo = {
 const ITEMS_PER_PAGE = 9
 const MAX_PAGES_SHOWN = 5
 
-type TranslatorWithNovels = Profile & {
-  authoredNovels: (Novel & {
+type TranslatorWithNovels = {
+  id: string;
+  username: string | null;
+  avatar_url?: string;
+  role: 'USER' | 'AUTHOR' | 'TRANSLATOR';
+  created_at: string;
+  updated_at: string;
+  kofi_url?: string | null;
+  patreon_url?: string | null;
+  custom_url?: string | null;
+  custom_url_label?: string | null;
+  author_bio?: string | null;
+  authoredNovels: {
+    id: string;
+    title: string;
+    slug: string;
+    cover_image_url?: string;
+    status: string;
+    updated_at: string;
     categories: {
-      category: NovelCategory;
+      id: string;
+      name: string;
+      created_at: string;
+      updated_at: string;
     }[];
-  })[];
-  _count: {
-    authoredNovels: number;
-  };
+  }[];
+  translatedNovels: {
+    id: string;
+    title: string;
+    slug: string;
+    cover_image_url?: string;
+    status: string;
+    updated_at: string;
+    categories: {
+      id: string;
+      name: string;
+      created_at: string;
+      updated_at: string;
+    }[];
+  }[];
+  translatedNovelsCount: number;
 }
 
 async function getTranslators(page: number = 1) {
   try {
-    // Get cursors for requested page and surrounding pages
-    const startPage = Math.max(1, page - Math.floor(MAX_PAGES_SHOWN / 2))
-    const cursors: string[] = []
-    let currentCursor: string | undefined = undefined
+    const supabase = createServerClient()
 
-    // Fetch cursors for the page window
-    for (let i = 1; i < startPage + MAX_PAGES_SHOWN; i++) {
-      const batch: { id: string }[] = await prisma.profile.findMany({
-        where: {
-          role: 'TRANSLATOR',
-          authoredNovels: { some: {} }
-        },
-        take: ITEMS_PER_PAGE,
-        ...(currentCursor ? {
-          skip: 1,
-          cursor: { id: currentCursor }
-        } : {}),
-        select: { id: true },
-        orderBy: {
-          authoredNovels: {
-            _count: 'desc'
-          }
+    // Get all translator profiles - simple and straightforward
+    const { data: allTranslators, error: translatorsError } = await supabase
+      .from('profiles')
+      .select(`
+        id,
+        username,
+        avatar_url,
+        role,
+        created_at,
+        updated_at,
+        kofi_url,
+        patreon_url,
+        custom_url,
+        custom_url_label,
+        author_bio
+      `)
+      .eq('role', 'TRANSLATOR')
+
+    if (translatorsError) {
+      console.error('Error fetching translators:', translatorsError)
+      throw translatorsError
+    }
+
+    if (!allTranslators || allTranslators.length === 0) {
+      return {
+        translators: [],
+        pageInfo: {
+          cursors: [],
+          currentPage: 1,
+          hasNextPage: false
         }
-      }).catch(() => [] as { id: string }[])
-      
-      if (batch.length === 0) break
-      
-      currentCursor = batch[batch.length - 1]?.id
-      if (currentCursor) {
-        cursors.push(currentCursor)
       }
     }
 
-    // Get actual data for current page
-    const skipPages = page - 1
-    const cursor = skipPages > 0 && cursors.length > 0 ? cursors[skipPages - 1] : undefined
+    const translatorIds = allTranslators.map(t => t.id)
 
-    const translators = await prisma.profile.findMany({
-      where: {
-        role: 'TRANSLATOR',
-        authoredNovels: { some: {} }
-      },
-      take: ITEMS_PER_PAGE + 1,
-      ...(cursor ? {
-        skip: 1,
-        cursor: { id: cursor }
-      } : {}),
-      include: {
-        authoredNovels: {
-          orderBy: {
-            updatedAt: 'desc'
-          },
-          include: {
-            categories: {
-              include: {
-                category: true
-              }
-            }
-          }
-        },
-        _count: {
-          select: {
-            authoredNovels: true
-          }
-        }
-      },
-      orderBy: {
-        authoredNovels: {
-          _count: 'desc'
+    // Get novel counts for each translator (both authored and translated)
+    const { data: novelCounts, error: countsError } = await supabase
+      .from('novels')
+      .select('author_profile_id, translator_id')
+      .or(`author_profile_id.in.(${translatorIds.join(',')}),translator_id.in.(${translatorIds.join(',')})`)
+      .neq('status', 'DRAFT')
+
+    if (countsError) {
+      console.error('Error fetching novel counts:', countsError)
+      throw countsError
+    }
+
+    // Calculate novel counts for each translator
+    const translatorNovelCounts: Record<string, number> = {}
+    novelCounts?.forEach(novel => {
+      if (novel.author_profile_id && translatorIds.includes(novel.author_profile_id)) {
+        translatorNovelCounts[novel.author_profile_id] = (translatorNovelCounts[novel.author_profile_id] || 0) + 1
+      }
+      if (novel.translator_id && translatorIds.includes(novel.translator_id)) {
+        translatorNovelCounts[novel.translator_id] = (translatorNovelCounts[novel.translator_id] || 0) + 1
+      }
+    })
+
+    // Filter translators who have novels and sort by novel count
+    const translatorsWithNovels = allTranslators
+      .filter(translator => (translatorNovelCounts[translator.id] || 0) > 0)
+      .map(translator => ({
+        ...translator,
+        totalNovels: translatorNovelCounts[translator.id] || 0
+      }))
+      .sort((a, b) => b.totalNovels - a.totalNovels)
+
+    if (translatorsWithNovels.length === 0) {
+      return {
+        translators: [],
+        pageInfo: {
+          cursors: [],
+          currentPage: 1,
+          hasNextPage: false
         }
       }
-    }).catch(() => [] as TranslatorWithNovels[])
+    }
 
-    const hasNextPage = translators.length > ITEMS_PER_PAGE
-    const displayTranslators = hasNextPage ? translators.slice(0, -1) : translators
+    // Calculate pagination
+    const totalTranslators = translatorsWithNovels.length
+    const totalPages = Math.ceil(totalTranslators / ITEMS_PER_PAGE)
+    const startIndex = (page - 1) * ITEMS_PER_PAGE
+    const endIndex = startIndex + ITEMS_PER_PAGE
+    const hasNextPage = page < totalPages
+
+    // Get the translators for the current page
+    const pageTranslators = translatorsWithNovels.slice(startIndex, endIndex)
+    const pageTranslatorIds = pageTranslators.map(t => t.id)
+
+    if (pageTranslatorIds.length === 0) {
+      return {
+        translators: [],
+        pageInfo: {
+          cursors: [],
+          currentPage: page,
+          hasNextPage: false
+        }
+      }
+    }
+
+    // Fetch detailed novel data for the current page translators only
+    const { data: novels, error: novelsError } = await supabase
+      .from('novels')
+      .select(`
+        id,
+        title,
+        slug,
+        cover_image_url,
+        status,
+        updated_at,
+        author_profile_id,
+        translator_id,
+        categories:categories_on_novels(
+          category:category_id(
+            id,
+            name,
+            created_at,
+            updated_at
+          )
+        )
+      `)
+      .or(`author_profile_id.in.(${pageTranslatorIds.join(',')}),translator_id.in.(${pageTranslatorIds.join(',')})`)
+      .neq('status', 'DRAFT')
+      .order('updated_at', { ascending: false })
+
+    if (novelsError) {
+      console.error('Error fetching novels:', novelsError)
+      throw novelsError
+    }
+
+    // Group novels by translator
+    type NovelWithCategories = {
+      id: string;
+      title: string;
+      slug: string;
+      cover_image_url?: string;
+      status: string;
+      updated_at: string;
+      categories: {
+        id: string;
+        name: string;
+        created_at: string;
+        updated_at: string;
+      }[];
+    }
+
+    const novelsByTranslator: Record<string, NovelWithCategories[]> = {}
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    novels?.forEach((novel: any) => {
+      const authorId = novel.author_profile_id
+      const translatorId = novel.translator_id
+
+      // Add to authored novels
+      if (authorId && pageTranslatorIds.includes(authorId)) {
+        if (!novelsByTranslator[authorId]) {
+          novelsByTranslator[authorId] = []
+        }
+        novelsByTranslator[authorId].push({
+          ...novel,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          categories: novel.categories?.map((c: any) => c.category) || []
+        })
+      }
+
+      // Add to translated novels (if different from author)
+      if (translatorId && pageTranslatorIds.includes(translatorId) && translatorId !== authorId) {
+        if (!novelsByTranslator[translatorId]) {
+          novelsByTranslator[translatorId] = []
+        }
+        novelsByTranslator[translatorId].push({
+          ...novel,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          categories: novel.categories?.map((c: any) => c.category) || []
+        })
+      }
+    })
+
+    // Build final translator data
+    const displayTranslators: TranslatorWithNovels[] = pageTranslators.map(translator => {
+      const translatorNovels = novelsByTranslator[translator.id] || []
+      
+      return {
+        id: translator.id,
+        username: translator.username,
+        avatar_url: translator.avatar_url,
+        role: translator.role,
+        created_at: translator.created_at,
+        updated_at: translator.updated_at,
+        kofi_url: translator.kofi_url,
+        patreon_url: translator.patreon_url,
+        custom_url: translator.custom_url,
+        custom_url_label: translator.custom_url_label,
+        author_bio: translator.author_bio,
+        authoredNovels: translatorNovels,
+        translatedNovels: translatorNovels,
+        translatedNovelsCount: translatorNovels.length
+      }
+    })
+
+    // Generate cursors for pagination
+    const cursors: string[] = []
+    for (let i = 1; i <= Math.min(totalPages, MAX_PAGES_SHOWN); i++) {
+      cursors.push(i.toString())
+    }
 
     return {
-      translators: displayTranslators.map(translator => ({
-        ...translator,
-        translatedNovels: translator.authoredNovels,
-        translatedNovelsCount: translator._count.authoredNovels
-      })),
+      translators: displayTranslators,
       pageInfo: {
         cursors,
         currentPage: page,

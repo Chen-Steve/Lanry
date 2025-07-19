@@ -1,19 +1,30 @@
-import { Profile } from "@prisma/client"
 import { Icon } from "@iconify/react"
 import Link from "next/link"
 import { NovelCover } from "./NovelCover"
 
 type TranslatorCardProps = {
-  translator: Profile & {
+  translator: {
+    id: string;
+    username: string | null;
+    avatar_url?: string;
+    role: 'USER' | 'AUTHOR' | 'TRANSLATOR';
+    created_at: string;
+    updated_at: string;
+    kofi_url?: string | null;
+    patreon_url?: string | null;
+    custom_url?: string | null;
+    custom_url_label?: string | null;
+    author_bio?: string | null;
     translatedNovels: Array<{
       id: string
       title: string
-      coverImageUrl: string | null
+      cover_image_url?: string | null
       slug: string
       categories: Array<{
-        category: {
-          name: string
-        }
+        id: string
+        name: string
+        created_at: string
+        updated_at: string
       }>
     }>
     translatedNovelsCount: number
@@ -26,9 +37,9 @@ export function TranslatorCard({ translator }: TranslatorCardProps) {
       {/* Translator Info */}
       <div className="flex items-center gap-3 mb-4">
         <div className="relative w-12 h-12 flex-shrink-0">
-          {translator.avatarUrl ? (
+          {translator.avatar_url ? (
             <img
-              src={translator.avatarUrl}
+              src={translator.avatar_url}
               alt={translator.username || "Translator"}
               className="w-full h-full rounded-full object-cover"
               loading="eager"
@@ -66,7 +77,7 @@ export function TranslatorCard({ translator }: TranslatorCardProps) {
                 >
                   <div className="relative aspect-[2/3] mb-1 bg-gray-100 dark:bg-gray-700 rounded overflow-hidden">
                     <NovelCover
-                      src={novel.coverImageUrl}
+                      src={novel.cover_image_url}
                       alt={novel.title}
                       fill
                       sizes="100px"

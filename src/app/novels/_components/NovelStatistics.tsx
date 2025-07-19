@@ -6,7 +6,7 @@ const NovelStatistics = () => {
     {
       icon: 'ph:books-duotone',
       label: 'Total Novels',
-      value: 145,
+      value: 160,
       color: 'amber',
       bgImage: 'https://vkgkhipasxqxitwlktwz.supabase.co/storage/v1/object/public/stat-section/novels.jpg'
     },
@@ -27,7 +27,7 @@ const NovelStatistics = () => {
     {
       icon: 'ph:users-duotone',
       label: 'Translators',
-      value: 46,
+      value: 48,
       color: 'amber',
       href: '/translators',
       bgImage: 'https://vkgkhipasxqxitwlktwz.supabase.co/storage/v1/object/public/stat-section/translators.jpg'
