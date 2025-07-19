@@ -21,7 +21,7 @@ export const coinPackages = [
   { id: 4, coins: 200, price: 20, coinsPerDollar: Math.round(200/20) },
   { id: 5, coins: 300, price: 25, coinsPerDollar: Math.round(300/25), tag: "BEST VALUE" },
   { id: 6, coins: 600, price: 50, coinsPerDollar: Math.round(600/50), isBonus: true }, // 500 + 100 bonus
-  { id: 7, coins: 1950, price: 150, coinsPerDollar: Math.round(1950/150) }, // Price anchor, 13 coins per dollar
+  { id: 7, coins: 1300, price: 100, coinsPerDollar: Math.round(1300/100) }, // Price anchor, 13 coins per dollar
 ];
 
 interface PaymentModalProps {
@@ -66,7 +66,7 @@ function PaymentModal({ isOpen, onClose, pkg, userId, isAuthenticated }: Payment
     20: "https://wise.com/pay/r/zhtbfDXkHuCrpvw",
     25: "https://wise.com/pay/r/qcORAIo2QnST6tw",
     50: "https://wise.com/pay/r/StC1UzfJmyBWfVY",
-    150: "https://wise.com/pay/r/GRxFRY5YeuwZ1U0"
+    100: "https://wise.com/pay/r/GRxFRY5YeuwZ1U0"
   };
 
   useEffect(() => {

@@ -351,6 +351,11 @@ a[data-back-to-ref]:hover {
   cursor: pointer;
 }
 
+/* Dark mode: white background for censored words */
+.dark .censored-word {
+  background-color: #fff;
+}
+
 /* When user enables visibility (e.g., via adding 'revealed' class) */
 .censored-word.revealed {
   background: none;

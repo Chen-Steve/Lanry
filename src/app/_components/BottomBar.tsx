@@ -22,8 +22,8 @@ export default function BottomBar() {
     }
   }, []);
 
-  // Only render in PWA mode
-  if (!isPWA) {
+  // Only render in PWA mode and not on chapter pages
+  if (!isPWA || (pathname.includes('/novels/') && pathname.split('/').length > 3)) {
     return null;
   }
 

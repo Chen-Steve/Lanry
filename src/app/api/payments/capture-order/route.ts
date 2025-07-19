@@ -66,7 +66,7 @@ export async function POST(req: Request) {
                  amount === 20 ? 200 :
                  amount === 25 ? 300 :
                  amount === 50 ? 600 :
-                 amount === 150 ? 1950 : 0;
+                 amount === 100 ? 1300 : 0;
 
     if (coins === 0) {
       throw new Error("Invalid payment amount");
