@@ -13,6 +13,7 @@ import CuratedNovels from './CuratedNovels';
 import supabase from '@/lib/supabaseClient';
 import BulletinBoard from './BulletinBoard';
 import CompletedNovels from './CompletedNovels';
+import PWABulletin from './PWABulletin';
 
 const NovelListing = () => {
   const [novels, setNovels] = useState<Novel[]>([]);
@@ -122,6 +123,8 @@ const NovelListing = () => {
           <FeaturedNovel novels={featuredNovels} />
         </div>
       )}
+
+      <PWABulletin />
 
       <NewReleases
         recentNovels={recentNovels.map(novel => ({
