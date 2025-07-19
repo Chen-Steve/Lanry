@@ -6,6 +6,7 @@ import supabase from '@/lib/supabaseClient';
 import { formatRelativeDate } from '@/lib/utils';
 import type { Comment } from '@/app/author/_types/authorTypes';
 import Link from 'next/link';
+import Select from '@/components/ui/select';
 
 type RawComment = {
   id: string;
@@ -36,12 +37,18 @@ type RawComment = {
   };
 };
 
+// Helper function to extract paragraph number from paragraph_id
+const extractParagraphNumber = (paragraphId: string): number | null => {
+  const match = paragraphId.match(/^p-(\d+)$/);
+  return match ? parseInt(match[1]) + 1 : null; // Add 1 since paragraphs are 0-indexed
+};
+
 export default function NovelComments() {
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedNovel, setSelectedNovel] = useState<string>('all');
   const [novels, setNovels] = useState<{ id: string; title: string }[]>([]);
-  const [commentType, setCommentType] = useState<'all' | 'novel' | 'chapter'>('all');
+  const [commentType, setCommentType] = useState<'all' | 'novel' | 'chapter' | 'paragraph'>('all');
 
   useEffect(() => {
     const fetchNovels = async () => {
@@ -73,10 +80,9 @@ export default function NovelComments() {
 
         const promises = [];
 
-        // Fetch chapter comments if needed
-        if (commentType === 'all' || commentType === 'chapter') {
-          // Fetch paragraph comments
-          const chapterQuery = supabase
+        // Fetch paragraph comments if needed
+        if (commentType === 'all' || commentType === 'paragraph') {
+          const paragraphQuery = supabase
             .from('chapter_comments')
             .select(`
               id,
@@ -100,12 +106,14 @@ export default function NovelComments() {
             .order('created_at', { ascending: false });
 
           if (selectedNovel !== 'all') {
-            chapterQuery.eq('novel_id', selectedNovel);
+            paragraphQuery.eq('novel_id', selectedNovel);
           }
 
-          promises.push(chapterQuery);
+          promises.push(paragraphQuery);
+        }
 
-          // Fetch chapter thread comments
+        // Fetch chapter thread comments if needed
+        if (commentType === 'all' || commentType === 'chapter') {
           const threadQuery = supabase
             .from('chapter_thread_comments')
             .select(`
@@ -178,13 +186,13 @@ export default function NovelComments() {
         }
 
         // Transform and combine the comments
-        const allComments = results.flatMap((result, index) => {
+        const allComments = results.flatMap((result) => {
           if (!result.data) return [];
           
           const comments = result.data as unknown as RawComment[];
           return comments.map(comment => {
-            // For thread comments (index 1)
-            if (index === 1 && comment.chapter && 'novel' in comment.chapter) {
+            // For thread comments with chapter data
+            if (comment.chapter && 'novel' in comment.chapter) {
               return {
                 id: comment.id,
                 content: comment.content,
@@ -197,7 +205,7 @@ export default function NovelComments() {
                   avatar_url: comment.profile.avatar_url || ''
                 },
                 chapter: {
-                  title: `Chapter ${comment.chapter.chapter_number}${comment.chapter.part_number ? `.${comment.chapter.part_number}` : ''} Thread`,
+                  title: `Chapter ${comment.chapter.chapter_number}${comment.chapter.part_number ? `.${comment.chapter.part_number}` : ''} Discussion`,
                   novel: {
                     title: comment.chapter.novel.title,
                     slug: comment.chapter.novel.slug
@@ -220,7 +228,11 @@ export default function NovelComments() {
                 avatar_url: comment.profile.avatar_url || ''
               },
               chapter: {
-                title: comment.chapter_number ? `Chapter ${comment.chapter_number}` : 'Novel Comment',
+                title: comment.paragraph_id 
+                  ? `Chapter ${comment.chapter_number} (Paragraph ${extractParagraphNumber(comment.paragraph_id)})`
+                  : comment.chapter_number 
+                    ? `Chapter ${comment.chapter_number}` 
+                    : 'Novel Comment',
                 novel: {
                   title: comment.novel.title,
                   slug: comment.novel.slug
@@ -263,29 +275,31 @@ export default function NovelComments() {
           <span className="text-lg text-muted-foreground">({comments.length})</span>
         </h2>
         <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-          <select
+          <Select
             value={commentType}
-            onChange={(e) => setCommentType(e.target.value as 'all' | 'novel' | 'chapter')}
-            className="px-3 py-2 rounded-lg border bg-background"
+            onChange={(value) => setCommentType(value as 'all' | 'novel' | 'chapter' | 'paragraph')}
+            options={[
+              { value: 'all', label: 'All Comments' },
+              { value: 'novel', label: 'Novel Comments' },
+              { value: 'chapter', label: 'Chapter Discussion' },
+              { value: 'paragraph', label: 'Paragraph Comments' }
+            ]}
+            className="w-full sm:w-48"
             aria-label="Filter comment type"
-          >
-            <option value="all">All Comments</option>
-            <option value="novel">Novel Comments</option>
-            <option value="chapter">Chapter Comments</option>
-          </select>
-          <select
+          />
+          <Select
             value={selectedNovel}
-            onChange={(e) => setSelectedNovel(e.target.value)}
-            className="px-3 py-2 rounded-lg border bg-background"
+            onChange={setSelectedNovel}
+            options={[
+              { value: 'all', label: 'All Novels' },
+              ...novels.map((novel) => ({
+                value: novel.id,
+                label: novel.title
+              }))
+            ]}
+            className="w-full sm:w-64"
             aria-label="Filter comments by novel"
-          >
-            <option value="all">All Novels</option>
-            {novels.map((novel) => (
-              <option key={novel.id} value={novel.id}>
-                {novel.title}
-              </option>
-            ))}
-          </select>
+          />
         </div>
       </div>
 
