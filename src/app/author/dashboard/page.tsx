@@ -100,165 +100,183 @@ export default function AuthorDashboard() {
   }
 
   return (
-    <div className="flex min-h-screen relative bg-background">
+    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Mobile Toggle Button */}
       <button
         onClick={() => setSidebarOpen(!isSidebarOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-accent hover:bg-accent/80 text-accent-foreground"
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-md bg-white dark:bg-gray-800 shadow-sm border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
         aria-label="Toggle Sidebar"
       >
-        <Icon icon={isSidebarOpen ? "mdi:close" : "mdi:menu"} className="text-2xl" />
+        <Icon icon={isSidebarOpen ? "ph:sidebar-simple" : "ph:sidebar-simple"} className="text-xl text-gray-600 dark:text-gray-300" />
       </button>
 
       {/* Overlay for mobile */}
       {isSidebarOpen && (
         <div 
-          className="lg:hidden fixed inset-0 bg-black/20 dark:bg-black/50 z-30"
+          className="lg:hidden fixed inset-0 bg-black/20 z-30"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Left Sidebar */}
-      <div className={`${isSidebarCollapsed ? 'w-20' : 'w-64'} bg-background border-r border-border fixed left-0 h-full z-40 transition-all duration-300 lg:translate-x-0 ${
+      <nav className={`${isSidebarCollapsed ? 'w-14' : 'w-64'} bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 fixed left-0 h-full z-40 transition-all duration-300 ease-in-out lg:translate-x-0 flex flex-col ${
         isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
-        <div className="flex flex-col h-full">
-          <nav className="flex-1 p-4">
-            <a href="https://lanry.space/" className="mb-6 block text-center" aria-label="Lanry Home">
+        {/* Header */}
+        <div className={`flex items-center p-4 border-b border-gray-200 dark:border-gray-700 h-16 ${isSidebarCollapsed ? 'justify-center' : 'justify-between'}`}>
+          {/* Logo - hidden when collapsed */}
+          {!isSidebarCollapsed && (
+            <a href="https://lanry.space/" className="flex items-center gap-3 flex-shrink-0" aria-label="Lanry Home">
               <Image
                 src="/lanry.jpg"
                 alt="Lanry Logo"
-                width={isSidebarCollapsed ? 40 : 60}
-                height={isSidebarCollapsed ? 40 : 60}
-                className="mx-auto rounded-lg object-cover"
+                width={32}
+                height={32}
+                className="rounded-lg object-cover"
                 priority
               />
             </a>
-            {/* Collapse / Expand button (desktop only) */}
-            <button
-              onClick={() => setSidebarCollapsed(!isSidebarCollapsed)}
-              className="hidden lg:flex items-center gap-2 w-full py-2 px-4 mb-4 rounded-lg transition-colors text-left text-muted-foreground hover:bg-accent/50"
-            >
-              <Icon icon={isSidebarCollapsed ? 'mdi:menu' : 'mdi:menu-open'} className="w-5 h-5" />
-              {!isSidebarCollapsed && <span>Collapse</span>}
-            </button>
+          )}
+          
+          {/* Collapse/Expand button */}
+          <button
+            onClick={() => setSidebarCollapsed(!isSidebarCollapsed)}
+            className="hidden lg:flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors flex-shrink-0"
+            title={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            <Icon icon={isSidebarCollapsed ? "ph:sidebar-simple" : "ph:sidebar-simple"} className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Navigation */}
+        <div className="flex-1 overflow-y-auto py-2">
+          <div className="space-y-1">
             <button
               onClick={() => setActiveTab('manage-novels')}
-              className={`w-full py-2 px-4 rounded-lg transition-colors text-left ${
+              className={`${isSidebarCollapsed ? 'mx-2' : 'mx-2'} flex items-center justify-start rounded-md text-sm font-medium transition-all duration-300 ${
                 activeTab === 'manage-novels'
-                  ? 'bg-accent text-accent-foreground'
-                  : 'text-muted-foreground hover:bg-accent/50'
+                  ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
+                  : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-white'
               }`}
+              style={{ paddingTop: '8px', paddingBottom: '8px', paddingLeft: '10px', paddingRight: '12px' }}
+              title={isSidebarCollapsed ? 'Manage Novels' : undefined}
             >
-              <span className="flex items-center gap-2">
-                <Icon icon="mdi:bookshelf" />
-                {!isSidebarCollapsed && 'Manage Novels'}
-              </span>
-            </button>
-            <button
-              onClick={() => setActiveTab('purchases')}
-              className={`w-full py-2 px-4 rounded-lg transition-colors text-left ${
-                activeTab === 'purchases'
-                  ? 'bg-accent text-accent-foreground'
-                  : 'text-muted-foreground hover:bg-accent/50'
-              }`}
-            >
-              <span className="flex items-center gap-2">
-                <Icon icon="mdi:currency-usd" />
-                {!isSidebarCollapsed && 'Earnings History'}
-              </span>
-            </button>
-            <button
-              onClick={() => setActiveTab('comments')}
-              className={`w-full py-2 px-4 rounded-lg transition-colors text-left ${
-                activeTab === 'comments'
-                  ? 'bg-accent text-accent-foreground'
-                  : 'text-muted-foreground hover:bg-accent/50'
-              }`}
-            >
-              <span className="flex items-center gap-2">
-                <Icon icon="mdi:comment-text-multiple" />
-                {!isSidebarCollapsed && 'Comments'}
-              </span>
-            </button>
-            <button
-              onClick={() => setActiveTab('statistics')}
-              className={`w-full py-2 px-4 rounded-lg transition-colors text-left ${
-                activeTab === 'statistics'
-                  ? 'bg-accent text-accent-foreground'
-                  : 'text-muted-foreground hover:bg-accent/50'
-              }`}
-            >
-              <span className="flex items-center gap-2">
-                <Icon icon="mdi:chart-bar" />
-                {!isSidebarCollapsed && 'Statistics'}
-              </span>
-            </button>
-            <button
-              onClick={() => setActiveTab('links')}
-              className={`w-full py-2 px-4 rounded-lg transition-colors text-left ${
-                activeTab === 'links'
-                  ? 'bg-accent text-accent-foreground'
-                  : 'text-muted-foreground hover:bg-accent/50'
-              }`}
-            >
-              <span className="flex items-center gap-2">
-                <Icon icon="mdi:link-variant" />
-                {!isSidebarCollapsed && 'Support Links'}
+              <Icon icon="mdi:bookshelf" className="w-5 h-5 flex-shrink-0" />
+              <span className={`transition-opacity duration-300 whitespace-nowrap ${isSidebarCollapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100 ml-3'}`}>
+                Manage Novels
               </span>
             </button>
             
-            <div className="mt-auto pt-4 border-t border-border">
-              <div className="space-y-2">
-                <div className="text-sm font-medium text-muted-foreground">Theme</div>
-                <div className="relative">
-                  <button
-                    onClick={() => setIsThemeDropdownOpen(!isThemeDropdownOpen)}
-                    className="w-full py-2 px-4 rounded-lg transition-colors text-left bg-accent/50 hover:bg-accent text-foreground"
-                  >
-                    <span className="flex items-center justify-between">
-                      <span className="flex items-center gap-2">
-                        <Icon icon={themeIcons[theme]} className="w-5 h-5" />
-                        {!isSidebarCollapsed && themeNames[theme]}
-                      </span>
-                      <Icon 
-                        icon={isThemeDropdownOpen ? "mdi:chevron-up" : "mdi:chevron-down"} 
-                        className="w-5 h-5" 
-                      />
-                    </span>
-                  </button>
-                  
-                  {isThemeDropdownOpen && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-popover border border-border rounded-lg shadow-lg overflow-hidden z-50">
-                      {Object.entries(themeNames).map(([key, name]) => (
-                        <button
-                          key={key}
-                          onClick={() => {
-                            setTheme(key as Theme);
-                            setIsThemeDropdownOpen(false);
-                          }}
-                          className={`w-full py-2 px-4 transition-colors text-left hover:bg-accent/50 flex items-center gap-2 ${
-                            theme === key
-                              ? 'bg-accent text-accent-foreground'
-                              : 'text-muted-foreground'
-                          }`}
-                        >
-                          <Icon icon={themeIcons[key as Theme]} className="w-5 h-5" />
-                          {name}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </nav>
+            <button
+              onClick={() => setActiveTab('purchases')}
+              className={`${isSidebarCollapsed ? 'mx-2' : 'mx-2'} flex items-center justify-start rounded-md text-sm font-medium transition-all duration-300 ${
+                activeTab === 'purchases'
+                  ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
+                  : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-white'
+              }`}
+              style={{ paddingTop: '8px', paddingBottom: '8px', paddingLeft: '10px', paddingRight: '12px' }}
+              title={isSidebarCollapsed ? 'Earnings History' : undefined}
+            >
+              <Icon icon="mdi:currency-usd" className="w-5 h-5 flex-shrink-0" />
+              <span className={`transition-opacity duration-300 whitespace-nowrap ${isSidebarCollapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100 ml-3'}`}>
+                Earnings History
+              </span>
+            </button>
+            
+            <button
+              onClick={() => setActiveTab('comments')}
+              className={`${isSidebarCollapsed ? 'mx-2' : 'mx-2'} flex items-center justify-start rounded-md text-sm font-medium transition-all duration-300 ${
+                activeTab === 'comments'
+                  ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
+                  : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-white'
+              }`}
+              style={{ paddingTop: '8px', paddingBottom: '8px', paddingLeft: '10px', paddingRight: '12px' }}
+              title={isSidebarCollapsed ? 'Comments' : undefined}
+            >
+              <Icon icon="mdi:comment-text-multiple" className="w-5 h-5 flex-shrink-0" />
+              <span className={`transition-opacity duration-300 whitespace-nowrap ${isSidebarCollapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100 ml-3'}`}>
+                Comments
+              </span>
+            </button>
+            
+            <button
+              onClick={() => setActiveTab('statistics')}
+              className={`${isSidebarCollapsed ? 'mx-2' : 'mx-2'} flex items-center justify-start rounded-md text-sm font-medium transition-all duration-300 ${
+                activeTab === 'statistics'
+                  ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
+                  : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-white'
+              }`}
+              style={{ paddingTop: '8px', paddingBottom: '8px', paddingLeft: '10px', paddingRight: '12px' }}
+              title={isSidebarCollapsed ? 'Statistics' : undefined}
+            >
+              <Icon icon="mdi:chart-bar" className="w-5 h-5 flex-shrink-0" />
+              <span className={`transition-opacity duration-300 whitespace-nowrap ${isSidebarCollapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100 ml-3'}`}>
+                Statistics
+              </span>
+            </button>
+            
+            <button
+              onClick={() => setActiveTab('links')}
+              className={`${isSidebarCollapsed ? 'mx-2' : 'mx-2'} flex items-center justify-start rounded-md text-sm font-medium transition-all duration-300 ${
+                activeTab === 'links'
+                  ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
+                  : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-white'
+              }`}
+              style={{ paddingTop: '8px', paddingBottom: '8px', paddingLeft: '10px', paddingRight: '12px' }}
+              title={isSidebarCollapsed ? 'Support Links' : undefined}
+            >
+              <Icon icon="mdi:link-variant" className="w-5 h-5 flex-shrink-0" />
+              <span className={`transition-opacity duration-300 whitespace-nowrap ${isSidebarCollapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100 ml-3'}`}>
+                Support Links
+              </span>
+            </button>
+          </div>
         </div>
-      </div>
+        
+        {/* Theme Selector - Bottom */}
+        <div className="border-t border-gray-200 dark:border-gray-700 p-3">
+          <div className="relative">
+            <button
+              onClick={() => setIsThemeDropdownOpen(!isThemeDropdownOpen)}
+              className={`${isSidebarCollapsed ? 'mx-2' : 'mx-2'} flex items-center justify-start rounded-md text-sm font-medium transition-all duration-300 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-white`}
+              style={{ paddingTop: '8px', paddingBottom: '8px' }}
+              title={isSidebarCollapsed ? 'Theme Settings' : undefined}
+            >
+              <Icon icon={themeIcons[theme]} className="w-5 h-5 flex-shrink-0" />
+              <span className={`transition-opacity duration-300 whitespace-nowrap ${isSidebarCollapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100 ml-3'}`}>
+                Theme
+              </span>
+            </button>
+            
+            {isThemeDropdownOpen && (
+              <div className={`absolute ${isSidebarCollapsed ? 'left-full ml-2 bottom-0' : 'bottom-full mb-2'} ${isSidebarCollapsed ? 'w-48' : 'left-0 right-0'} bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg overflow-hidden z-50`}>
+                {Object.entries(themeNames).map(([key, name]) => (
+                  <button
+                    key={key}
+                    onClick={() => {
+                      setTheme(key as Theme);
+                      setIsThemeDropdownOpen(false);
+                    }}
+                    className={`w-full px-3 py-2 text-left text-sm flex items-center gap-3 transition-colors ${
+                      theme === key
+                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
+                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-white'
+                    }`}
+                  >
+                    <Icon icon={themeIcons[key as Theme]} className="w-4 h-4 flex-shrink-0" />
+                    {name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </nav>
 
       {/* Main Content */}
-      <div className={`${isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'} flex-1 min-w-0`}>
-        <div className="pt-10 h-full">
+      <main className={`${isSidebarCollapsed ? 'lg:ml-14' : 'lg:ml-64'} flex-1 min-w-0 transition-all duration-300 ease-in-out`}>
+        <div className="h-full bg-white dark:bg-gray-900 lg:rounded-tl-xl lg:border-l lg:border-gray-200 lg:dark:border-gray-700">
+          <div className="p-6 lg:p-8">
             {activeTab === 'manage-novels' && (
               <NovelManagement />
             )}
@@ -274,8 +292,9 @@ export default function AuthorDashboard() {
             {activeTab === 'links' && (
               <TranslatorLinks />
             )}
+          </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 } 
