@@ -110,10 +110,10 @@ export default function NovelCard({ novel, onEdit, onDelete }: NovelCardProps) {
             )}
           </div>
 
-          {/* Footer: Last Updated */}
+          {/* Footer: Created */}
           <div className="flex items-center justify-end text-xs text-muted-foreground border-t border-border/50 px-2 sm:px-3 py-1">
             <span className="text-xs">
-              {formatDate(novel.updated_at)}
+              {formatDate(novel.created_at)}
             </span>
           </div>
         </div>
