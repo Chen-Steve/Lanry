@@ -153,12 +153,11 @@ export default function AuthorDashboard() {
           <div className="space-y-1">
             <button
               onClick={() => setActiveTab('manage-novels')}
-              className={`${isSidebarCollapsed ? 'mx-2' : 'mx-2'} flex items-center justify-start rounded-md text-sm font-medium transition-all duration-300 ${
+              className={`mx-2 flex items-center justify-start rounded-md text-sm font-medium transition-all duration-300 py-2 px-2.5 ${
                 activeTab === 'manage-novels'
                   ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
                   : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-white'
               }`}
-              style={{ paddingTop: '8px', paddingBottom: '8px', paddingLeft: '10px', paddingRight: '12px' }}
               title={isSidebarCollapsed ? 'Manage Novels' : undefined}
             >
               <Icon icon="mdi:bookshelf" className="w-5 h-5 flex-shrink-0" />
@@ -169,12 +168,11 @@ export default function AuthorDashboard() {
             
             <button
               onClick={() => setActiveTab('purchases')}
-              className={`${isSidebarCollapsed ? 'mx-2' : 'mx-2'} flex items-center justify-start rounded-md text-sm font-medium transition-all duration-300 ${
+              className={`mx-2 flex items-center justify-start rounded-md text-sm font-medium transition-all duration-300 py-2 px-2.5 ${
                 activeTab === 'purchases'
                   ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
                   : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-white'
               }`}
-              style={{ paddingTop: '8px', paddingBottom: '8px', paddingLeft: '10px', paddingRight: '12px' }}
               title={isSidebarCollapsed ? 'Earnings History' : undefined}
             >
               <Icon icon="mdi:currency-usd" className="w-5 h-5 flex-shrink-0" />
@@ -185,12 +183,11 @@ export default function AuthorDashboard() {
             
             <button
               onClick={() => setActiveTab('comments')}
-              className={`${isSidebarCollapsed ? 'mx-2' : 'mx-2'} flex items-center justify-start rounded-md text-sm font-medium transition-all duration-300 ${
+              className={`mx-2 flex items-center justify-start rounded-md text-sm font-medium transition-all duration-300 py-2 px-2.5 ${
                 activeTab === 'comments'
                   ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
                   : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-white'
               }`}
-              style={{ paddingTop: '8px', paddingBottom: '8px', paddingLeft: '10px', paddingRight: '12px' }}
               title={isSidebarCollapsed ? 'Comments' : undefined}
             >
               <Icon icon="mdi:comment-text-multiple" className="w-5 h-5 flex-shrink-0" />
@@ -201,12 +198,11 @@ export default function AuthorDashboard() {
             
             <button
               onClick={() => setActiveTab('statistics')}
-              className={`${isSidebarCollapsed ? 'mx-2' : 'mx-2'} flex items-center justify-start rounded-md text-sm font-medium transition-all duration-300 ${
+              className={`mx-2 flex items-center justify-start rounded-md text-sm font-medium transition-all duration-300 py-2 px-2.5 ${
                 activeTab === 'statistics'
                   ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
                   : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-white'
               }`}
-              style={{ paddingTop: '8px', paddingBottom: '8px', paddingLeft: '10px', paddingRight: '12px' }}
               title={isSidebarCollapsed ? 'Statistics' : undefined}
             >
               <Icon icon="mdi:chart-bar" className="w-5 h-5 flex-shrink-0" />
@@ -217,12 +213,11 @@ export default function AuthorDashboard() {
             
             <button
               onClick={() => setActiveTab('links')}
-              className={`${isSidebarCollapsed ? 'mx-2' : 'mx-2'} flex items-center justify-start rounded-md text-sm font-medium transition-all duration-300 ${
+              className={`mx-2 flex items-center justify-start rounded-md text-sm font-medium transition-all duration-300 py-2 px-2.5 ${
                 activeTab === 'links'
                   ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
                   : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-white'
               }`}
-              style={{ paddingTop: '8px', paddingBottom: '8px', paddingLeft: '10px', paddingRight: '12px' }}
               title={isSidebarCollapsed ? 'Support Links' : undefined}
             >
               <Icon icon="mdi:link-variant" className="w-5 h-5 flex-shrink-0" />
@@ -238,12 +233,11 @@ export default function AuthorDashboard() {
           <div className="relative">
             <button
               onClick={() => setIsThemeDropdownOpen(!isThemeDropdownOpen)}
-              className={`${isSidebarCollapsed ? 'mx-2' : 'mx-2'} flex items-center justify-start rounded-md text-sm font-medium transition-all duration-300 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-white`}
-              style={{ paddingTop: '8px', paddingBottom: '8px' }}
+              className={`mx-2 flex items-center justify-start rounded-md text-sm font-medium transition-all duration-300 py-2 px-2.5 text-gray-600 dark:text-gray-300`}
               title={isSidebarCollapsed ? 'Theme Settings' : undefined}
             >
-              <Icon icon={themeIcons[theme]} className="w-5 h-5 flex-shrink-0" />
-              <span className={`transition-opacity duration-300 whitespace-nowrap ${isSidebarCollapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100 ml-3'}`}>
+              <Icon icon={themeIcons[theme]} className="w-5 h-5 flex-shrink-0 -ml-3 mr-3" />
+              <span className={`transition-opacity duration-300 whitespace-nowrap ${isSidebarCollapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'}`}>
                 Theme
               </span>
             </button>
