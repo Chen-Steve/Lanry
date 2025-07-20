@@ -8,6 +8,7 @@ import { deleteNovel } from '@/app/author/_services/novelUploadService';
 import { toast } from 'sonner';
 import NovelEditForm from './NovelEditForm';
 import ChapterEditForm from './ChapterEditForm';
+import NovelCard from './NovelCard';
 
 interface NovelWithChapters extends Novel {
   chapterCount: number;
@@ -34,20 +35,6 @@ const emptyNovel: NovelWithChapters = {
   is_author_name_custom: true
 };
 
-const ageRatingIcons = {
-  EVERYONE: 'mdi:account-multiple',
-  TEEN: 'mdi:account-school',
-  MATURE: 'mdi:account-alert',
-  ADULT: 'mdi:account-lock'
-} as const;
-
-const ageRatingLabels = {
-  EVERYONE: 'Everyone',
-  TEEN: 'Teen',
-  MATURE: 'Mature',
-  ADULT: 'Adult'
-} as const;
-
 export default function NovelManagement() {
   const [isLoading, setIsLoading] = useState(true);
   const [novels, setNovels] = useState<NovelWithChapters[]>([]);
@@ -55,7 +42,6 @@ export default function NovelManagement() {
   const [novelToDelete, setNovelToDelete] = useState<NovelWithChapters | null>(null);
   const [novelToEdit, setNovelToEdit] = useState<NovelWithChapters | null>(null);
   const [view, setView] = useState<'list' | 'edit' | 'chapter'>('list');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [chapterEditData, setChapterEditData] = useState<{
     novelId: string;
     chapterId?: string;
@@ -80,8 +66,9 @@ export default function NovelManagement() {
     }
   };
 
-  const handleEditClick = (novel: NovelWithChapters) => {
-    setNovelToEdit(novel);
+  const handleEditClick = (novel: Novel) => {
+    const novelWithChapters = novel as NovelWithChapters;
+    setNovelToEdit(novelWithChapters);
     setView('edit');
   };
 
@@ -144,6 +131,11 @@ export default function NovelManagement() {
     }
   };
 
+  const handleDeleteClick = (novel: Novel) => {
+    const novelWithChapters = novel as NovelWithChapters;
+    setNovelToDelete(novelWithChapters);
+  };
+
   if (view === 'chapter' && chapterEditData) {
     return (
       <ChapterEditForm
@@ -166,185 +158,141 @@ export default function NovelManagement() {
   }
 
   return (
-    <main className="space-y-4 sm:space-y-6 p-4 sm:p-8">
-      <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h1 className="text-xl sm:text-2xl font-bold text-foreground">Novel Management</h1>
+    <div className="max-w-7xl mx-auto">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center mb-2">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-lg sm:text-xl lg:text-2xl font-bold truncate">Novel Management</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+            Create and manage your novels
+            {filteredNovels.length > 0 && (
+              <span className="hidden sm:inline">
+                {` (${filteredNovels.length} novel${filteredNovels.length !== 1 ? 's' : ''})`}
+              </span>
+            )}
+          </p>
+          {/* Mobile-only count */}
+          {filteredNovels.length > 0 && (
+            <p className="text-xs text-muted-foreground mt-0.5 sm:hidden">
+              {filteredNovels.length} novel{filteredNovels.length !== 1 ? 's' : ''}
+            </p>
+          )}
+        </div>
         <button
-          className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
           onClick={() => {
             setNovelToEdit(emptyNovel);
             setView('edit');
           }}
+          className="flex items-center justify-center gap-2 bg-primary text-primary-foreground px-3 py-2 rounded-lg hover:bg-primary/90 active:bg-primary/95 transition-colors text-sm sm:text-base min-h-[44px] w-full sm:w-auto touch-manipulation"
         >
-          <Icon icon="mdi:plus" />
-          Add New Novel
+          <Icon icon="ph:plus" className="h-4 w-4 sm:h-5 sm:w-5" />
+          <span className="font-medium -mb-0.5">Create Novel</span>
         </button>
-      </header>
+      </div>
 
-      <section className="flex gap-4 items-center">
-        <div className="relative flex-1">
-          <Icon 
-            icon="mdi:magnify" 
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-          />
+      {/* Search Bar */}
+      <div className="mb-4 sm:mb-2">
+        <div className="relative">
+          <Icon icon="ph:magnifying-glass" className="h-4 w-4 sm:h-5 sm:w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
-            placeholder="Search novels..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 bg-background text-foreground placeholder:text-muted-foreground text-sm sm:text-base"
+            placeholder="Search novels..."
+            className="w-full pl-10 sm:pl-11 pr-4 py-2 sm:py-2.5 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm sm:text-base min-h-[40px] sm:min-h-[44px] touch-manipulation"
           />
         </div>
-        <div className="flex border border-border rounded-lg overflow-hidden">
-          <button
-            className={`p-2 flex items-center justify-center ${viewMode === 'grid' ? 'bg-primary text-primary-foreground' : 'bg-background text-foreground hover:bg-accent/50'}`}
-            onClick={() => setViewMode('grid')}
-            aria-label="Grid view"
-          >
-            <Icon icon="mdi:grid" className="w-5 h-5" />
-          </button>
-          <button
-            className={`p-2 flex items-center justify-center ${viewMode === 'list' ? 'bg-primary text-primary-foreground' : 'bg-background text-foreground hover:bg-accent/50'}`}
-            onClick={() => setViewMode('list')}
-            aria-label="List view"
-          >
-            <Icon icon="mdi:format-list-bulleted" className="w-5 h-5" />
-          </button>
-        </div>
-      </section>
+      </div>
 
-      <section className={`${viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3' : 'flex flex-col gap-0 divide-y divide-border'}`}>
-        {isLoading ? (
-          <div className="col-span-full py-12 text-center">
-            <Icon icon="mdi:loading" className="animate-spin text-3xl text-primary/60" />
+      {/* Loading State */}
+      {isLoading && (
+        <div className="flex items-center justify-center py-8 sm:py-12">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-primary mx-auto mb-3 sm:mb-4"></div>
+            <p className="text-muted-foreground text-xs sm:text-sm">Loading novels...</p>
           </div>
-        ) : filteredNovels.length > 0 ? (
-          filteredNovels.map((novel) => (
-            <article key={novel.id} className={`relative ${viewMode === 'grid' 
-              ? 'flex gap-3 bg-background hover:bg-accent/50 p-2 xs:p-2.5 sm:p-3 border border-border rounded-lg' 
-              : 'flex flex-row gap-2 bg-background hover:bg-accent/50 p-1.5 xs:p-2 sm:p-2.5 border-0 first:rounded-t-lg last:rounded-b-lg'}`}>
-              <button 
-                className="absolute top-1 xs:top-1.5 right-1 xs:right-1.5 p-0.5 xs:p-1 text-muted-foreground hover:text-red-600 dark:hover:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-full transition-colors"
-                aria-label="Delete novel"
-                onClick={() => setNovelToDelete(novel)}
-              >
-                <Icon icon="mdi:delete" className="w-3 xs:w-3.5 sm:w-4 h-3 xs:h-3.5 sm:h-4" />
-              </button>
+        </div>
+      )}
 
-              <div className={`${viewMode === 'grid' 
-                ? 'w-[45px] xs:w-[50px] sm:w-[60px] h-[68px] xs:h-[75px] sm:h-[90px]' 
-                : 'w-[40px] xs:w-[45px] sm:w-[50px] h-[60px] xs:h-[68px] sm:h-[75px]'} flex-shrink-0`}>
-                {novel.coverImageUrl ? (
-                  <img
-                    src={novel.coverImageUrl}
-                    alt={novel.title}
-                    className="object-cover w-full h-full rounded border border-border"
-                  />
-                ) : (
-                  <div className="w-full h-full rounded border border-border bg-accent flex items-center justify-center">
-                    <span className="text-muted-foreground text-[10px] font-medium">No cover</span>
-                  </div>
+      {/* Novels Grid */}
+      {!isLoading && (
+        <>
+          {filteredNovels.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1 sm:gap-2 lg:gap-2">
+              {filteredNovels.map((novel) => (
+                <NovelCard
+                  key={novel.id}
+                  novel={novel}
+                  onEdit={handleEditClick}
+                  onDelete={handleDeleteClick}
+                />
+              ))}
+            </div>
+          ) : (
+            /* Empty State */
+            <div className="col-span-full">
+              <div className="border border-dashed border-border rounded-lg p-4 sm:p-6 lg:p-12 text-center">
+                <Icon icon="ph:book" className="h-10 w-10 sm:h-12 sm:w-12 lg:h-16 lg:w-16 text-muted-foreground mx-auto mb-3 sm:mb-4 opacity-50" />
+                <h3 className="text-sm sm:text-base lg:text-lg font-semibold mb-2">
+                  {searchQuery ? 'No Novels Found' : 'No Novels Yet'}
+                </h3>
+                <p className="text-muted-foreground mb-4 sm:mb-6 text-xs sm:text-sm lg:text-base max-w-sm mx-auto leading-relaxed">
+                  {searchQuery 
+                    ? 'Try adjusting your search criteria.'
+                    : 'Start creating your first novel to see it here.'
+                  }
+                </p>
+                {!searchQuery && (
+                  <button 
+                    onClick={() => {
+                      setNovelToEdit(emptyNovel);
+                      setView('edit');
+                    }}
+                    className="inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 sm:px-6 py-3 rounded-lg hover:bg-primary/90 active:bg-primary/95 transition-colors text-sm sm:text-base min-h-[44px] w-full sm:w-auto touch-manipulation"
+                  >
+                    <Icon icon="ph:plus" className="h-4 w-4" />
+                    <span className="font-medium">Add Your First Novel</span>
+                  </button>
                 )}
               </div>
-
-              <div className={`flex-1 min-w-0 flex flex-col ${viewMode === 'grid' ? 'justify-between py-0.5' : 'justify-center py-0'}`}>
-                <div>
-                  <h2 className={`font-medium text-sm xs:text-base text-foreground ${viewMode === 'grid' ? 'mb-1 xs:mb-1.5' : 'mb-0.5 xs:mb-1'} pr-4 xs:pr-5 sm:pr-6 line-clamp-1`}>{novel.title}</h2>
-
-                  <div className={`flex flex-wrap items-center gap-1 ${viewMode === 'list' ? 'max-w-[650px]' : ''}`}>
-                    <span className="text-[10px] xs:text-xs text-muted-foreground">
-                      {novel.chapterCount} Chapters
-                    </span>
-
-                    <span className={`inline-flex items-center gap-0.5 xs:gap-1 px-1 xs:px-1.5 py-0.5 rounded-full text-[10px] xs:text-xs font-medium
-                      ${novel.status === 'ONGOING' ? 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300' :
-                        novel.status === 'COMPLETED' ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300' :
-                        novel.status === 'DROPPED' ? 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300' :
-                        novel.status === 'DRAFT' ? 'bg-gray-100 dark:bg-gray-900/50 text-gray-800 dark:text-gray-300' :
-                        'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-300'}`}>
-                      <Icon icon={
-                        novel.status === 'ONGOING' ? 'mdi:pencil' :
-                        novel.status === 'COMPLETED' ? 'mdi:check-circle' :
-                        novel.status === 'DROPPED' ? 'mdi:close-circle' :
-                        novel.status === 'DRAFT' ? 'mdi:file-document-outline' :
-                        'mdi:pause-circle'
-                      } className="w-2.5 xs:w-3 h-2.5 xs:h-3" />
-                      {novel.status}
-                    </span>
-
-                    <span className={`inline-flex items-center gap-0.5 xs:gap-1 px-1 xs:px-1.5 py-0.5 rounded-full text-[10px] xs:text-xs font-medium
-                      ${novel.ageRating === 'EVERYONE' ? 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300' :
-                        novel.ageRating === 'TEEN' ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300' :
-                        novel.ageRating === 'MATURE' ? 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-300' :
-                        'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300'}`}>
-                      <Icon icon={ageRatingIcons[novel.ageRating]} className="w-2.5 xs:w-3 h-2.5 xs:h-3" />
-                      {ageRatingLabels[novel.ageRating]}
-                    </span>
-                  </div>
-                </div>
-
-                <div className={`${viewMode === 'grid' ? 'flex gap-2 mt-2 xs:mt-2.5' : 'flex gap-2 mt-1 xs:mt-1.5'}`}>
-                  <button 
-                    className={`${viewMode === 'grid' 
-                      ? 'w-full px-3 xs:px-4 py-2 xs:py-2.5 text-sm sm:text-base' 
-                      : 'w-auto px-2 xs:px-3 py-1 xs:py-1.5 text-xs sm:text-sm'} font-medium text-primary bg-primary/10 hover:bg-primary/20 rounded-md transition-colors`}
-                    aria-label="Edit novel"
-                    onClick={() => handleEditClick(novel)}
-                  >
-                    Edit Novel & Chapters
-                  </button>
-                </div>
-              </div>
-            </article>
-          ))
-        ) : (
-          <p className="col-span-full py-12 text-center text-sm sm:text-base text-muted-foreground">
-            No novels found. Click &quot;Add New Novel&quot; to create one.
-          </p>
-        )}
-      </section>
+            </div>
+          )}
+        </>
+      )}
 
       {/* Delete Confirmation Modal */}
       {novelToDelete && (
         <div className="fixed inset-0 bg-foreground/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-background rounded-lg p-4 sm:p-6 max-w-sm w-full mx-auto shadow-xl border border-border">
-            <h3 className="text-base sm:text-lg font-medium text-foreground mb-3 sm:mb-4">Delete Novel</h3>
-            <p className="text-sm sm:text-base text-muted-foreground mb-4 sm:mb-6">
-              Are you sure you want to delete &quot;{novelToDelete.title}&quot;? This action cannot be undone.
+          <div className="bg-background rounded-lg p-4 sm:p-6 max-w-md w-full mx-auto shadow-xl border border-border">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex-shrink-0 w-10 h-10 bg-red-100 dark:bg-red-900/50 rounded-full flex items-center justify-center">
+                <Icon icon="ph:warning" className="h-5 w-5 text-red-600 dark:text-red-400" />
+              </div>
+              <div>
+                <h3 className="text-base sm:text-lg font-semibold text-foreground">Delete Novel</h3>
+                <p className="text-sm text-muted-foreground">This action cannot be undone</p>
+              </div>
+            </div>
+            <p className="text-sm sm:text-base text-muted-foreground mb-6 leading-relaxed">
+              Are you sure you want to delete <strong>&quot;{novelToDelete.title}&quot;</strong>? This will permanently remove the novel and all its chapters.
             </p>
-            <div className="flex justify-end gap-3">
+            <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end">
               <button
-                className="px-3 sm:px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-accent rounded-md transition-colors"
                 onClick={() => setNovelToDelete(null)}
+                className="px-4 py-2.5 text-sm font-medium text-foreground hover:bg-accent rounded-lg transition-colors min-h-[44px] touch-manipulation"
               >
                 Cancel
               </button>
               <button
-                className="px-3 sm:px-4 py-2 text-sm font-medium text-primary-foreground bg-red-600 dark:bg-red-700 hover:bg-red-700 dark:hover:bg-red-800 rounded-md transition-colors"
                 onClick={handleDeleteNovel}
+                className="px-4 py-2.5 text-sm font-medium text-white bg-red-600 dark:bg-red-700 hover:bg-red-700 dark:hover:bg-red-800 rounded-lg transition-colors min-h-[44px] touch-manipulation"
               >
-                Delete
+                Delete Novel
               </button>
             </div>
           </div>
         </div>
       )}
-
-      <footer className="flex justify-center items-center gap-2 py-4">
-        <button 
-          className="p-2 rounded-lg hover:bg-accent transition-colors"
-          aria-label="Previous page"
-        >
-          <Icon icon="mdi:chevron-left" className="text-xl text-foreground" />
-        </button>
-        <span className="px-4 py-2 text-sm sm:text-base text-foreground">Page 1 of 1</span>
-        <button 
-          className="p-2 rounded-lg hover:bg-accent transition-colors"
-          aria-label="Next page"
-        >
-          <Icon icon="mdi:chevron-right" className="text-xl text-foreground" />
-        </button>
-      </footer>
-    </main>
+    </div>
   );
 } 
