@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getNovelAnalytics } from '@/services/googleAnalyticsService';
-import supabase from '@/lib/supabaseClient';
+import { createServerClient } from '@/lib/supabaseServer';
+
+// This route relies on per-request query params, so we disable static rendering
+export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
@@ -31,6 +34,7 @@ export async function GET(request: NextRequest) {
     console.error('Error fetching analytics data:', error);
     
     // Fallback to database views if GA fails
+    const supabase = createServerClient();
     try {
       const { searchParams } = new URL(request.url);
       const novelIdsParam = searchParams.get('novelIds');
@@ -45,7 +49,7 @@ export async function GET(request: NextRequest) {
 
         if (dbError) throw dbError;
 
-        const fallbackData = novels?.map(novel => ({
+        const fallbackData = novels?.map((novel: { id: string; title: string; views: number | null }) => ({
           novelId: novel.id,
           title: novel.title,
           pageViews: novel.views || 0,
