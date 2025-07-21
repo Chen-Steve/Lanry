@@ -1,7 +1,25 @@
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createServerClient as createSSRClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
-// This is for use in server components
+// Shared helper to obtain a typed Supabase client inside server contexts (API routes & RSC)
 export function createServerClient() {
-  return createServerComponentClient({ cookies });
+  const cookieStore = cookies();
+
+  return createSSRClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value;
+        },
+        set() {
+          /* no-op: Readonly cookies cannot be modified in this context */
+        },
+        remove() {
+          /* no-op */
+        }
+      }
+    }
+  );
 } 
