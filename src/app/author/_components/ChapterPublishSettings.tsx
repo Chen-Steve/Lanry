@@ -338,7 +338,7 @@ export default function ChapterPublishSettings({
                 {!isIndefinitelyLocked && (
                   <div>
                     <div className="flex items-center gap-2">
-                      <Icon icon="ph:coins" className="w-5 h-5 text-primary" />
+                      <Icon icon="ph:stop-circle" className="w-5 h-5 text-primary" />
                       <h4 className="text-sm font-medium text-foreground">Cost</h4>
                     </div>
 

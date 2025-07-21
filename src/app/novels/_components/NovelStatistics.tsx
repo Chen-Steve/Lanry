@@ -6,21 +6,21 @@ const NovelStatistics = () => {
     {
       icon: 'ph:books-duotone',
       label: 'Total Novels',
-      value: 160,
+      value: 164,
       color: 'amber',
       bgImage: 'https://vkgkhipasxqxitwlktwz.supabase.co/storage/v1/object/public/stat-section/novels.jpg'
     },
     {
       icon: 'ph:book-bookmark-duotone',
       label: 'Total Chapters',
-      value: 10895,
+      value: 12300,
       color: 'amber',
       bgImage: 'https://vkgkhipasxqxitwlktwz.supabase.co/storage/v1/object/public/stat-section/chapters.avif'
     },
     {
       icon: 'ph:check-circle-duotone',
       label: 'Completed',
-      value: 42,
+      value: 47,
       color: 'amber',
       bgImage: 'https://vkgkhipasxqxitwlktwz.supabase.co/storage/v1/object/public/stat-section/completed.jpg'
     },

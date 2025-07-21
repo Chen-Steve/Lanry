@@ -226,7 +226,7 @@ export default function ChapterPurchaseButton({
         </>
       ) : (
         <>
-          <Icon icon="ph:coins" className="text-xl" />
+          <Icon icon="ph:stop-circle" className="text-xl" />
           <span>{coins} coins</span>
         </>
       )}

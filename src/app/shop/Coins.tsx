@@ -98,7 +98,7 @@ function PaymentModal({ isOpen, onClose, pkg, userId, isAuthenticated }: Payment
         </div>
         
         <div className="flex items-center gap-3 mb-4 p-3 bg-muted/50 rounded-lg">
-          <Icon icon="pepicons-print:coins" className="text-amber-500 text-2xl" />
+          <Icon icon="ph:stop-circle" className="text-amber-500 text-2xl" />
           <div>
             <div className="font-semibold">
               {pkg.id === 6 ? (
@@ -264,7 +264,7 @@ export default function Coins() {
             <div className="hidden md:flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-3">
-                  <Icon icon="pepicons-print:coins" className="text-amber-500 text-2xl" />
+                  <Icon icon="ph:stop-circle" className="text-amber-500 text-2xl" />
                   <div>
                     <div className="font-semibold text-lg">
                       {pkg.id === 6 ? (
@@ -300,7 +300,7 @@ export default function Coins() {
             <div className="md:hidden">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <Icon icon="pepicons-print:coins" className="text-amber-500 text-xl" />
+                  <Icon icon="ph:stop-circle" className="text-amber-500 text-xl" />
                   <div>
                     <div className="font-semibold">
                       {pkg.id === 6 ? (
