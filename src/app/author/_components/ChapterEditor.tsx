@@ -429,7 +429,7 @@ export default function ChapterEditor({
           </div>
         ) : (
           <>
-            <div className="relative">
+            <div className="relative h-full">
               <textarea
                 ref={textareaRef}
                 value={draftValue}
