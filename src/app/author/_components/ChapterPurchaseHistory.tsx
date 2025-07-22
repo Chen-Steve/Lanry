@@ -1,7 +1,10 @@
+'use client';
+
 import { useEffect, useState } from 'react';
 import supabase from '@/lib/supabaseClient';
 import { Icon } from '@iconify/react';
 import { formatDate } from '@/lib/utils';
+import PurchaseAnalytics from './PurchaseAnalytics';
 
 interface RawPurchaseRecord {
   id: string;
@@ -193,6 +196,10 @@ export default function ChapterPurchaseHistory() {
 
   return (
     <div className="min-w-0 w-full">
+      {/* Earnings overview charts */}
+      <PurchaseAnalytics />
+
+      {/* Existing purchase history list wrapper */}
       <div className="bg-background rounded-lg border border-border">
         <div className="p-3 border-b border-border bg-muted/30">
           <div className="flex items-center justify-between gap-2 min-w-0">

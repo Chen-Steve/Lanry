@@ -253,10 +253,17 @@ export default function NovelStatistics() {
     '#a855f7', '#ec4899', '#14b8a6', '#f59e0b', '#6366f1'
   ] as const;
 
+  // Generate distinct HSL colors when the preset palette runs out
+  const getColor = (idx: number): string => {
+    if (idx < chartColors.length) return chartColors[idx];
+    const hue = (idx * 137.508) % 360; // golden angle
+    return `hsl(${hue}, 65%, 55%)`;
+  };
+
   type ChartSlice = {
     title: string;
     value: number;
-    color: (typeof chartColors)[number];
+    color: string;
   };
 
   const chartData: ChartSlice[] = stats
@@ -264,7 +271,7 @@ export default function NovelStatistics() {
     .map((s, idx) => ({
       title: s.title,
       value: s.total_views,
-      color: chartColors[idx % chartColors.length],
+      color: getColor(idx),
     }));
 
   return (
@@ -430,7 +437,7 @@ export default function NovelStatistics() {
                     .map((s, idx) => ({
                       title: s.title,
                       value: s.views,
-                      color: chartColors[idx % chartColors.length],
+                      color: getColor(idx),
                     }))}
                   lineWidth={60}
                   style={{ width: 220, height: 220 }}
@@ -452,7 +459,7 @@ export default function NovelStatistics() {
                   .sort((a, b) => b.views - a.views)
                   .map((s, idx) => (
                     <li key={s.id} className="flex items-center gap-2">
-                      <span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: chartColors[idx % chartColors.length] }} />
+                      <span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: getColor(idx) }} />
                       <span className="flex-1 line-clamp-1" title={s.title}>{s.title}</span>
                       <span className="font-medium tabular-nums">{s.views.toLocaleString()}</span>
                     </li>
