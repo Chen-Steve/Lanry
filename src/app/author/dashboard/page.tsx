@@ -153,7 +153,7 @@ export default function AuthorDashboard() {
           <div className="space-y-1">
             <button
               onClick={() => setActiveTab('manage-novels')}
-              className={`mx-2 flex items-center justify-start rounded-md text-sm font-medium transition-all duration-300 py-2 px-2.5 ${
+              className={`w-full flex items-center justify-start rounded-md text-base font-medium transition-all duration-300 py-3 px-4 ${
                 activeTab === 'manage-novels'
                   ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
                   : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-white'
@@ -168,7 +168,7 @@ export default function AuthorDashboard() {
             
             <button
               onClick={() => setActiveTab('purchases')}
-              className={`mx-2 flex items-center justify-start rounded-md text-sm font-medium transition-all duration-300 py-2 px-2.5 ${
+              className={`w-full flex items-center justify-start rounded-md text-base font-medium transition-all duration-300 py-3 px-4 ${
                 activeTab === 'purchases'
                   ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
                   : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-white'
@@ -183,7 +183,7 @@ export default function AuthorDashboard() {
             
             <button
               onClick={() => setActiveTab('comments')}
-              className={`mx-2 flex items-center justify-start rounded-md text-sm font-medium transition-all duration-300 py-2 px-2.5 ${
+              className={`w-full flex items-center justify-start rounded-md text-base font-medium transition-all duration-300 py-3 px-4 ${
                 activeTab === 'comments'
                   ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
                   : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-white'
@@ -198,7 +198,7 @@ export default function AuthorDashboard() {
             
             <button
               onClick={() => setActiveTab('statistics')}
-              className={`mx-2 flex items-center justify-start rounded-md text-sm font-medium transition-all duration-300 py-2 px-2.5 ${
+              className={`w-full flex items-center justify-start rounded-md text-base font-medium transition-all duration-300 py-3 px-4 ${
                 activeTab === 'statistics'
                   ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
                   : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-white'
@@ -213,7 +213,7 @@ export default function AuthorDashboard() {
             
             <button
               onClick={() => setActiveTab('links')}
-              className={`mx-2 flex items-center justify-start rounded-md text-sm font-medium transition-all duration-300 py-2 px-2.5 ${
+              className={`w-full flex items-center justify-start rounded-md text-base font-medium transition-all duration-300 py-3 px-4 ${
                 activeTab === 'links'
                   ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
                   : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-white'

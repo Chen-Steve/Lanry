@@ -260,6 +260,12 @@ export default function NovelStatistics() {
     return `hsl(${hue}, 65%, 55%)`;
   };
 
+  // Ensure both GA and in-house charts use identical colours per novel
+  const colorMap = new Map<string, string>();
+  stats.forEach((s, idx) => {
+    colorMap.set(s.id, getColor(idx));
+  });
+  
   type ChartSlice = {
     title: string;
     value: number;
@@ -268,10 +274,10 @@ export default function NovelStatistics() {
 
   const chartData: ChartSlice[] = stats
     .filter(s => s.total_views > 0)
-    .map((s, idx) => ({
+    .map((s) => ({
       title: s.title,
       value: s.total_views,
-      color: getColor(idx),
+      color: colorMap.get(s.id) as string,
     }));
 
   return (
@@ -437,7 +443,7 @@ export default function NovelStatistics() {
                     .map((s, idx) => ({
                       title: s.title,
                       value: s.views,
-                      color: getColor(idx),
+                      color: colorMap.get(s.id) ?? getColor(idx),
                     }))}
                   lineWidth={60}
                   style={{ width: 220, height: 220 }}
@@ -459,7 +465,7 @@ export default function NovelStatistics() {
                   .sort((a, b) => b.views - a.views)
                   .map((s, idx) => (
                     <li key={s.id} className="flex items-center gap-2">
-                      <span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: getColor(idx) }} />
+                      <span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: colorMap.get(s.id) ?? getColor(idx) }} />
                       <span className="flex-1 line-clamp-1" title={s.title}>{s.title}</span>
                       <span className="font-medium tabular-nums">{s.views.toLocaleString()}</span>
                     </li>

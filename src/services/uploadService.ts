@@ -64,27 +64,12 @@ export async function uploadImage(file: File, userId: string | null, bucket: Ima
       throw new Error('Upload failed - no path returned');
     }
 
-    // Try to get transformed WebP version
-    try {
-      const { data: { publicUrl } } = supabase.storage
-        .from(bucket)
-        .getPublicUrl(data.path, {
-          transform: {
-            format: 'origin',
-            quality: 80,
-          },
-        });
-      
-      return publicUrl;
-    } catch (transformError) {
-      // If transformation fails, use original format
-      console.warn('Image transformation failed:', transformError);
-      const { data: { publicUrl } } = supabase.storage
-        .from(bucket)
-        .getPublicUrl(data.path);
-      
-      return publicUrl;
-    }
+    // Retrieve public URL without using the Image Transform service
+    const { data: { publicUrl } } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(data.path);
+
+    return publicUrl;
   } catch (error) {
     console.error('Error uploading image:', error);
     if (error instanceof Error) {
