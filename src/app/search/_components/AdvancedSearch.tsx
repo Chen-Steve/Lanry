@@ -3,12 +3,13 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Icon } from '@iconify/react';
 import type { Novel, Tag } from '@/types/database';
-import { NovelStatus } from '@prisma/client';
 import { debounce } from 'lodash';
 import { useSearchParams } from 'next/navigation';
 import TagSelector from './TagSelector';
 import CategorySelector from './CategorySelector';
 import NovelList from './NovelList';
+
+type NovelStatus = 'ONGOING' | 'COMPLETED' | 'HIATUS' | 'DROPPED' | 'DRAFT';
 
 interface SearchFilters {
   query: string;
@@ -39,6 +40,9 @@ export default function AdvancedSearch() {
   const authorInputRef = useRef<HTMLInputElement>(null);
   const authorDropdownRef = useRef<HTMLDivElement>(null);
   const [showFilters, setShowFilters] = useState(false);
+
+  // Available novel status options (excluding DRAFT as it is not shown in the UI)
+  const STATUS_OPTIONS: NovelStatus[] = ['ONGOING', 'COMPLETED', 'HIATUS', 'DROPPED'];
 
   // 2. On mount, set filters from URL (except tags, which are handled in tag loader)
   useEffect(() => {
@@ -362,25 +366,47 @@ export default function AdvancedSearch() {
                   </div>
                 </div>
 
-                {/* Status Filter */}
-                <div>
-                  <select
-                    value={filters.status || ''}
-                    onChange={e => setFilters(prev => ({ 
-                      ...prev, 
-                      status: e.target.value ? e.target.value as NovelStatus : undefined 
-                    }))}
-                    className="w-full px-3 py-1.5 bg-background text-foreground border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
-                    aria-label="Filter by novel status"
+                {/* Status Filter - button selections */}
+                <div className="flex flex-wrap gap-2" aria-label="Filter by novel status">
+                  {/* "Any" option */}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFilters(prev => ({
+                        ...prev,
+                        status: undefined,
+                      }))
+                    }
+                    className={`px-3 py-1.5 rounded-lg border hover:bg-accent transition-colors ${
+                      !filters.status
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-background text-foreground'
+                    }`}
                   >
-                    <option value="">Any status</option>
-                    <option value="ONGOING">Ongoing</option>
-                    <option value="COMPLETED">Completed</option>
-                    <option value="HIATUS">Hiatus</option>
-                    <option value="DROPPED">Dropped</option>
-                  </select>
-                </div>
+                    Any
+                  </button>
 
+                  {STATUS_OPTIONS.map(statusOption => (
+                    <button
+                      key={statusOption}
+                      type="button"
+                      onClick={() =>
+                        setFilters(prev => ({
+                          ...prev,
+                          // Toggle if the same status is clicked again
+                          status: prev.status === statusOption ? undefined : statusOption,
+                        }))
+                      }
+                      className={`px-3 py-1.5 rounded-lg border capitalize hover:bg-accent transition-colors ${
+                        filters.status === statusOption
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-background text-foreground'
+                      }`}
+                    >
+                      {statusOption.toLowerCase()}
+                    </button>
+                  ))}
+                </div>
                 {/* Category Filter */}
                 <div>
                   <CategorySelector
