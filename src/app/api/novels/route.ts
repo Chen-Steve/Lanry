@@ -1,120 +1,117 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { Prisma, NovelStatus } from '@prisma/client';
 import { generateNovelSlug } from '@/lib/utils';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { createServerClient } from '@/lib/supabaseServer';
 
-// Use Prisma's generated types
-type NovelData = Prisma.NovelCreateInput;
+// Mark this route as dynamic so it is never cached at build time
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+// Valid statuses we accept from the client
+const VALID_STATUSES = ['ONGOING', 'COMPLETED', 'HIATUS', 'DROPPED', 'DRAFT'] as const;
+type NovelStatus = typeof VALID_STATUSES[number];
+
+interface CreateNovelPayload {
+  title: string;
+  author: string;
+  description: string;
+  status: NovelStatus | string;
+}
 
 export async function POST(request: Request) {
   try {
-    const cookieStore = cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
-    
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    const body = await request.json();
+    const supabase = createServerClient();
+
+    // Obtain current session (may be null for anonymous)
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    const body = (await request.json()) as Partial<CreateNovelPayload>;
     const { title, author, description, status } = body;
 
+    // Basic validation
     if (!title || !author || !description || !status) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    if (!VALID_STATUSES.includes(status.toUpperCase() as NovelStatus)) {
+      return NextResponse.json({ error: 'Invalid status' }, { status: 422 });
     }
 
     const slug = generateNovelSlug(title);
 
-    const novelData: NovelData = {
+    // Assemble row to insert
+    const novelData: Record<string, unknown> = {
       title,
       author,
       description,
-      status: status.toUpperCase() as NovelStatus,
+      status: status.toUpperCase(),
       slug,
     };
 
+    // If a user is signed in, associate the profile as author
     if (session?.user) {
-      novelData.authorProfile = {
-        connect: {
-          id: session.user.id
-        }
-      };
+      novelData.author_profile_id = session.user.id;
     }
 
-    const novel = await prisma.novel.create({
-      data: novelData,
-    });
+    // Insert and return the created row
+    const { data, error } = await supabase
+      .from('novels')
+      .insert([novelData])
+      .select('*')
+      .single();
 
-    return NextResponse.json(novel);
+    if (error) {
+      console.error('Supabase error creating novel:', error);
+      return NextResponse.json({ error: 'Database operation failed' }, { status: 400 });
+    }
+
+    return NextResponse.json(data);
   } catch (error) {
     console.error('Error creating novel:', error);
-    
-    if (error instanceof Prisma.PrismaClientInitializationError) {
-      return NextResponse.json(
-        { error: 'Database connection error' },
-        { status: 503 }
-      );
-    }
-
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === 'P2025') {
-        return NextResponse.json(
-          { error: 'Author profile not found' },
-          { status: 404 }
-        );
-      }
-      return NextResponse.json(
-        { error: 'Database operation failed' },
-        { status: 400 }
-      );
-    }
-
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
 export async function GET() {
   try {
-    const novels = await prisma.novel.findMany({
-      where: {
-        status: {
-          not: 'DRAFT'
-        }
-      },
-      include: {
-        _count: {
-          select: { chapters: true },
-        },
-        chapters: {
-          orderBy: {
-            createdAt: 'desc',
-          },
-          take: 1,
-        },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
+    const supabase = createServerClient();
+
+    // Fetch novels and their latest chapter (if any)
+    const { data: novels, error } = await supabase
+      .from('novels')
+      .select(
+        `*,
+        chapters:chapters (
+          id,
+          created_at
+        )`
+      )
+      .neq('status', 'DRAFT');
+
+    if (error) {
+      console.error('Supabase error fetching novels:', error);
+      return NextResponse.json({ error: 'Error fetching novels' }, { status: 500 });
+    }
+
+    if (!novels) return NextResponse.json([]);
+
+    // Sort by latest chapter date (fallback to novel creation date) without using `any`
+    interface NovelRow {
+      created_at: string;
+      chapters?: { created_at: string }[];
+      // allow any additional properties but keep type-safe parts we need
+      [key: string]: unknown;
+    }
+
+    const sorted = (novels as NovelRow[]).sort((a, b) => {
+      const aLatestDate = a.chapters?.[0]?.created_at ?? a.created_at;
+      const bLatestDate = b.chapters?.[0]?.created_at ?? b.created_at;
+
+      return new Date(bLatestDate).getTime() - new Date(aLatestDate).getTime();
     });
 
-    // Sort novels by latest chapter date, falling back to novel creation date
-    const sortedNovels = novels.sort((a, b) => {
-      const aLatestChapter = a.chapters[0]?.createdAt;
-      const bLatestChapter = b.chapters[0]?.createdAt;
-      
-      if (!aLatestChapter && !bLatestChapter) return 0;
-      if (!aLatestChapter) return 1;
-      if (!bLatestChapter) return -1;
-      
-      return bLatestChapter.getTime() - aLatestChapter.getTime();
-    });
-
-    return NextResponse.json(sortedNovels);
+    return NextResponse.json(sorted);
   } catch (error) {
     console.error('Error fetching novels:', error);
     return NextResponse.json({ error: 'Error fetching novels' }, { status: 500 });
