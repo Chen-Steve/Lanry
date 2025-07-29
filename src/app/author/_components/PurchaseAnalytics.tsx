@@ -1,37 +1,8 @@
 "use client";
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import supabase from '@/lib/supabaseClient';
-import { PieChart } from 'react-minimal-pie-chart';
 import { Icon } from '@iconify/react';
-import {
-  Chart,
-  BarController,
-  BarElement,
-  CategoryScale,
-  LinearScale,
-  Tooltip,
-  Legend,
-  ChartOptions,
-  ChartData,
-} from 'chart.js';
-
-// Register Chart.js components (safe to call multiple times)
-Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend);
-
-// Shared color palette for charts
-const CHART_COLORS: readonly string[] = [
-  '#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6',
-  '#a855f7', '#ec4899', '#14b8a6', '#f59e0b', '#6366f1',
-] as const;
-
-// Generate distinct HSL colors beyond the preset palette
-const getColor = (idx: number): string => {
-  if (idx < CHART_COLORS.length) return CHART_COLORS[idx];
-  // Use golden-angle to distribute hues
-  const hue = (idx * 137.508) % 360; // golden angle in degrees
-  return `hsl(${hue}, 65%, 55%)`;
-};
 
 // Utility to format Date -> YYYY-MM (e.g., 2025-07)
 const toYearMonth = (iso: string) => iso.slice(0, 7);
@@ -50,26 +21,17 @@ interface RevenueByMonth {
 export default function PurchaseAnalytics() {
   const [novelData, setNovelData] = useState<RevenueByNovel[]>([]);
   const [monthlyData, setMonthlyData] = useState<RevenueByMonth[]>([]);
+  const [coinBalance, setCoinBalance] = useState<number>(0);
+  const [perNovelMonth, setPerNovelMonth] = useState<Record<string, Record<string, number>>>({});
+  const [showMonthly, setShowMonthly] = useState(false);
+  // Removed monthlyData and matrix persistence
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const chartRef = useRef<Chart | null>(null);
+  // Removed Chart.js refs as we no longer render the bar chart
+  // Removed PerNovelMatrix as bar chart was removed
 
-  // Store per-novel month revenue matrix between renders
-  interface PerNovelMatrix {
-    perNovelMonth: Record<string, Record<string, number>>;
-    monthArray: RevenueByMonth[];
-    novelArray: RevenueByNovel[];
-  }
-  const perNovelMonthRef = useRef<PerNovelMatrix | null>(null);
-
-  // Destroy chart on unmount
-  useEffect(() => {
-    return () => {
-      chartRef.current?.destroy();
-    };
-  }, []);
+  // No Chart.js instance to destroy anymore
 
   // Fetch & process revenue data
   useEffect(() => {
@@ -79,6 +41,15 @@ export default function PurchaseAnalytics() {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('Not authenticated');
 
+        // Fetch profile to get current coin balance
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('coins')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        setCoinBalance(profile?.coins ?? 0);
+
         // Fetch novels the author/translator owns
         const { data: novels } = await supabase
           .from('novels')
@@ -87,7 +58,7 @@ export default function PurchaseAnalytics() {
 
         if (!novels || novels.length === 0) {
           setNovelData([]);
-          setMonthlyData([]);
+          // Removed monthlyData and matrix persistence
           return;
         }
 
@@ -100,7 +71,7 @@ export default function PurchaseAnalytics() {
         let from = 0;
         const aggregatedNovel: Record<string, number> = {}; // novelId -> revenue
         const aggregatedMonth: Record<string, number> = {}; // YYYY-MM -> revenue
-        const perNovelMonth: Record<string, Record<string, number>> = {}; // novelId -> {month -> revenue}
+        const perNovel: Record<string, Record<string, number>> = {}; // novelId -> {month: revenue}
 
         while (true) {
           const { data, error: batchErr, count } = await supabase
@@ -120,9 +91,9 @@ export default function PurchaseAnalytics() {
             // Per-month aggregation
             const ym = toYearMonth(row.created_at);
             aggregatedMonth[ym] = (aggregatedMonth[ym] || 0) + revenue;
-            // Matrix aggregation
-            if (!perNovelMonth[row.novel_id]) perNovelMonth[row.novel_id] = {};
-            perNovelMonth[row.novel_id][ym] = (perNovelMonth[row.novel_id][ym] || 0) + revenue;
+            // Per novel-month aggregation
+            if (!perNovel[row.novel_id]) perNovel[row.novel_id] = {};
+            perNovel[row.novel_id][ym] = (perNovel[row.novel_id][ym] || 0) + revenue;
           }
 
           from += batchSize;
@@ -140,9 +111,7 @@ export default function PurchaseAnalytics() {
 
         setNovelData(novelArray);
         setMonthlyData(monthArray);
-
-        // Save matrix into ref for chart effect (simple solution: attach to window property)
-        perNovelMonthRef.current = { perNovelMonth, monthArray, novelArray };
+        setPerNovelMonth(perNovel);
       } catch (err) {
         console.error('Error fetching revenue analytics:', err);
         setError(err instanceof Error ? err.message : 'Failed to load analytics');
@@ -152,67 +121,7 @@ export default function PurchaseAnalytics() {
     })();
   }, []);
 
-  // Draw / update monthly bar chart when data ready
-  useEffect(() => {
-    if (!canvasRef.current) return;
-    if (!monthlyData.length) return;
-
-    // Destroy previous instance if exists
-    if (chartRef.current) chartRef.current.destroy();
-
-    // Convert YYYY-MM -> "MonthName - Year" (e.g., "July - 2025")
-    const labels = monthlyData.map(d => {
-      const [year, month] = d.month.split('-');
-      const date = new Date(Number(year), Number(month) - 1);
-      const monthName = date.toLocaleString('default', { month: 'short' });
-      return `${monthName} - ${year}`;
-    });
-
-    // Build stacked datasets (one per novel)
-    const matrix = perNovelMonthRef.current;
-    if (!matrix) return;
-
-    const datasets = matrix.novelArray.map((novel, idx) => {
-      const monthMap = matrix.perNovelMonth[novel.id] || {};
-      const dataArr = matrix.monthArray.map(m => +((monthMap[m.month] || 0).toFixed(2)));
-      return {
-        label: novel.title,
-        data: dataArr,
-        backgroundColor: getColor(idx),
-        stack: 'total',
-      };
-    });
-
-    const data: ChartData<'bar'> = { labels, datasets };
-
-    const options: ChartOptions<'bar'> = {
-      responsive: true,
-      plugins: {
-        legend: { display: true, position: 'bottom' },
-        tooltip: {
-          callbacks: {
-            label: ctx => `$${ctx.parsed.y.toFixed(2)}`,
-          },
-        },
-      },
-      scales: {
-        x: { stacked: true },
-        y: {
-          stacked: true,
-          beginAtZero: true,
-          ticks: {
-            callback: value => `$${value}`,
-          },
-        },
-      },
-    };
-
-    chartRef.current = new Chart(canvasRef.current, {
-      type: 'bar',
-      data,
-      options,
-    });
-  }, [monthlyData]);
+  // Removed bar chart effect – now we only show the pie chart
 
   if (isLoading) {
     return (
@@ -238,60 +147,63 @@ export default function PurchaseAnalytics() {
     return null; // Nothing to show
   }
 
-  // Prepare pie chart slices (reuse colors from NovelStatistics)
-  const pieData = novelData.map((d, idx) => ({
-    title: d.title,
-    value: +(d.revenue.toFixed(2)),
-    color: getColor(idx),
-  }));
-
-  // Sum totals for display
   const totalRevenue = novelData.reduce((sum, n) => sum + n.revenue, 0);
+
+  // Helper to convert YYYY-MM to "Mon YYYY"
+  const prettyMonth = (ym: string) => {
+    const [year, month] = ym.split('-');
+    const date = new Date(Number(year), Number(month) - 1);
+    return date.toLocaleString('default', { month: 'short', year: 'numeric' });
+  };
 
   return (
     <section className="mb-10">
-      <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-        Earnings Overview
-        <span className="text-sm font-normal text-muted-foreground">(after 30% platform fee)</span>
-      </h2>
+      <h2 className="text-xl font-semibold mb-6">Earnings Overview</h2>
 
-      {/* Pie chart / legend */}
-      <div className="flex flex-col md:flex-row items-center gap-6 mb-8">
-        <div className="relative" style={{ width: 220, height: 220 }}>
-          <PieChart
-            data={pieData}
-            lineWidth={60}
-            style={{ width: 220, height: 220 }}
-            animate
-          />
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <span className="text-lg font-semibold bg-background/80 px-2 py-1 rounded-lg shadow">
-              ${totalRevenue.toFixed(2)}
-            </span>
-          </div>
+      {/* Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+        <div className="p-4 rounded-lg bg-muted flex items-center justify-between">
+          <span className="text-sm font-medium text-muted-foreground">Current Balance</span>
+          <span className="text-2xl font-semibold tabular-nums">{coinBalance}</span>
         </div>
-
-        <div className="flex-1 max-w-md w-full">
-          <h3 className="text-lg font-medium mb-2">Revenue by Novel</h3>
-          <ul className="space-y-1 max-h-[240px] overflow-auto pr-2 text-sm">
-            {pieData.map(d => (
-              <li key={d.title} className="flex items-center gap-2">
-                <span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: d.color }} />
-                <span className="flex-1 line-clamp-1" title={d.title}>{d.title}</span>
-                <span className="font-medium tabular-nums">${d.value.toFixed(2)}</span>
-              </li>
-            ))}
-          </ul>
+        <div className="p-4 rounded-lg bg-muted flex items-center justify-between">
+          <span className="text-sm font-medium text-muted-foreground">Lifetime Earnings</span>
+          <span className="text-2xl font-semibold tabular-nums">${totalRevenue.toFixed(2)}</span>
         </div>
       </div>
 
-      {/* Monthly bar chart */}
+      {/* Monthly earnings table */}
       {monthlyData.length > 0 && (
-        <div className="mt-8">
-          <h3 className="text-lg font-medium mb-4">Monthly Revenue</h3>
-          <div className="w-full overflow-x-auto">
-            <canvas ref={canvasRef} height={100} />
-          </div>
+        <div className="max-w-2xl w-full">
+          <button
+            onClick={() => setShowMonthly(p => !p)}
+            className="flex items-center justify-between w-full px-3 py-2 bg-muted rounded-lg hover:bg-muted/70 transition-colors"
+          >
+            <span className="text-lg font-medium">Monthly Earnings</span>
+            <Icon icon={showMonthly ? 'mdi:chevron-up' : 'mdi:chevron-down'} className="text-xl" />
+          </button>
+
+          {showMonthly && (
+            <div className="border rounded-lg mt-3 overflow-hidden divide-y">
+              {monthlyData.map(m => (
+                <div key={m.month} className="p-3 bg-background/50">
+                  <div className="font-medium mb-2 text-muted-foreground">{prettyMonth(m.month)}</div>
+                  <ul className="space-y-0.5 text-sm ml-2">
+                    {novelData.map(novel => {
+                      const amount = perNovelMonth[novel.id]?.[m.month] ?? 0;
+                      if (amount === 0) return null;
+                      return (
+                        <li key={novel.id} className="flex justify-between">
+                          <span>{novel.title}</span>
+                          <span className="tabular-nums">${amount.toFixed(2)}</span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </section>

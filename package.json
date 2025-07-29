@@ -23,11 +23,10 @@
     "@types/turndown": "^5.0.5",
     "@types/uuid": "^10.0.0",
     "autoprefixer": "^10.4.20",
-    "chart.js": "^4.5.0",
+    "es-toolkit": "^1.39.8",
     "googleapis": "^152.0.0",
     "html-to-text": "^9.0.5",
     "jszip": "^3.10.1",
-    "lodash": "^4.17.21",
     "mammoth": "^1.9.1",
     "nanoid": "^5.0.6",
     "next": "^14.2.25",
@@ -41,7 +40,6 @@
     "uuid": "^11.1.0"
   },
   "devDependencies": {
-    "@types/lodash": "^4.17.13",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",

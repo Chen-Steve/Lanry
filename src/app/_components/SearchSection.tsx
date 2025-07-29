@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import debounce from 'lodash/debounce';
+import { debounce } from 'es-toolkit';
 import type { Novel } from '@/types/database';
 import { Icon } from '@iconify/react';
 

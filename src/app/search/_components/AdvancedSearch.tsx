@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Icon } from '@iconify/react';
 import type { Novel, Tag } from '@/types/database';
-import { debounce } from 'lodash';
+import { debounce } from 'es-toolkit';
 import { useSearchParams } from 'next/navigation';
 import TagSelector from './TagSelector';
 import CategorySelector from './CategorySelector';
