@@ -9,7 +9,6 @@ import { toast } from 'sonner';
 import { getNovel, toggleBookmark } from '@/services/novelService';
 import { NovelContent } from '@/app/novels/[id]/_components/NovelContent';
 import AdultContentWarning from './_components/AdultContentWarning';
-import { generateUUID } from '@/lib/utils';
 import { event as gaEvent } from '@/lib/gtag';
 
 export default function NovelPage({ params }: { params: { id: string } }) {
@@ -46,23 +45,11 @@ export default function NovelPage({ params }: { params: { id: string } }) {
             value: 1
           });
           
-          // Log the view in novel_view_logs and increment the views counter
-          const [{ error: viewLogError }] = await Promise.all([
-            supabase
-              .from('novel_view_logs')
-              .insert({
-                id: generateUUID(),
-                novel_id: data.id,
-                created_at: new Date().toISOString(),
-                viewed_at: new Date().toISOString()
-              }),
-            fetch(`/api/novels/${data.id}/views`, {
-              method: 'POST'
-            })
-          ]);
-
-          if (viewLogError) {
-            console.error('Error logging view:', viewLogError);
+          // Increment the view counter (logs are handled server-side)
+          try {
+            await fetch(`/api/novels/${data.id}/views`, { method: 'POST' });
+          } catch (err) {
+            console.error('Failed to increment novel views:', err);
           }
         }
       } catch (error) {

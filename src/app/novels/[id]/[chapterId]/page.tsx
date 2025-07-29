@@ -15,7 +15,6 @@ import ChapterNavigation from './_components/navigation/ChapterNavigation';
 import ChapterComments from './_components/interaction/comments/ChapterComments';
 import ChapterPurchaseButton from './_components/interaction/ChapterPurchaseButton';
 import PullToLoadNext from './_components/navigation/PullToLoadNext';
-import { generateUUID } from '@/lib/utils';
 
 interface ChapterNavigation {
   prevChapter: { id: string; chapter_number: number; part_number?: number | null; title: string } | null;
@@ -163,26 +162,15 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
 
   useEffect(() => {
     if (!chapter || chapter.isLocked) return;
-    // Log the view in novel_view_logs and increment the views counter
+    // Increment the novel view counter
     const logView = async () => {
       try {
         const novelUUID = chapter.novel.id;
-        const [{ error: viewLogError }] = await Promise.all([
-          supabase
-            .from('novel_view_logs')
-            .insert({
-              id: generateUUID(),
-              novel_id: novelUUID,
-              created_at: new Date().toISOString(),
-              viewed_at: new Date().toISOString()
-            }),
-          fetch(`/api/novels/${novelUUID}/views`, {
-            method: 'POST'
-          })
-        ]);
-        if (viewLogError) console.error('ViewLog Insert Error:', viewLogError);
+        await fetch(`/api/novels/${novelUUID}/views`, {
+          method: 'POST'
+        });
       } catch (error) {
-        console.error('Error logging/incrementing novel view from chapter page:', error);
+        console.error('Error incrementing novel view from chapter page:', error);
       }
     };
     logView();

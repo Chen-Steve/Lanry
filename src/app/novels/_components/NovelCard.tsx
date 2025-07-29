@@ -47,16 +47,6 @@ const NovelCard = ({
     fetchData();
   }, [novel.id, chapterCount]);
 
-  const handleClick = async () => {
-    try {
-      await fetch(`/api/novels/${novel.id}/views`, {
-        method: 'POST',
-      });
-    } catch (error) {
-      console.error('Failed to increment views:', error);
-    }
-  };
-
   // Find yaoi/yuri category if it exists and only if there are chapters
   const category = totalChapters > 0 ? novel.categories?.find(cat => 
     cat.name.toLowerCase() === 'yaoi' || cat.name.toLowerCase() === 'yuri'
@@ -66,7 +56,6 @@ const NovelCard = ({
     <Link 
       href={`/novels/${novel.slug}`} 
       className={`block hover:bg-accent rounded-lg transition-colors ${className}`}
-      onClick={handleClick}
     >
       <div className="flex flex-col">
         <NovelCover 
