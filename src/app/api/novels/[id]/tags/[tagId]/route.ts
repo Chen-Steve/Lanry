@@ -1,8 +1,5 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
-import { Prisma } from '@prisma/client';
+import { createServerClient } from '@/lib/supabaseServer';
 
 // DELETE /api/novels/[id]/tags/[tagId]
 export async function DELETE(
@@ -10,9 +7,9 @@ export async function DELETE(
   { params }: { params: { id: string; tagId: string } }
 ) {
   try {
-    const supabase = createRouteHandlerClient({ cookies });
-    
-    // Get the authorization header
+    const supabase = createServerClient();
+
+    // Validate bearer token
     const authHeader = request.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
       return NextResponse.json(
@@ -31,28 +28,23 @@ export async function DELETE(
       );
     }
 
-    await prisma.tagsOnNovels.delete({
-      where: {
-        novelId_tagId: {
-          novelId: params.id,
-          tagId: params.tagId
-        }
-      }
-    });
+    // Idempotent delete – succeeds whether a row existed or not
+    const { error: deleteError } = await supabase
+      .from('tags_on_novels')
+      .delete()
+      .eq('novel_id', params.id)
+      .eq('tag_id', params.tagId);
+
+    if (deleteError) {
+      throw deleteError;
+    }
 
     return NextResponse.json({ success: true });
-  } catch (err: unknown) {
-    const error = err as Error;
+  } catch (error) {
     console.error('Error removing tag:', error);
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
-      return NextResponse.json(
-        { error: 'Tag not found on novel' },
-        { status: 404 }
-      );
-    }
     return NextResponse.json(
       { error: 'Failed to remove tag' },
       { status: 500 }
     );
   }
-} 
+}

@@ -1,14 +1,20 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { createServerClient } from '@/lib/supabaseServer';
+import { randomUUID } from 'crypto';
 
 // GET /api/tags
 export async function GET() {
   try {
-    const tags = await prisma.tag.findMany({
-      orderBy: { name: 'asc' }
-    });
+    const supabase = createServerClient();
+    const { data: tags, error } = await supabase
+      .from('tags')
+      .select('*')
+      .order('name');
+
+    if (error) {
+      throw error;
+    }
+
     return NextResponse.json(tags);
   } catch (error) {
     console.error('Error fetching tags:', error);
@@ -22,7 +28,7 @@ export async function GET() {
 // POST /api/tags
 export async function POST(request: Request) {
   try {
-    const supabase = createRouteHandlerClient({ cookies });
+    const supabase = createServerClient();
     
     // Get the authorization header
     const authHeader = request.headers.get('Authorization');
@@ -52,18 +58,42 @@ export async function POST(request: Request) {
       );
     }
 
-    const tag = await prisma.tag.create({
-      data: {
+    // Check if a tag with the same name already exists (case-insensitive)
+    const { data: existingTag } = await supabase
+      .from('tags')
+      .select('id')
+      .ilike('name', name.trim())
+      .maybeSingle();
+
+    if (existingTag) {
+      return NextResponse.json(
+        { error: 'A tag with this name already exists' },
+        { status: 400 }
+      );
+    }
+
+    // Create new tag with UUID
+    const { data: tag, error: insertError } = await supabase
+      .from('tags')
+      .insert([{
+        id: randomUUID(),
         name: name.trim(),
-        description: description?.trim()
-      }
-    });
+        description: description?.trim(),
+        updated_at: new Date().toISOString()
+      }])
+      .select()
+      .single();
+
+    if (insertError) {
+      throw insertError;
+    }
 
     return NextResponse.json(tag);
   } catch (error) {
     console.error('Error creating tag:', error);
+    const message = error instanceof Error ? error.message : 'Failed to create tag';
     return NextResponse.json(
-      { error: 'Failed to create tag' },
+      { error: message },
       { status: 500 }
     );
   }

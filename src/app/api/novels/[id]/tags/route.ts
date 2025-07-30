@@ -1,20 +1,25 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
-import { Prisma } from '@prisma/client';
+import { createServerClient } from '@/lib/supabaseServer';
 
 // GET /api/novels/[id]/tags
 export async function GET(
-  request: Request,
+  _request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    const tagsOnNovel = await prisma.tagsOnNovels.findMany({
-      where: { novelId: params.id },
-      include: { tag: true }
-    });
-    return NextResponse.json(tagsOnNovel.map(t => t.tag));
+    const supabase = createServerClient();
+
+    const { data, error } = await supabase
+      .from('tags_on_novels')
+      .select('tag:tag_id (*)')
+      .eq('novel_id', params.id);
+
+    if (error) {
+      throw error;
+    }
+
+    const tags = (data || []).map((row: { tag: unknown }) => row.tag);
+    return NextResponse.json(tags);
   } catch (error) {
     console.error('Error fetching novel tags:', error);
     return NextResponse.json(
@@ -30,9 +35,9 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    const supabase = createRouteHandlerClient({ cookies });
-    
-    // Get the authorization header
+    const supabase = createServerClient();
+
+    // Bearer token auth check
     const authHeader = request.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
       return NextResponse.json(
@@ -40,10 +45,8 @@ export async function POST(
         { status: 401 }
       );
     }
-
     const token = authHeader.split(' ')[1];
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-
     if (authError || !user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -52,23 +55,25 @@ export async function POST(
     }
 
     const { tagIds } = await request.json();
-    
-    if (!tagIds || !Array.isArray(tagIds) || tagIds.length === 0) {
+    if (!Array.isArray(tagIds) || tagIds.length === 0) {
       return NextResponse.json(
         { error: 'Tag IDs are required' },
         { status: 400 }
       );
     }
 
-    const data = tagIds.map((tagId: string) => ({
-      novelId: params.id,
-      tagId
+    const rows = tagIds.map((tagId: string) => ({
+      novel_id: params.id,
+      tag_id: tagId,
     }));
 
-    await prisma.tagsOnNovels.createMany({
-      data,
-      skipDuplicates: true
-    });
+    const { error: insertError } = await supabase
+      .from('tags_on_novels')
+      .upsert(rows, { onConflict: 'novel_id,tag_id' });
+
+    if (insertError) {
+      throw insertError;
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -79,55 +84,3 @@ export async function POST(
     );
   }
 }
-
-// DELETE /api/novels/[id]/tags/[tagId]
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string; tagId: string } }
-) {
-  try {
-    const supabase = createRouteHandlerClient({ cookies });
-    
-    // Get the authorization header
-    const authHeader = request.headers.get('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { error: 'Missing or invalid authorization header' },
-        { status: 401 }
-      );
-    }
-
-    const token = authHeader.split(' ')[1];
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    await prisma.tagsOnNovels.delete({
-      where: {
-        novelId_tagId: {
-          novelId: params.id,
-          tagId: params.tagId
-        }
-      }
-    });
-
-    return NextResponse.json({ success: true });
-  } catch (error: unknown) {
-    console.error('Error removing tag:', error);
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
-      return NextResponse.json(
-        { error: 'Tag not found on novel' },
-        { status: 404 }
-      );
-    }
-    return NextResponse.json(
-      { error: 'Failed to remove tag' },
-      { status: 500 }
-    );
-  }
-} 

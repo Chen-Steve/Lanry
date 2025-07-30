@@ -119,7 +119,19 @@ export default function TagSelectionModal({
       await handleToggleTag(newTag);
     } catch (error) {
       console.error('Error creating tag:', error);
-      toast.error('Failed to create tag');
+      if (error instanceof Error) {
+        if (error.message === 'A tag with this name already exists') {
+          toast.error('A tag with this name already exists', {
+            description: 'Please choose a different name for your tag.'
+          });
+        } else {
+          toast.error('Failed to create tag', {
+            description: error.message
+          });
+        }
+      } else {
+        toast.error('Failed to create tag');
+      }
     } finally {
       setIsCreatingTag(false);
     }

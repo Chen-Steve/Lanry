@@ -89,13 +89,18 @@ export async function createTag(name: string, description?: string): Promise<Tag
       headers,
       body: JSON.stringify({ name, description }),
     });
+    
+    const data = await response.json();
+    
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to create tag');
+      // Throw specific error message from the API
+      throw new Error(data.error || 'Failed to create tag');
     }
-    return response.json();
+    
+    return data;
   } catch (error) {
     console.error('Error creating tag:', error);
-    throw error;
+    // Re-throw the error with the specific message
+    throw error instanceof Error ? error : new Error('Failed to create tag');
   }
 } 
