@@ -123,7 +123,7 @@ export default function AuthorDashboard() {
         isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
         {/* Header */}
-        <div className={`flex items-center p-4 border-b border-gray-200 dark:border-gray-700 h-16 ${isSidebarCollapsed ? 'justify-center' : 'justify-between'}`}>
+        <div className={`flex items-center p-4 border-b border-gray-200 dark:border-gray-700 h-16 ${isSidebarCollapsed ? 'justify-center' : 'justify-end lg:justify-between'}`}>
           {/* Logo - hidden when collapsed */}
           {!isSidebarCollapsed && (
             <a href="https://lanry.space/" className="flex items-center gap-3 flex-shrink-0" aria-label="Lanry Home">
