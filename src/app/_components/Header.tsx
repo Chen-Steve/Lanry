@@ -12,11 +12,14 @@ import { useUserProfile } from '@/hooks/useUserProfile';
 
 const MobileMenu = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
   const pathname = usePathname();
+  const { isAuthenticated } = useAuth();
 
   const menuItems = [
     { icon: "ph:house-bold", label: "Home", href: "/" },
-    { icon: "ph:shopping-cart-simple-bold", label: "Shop", href: "/shop" },
-    { icon: "mdi:bookmark-multiple", label: "Bookmarks", href: "/bookmarks" },
+    ...(isAuthenticated ? [
+      { icon: "ph:shopping-cart-simple-bold", label: "Shop", href: "/shop" },
+      { icon: "mdi:bookmark-multiple", label: "Bookmarks", href: "/bookmarks" }
+    ] : []),
     { icon: "ph:users-bold", label: "Translators", href: "/translators" },
     { icon: "ic:baseline-discord", label: "Discord", href: "https://discord.gg/DXHRpV3sxF", external: true },
   ];
@@ -205,12 +208,23 @@ const Header = () => {
                 <div className="hidden md:flex items-center gap-4">
                   <ThemeToggle />
                   
-                  <Link 
-                    href="/shop"
-                    className="bg-secondary/80 backdrop-blur-sm p-2 text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-secondary/90 inline-flex items-center"
-                  >
-                    <Icon icon="ph:shopping-cart-simple-bold" className="w-5 h-5" />
-                  </Link>
+                  {isAuthenticated && (
+                    <>
+                      <Link 
+                        href="/shop"
+                        className="bg-secondary/80 backdrop-blur-sm p-2 text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-secondary/90 inline-flex items-center"
+                      >
+                        <Icon icon="ph:shopping-cart-simple-bold" className="w-5 h-5" />
+                      </Link>
+
+                      <Link 
+                        href="/bookmarks"
+                        className="bg-secondary/80 backdrop-blur-sm p-2 text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-secondary/90 inline-flex items-center"
+                      >
+                        <Icon icon="mdi:bookmark-multiple" className="w-5 h-5" />
+                      </Link>
+                    </>
+                  )}
 
                   <Link 
                     href="https://discord.gg/DXHRpV3sxF"
@@ -219,13 +233,6 @@ const Header = () => {
                     className="bg-secondary/80 backdrop-blur-sm p-2 text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-secondary/90 inline-flex items-center"
                   >
                     <Icon icon="ic:baseline-discord" className="w-5 h-5" />
-                  </Link>
-
-                  <Link 
-                    href="/bookmarks"
-                    className="bg-secondary/80 backdrop-blur-sm p-2 text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-secondary/90 inline-flex items-center"
-                  >
-                    <Icon icon="mdi:bookmark-multiple" className="w-5 h-5" />
                   </Link>
 
                   <Link 
@@ -238,12 +245,14 @@ const Header = () => {
 
                 {/* Shop (always visible) */}
                 <div className="flex-none md:hidden">
-                  <Link 
-                    href="/shop"
-                    className="bg-secondary/80 backdrop-blur-sm p-2 text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-secondary/90 inline-flex items-center"
-                  >
-                    <Icon icon="ph:shopping-cart-simple-bold" className="w-5 h-5" />
-                  </Link>
+                  {isAuthenticated && (
+                    <Link 
+                      href="/shop"
+                      className="bg-secondary/80 backdrop-blur-sm p-2 text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-secondary/90 inline-flex items-center"
+                    >
+                      <Icon icon="ph:shopping-cart-simple-bold" className="w-5 h-5" />
+                    </Link>
+                  )}
                 </div>
 
                 {/* Mobile Menu Button */}
