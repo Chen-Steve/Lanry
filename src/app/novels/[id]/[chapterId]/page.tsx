@@ -38,7 +38,7 @@ export default function ChapterPage({ params }: { params: { id: string; chapterI
   const [navigation, setNavigation] = useState<ChapterNavigation>(initialNavigation);
   const [isCommentOpen, setIsCommentOpen] = useState(false);
   const [hideComments, setHideComments] = useLocalStorage('chapter-hide-comments', false);
-  const [showProfanity, setShowProfanity] = useLocalStorage('chapter-show-profanity', false);
+  const [showProfanity, setShowProfanity] = useLocalStorage('chapter-show-profanity', true);
   const [fontFamily, setFontFamily] = useLocalStorage(
     'chapter-font-family',
     'ui-sans-serif, system-ui, sans-serif'
