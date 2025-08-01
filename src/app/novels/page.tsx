@@ -11,7 +11,7 @@ export const metadata = {
 
 export default function NovelsPage() {
   return (
-    <main className="relative max-w-[1600px] mx-auto pb-2">
+    <main className="relative max-w-[1600px] mx-auto">
       {/* Main Content */}
       <div className="max-w-5xl mx-auto">
         <NovelListing />

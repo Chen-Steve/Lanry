@@ -1,19 +1,19 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Icon } from '@iconify/react';
 import type { Novel, Tag } from '@/types/database';
-import { debounce } from 'es-toolkit';
 import { useSearchParams } from 'next/navigation';
 import TagSelector from './TagSelector';
 import CategorySelector from './CategorySelector';
+import TLSelector from './TLSelector';
 import NovelList from './NovelList';
 
 type NovelStatus = 'ONGOING' | 'COMPLETED' | 'HIATUS' | 'DROPPED' | 'DRAFT';
 
 interface SearchFilters {
   query: string;
-  author: string;
+  selectedTLs: string[];
   tags: Tag[];
   status?: NovelStatus;
   categories: string[];
@@ -25,7 +25,7 @@ export default function AdvancedSearch() {
   // 1. Use hardcoded defaults for filters
   const [filters, setFilters] = useState<SearchFilters>({
     query: '',
-    author: '',
+    selectedTLs: [],
     tags: [],
     categories: [],
     page: 1,
@@ -35,10 +35,7 @@ export default function AdvancedSearch() {
   const [totalPages, setTotalPages] = useState(1);
   const [hasSearched, setHasSearched] = useState(false);
   const [availableTags, setAvailableTags] = useState<Tag[]>([]);
-  const [authorSuggestions, setAuthorSuggestions] = useState<Array<{ username: string; role: string }>>([]);
-  const [showAuthorDropdown, setShowAuthorDropdown] = useState(false);
-  const authorInputRef = useRef<HTMLInputElement>(null);
-  const authorDropdownRef = useRef<HTMLDivElement>(null);
+
   const [showFilters, setShowFilters] = useState(false);
 
   // Available novel status options (excluding DRAFT as it is not shown in the UI)
@@ -47,73 +44,21 @@ export default function AdvancedSearch() {
   // 2. On mount, set filters from URL (except tags, which are handled in tag loader)
   useEffect(() => {
     const query = searchParams.get('q') || '';
-    const author = searchParams.get('author') || '';
+    const selectedTLs = searchParams.getAll('tls') || [];
     const categories = searchParams.getAll('categories') || [];
     const page = parseInt(searchParams.get('page') || '1');
     setFilters(prev => ({
       ...prev,
       query,
-      author,
+      selectedTLs,
       categories,
       page,
     }));
     // Tags are handled in the tag loading effect
-    // eslint-disable-next-line
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only on mount
 
-  // Fetch author suggestions
-  const debouncedFetchAuthors = useRef(
-    debounce(async (query: string) => {
-      if (!query.trim()) {
-        setAuthorSuggestions([]);
-        return;
-      }
 
-      try {
-        const response = await fetch(`/api/authors?q=${encodeURIComponent(query)}`);
-        if (!response.ok) throw new Error('Failed to fetch authors');
-        const data = await response.json();
-        setAuthorSuggestions(data);
-      } catch (error) {
-        console.error('Error fetching authors:', error);
-        setAuthorSuggestions([]);
-      }
-    }, 300)
-  ).current;
-
-  // Handle author input change
-  const handleAuthorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setFilters(prev => ({ ...prev, author: value }));
-    setShowAuthorDropdown(true);
-    debouncedFetchAuthors(value);
-  };
-
-  // Handle author selection
-  const handleAuthorSelect = (author: { username: string; role: string }) => {
-    setFilters(prev => ({ ...prev, author: author.username }));
-    setShowAuthorDropdown(false);
-    setAuthorSuggestions([]);
-  };
-
-  // Close author dropdown on outside click
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        authorDropdownRef.current && 
-        !authorDropdownRef.current.contains(event.target as Node) &&
-        !authorInputRef.current?.contains(event.target as Node)
-      ) {
-        setShowAuthorDropdown(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      debouncedFetchAuthors.cancel();
-    };
-  }, [debouncedFetchAuthors]);
 
   // Load tags and initialize filters from URL
   useEffect(() => {
@@ -160,6 +105,7 @@ export default function AdvancedSearch() {
     };
 
     loadTags();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run on mount
 
   // After tag loading and filter initialization, add:
@@ -167,13 +113,13 @@ export default function AdvancedSearch() {
     // Only run on first mount
     handleSearch(true, {
       query: '',
-      author: '',
+      selectedTLs: [],
       tags: [],
       categories: [],
       page: 1,
       // status: undefined, // if needed by SearchFilters
     });
-    // eslint-disable-next-line
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSearch = useCallback(async (resetPage: boolean = false, searchFilters: SearchFilters = filters) => {
@@ -193,8 +139,10 @@ export default function AdvancedSearch() {
         queryParams.append('q', searchFilters.query);
       }
 
-      if (searchFilters.author.trim()) {
-        queryParams.append('author', searchFilters.author);
+      if (searchFilters.selectedTLs.length > 0) {
+        searchFilters.selectedTLs.forEach(tl => {
+          queryParams.append('tls', tl);
+        });
       }
       
       if (searchFilters.tags.length > 0) {
@@ -278,10 +226,25 @@ export default function AdvancedSearch() {
     }));
   };
 
+  // Handle TL selection
+  const handleTLSelect = (tlUsername: string) => {
+    setFilters(prev => ({
+      ...prev,
+      selectedTLs: [...prev.selectedTLs, tlUsername]
+    }));
+  };
+
+  const handleTLRemove = (tlUsername: string) => {
+    setFilters(prev => ({
+      ...prev,
+      selectedTLs: prev.selectedTLs.filter(tl => tl !== tlUsername)
+    }));
+  };
+
   // Function to check if any filters are active
   const hasActiveFilters = () => {
     return filters.query.trim() !== '' ||
-           filters.author.trim() !== '' ||
+           filters.selectedTLs.length > 0 ||
            filters.tags.length > 0 ||
            filters.status !== undefined ||
            filters.categories.length > 0;
@@ -329,40 +292,13 @@ export default function AdvancedSearch() {
                     />
                   </div>
 
-                  {/* Author Search */}
+                  {/* TL Search */}
                   <div className="flex-1">
-                    <div className="relative" ref={authorDropdownRef}>
-                      <input
-                        ref={authorInputRef}
-                        type="text"
-                        value={filters.author}
-                        onChange={handleAuthorChange}
-                        onFocus={() => {
-                          if (filters.author.trim()) {
-                            setShowAuthorDropdown(true);
-                            debouncedFetchAuthors(filters.author);
-                          }
-                        }}
-                        placeholder="Search by author..."
-                        className="w-full px-3 py-1.5 bg-background text-foreground placeholder:text-muted-foreground border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
-                      />
-                      {showAuthorDropdown && authorSuggestions.length > 0 && (
-                        <div className="absolute left-0 mt-1 bg-background border border-border rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto w-full">
-                          {authorSuggestions.map((author, index) => (
-                            <button
-                              key={index}
-                              onClick={() => handleAuthorSelect(author)}
-                              className="w-full px-3 py-1.5 text-left hover:bg-accent transition-colors text-sm flex items-center justify-between"
-                            >
-                              <span>{author.username}</span>
-                              <span className="text-xs text-muted-foreground capitalize">
-                                {author.role.toLowerCase()}
-                              </span>
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                    <TLSelector
+                      selectedTLs={filters.selectedTLs}
+                      onTLSelect={handleTLSelect}
+                      onTLRemove={handleTLRemove}
+                    />
                   </div>
                 </div>
 
@@ -448,13 +384,11 @@ export default function AdvancedSearch() {
                     onClick={() => {
                       setFilters({
                         query: '',
-                        author: '',
+                        selectedTLs: [],
                         tags: [],
                         categories: [],
                         page: 1
                       });
-                      handleSearch(true);
-                      setShowFilters(false);
                     }}
                     disabled={isLoading}
                     className="px-4 py-2 bg-secondary text-foreground rounded-lg hover:bg-secondary/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"

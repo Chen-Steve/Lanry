@@ -108,7 +108,7 @@ const NovelListing = () => {
 
   if (isLoading) {
     return (
-      <div className="max-w-5xl mx-auto px-4">
+      <div className="max-w-5xl mx-auto px-3 sm:px-4">
         <div className="animate-pulse h-12 bg-gray-200 rounded-lg mb-6"></div>
         <LoadingGrid />
       </div>
@@ -116,7 +116,7 @@ const NovelListing = () => {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4">
+    <div className="max-w-5xl mx-auto px-3 sm:px-4">
       {/* Featured Novels */}
       {featuredNovels.length > 0 && (
         <div className="relative mb-2">

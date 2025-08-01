@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { createServerClient } from '@/lib/supabaseServer';
 
 // Mark this route as dynamic
 export const dynamic = 'force-dynamic';
@@ -12,14 +11,14 @@ export async function GET(request: Request) {
     const query = searchParams.get('q')?.trim().toLowerCase() || '';
     
     // Create Supabase client
-    const supabase = createRouteHandlerClient({ cookies });
+    const supabase = createServerClient();
     
     // Fetch profile data from Supabase
     let queryBuilder = supabase.from('profiles')
       .select('username, role')
       .in('role', ['AUTHOR', 'TRANSLATOR'])
       .order('username', { ascending: true })
-      .limit(10);
+      .limit(50);
     
     // Add search filter if query exists
     if (query) {

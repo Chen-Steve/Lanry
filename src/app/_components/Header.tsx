@@ -177,13 +177,13 @@ const Header = () => {
 
   return (
     <>
-      <header className={`w-full sticky top-0 z-40 mb-0 sm:mb-2 transition-all duration-300 ${
+      <header className={`w-full sticky z-40 transition-all duration-300 ${
         isVisible ? 'translate-y-0' : '-translate-y-full'
       }`}>
         <div className="max-w-5xl mx-auto">
           <div className="px-3 sm:px-4 py-2 md:py-3">
             <div className="flex items-center justify-between gap-2 sm:gap-4">
-              <div className="flex items-center gap-2 flex-1">
+              <div className="flex items-center gap-1 flex-1">
                 {/* Home Icon */}
                 <div className="flex-none">
                   <Link
@@ -201,7 +201,7 @@ const Header = () => {
               </div>
 
               {/* Actions */}
-              <div className={`flex items-center gap-2 sm:gap-4 transition-all duration-300 ${
+              <div className={`flex items-center gap-2 sm:gap-4 mr-2 sm:mr-0 sm:pr-1 transition-all duration-300 ${
                 isSearchExpanded ? 'hidden sm:flex' : 'flex'
               }`}>
                 {/* Desktop Navigation */}

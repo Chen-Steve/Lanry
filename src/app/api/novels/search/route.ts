@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const query = searchParams.get('q')?.trim().toLowerCase() || '';
-    const author = searchParams.get('author')?.trim();
+    const tls = searchParams.getAll('tls');
     const tags = searchParams.getAll('tags');
     const status = searchParams.get('status') as NovelStatus | null;
     const categories = searchParams.getAll('categories');
@@ -82,16 +82,23 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Add author search if author exists
-    if (author) {
-      where = {
-        ...where,
+    // Add TL search if TLs exist
+    if (tls.length > 0) {
+      const existingAnd = Array.isArray(where.AND) ? where.AND : [];
+      const tlConditions: Prisma.NovelWhereInput[] = tls.map(tlUsername => ({
         authorProfile: {
           username: {
-            mode: 'insensitive',
-            equals: author
+            equals: tlUsername,
+            mode: Prisma.QueryMode.insensitive
           }
         }
+      }));
+
+      where = {
+        ...where,
+        AND: [...existingAnd, {
+          OR: tlConditions
+        }]
       };
     }
 

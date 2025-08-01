@@ -32,11 +32,8 @@ const PWABulletin = () => {
           </div>
           <div>
             <h3 className="font-semibold text-gray-900 dark:text-white">
-              Try our new app!
+              Try the Lanry app!
             </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-300">
-              Install Lanry as an app for a better reading experience
-            </p>
           </div>
         </div>
         <div className="flex items-center gap-2">

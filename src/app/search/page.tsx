@@ -8,7 +8,7 @@ export const metadata = {
 
 export default function SearchPage() {
   return (
-    <main className="container mx-auto px-4 max-w-5xl">
+    <main className="container mx-auto px-1 sm:px-3 max-w-5xl">
       <AdvancedSearch />
     </main>
   );
