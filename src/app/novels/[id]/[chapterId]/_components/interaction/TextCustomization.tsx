@@ -1,7 +1,7 @@
 'use client';
 
 import { Icon } from '@iconify/react';
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 
 interface TextCustomizationProps {
   onFontChange: (font: string) => void;
@@ -11,13 +11,12 @@ interface TextCustomizationProps {
 }
 
 const fonts = [
-  { name: 'Default', value: 'ui-sans-serif, system-ui, sans-serif' },
-  { name: 'Mono', value: 'ui-monospace, monospace' },
-  { name: 'Garamond', value: 'Garamond, EB Garamond, serif' },
-  { name: 'Comic Sans', value: '"Comic Sans MS", "Comic Sans", "Chalkboard SE", "Comic Neue", sans-serif' },
-  { name: 'Playfair Display', value: '"Playfair Display", serif' },
-  { name: 'Montserrat', value: 'Montserrat, sans-serif' },
-  { name: 'Courier New', value: '"Courier New", monospace' },
+  { name: 'Default', value: 'ui-sans-serif, system-ui, sans-serif', preview: 'Aa' },
+  { name: 'Mono', value: 'ui-monospace, monospace', preview: 'Aa' },
+  { name: 'Garamond', value: 'Garamond, EB Garamond, serif', preview: 'Aa' },
+  { name: 'Comic Sans', value: '"Comic Sans MS", "Comic Sans", "Chalkboard SE", "Comic Neue", sans-serif', preview: 'Aa' },
+  { name: 'Playfair Display', value: '"Playfair Display", serif', preview: 'Aa' },
+  { name: 'Courier New', value: '"Courier New", monospace', preview: 'Aa' },
 ];
 
 export default function TextCustomization({
@@ -27,25 +26,7 @@ export default function TextCustomization({
   currentSize,
 }: TextCustomizationProps) {
   const [showFontModal, setShowFontModal] = useState(false);
-  const [canScroll, setCanScroll] = useState(false);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isMobile = typeof window !== 'undefined' ? window.innerWidth <= 768 : false;
-
-  // Check if scrolling is possible
-  useEffect(() => {
-    if (!isMobile || !scrollContainerRef.current) return;
-
-    const checkScroll = () => {
-      const container = scrollContainerRef.current;
-      if (container) {
-        setCanScroll(container.scrollWidth > container.clientWidth);
-      }
-    };
-
-    checkScroll();
-    window.addEventListener('resize', checkScroll);
-    return () => window.removeEventListener('resize', checkScroll);
-  }, [isMobile]);
 
   const getCurrentFontName = () => {
     const currentFontObj = fonts.find(font => font.value === currentFont);
@@ -53,7 +34,7 @@ export default function TextCustomization({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Desktop Controls */}
       {!isMobile && (
         <>
@@ -115,63 +96,63 @@ export default function TextCustomization({
         </>
       )}
 
-      {/* Mobile Font Selection */}
+      {/* Mobile Enhanced Layout */}
       {isMobile && (
         <>
-          <div className="relative">
-            <div 
-              ref={scrollContainerRef}
-              className="flex-1 overflow-x-auto no-scrollbar"
-            >
-              <div className="flex items-center gap-3 min-w-max pr-4">
-                {fonts.map((font) => (
-                  <button
-                    key={font.name}
-                    onClick={() => onFontChange(font.value)}
-                    className={`px-3 py-1 rounded-md text-sm whitespace-nowrap ${
-                      currentFont === font.value
-                        ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                    }`}
-                    style={{ fontFamily: font.value }}
-                  >
-                    {font.name}
-                  </button>
-                ))}
-              </div>
+          {/* Font Family Section */}
+          <div className="space-y-3">
+            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Font Family</h4>
+            <div className="grid grid-cols-3 gap-2">
+              {fonts.map((font) => (
+                <button
+                  key={font.name}
+                  onClick={() => onFontChange(font.value)}
+                  className={`p-2 rounded-lg border-2 transition-all ${
+                    currentFont === font.value
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                  }`}
+                >
+                  <div className="flex flex-col items-center gap-1">
+                    <span 
+                      className="text-lg font-medium"
+                      style={{ fontFamily: font.value }}
+                    >
+                      {font.preview}
+                    </span>
+                    <span className="text-xs text-gray-600 dark:text-gray-400 text-center leading-tight">
+                      {font.name}
+                    </span>
+                  </div>
+                </button>
+              ))}
             </div>
-            {/* Scroll Indicator */}
-            {canScroll && (
-              <div className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none">
-                <div className="flex items-center justify-center w-6 h-6 rounded-full bg-gray-100/80 dark:bg-gray-800/80 shadow-sm">
-                  <Icon 
-                    icon="mdi:chevron-right" 
-                    className="w-5 h-5 text-gray-500 dark:text-gray-400 animate-pulse" 
-                  />
-                </div>
-              </div>
-            )}
           </div>
 
-          {/* Mobile Font Size Controls */}
-          <div className="flex items-center justify-end gap-2">
-            <button
-              title="Decrease Font Size"
-              onClick={() => onSizeChange(currentSize - 1)}
-              className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300"
-              disabled={currentSize <= 12}
-            >
-              <Icon icon="mdi:minus" />
-            </button>
-            <span className="text-sm min-w-[3ch] text-center">{currentSize}</span>
-            <button
-              title="Increase Font Size"
-              onClick={() => onSizeChange(currentSize + 1)}
-              className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300"
-              disabled={currentSize >= 24}
-            >
-              <Icon icon="mdi:plus" />
-            </button>
+          {/* Font Size Section */}
+          <div className="space-y-3">
+            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Font Size</h4>
+            <div className="flex items-center justify-center gap-3">
+              <button
+                title="Decrease Font Size"
+                onClick={() => onSizeChange(Math.max(12, currentSize - 1))}
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300"
+                disabled={currentSize <= 12}
+              >
+                <Icon icon="mdi:minus" className="w-4 h-4" />
+              </button>
+              <div className="text-center min-w-[4rem]">
+                <span className="text-lg font-medium">{currentSize}</span>
+              </div>
+              <button
+                title="Increase Font Size"
+                onClick={() => onSizeChange(Math.min(30, currentSize + 1))}
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300"
+                disabled={currentSize >= 30}
+              >
+                <Icon icon="mdi:plus" className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </>
       )}

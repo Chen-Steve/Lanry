@@ -301,6 +301,11 @@ export default function ChapterPageClient({ novelId, chapter, navigation, userId
         onShowProfanityChange={setShowProfanity}
         settingsButtonRef={settingsButtonRef}
         floatingDesktopModal
+        currentChapter={chapter.chapter_number}
+        currentPartNumber={chapter.part_number}
+        currentVolumeId={chapter.volume_id}
+        availableChapters={navigation.availableChapters}
+        volumes={navigation.volumes}
       />
     </div>
   );
