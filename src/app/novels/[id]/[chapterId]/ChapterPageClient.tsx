@@ -1,5 +1,6 @@
 'use client';
 
+
 import { useEffect, useState, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -43,6 +44,7 @@ export default function ChapterPageClient({ novelId, chapter, navigation, userId
   const [isCommentOpen, setIsCommentOpen] = useState(false);
   const [hideComments, setHideComments] = useLocalStorage('chapter-hide-comments', false);
   const [showProfanity, setShowProfanity] = useLocalStorage('chapter-show-profanity', true);
+  const [zenMode, setZenMode] = useLocalStorage('chapter-zen-mode', false);
   const [fontFamily, setFontFamily] = useLocalStorage(
     'chapter-font-family',
     'ui-sans-serif, system-ui, sans-serif'
@@ -50,6 +52,11 @@ export default function ChapterPageClient({ novelId, chapter, navigation, userId
   const [fontSize, setFontSize] = useLocalStorage('chapter-font-size', 16);
 
   const settingsButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Derived settings based on Zen Mode
+  const effectiveHideComments = zenMode ? true : hideComments;
+  const effectiveShowProfanity = zenMode ? true : showProfanity;
+  const hideAuthorWords = zenMode ? true : false;
 
   // Handle URL fragment scrolling after mount
   useEffect(() => {
@@ -250,8 +257,9 @@ export default function ChapterPageClient({ novelId, chapter, navigation, userId
         isTranslator={chapter.hasTranslatorAccess}
         publishAt={chapter.publish_at}
         authorProfile={chapter.authorProfile}
-        hideComments={hideComments}
-        showProfanity={showProfanity}
+        hideComments={effectiveHideComments}
+        showProfanity={effectiveShowProfanity}
+        hideAuthorWords={hideAuthorWords}
         settingsButtonRef={settingsButtonRef}
       />
 
@@ -271,13 +279,15 @@ export default function ChapterPageClient({ novelId, chapter, navigation, userId
       </div>
 
       {/* Chapter Comments */}
-      <div id="chapter-comments" className="mt-2 pt-2">
-        <ChapterComments
-          chapterId={chapter.id}
-          authorId={chapter.novel.author_profile_id}
-          isFirstChapter={chapter.chapter_number === 1} 
-        />
-      </div>
+      {!zenMode && (
+        <div id="chapter-comments" className="mt-2 pt-2">
+          <ChapterComments
+            chapterId={chapter.id}
+            authorId={chapter.novel.author_profile_id}
+            isFirstChapter={chapter.chapter_number === 1}
+          />
+        </div>
+      )}
 
       {/* Pull to Load Next */}
       <PullToLoadNext
@@ -299,6 +309,8 @@ export default function ChapterPageClient({ novelId, chapter, navigation, userId
         onHideCommentsChange={setHideComments}
         showProfanity={showProfanity}
         onShowProfanityChange={setShowProfanity}
+        zenMode={zenMode}
+        onZenModeChange={setZenMode}
         settingsButtonRef={settingsButtonRef}
         floatingDesktopModal
         currentChapter={chapter.chapter_number}

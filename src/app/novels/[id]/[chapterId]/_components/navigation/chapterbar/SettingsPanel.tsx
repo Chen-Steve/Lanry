@@ -7,6 +7,8 @@ interface SettingsPanelProps {
   onHideCommentsChange: (hide: boolean) => void;
   showProfanity: boolean;
   onShowProfanityChange: (show: boolean) => void;
+  zenMode: boolean;
+  onZenModeChange: (zen: boolean) => void;
 }
 
 export const SettingsPanel = ({
@@ -14,7 +16,9 @@ export const SettingsPanel = ({
   hideComments,
   onHideCommentsChange,
   showProfanity,
-  onShowProfanityChange
+  onShowProfanityChange,
+  zenMode,
+  onZenModeChange
 }: SettingsPanelProps) => {
   return (
     <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3 space-y-3">
@@ -32,25 +36,13 @@ export const SettingsPanel = ({
       </button>
 
       {/* Zen mode toggle */}
-      <div className="flex items-center justify-between p-2">
-        <div className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-2">
-          <Icon icon="mdi:meditation" className="w-4 h-4" />
-          <span>Zen Mode</span>
-        </div>
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            // TODO: Add zen mode functionality
-          }}
-          className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none bg-gray-300 dark:bg-gray-700`}
-          aria-label="Toggle zen mode"
-        >
-          <span
-            className={`inline-block w-4 h-4 transform rounded-full bg-white transition-transform translate-x-1.5`}
-          />
-        </button>
-      </div>
+      <ToggleSwitch
+        label="Zen Mode"
+        icon="mdi:meditation"
+        isOn={zenMode}
+        onToggle={() => onZenModeChange(!zenMode)}
+        ariaLabel="Toggle zen mode"
+      />
 
       {/* Comments toggle */}
       <ToggleSwitch

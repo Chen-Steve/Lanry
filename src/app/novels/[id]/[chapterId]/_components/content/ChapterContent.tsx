@@ -1,5 +1,6 @@
 'use client';
 
+
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { formatDate } from '@/lib/utils';
 import { getTextStyles, formatText, extractedFootnotes, ExtractedFootnote } from '@/lib/textFormatting';
@@ -43,6 +44,7 @@ interface ChapterContentProps {
   isTranslator?: boolean;
   publishAt?: string;
   hideComments?: boolean;
+  hideAuthorWords?: boolean;
   showProfanity?: boolean;
   authorProfile?: {
     username: string;
@@ -75,6 +77,7 @@ export default function ChapterContent({
   publishAt,
   authorProfile,
   hideComments = false,
+  hideAuthorWords = false,
   showProfanity = false,
   settingsButtonRef
 }: ChapterContentProps) {
@@ -713,7 +716,7 @@ export default function ChapterContent({
         )}
 
         {/* Author's Thoughts Section - Only show if not indefinitely locked */}
-        {!isIndefinitelyLocked && authorThoughts && authorThoughts.trim() !== '' && (
+        {!isIndefinitelyLocked && !hideAuthorWords && authorThoughts && authorThoughts.trim() !== '' && (
           <div className="mt-4 max-w-2xl mx-auto">
             <div className="relative bg-card rounded-lg p-4 border border-border shadow-sm">
               <div className="relative mb-4">

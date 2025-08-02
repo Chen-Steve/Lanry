@@ -23,6 +23,8 @@ interface ChapterProgressBarProps {
   onHideCommentsChange: (hide: boolean) => void;
   showProfanity: boolean;
   onShowProfanityChange: (show: boolean) => void;
+  zenMode: boolean;
+  onZenModeChange: (zen: boolean) => void;
   settingsButtonRef?: React.RefObject<HTMLButtonElement>;
   floatingDesktopModal?: boolean;
   currentChapter?: number;
@@ -54,6 +56,8 @@ export default function ChapterProgressBar({
   onHideCommentsChange,
   showProfanity,
   onShowProfanityChange,
+  zenMode,
+  onZenModeChange,
   settingsButtonRef,
   floatingDesktopModal = false,
   currentChapter,
@@ -150,6 +154,8 @@ export default function ChapterProgressBar({
                 onHideCommentsChange={onHideCommentsChange}
                 showProfanity={showProfanity}
                 onShowProfanityChange={onShowProfanityChange}
+                zenMode={zenMode}
+                onZenModeChange={onZenModeChange}
               />
             </div>
 
@@ -241,6 +247,8 @@ export default function ChapterProgressBar({
                onHideCommentsChange={onHideCommentsChange}
                showProfanity={showProfanity}
                onShowProfanityChange={onShowProfanityChange}
+               zenMode={zenMode}
+               onZenModeChange={onZenModeChange}
              />
            </div>
 
