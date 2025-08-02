@@ -31,6 +31,7 @@ interface NovelContentProps {
   } | null;
   novelSlug: string;
   firstChapterNumber?: number;
+  firstChapterPartNumber?: number | null;
   isAuthenticated: boolean;
   isBookmarked: boolean;
   isBookmarkLoading: boolean;
@@ -66,6 +67,7 @@ export const NovelContent = ({
   translator,
   novelSlug,
   firstChapterNumber,
+  firstChapterPartNumber,
   isAuthenticated,
   isBookmarked,
   isBookmarkLoading,
@@ -153,6 +155,7 @@ export const NovelContent = ({
             tags={tags}
             description={description}
             firstChapterNumber={firstChapterNumber}
+            firstChapterPartNumber={firstChapterPartNumber}
             novelSlug={novelSlug}
             isAuthenticated={isAuthenticated}
             isBookmarked={isBookmarked}

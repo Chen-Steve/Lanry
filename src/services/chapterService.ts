@@ -1,6 +1,6 @@
-import supabase from '@/lib/supabaseClient';
+import { getSupabase } from '@/lib/supabase';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { Chapter, Novel } from '@/types/database';
-// Redis/Upstash caching removed to avoid hitting request limits
 
 type ChapterWithNovel = Chapter & {
   novel: Novel;
@@ -28,7 +28,13 @@ export async function isChapterPublished(publishAt: string | null): Promise<bool
   return isChapterPublishedSync(publishAt);
 }
 
-export async function getChapter(novelId: string, chapterNumber: number, partNumber?: number | null): Promise<ChapterWithNovel | null> {
+export async function getChapter(
+  novelId: string,
+  chapterNumber: number,
+  partNumber?: number | null,
+  supabaseOverride?: SupabaseClient
+): Promise<ChapterWithNovel | null> {
+  const supabase = supabaseOverride ?? getSupabase();
   try {
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -54,7 +60,17 @@ export async function getChapter(novelId: string, chapterNumber: number, partNum
           id,
           title,
           author,
-          author_profile_id
+          author_profile_id,
+          authorProfile:author_profile_id(
+            username,
+            avatar_url,
+            role,
+            kofi_url,
+            patreon_url,
+            custom_url,
+            custom_url_label,
+            author_bio
+          )
         )
       `)
       .eq('novel_id', novel.id)
@@ -72,7 +88,13 @@ export async function getChapter(novelId: string, chapterNumber: number, partNum
 
     if (error || !chapter) return null;
 
-    const chapterBase: ChapterWithNovel = chapter;
+    // Extract authorProfile from nested novel structure
+    const authorProfile = chapter.novel?.authorProfile || null;
+    
+    const chapterBase: ChapterWithNovel = {
+      ...chapter,
+      authorProfile
+    };
 
     // Determine if user is author or translator
     let hasTranslatorAccess = false;
@@ -137,7 +159,13 @@ export async function getChapter(novelId: string, chapterNumber: number, partNum
   }
 }
 
-export async function getChapterNavigation(novelId: string, currentChapterNumber: number, currentPartNumber?: number | null) {
+export async function getChapterNavigation(
+  novelId: string,
+  currentChapterNumber: number,
+  currentPartNumber?: number | null,
+  supabaseOverride?: SupabaseClient
+) {
+  const supabase = supabaseOverride ?? getSupabase();
   try {
     const { data: novel, error: novelError } = await supabase
       .from('novels')
@@ -255,7 +283,8 @@ export async function getChapterNavigation(novelId: string, currentChapterNumber
   }
 }
 
-export async function getTotalAllChapters(novelId: string): Promise<number> {
+export async function getTotalAllChapters(novelId: string, supabaseOverride?: SupabaseClient): Promise<number> {
+  const supabase = supabaseOverride ?? getSupabase();
   try {
     const { data: novel, error: novelError } = await supabase
       .from('novels')
@@ -324,6 +353,7 @@ export async function getChaptersForList({
   totalPages: number;
 }> {
   try {
+    const supabase = getSupabase();
     // Get novel info and check translator access in parallel
     const [novelResult, userResult] = await Promise.all([
       supabase

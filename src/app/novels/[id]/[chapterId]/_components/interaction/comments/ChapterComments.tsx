@@ -35,9 +35,10 @@ interface SupabaseComment {
 interface ChapterCommentsProps {
   chapterId: string;
   authorId: string;
+  isFirstChapter?: boolean;
 }
 
-export function ChapterComments({ chapterId, authorId }: ChapterCommentsProps) {
+export function ChapterComments({ chapterId, authorId, isFirstChapter = false }: ChapterCommentsProps) {
   const [userId, setUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [comments, setComments] = useState<ChapterComment[]>([]);
@@ -234,17 +235,19 @@ export function ChapterComments({ chapterId, authorId }: ChapterCommentsProps) {
 
   return (
     <div className="space-y-2 max-w-2xl mx-auto">
-      <div className="bg-yellow-500/10 border border-yellow-500/20 p-4 rounded-lg">
-        <div className="flex items-center gap-3">
-          <Icon 
-            icon="ph:warning-circle-bold" 
-            className="w-6 h-6 text-yellow-500 flex-shrink-0"
-          />
-          <p className="text-sm text-yellow-700 dark:text-yellow-400">
-            Please don&apos;t share the website&apos;s link anywhere.
-          </p>
+      {isFirstChapter && (
+        <div className="bg-yellow-500/10 border border-yellow-500/20 p-4 rounded-lg">
+          <div className="flex items-center gap-3">
+            <Icon 
+              icon="ph:warning-circle-bold" 
+              className="w-6 h-6 text-yellow-500 flex-shrink-0"
+            />
+            <p className="text-sm text-yellow-700 dark:text-yellow-400">
+              Don&apos;t share this website&apos;s link!
+            </p>
+          </div>
         </div>
-      </div>
+      )}
 
       <h3 className="text-lg font-semibold">Comments</h3>
       

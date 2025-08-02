@@ -153,6 +153,7 @@ export default function NovelPage({ params }: { params: { id: string } }) {
         translator={novel.translator}
         novelSlug={novel.slug}
         firstChapterNumber={novel.chapters[0]?.chapter_number}
+        firstChapterPartNumber={novel.chapters[0]?.part_number}
         isAuthenticated={isAuthenticated}
         isBookmarked={isBookmarked}
         isBookmarkLoading={isBookmarkLoading}

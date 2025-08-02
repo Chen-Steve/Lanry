@@ -714,8 +714,8 @@ export default function ChapterContent({
 
         {/* Author's Thoughts Section - Only show if not indefinitely locked */}
         {!isIndefinitelyLocked && authorThoughts && authorThoughts.trim() !== '' && (
-          <div className="mt-8 max-w-2xl mx-auto">
-            <div className="relative bg-card rounded-lg p-6 border border-border shadow-sm">
+          <div className="mt-4 max-w-2xl mx-auto">
+            <div className="relative bg-card rounded-lg p-4 border border-border shadow-sm">
               <div className="relative mb-4">
                 {/* Like Button - Absolute positioned */}
                 <div className="absolute right-0 top-0">
@@ -774,7 +774,7 @@ export default function ChapterContent({
                         }}
                       >
                         <span className="inline-block min-w-fit touch-pan-x">
-                          {authorProfile?.username}&apos;s words
+                          {`${authorProfile?.username}'s words`}
                         </span>
                       </h3>
                       {/* Gradient fade effect */}
@@ -798,7 +798,7 @@ export default function ChapterContent({
               </div>
 
               <div 
-                className="prose prose-sm md:prose-base text-foreground dark:prose-invert mb-6"
+                className="prose prose-sm md:prose-base text-foreground dark:prose-invert"
                 style={getTextStyles(fontFamily, fontSize - 1)}
                 dangerouslySetInnerHTML={{ __html: formatText(filterExplicitContent(authorThoughts, !showProfanity)) }}
               />
@@ -811,8 +811,7 @@ export default function ChapterContent({
                     kofiUrl: authorProfile.kofiUrl,
                     patreonUrl: authorProfile.patreonUrl,
                     customUrl: authorProfile.customUrl,
-                    customUrlLabel: authorProfile.customUrlLabel,
-                    author_bio: authorProfile.author_bio
+                    customUrlLabel: authorProfile.customUrlLabel
                   }}
                 />
               )}

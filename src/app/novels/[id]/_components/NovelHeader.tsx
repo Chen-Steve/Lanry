@@ -35,6 +35,7 @@ interface NovelHeaderProps {
   tags?: Tag[];
   description: string;
   firstChapterNumber?: number;
+  firstChapterPartNumber?: number | null;
   novelSlug: string;
   isAuthenticated: boolean;
   isBookmarked: boolean;
@@ -67,6 +68,7 @@ export const NovelHeader = ({
   tags,
   description,
   firstChapterNumber,
+  firstChapterPartNumber,
   novelSlug,
   isAuthenticated,
   isBookmarked,
@@ -342,7 +344,7 @@ export const NovelHeader = ({
                 <div className="flex items-center gap-2 w-full sm:w-auto">
                   {firstChapterNumber !== undefined && (
                     <Link 
-                      href={`/novels/${novelSlug}/c${firstChapterNumber}`}
+                      href={`/novels/${novelSlug}/c${firstChapterNumber}${firstChapterPartNumber ? `-p${firstChapterPartNumber}` : ''}`}
                       className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1 px-4 h-10 rounded-lg bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 transition-colors text-white font-medium"
                     >
                       <Icon icon="pepicons-print:book-open" className="text-xl" />
