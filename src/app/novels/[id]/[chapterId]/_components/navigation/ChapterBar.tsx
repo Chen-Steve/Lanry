@@ -1,6 +1,7 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
+import { motion, PanInfo, useAnimationControls } from 'framer-motion';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { NovelInfoCard } from './chapterbar/NovelInfoCard';
 import { SettingsPanel } from './chapterbar/SettingsPanel';
@@ -63,6 +64,7 @@ export default function ChapterProgressBar({
 }: ChapterProgressBarProps) {
   const isMobile = useMediaQuery('(max-width: 768px)');
   const barRef = useRef<HTMLDivElement>(null);
+  const controls = useAnimationControls();
   
   const {
     isVisible,
@@ -92,6 +94,27 @@ export default function ChapterProgressBar({
     settingsButtonRef,
     setDesktopTop,
   });
+
+  // Keep sheet in sync when isVisible changes externally (not from drag)
+  useEffect(() => {
+    if (isVisible) {
+      controls.start({ y: 0, transition: { type: 'spring', damping: 35, stiffness: 300, mass: 0.5 } });
+    } else {
+      controls.start({ y: '100%', transition: { type: 'spring', damping: 35, stiffness: 300, mass: 0.5 } });
+    }
+  }, [isVisible, controls]);
+
+  const closeSheet = async () => {
+    // Animate to closed position first to avoid jump
+    await controls.start({
+      y: '100%',
+      transition: { type: 'spring', damping: 35, stiffness: 300, mass: 0.5 },
+    });
+    setIsVisible(false);
+    setActivePanel('main');
+    const customEvent = new CustomEvent('toggleChapterBar', { detail: { isVisible: false } });
+    document.dispatchEvent(customEvent);
+  };
 
 
 
@@ -169,15 +192,35 @@ export default function ChapterProgressBar({
   if (!isMobile) return null;
 
   return (
-    <div
+    <motion.div
       ref={barRef}
-      className={`fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t dark:border-gray-800 shadow-lg transition-all duration-300 rounded-t-2xl ${isVisible ? 'translate-y-0 py-4 min-h-[220px]' : 'translate-y-full'}`}
+      className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t dark:border-gray-800 shadow-lg rounded-t-2xl py-1 min-h-[220px]"
+      initial={{ y: "100%" }}
+      animate={controls}
+      drag="y"
+      dragConstraints={{ top: 0, bottom: 0 }}
+      dragElastic={{ top: 0, bottom: 0.8 }}
+      onDragEnd={async (event, info: PanInfo) => {
+        const shouldClose = info.velocity.y > 500 || info.offset.y > 100;
+        if (shouldClose) {
+          await closeSheet();
+        } else {
+          // Snap back open if not closing
+          controls.start({
+            y: 0,
+            transition: { type: 'spring', damping: 35, stiffness: 300, mass: 0.5 },
+          });
+        }
+      }}
+      style={{
+        touchAction: 'none'
+      }}
     >
-             <div className="px-4 relative">
-         {/* Drag indicator */}
-         <span className="block w-12 h-1 mx-auto -mt-1 mb-2 bg-gray-300 dark:bg-gray-700 rounded-full"></span>
-
-
+      <div className="px-4 relative">
+        {/* Drag indicator */}
+        <div className="flex justify-center py-4 select-none">
+          <span className="block w-12 h-1 bg-gray-300 dark:bg-gray-700 rounded-full"></span>
+        </div>
 
          {/* Panels container */}
          <div className="relative overflow-hidden">
@@ -230,6 +273,6 @@ export default function ChapterProgressBar({
            </div>
          </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

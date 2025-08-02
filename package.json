@@ -24,6 +24,7 @@
     "@types/uuid": "^10.0.0",
     "autoprefixer": "^10.4.20",
     "es-toolkit": "^1.39.8",
+    "framer-motion": "^12.23.12",
     "googleapis": "^152.0.0",
     "html-to-text": "^9.0.5",
     "jszip": "^3.10.1",
