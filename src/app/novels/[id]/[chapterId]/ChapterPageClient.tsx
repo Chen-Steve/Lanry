@@ -5,6 +5,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Icon } from '@iconify/react';
+import supabase from '@/lib/supabaseClient';
 
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import ChapterHeader from './_components/content/ChapterHeader';
@@ -41,6 +42,8 @@ const isIndefinitelyLocked = (chapter: { publish_at?: string | null }): boolean 
 
 export default function ChapterPageClient({ novelId, chapter, navigation, userId }: ChapterPageClientProps) {
   // Local UI states that should stay on the client
+  const [isLocked, setIsLocked] = useState(chapter.isLocked ?? false);
+  const [unlockCheckComplete, setUnlockCheckComplete] = useState(!chapter.isLocked);
   const [isCommentOpen, setIsCommentOpen] = useState(false);
   const [hideComments, setHideComments] = useLocalStorage('chapter-hide-comments', false);
   const [showProfanity, setShowProfanity] = useLocalStorage('chapter-show-profanity', true);
@@ -57,6 +60,62 @@ export default function ChapterPageClient({ novelId, chapter, navigation, userId
   const effectiveHideComments = zenMode ? true : hideComments;
   const effectiveShowProfanity = zenMode ? true : showProfanity;
   const hideAuthorWords = zenMode ? true : false;
+
+  // If the chapter was marked as locked on the server, double-check on the client in case the user has purchased it recently
+  useEffect(() => {
+    const checkUnlock = async () => {
+      if (!isLocked) {
+        setUnlockCheckComplete(true);
+        return;
+      }
+
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user) {
+          setUnlockCheckComplete(true);
+          return;
+        }
+
+        // Resolve numeric novel id in case we are using a slug
+        const { data: novel, error: novelError } = await supabase
+          .from('novels')
+          .select('id')
+          .or(`id.eq.${novelId},slug.eq.${novelId}`)
+          .single();
+
+        if (novelError || !novel) {
+          setUnlockCheckComplete(true);
+          return;
+        }
+
+        let unlockQuery = supabase
+          .from('chapter_unlocks')
+          .select('id')
+          .eq('profile_id', session.user.id)
+          .eq('novel_id', novel.id)
+          .eq('chapter_number', chapter.chapter_number);
+
+        if (chapter.part_number == null) {
+          unlockQuery = unlockQuery.is('part_number', null);
+        } else {
+          unlockQuery = unlockQuery.eq('part_number', chapter.part_number);
+        }
+
+        const { data: unlock } = await unlockQuery.maybeSingle();
+        if (unlock) {
+          setIsLocked(false);
+        }
+      } catch (error) {
+        console.error('Error verifying unlock status:', error);
+      } finally {
+        setUnlockCheckComplete(true);
+      }
+    };
+
+    checkUnlock();
+    // We only need to run this once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Handle URL fragment scrolling after mount
   useEffect(() => {
@@ -86,8 +145,18 @@ export default function ChapterPageClient({ novelId, chapter, navigation, userId
   const isPublished = !chapter.publish_at || new Date(chapter.publish_at) <= new Date();
   const shouldBeFree = isPublished && !!chapter.publish_at;
 
+  // While we're verifying unlock status, show a simple loading message
+  if (!unlockCheckComplete && isLocked) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-12 text-center text-muted-foreground">
+        <Icon icon="mdi:loading" className="animate-spin text-2xl mx-auto mb-2" />
+        <p>Checking chapter access...</p>
+      </div>
+    );
+  }
+
   // Render locked states first (mirrors original order)
-  if (chapter.isLocked && !isIndefinitelyLocked(chapter)) {
+  if (unlockCheckComplete && isLocked && !isIndefinitelyLocked(chapter)) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-8">
         <Link 
@@ -151,7 +220,7 @@ export default function ChapterPageClient({ novelId, chapter, navigation, userId
     );
   }
 
-  if (chapter.isLocked && !shouldBeFree) {
+  if (unlockCheckComplete && isLocked && !shouldBeFree) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-8">
         <Link 
