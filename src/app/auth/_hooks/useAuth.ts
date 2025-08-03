@@ -265,13 +265,21 @@ export function useAuth() {
   };
 
   const checkAndRedirect = async () => {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    const { data: sessionCheck } = await supabase.auth.getSession();
-    if (!sessionCheck.session) {
-      throw new Error('Failed to establish session');
+    const timeoutMs = 5000;
+    const intervalMs = 250;
+    const start = Date.now();
+
+    while (Date.now() - start < timeoutMs) {
+      const { data: sessionCheck } = await supabase.auth.getSession();
+      if (sessionCheck.session) {
+        router.push('/');
+        router.refresh();
+        return;
+      }
+      await new Promise(res => setTimeout(res, intervalMs));
     }
-    router.push('/');
-    router.refresh();
+
+    throw new Error('Failed to establish session after sign in');
   };
 
   const resetForm = () => {

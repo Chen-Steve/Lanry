@@ -1,6 +1,7 @@
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { generateUsername } from '@/utils/username';
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
@@ -31,37 +32,48 @@ export async function GET(request: Request) {
         console.log('[Auth Callback] User authenticated:', session.user.id);
         
         try {
-          // Check if profile exists
-          const { data: existingProfile } = await supabase
+          // Idempotent profile creation using UPSERT to avoid duplicate-key race conditions
+          // Try to insert profile; if username clashes, retry with a random suffix (max 5 attempts)
+          const emailBased = session.user.email ? session.user.email.split('@')[0] : undefined;
+
+          // Attempt once with the email-based username (if any). If that collides, fall back to a random username.
+          let username = emailBased ?? generateUsername();
+
+          let { error: upsertError } = await supabase
             .from('profiles')
-            .select('id')
-            .eq('id', session.user.id)
-            .single();
-          
-          if (!existingProfile) {
-            console.log('[Auth Callback] No existing profile found, creating profile');
-            
-            // Generate username from email or random string
-            const username = session.user.email 
-              ? session.user.email.split('@')[0] 
-              : `user_${Math.random().toString(36).slice(2, 7)}`;
-            
-            // Create profile
-            const { error: createError } = await supabase
-              .from('profiles')
-              .insert([{
+            .upsert(
+              [{
                 id: session.user.id,
                 username,
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString(),
                 role: 'USER',
-                coins: 0
-              }]);
-            
-            if (createError) {
-              console.error('[Auth Callback] Error creating profile:', createError);
-              return NextResponse.redirect(new URL('/auth?error=profile_creation_failed', requestUrl.origin));
-            }
+                coins: 0,
+              }],
+              { onConflict: 'id' }
+            );
+
+          if (upsertError && upsertError.code === '23505') {
+            // The chosen username is taken – generate a fresh random one and try only once more.
+            username = generateUsername();
+            ({ error: upsertError } = await supabase
+              .from('profiles')
+              .upsert(
+                [{
+                  id: session.user.id,
+                  username,
+                  created_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString(),
+                  role: 'USER',
+                  coins: 0,
+                }],
+                { onConflict: 'id' }
+              ));
+          }
+
+          if (upsertError) {
+            console.error('[Auth Callback] Error upserting profile:', upsertError);
+            return NextResponse.redirect(new URL('/auth?error=profile_creation_failed', requestUrl.origin));
           }
           
           console.log('[Auth Callback] Redirecting to home');
