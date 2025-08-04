@@ -244,8 +244,8 @@ export default function ChapterPurchaseHistory() {
                   </div>
                   <div className="flex flex-col items-end gap-1 shrink-0">
                     <div className="flex items-center gap-1 text-primary font-medium">
-                      <Icon icon="solar:dollar-minimalistic-bold" className="text-base shrink-0" />
-                      <span className="text-sm">{(purchase.cost * 0.7).toFixed(1)}</span>
+                      <Icon icon="ph:stop-circle" className="text-base shrink-0 text-amber-500" />
+                      <span className="text-sm">{(purchase.cost * 0.7).toFixed(1)} coins</span>
                     </div>
                     <time className="text-xs text-muted-foreground">
                       {formatDate(purchase.created_at)}

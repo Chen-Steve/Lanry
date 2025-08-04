@@ -175,7 +175,7 @@ export default function AuthorDashboard() {
               }`}
               title={isSidebarCollapsed ? 'Earnings History' : undefined}
             >
-              <Icon icon="mdi:currency-usd" className="w-5 h-5 flex-shrink-0" />
+              <Icon icon="ph:stop-circle" className="w-5 h-5 flex-shrink-0 text-amber-500" />
               <span className={`transition-opacity duration-300 whitespace-nowrap ${isSidebarCollapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100 ml-3'}`}>
                 Earnings History
               </span>

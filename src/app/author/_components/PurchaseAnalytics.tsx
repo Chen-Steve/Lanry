@@ -164,11 +164,11 @@ export default function PurchaseAnalytics() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
         <div className="p-4 rounded-lg bg-muted flex items-center justify-between">
           <span className="text-sm font-medium text-muted-foreground">Current Balance</span>
-          <span className="text-2xl font-semibold tabular-nums">{coinBalance}</span>
+          <span className="text-2xl font-semibold tabular-nums">{coinBalance.toFixed(1)} coins</span>
         </div>
         <div className="p-4 rounded-lg bg-muted flex items-center justify-between">
           <span className="text-sm font-medium text-muted-foreground">Lifetime Earnings</span>
-          <span className="text-2xl font-semibold tabular-nums">${totalRevenue.toFixed(2)}</span>
+          <span className="text-2xl font-semibold tabular-nums">{totalRevenue.toFixed(1)} coins</span>
         </div>
       </div>
 
@@ -195,7 +195,7 @@ export default function PurchaseAnalytics() {
                       return (
                         <li key={novel.id} className="flex justify-between">
                           <span>{novel.title}</span>
-                          <span className="tabular-nums">${amount.toFixed(2)}</span>
+                          <span className="tabular-nums">{amount.toFixed(1)} coins</span>
                         </li>
                       );
                     })}
