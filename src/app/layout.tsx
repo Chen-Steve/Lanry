@@ -6,7 +6,7 @@ import Providers from './providers';
 import { Toaster } from 'sonner';
 import { ThemeProvider } from '@/lib/ThemeContext';
 import CookieConsent from './_components/CookieConsent';
-import AdSenseConditional from './_components/AdSenseConditional';
+
 
 export const metadata: Metadata = {
   title: "Lanry",
@@ -83,7 +83,6 @@ export default function RootLayout({
             </ConditionalLayout>
             <Toaster position="bottom-right" />
             <CookieConsent />
-            <AdSenseConditional />
           </ThemeProvider>
         </Providers>
       </body>

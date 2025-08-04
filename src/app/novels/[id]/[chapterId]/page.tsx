@@ -23,16 +23,20 @@ export default async function ChapterPage({ params }: PageParams) {
   const partNumber = match[2] ? parseInt(match[2], 10) : null;
 
   // Fetch current user once on the server
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
 
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session }
+  } = await supabase.auth.getSession();
+
+  const user = session?.user || null;
+
+
 
   // Fetch chapter data & navigation in parallel
   const [chapter, navigation] = await Promise.all([
-    getChapter(novelId, chapterNumber, partNumber, supabase),
-    getChapterNavigation(novelId, chapterNumber, partNumber, supabase),
+    getChapter(novelId, chapterNumber, partNumber, supabase, user),
+    getChapterNavigation(novelId, chapterNumber, partNumber, supabase, user),
   ]);
 
   // Handle missing chapter

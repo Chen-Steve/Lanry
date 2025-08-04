@@ -41,6 +41,10 @@ const isIndefinitelyLocked = (chapter: { publish_at?: string | null }): boolean 
 };
 
 export default function ChapterPageClient({ novelId, chapter, navigation, userId }: ChapterPageClientProps) {
+  // Client-side authentication state
+  const [clientUserId, setClientUserId] = useState<string | null>(userId);
+  
+  
   // Local UI states that should stay on the client
   const [isLocked, setIsLocked] = useState(chapter.isLocked ?? false);
   const [unlockCheckComplete, setUnlockCheckComplete] = useState(!chapter.isLocked);
@@ -60,6 +64,23 @@ export default function ChapterPageClient({ novelId, chapter, navigation, userId
   const effectiveHideComments = zenMode ? true : hideComments;
   const effectiveShowProfanity = zenMode ? true : showProfanity;
   const hideAuthorWords = zenMode ? true : false;
+
+  // Get client-side authentication state
+  useEffect(() => {
+    const getClientAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const currentUserId = session?.user?.id || null;
+
+        setClientUserId(currentUserId);
+      } catch (error) {
+        console.error('Error getting client session:', error);
+        setClientUserId(null);
+      }
+    };
+
+    getClientAuth();
+  }, []);
 
   // If the chapter was marked as locked on the server, double-check on the client in case the user has purchased it recently
   useEffect(() => {
@@ -196,8 +217,8 @@ export default function ChapterPageClient({ novelId, chapter, navigation, userId
             partNumber={chapter.part_number}
             coins={chapter.coins}
             authorId={chapter.novel.author_profile_id}
-            userProfileId={userId ?? undefined}
-            isAuthenticated={!!userId}
+            userProfileId={clientUserId ?? undefined}
+            isAuthenticated={!!clientUserId}
             publishAt={chapter.publish_at}
           />
         </div>

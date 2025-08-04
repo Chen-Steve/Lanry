@@ -1,5 +1,5 @@
 import { getSupabase } from '@/lib/supabase';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient, User } from '@supabase/supabase-js';
 import { Chapter, Novel } from '@/types/database';
 
 type ChapterWithNovel = Chapter & {
@@ -32,11 +32,17 @@ export async function getChapter(
   novelId: string,
   chapterNumber: number,
   partNumber?: number | null,
-  supabaseOverride?: SupabaseClient
+  supabaseOverride?: SupabaseClient,
+  userOverride?: User | null
 ): Promise<ChapterWithNovel | null> {
   const supabase = supabaseOverride ?? getSupabase();
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    // Use provided user or fetch from current session
+    let user = userOverride;
+    if (!user) {
+      const { data: { user: fetchedUser } } = await supabase.auth.getUser();
+      user = fetchedUser;
+    }
 
     // First resolve the novel to obtain its numeric id (needed for the canonical cache key)
     const { data: novel, error: novelError } = await supabase
@@ -163,7 +169,8 @@ export async function getChapterNavigation(
   novelId: string,
   currentChapterNumber: number,
   currentPartNumber?: number | null,
-  supabaseOverride?: SupabaseClient
+  supabaseOverride?: SupabaseClient,
+  userOverride?: User | null
 ) {
   const supabase = supabaseOverride ?? getSupabase();
   try {
@@ -175,7 +182,11 @@ export async function getChapterNavigation(
 
     if (novelError || !novel) return { prevChapter: null, nextChapter: null, availableChapters: [], volumes: [] };
 
-    const { data: { user } } = await supabase.auth.getUser();
+    let user = userOverride;
+    if (!user) {
+      const { data: { user: fetchedUser } } = await supabase.auth.getUser();
+      user = fetchedUser;
+    }
 
     // Check if user is author, translator, or created the novel as a translator
     const isAuthor = user && novel.author_profile_id === user.id;

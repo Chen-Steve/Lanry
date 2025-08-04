@@ -1,6 +1,9 @@
+'use client';
+
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
 import { useMemo, useState, useEffect, useRef } from 'react';
+import supabase from '@/lib/supabaseClient';
 
 interface ChapterNavigationProps {
   navigation: {
@@ -10,12 +13,23 @@ interface ChapterNavigationProps {
       volume_id?: string;
       isAccessible?: boolean;
     } | null;
-    nextChapter: { 
-      chapter_number: number; 
-      part_number?: number | null; 
+    nextChapter: {
+      chapter_number: number;
+      part_number?: number | null;
       volume_id?: string;
       isAccessible?: boolean;
     } | null;
+    availableChapters: Array<{
+      chapter_number: number;
+      part_number?: number | null;
+      volume_id?: string;
+      isAccessible?: boolean;
+    }>;
+    volumes: Array<{
+      id: string;
+      title: string;
+      volume_number: number;
+    }>;
   };
   novelId: string;
   currentChapter: number;
@@ -37,22 +51,63 @@ interface ChapterNavigationProps {
 }
 
 export default function ChapterNavigation({ 
-  navigation, 
+  navigation: initialNavigation, 
   novelId, 
   currentChapter,
   currentPartNumber,
   currentVolumeId,
-  availableChapters = [],
+  // availableChapters prop is ignored because we rely on navigation.availableChapters
   volumes = [],
   handleChapterSelect,
   position = 'bottom'
 }: ChapterNavigationProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [navigation, setNavigation] = useState(initialNavigation);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const dropdownPosition = position === 'top' 
     ? 'top-full left-1/2 -translate-x-1/2 mt-2' 
     : 'bottom-full left-1/2 -translate-x-1/2 mb-2';
+
+  // Fetch updated unlock information for prev/next chapters on mount
+  useEffect(() => {
+    const updateAccess = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
+
+      // Resolve numeric novel id (the navigation component receives slug or id)
+      const { data: novel } = await supabase
+        .from('novels')
+        .select('id')
+        .or(`id.eq.${novelId},slug.eq.${novelId}`)
+        .single();
+      if (!novel) return;
+
+      // Pull every unlock the user has for this novel (no extra filtering)
+      const { data: unlocks } = await supabase
+        .from('chapter_unlocks')
+        .select('chapter_number, part_number')
+        .eq('novel_id', novel.id)
+        .eq('profile_id', session.user.id);
+
+      const isUnlocked = (chNum: number | undefined, partNum: number | null | undefined) => {
+        return unlocks?.some(u => u.chapter_number === chNum && (u.part_number ?? null) === (partNum ?? null));
+      };
+
+      setNavigation(prev => ({
+        prevChapter: prev.prevChapter ? { ...prev.prevChapter, isAccessible: prev.prevChapter.isAccessible || isUnlocked(prev.prevChapter.chapter_number, prev.prevChapter.part_number) } : null,
+        nextChapter: prev.nextChapter ? { ...prev.nextChapter, isAccessible: prev.nextChapter.isAccessible || isUnlocked(prev.nextChapter.chapter_number, prev.nextChapter.part_number) } : null,
+        availableChapters: prev.availableChapters.map(ch => ({
+          ...ch,
+          isAccessible: ch.isAccessible || isUnlocked(ch.chapter_number, ch.part_number)
+        })),
+        // volumes stay the same
+        volumes: initialNavigation.volumes
+      }));
+    };
+    updateAccess();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -84,6 +139,8 @@ export default function ChapterNavigation({
     const bPart = b.part_number ?? 0;
     return aPart - bPart;
   };
+
+  const availableChapters = navigation.availableChapters;
 
   // Group chapters by volume
   const chaptersGroupedByVolume = useMemo(() => {
