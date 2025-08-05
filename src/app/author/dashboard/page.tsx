@@ -60,6 +60,15 @@ export default function AuthorDashboard() {
   const { theme, setTheme } = useTheme();
   const [isSidebarCollapsed, setSidebarCollapsed] = useState(false);
 
+  // Helper function to handle tab changes and close sidebar on mobile
+  const handleTabChange = (tabName: string) => {
+    setActiveTab(tabName);
+    // Close sidebar on mobile after selection
+    if (window.innerWidth < 1024) { // lg breakpoint
+      setSidebarOpen(false);
+    }
+  };
+
   useEffect(() => {
     const checkAuthorization = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -152,7 +161,7 @@ export default function AuthorDashboard() {
         <div className="flex-1 overflow-y-auto py-2">
           <div className="space-y-1">
             <button
-              onClick={() => setActiveTab('manage-novels')}
+              onClick={() => handleTabChange('manage-novels')}
               className={`w-full flex items-center justify-start rounded-md text-base font-medium transition-all duration-300 py-3 px-4 ${
                 activeTab === 'manage-novels'
                   ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
@@ -167,7 +176,7 @@ export default function AuthorDashboard() {
             </button>
             
             <button
-              onClick={() => setActiveTab('purchases')}
+              onClick={() => handleTabChange('purchases')}
               className={`w-full flex items-center justify-start rounded-md text-base font-medium transition-all duration-300 py-3 px-4 ${
                 activeTab === 'purchases'
                   ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
@@ -182,7 +191,7 @@ export default function AuthorDashboard() {
             </button>
             
             <button
-              onClick={() => setActiveTab('comments')}
+              onClick={() => handleTabChange('comments')}
               className={`w-full flex items-center justify-start rounded-md text-base font-medium transition-all duration-300 py-3 px-4 ${
                 activeTab === 'comments'
                   ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
@@ -197,7 +206,7 @@ export default function AuthorDashboard() {
             </button>
             
             <button
-              onClick={() => setActiveTab('statistics')}
+              onClick={() => handleTabChange('statistics')}
               className={`w-full flex items-center justify-start rounded-md text-base font-medium transition-all duration-300 py-3 px-4 ${
                 activeTab === 'statistics'
                   ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
@@ -212,7 +221,7 @@ export default function AuthorDashboard() {
             </button>
             
             <button
-              onClick={() => setActiveTab('links')}
+              onClick={() => handleTabChange('links')}
               className={`w-full flex items-center justify-start rounded-md text-base font-medium transition-all duration-300 py-3 px-4 ${
                 activeTab === 'links'
                   ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'

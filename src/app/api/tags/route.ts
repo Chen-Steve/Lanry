@@ -5,7 +5,7 @@ import { randomUUID } from 'crypto';
 // GET /api/tags
 export async function GET() {
   try {
-    const supabase = createServerClient();
+    const supabase = await createServerClient();
     const { data: tags, error } = await supabase
       .from('tags')
       .select('*')
@@ -28,27 +28,7 @@ export async function GET() {
 // POST /api/tags
 export async function POST(request: Request) {
   try {
-    const supabase = createServerClient();
-    
-    // Get the authorization header
-    const authHeader = request.headers.get('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { error: 'Missing or invalid authorization header' },
-        { status: 401 }
-      );
-    }
-
-    const token = authHeader.split(' ')[1];
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
+    const supabase = await createServerClient();
     const { name, description } = await request.json();
     
     if (!name?.trim()) {

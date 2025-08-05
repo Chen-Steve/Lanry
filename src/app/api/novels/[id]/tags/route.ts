@@ -7,8 +7,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const supabase = createServerClient();
-
+    const supabase = await createServerClient();
     const { data, error } = await supabase
       .from('tags_on_novels')
       .select('tag:tag_id (*)')
@@ -35,26 +34,9 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    const supabase = createServerClient();
-
-    // Bearer token auth check
-    const authHeader = request.headers.get('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { error: 'Missing or invalid authorization header' },
-        { status: 401 }
-      );
-    }
-    const token = authHeader.split(' ')[1];
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
+    const supabase = await createServerClient();
     const { tagIds } = await request.json();
+    
     if (!Array.isArray(tagIds) || tagIds.length === 0) {
       return NextResponse.json(
         { error: 'Tag IDs are required' },

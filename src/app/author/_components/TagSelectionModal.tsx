@@ -43,7 +43,12 @@ export default function TagSelectionModal({
         setTags(allTags);
       } catch (error) {
         console.error('Error loading tags:', error);
-        toast.error('Failed to load tags');
+        const errorMessage = error instanceof Error ? error.message : 'Failed to load tags';
+        if (errorMessage.includes('sign in again')) {
+          toast.error('Session expired. Please refresh the page and sign in again.');
+        } else {
+          toast.error('Failed to load tags');
+        }
       } finally {
         setIsLoading(false);
       }
@@ -61,14 +66,11 @@ export default function TagSelectionModal({
       // Remove tag
       if (!isNewNovel) {
         try {
-          const success = await tagService.removeNovelTag(novelId, tag.id);
-          if (!success) {
-            toast.error('Failed to remove tag');
-            return;
-          }
+          await tagService.removeNovelTag(novelId, tag.id);
         } catch (error) {
           console.error('Error removing tag:', error);
-          toast.error('Failed to remove tag');
+          const errorMessage = error instanceof Error ? error.message : 'Failed to remove tag';
+          toast.error(errorMessage);
           return;
         }
       }
@@ -83,14 +85,11 @@ export default function TagSelectionModal({
       // Add tag
       if (!isNewNovel) {
         try {
-          const success = await tagService.addNovelTags(novelId, [tag.id]);
-          if (!success) {
-            toast.error('Failed to add tag');
-            return;
-          }
+          await tagService.addNovelTags(novelId, [tag.id]);
         } catch (error) {
           console.error('Error adding tag:', error);
-          toast.error('Failed to add tag');
+          const errorMessage = error instanceof Error ? error.message : 'Failed to add tag';
+          toast.error(errorMessage);
           return;
         }
       }

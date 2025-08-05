@@ -178,7 +178,7 @@ export interface Tag {
   id: string;
   name: string;
   description?: string | null;
-  createdAt: Date;
-  updatedAt: Date;
+  created_at: string;
+  updated_at: string;
   usageCount?: number;
 } 
