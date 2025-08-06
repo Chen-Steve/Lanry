@@ -7,25 +7,11 @@ type TranslatorCardProps = {
     id: string;
     username: string | null;
     avatar_url?: string;
-    role: 'USER' | 'AUTHOR' | 'TRANSLATOR';
-    created_at: string;
-    updated_at: string;
-    kofi_url?: string | null;
-    patreon_url?: string | null;
-    custom_url?: string | null;
-    custom_url_label?: string | null;
-    author_bio?: string | null;
     translatedNovels: Array<{
       id: string
       title: string
       cover_image_url?: string | null
       slug: string
-      categories: Array<{
-        id: string
-        name: string
-        created_at: string
-        updated_at: string
-      }>
     }>
     translatedNovelsCount: number
   }

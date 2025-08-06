@@ -24,82 +24,49 @@ type TranslatorWithNovels = {
   id: string;
   username: string | null;
   avatar_url?: string;
-  role: 'USER' | 'AUTHOR' | 'TRANSLATOR';
-  created_at: string;
-  updated_at: string;
-  kofi_url?: string | null;
-  patreon_url?: string | null;
-  custom_url?: string | null;
-  custom_url_label?: string | null;
-  author_bio?: string | null;
   authoredNovels: {
     id: string;
     title: string;
     slug: string;
     cover_image_url?: string;
-    status: string;
-    updated_at: string;
-    categories: {
-      id: string;
-      name: string;
-      created_at: string;
-      updated_at: string;
-    }[];
   }[];
   translatedNovels: {
     id: string;
     title: string;
     slug: string;
     cover_image_url?: string;
-    status: string;
-    updated_at: string;
-    categories: {
-      id: string;
-      name: string;
-      created_at: string;
-      updated_at: string;
-    }[];
   }[];
   translatedNovelsCount: number;
 }
 
 async function getTranslators(page: number = 1) {
-  try {
-    const supabase = createServerClient()
+  const supabase = await createServerClient()
 
-    // Get all translator profiles - simple and straightforward
-    const { data: allTranslators, error: translatorsError } = await supabase
-      .from('profiles')
-      .select(`
-        id,
-        username,
-        avatar_url,
-        role,
-        created_at,
-        updated_at,
-        kofi_url,
-        patreon_url,
-        custom_url,
-        custom_url_label,
-        author_bio
-      `)
-      .eq('role', 'TRANSLATOR')
+  // Get all translator profiles - simple and straightforward
+  const { data: allTranslators, error: translatorsError } = await supabase
+    .from('profiles')
+    .select(`
+      id,
+      username,
+      avatar_url,
+      role
+    `)
+    .eq('role', 'TRANSLATOR')
 
-    if (translatorsError) {
-      console.error('Error fetching translators:', translatorsError)
-      throw translatorsError
-    }
+  if (translatorsError) {
+    throw translatorsError
+  }
 
-    if (!allTranslators || allTranslators.length === 0) {
-      return {
-        translators: [],
-        pageInfo: {
-          cursors: [],
-          currentPage: 1,
-          hasNextPage: false
-        }
+  if (!allTranslators || allTranslators.length === 0) {
+    return {
+      translators: [],
+      pageInfo: {
+        cursors: [],
+        currentPage: 1,
+        hasNextPage: false
       }
     }
+  }
 
     const translatorIds = allTranslators.map(t => t.id)
 
@@ -111,7 +78,6 @@ async function getTranslators(page: number = 1) {
       .neq('status', 'DRAFT')
 
     if (countsError) {
-      console.error('Error fetching novel counts:', countsError)
       throw countsError
     }
 
@@ -149,6 +115,19 @@ async function getTranslators(page: number = 1) {
     // Calculate pagination
     const totalTranslators = translatorsWithNovels.length
     const totalPages = Math.ceil(totalTranslators / ITEMS_PER_PAGE)
+    
+    // If requested page is beyond available pages, redirect to page 1
+    if (page > totalPages) {
+      return {
+        translators: [],
+        pageInfo: {
+          cursors: Array.from({ length: totalPages }, (_, i) => (i + 1).toString()),
+          currentPage: 1,
+          hasNextPage: false
+        }
+      }
+    }
+
     const startIndex = (page - 1) * ITEMS_PER_PAGE
     const endIndex = startIndex + ITEMS_PER_PAGE
     const hasNextPage = page < totalPages
@@ -156,17 +135,6 @@ async function getTranslators(page: number = 1) {
     // Get the translators for the current page
     const pageTranslators = translatorsWithNovels.slice(startIndex, endIndex)
     const pageTranslatorIds = pageTranslators.map(t => t.id)
-
-    if (pageTranslatorIds.length === 0) {
-      return {
-        translators: [],
-        pageInfo: {
-          cursors: [],
-          currentPage: page,
-          hasNextPage: false
-        }
-      }
-    }
 
     // Fetch detailed novel data for the current page translators only
     const { data: novels, error: novelsError } = await supabase
@@ -176,47 +144,27 @@ async function getTranslators(page: number = 1) {
         title,
         slug,
         cover_image_url,
-        status,
-        updated_at,
         author_profile_id,
-        translator_id,
-        categories:categories_on_novels(
-          category:category_id(
-            id,
-            name,
-            created_at,
-            updated_at
-          )
-        )
+        translator_id
       `)
       .or(`author_profile_id.in.(${pageTranslatorIds.join(',')}),translator_id.in.(${pageTranslatorIds.join(',')})`)
       .neq('status', 'DRAFT')
       .order('updated_at', { ascending: false })
 
     if (novelsError) {
-      console.error('Error fetching novels:', novelsError)
       throw novelsError
     }
 
     // Group novels by translator
-    type NovelWithCategories = {
+    type Novel = {
       id: string;
       title: string;
       slug: string;
       cover_image_url?: string;
-      status: string;
-      updated_at: string;
-      categories: {
-        id: string;
-        name: string;
-        created_at: string;
-        updated_at: string;
-      }[];
     }
 
-    const novelsByTranslator: Record<string, NovelWithCategories[]> = {}
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    novels?.forEach((novel: any) => {
+    const novelsByTranslator: Record<string, Novel[]> = {}
+    novels?.forEach((novel) => {
       const authorId = novel.author_profile_id
       const translatorId = novel.translator_id
 
@@ -226,9 +174,10 @@ async function getTranslators(page: number = 1) {
           novelsByTranslator[authorId] = []
         }
         novelsByTranslator[authorId].push({
-          ...novel,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          categories: novel.categories?.map((c: any) => c.category) || []
+          id: novel.id,
+          title: novel.title,
+          slug: novel.slug,
+          cover_image_url: novel.cover_image_url
         })
       }
 
@@ -238,9 +187,10 @@ async function getTranslators(page: number = 1) {
           novelsByTranslator[translatorId] = []
         }
         novelsByTranslator[translatorId].push({
-          ...novel,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          categories: novel.categories?.map((c: any) => c.category) || []
+          id: novel.id,
+          title: novel.title,
+          slug: novel.slug,
+          cover_image_url: novel.cover_image_url
         })
       }
     })
@@ -254,24 +204,17 @@ async function getTranslators(page: number = 1) {
         username: translator.username,
         avatar_url: translator.avatar_url,
         role: translator.role,
-        created_at: translator.created_at,
-        updated_at: translator.updated_at,
-        kofi_url: translator.kofi_url,
-        patreon_url: translator.patreon_url,
-        custom_url: translator.custom_url,
-        custom_url_label: translator.custom_url_label,
-        author_bio: translator.author_bio,
         authoredNovels: translatorNovels,
         translatedNovels: translatorNovels,
         translatedNovelsCount: translatorNovels.length
       }
     })
 
-    // Generate cursors for pagination
-    const cursors: string[] = []
-    for (let i = 1; i <= Math.min(totalPages, MAX_PAGES_SHOWN); i++) {
-      cursors.push(i.toString())
-    }
+    // Generate cursors for pagination - only for pages with content
+    const cursors = Array.from(
+      { length: totalPages }, 
+      (_, i) => (i + 1).toString()
+    )
 
     return {
       translators: displayTranslators,
@@ -281,24 +224,20 @@ async function getTranslators(page: number = 1) {
         hasNextPage
       }
     }
-  } catch (error) {
-    console.error('Error fetching translators:', error)
-    // Return a safe default state
-    return {
-      translators: [],
-      pageInfo: {
-        cursors: [],
-        currentPage: 1,
-        hasNextPage: false
-      }
-    }
-  }
 }
 
 function Pagination({ pageInfo }: { pageInfo: PageInfo }) {
-  const { cursors, currentPage, hasNextPage } = pageInfo
-  const startPage = Math.max(1, currentPage - Math.floor(MAX_PAGES_SHOWN / 2))
-  const endPage = startPage + Math.min(MAX_PAGES_SHOWN - 1, cursors.length)
+  const { cursors, currentPage } = pageInfo
+  const totalPages = cursors.length
+  
+  // Calculate the range of pages to show
+  let startPage = Math.max(1, currentPage - Math.floor(MAX_PAGES_SHOWN / 2))
+  const endPage = Math.min(startPage + MAX_PAGES_SHOWN - 1, totalPages)
+  
+  // Adjust startPage if we're near the end
+  if (endPage - startPage + 1 < MAX_PAGES_SHOWN) {
+    startPage = Math.max(1, endPage - MAX_PAGES_SHOWN + 1)
+  }
   
   return (
     <nav className="flex items-center gap-2">
@@ -337,7 +276,7 @@ function Pagination({ pageInfo }: { pageInfo: PageInfo }) {
         </Link>
       ))}
 
-      {hasNextPage && (
+      {currentPage < totalPages && (
         <Link
           href={`/translators?page=${currentPage + 1}`}
           className="px-3 py-2 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors"
@@ -361,26 +300,7 @@ export default async function TranslatorsPage({
 
     return (
       <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-center gap-2 mb-8">
-          <h1 className="text-3xl font-bold">Translators</h1>
-        </div>
-        
-        {translators.length === 0 ? (
-          <div className="text-center py-12">
-            <Icon icon="mdi:book-off" className="w-16 h-16 mx-auto text-gray-400" />
-            <p className="mt-4 text-gray-600">No translators found</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-            {translators.map((translator) => (
-              <TranslatorCard key={translator.id} translator={translator} />
-            ))}
-            
-            <div className="flex justify-center mt-8 col-span-full">
-              <Pagination pageInfo={pageInfo} />
-            </div>
-          </div>
-        )}
+        <TranslatorsContent translators={translators} pageInfo={pageInfo} />
       </div>
     )
   } catch (error) {
@@ -395,4 +315,31 @@ export default async function TranslatorsPage({
       </div>
     )
   }
-} 
+}
+
+function TranslatorsContent({ translators, pageInfo }: { translators: TranslatorWithNovels[], pageInfo: PageInfo }) {
+  return (
+    <>
+      <div className="flex items-center justify-center gap-2 mb-8">
+        <h1 className="text-3xl font-bold">Translators</h1>
+      </div>
+      
+      {translators.length === 0 ? (
+        <div className="text-center py-12">
+          <Icon icon="mdi:book-off" className="w-16 h-16 mx-auto text-gray-400" />
+          <p className="mt-4 text-gray-600">No translators found</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+          {translators.map((translator) => (
+            <TranslatorCard key={translator.id} translator={translator} />
+          ))}
+          
+          <div className="flex justify-center mt-8 col-span-full">
+            <Pagination pageInfo={pageInfo} />
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
