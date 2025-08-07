@@ -422,7 +422,6 @@ export default function ChapterEditForm({
             <ChapterEditor
               value={formData.content}
               onChange={(value) => {
-                console.log('ChapterEditor onChange called with:', value.slice(0, 50) + '...');
                 setFormData(prev => ({ ...prev, content: value }));
               }}
               authorThoughts={formData.authorThoughts}

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Icon } from '@iconify/react';
 import FootnoteImageUploader from './FootnoteImageUploader';
-import MarkdownPreview from './MarkdownPreview';
+import ChapterPreview from './ChapterPreview';
 import FindReplaceOverlay from './FindReplaceOverlay';
 
 interface ChapterEditorProps {
@@ -41,6 +41,12 @@ export default function ChapterEditor({
   const [matches, setMatches] = useState<{ start: number; end: number }[]>([]);
   const [highlightOverlay, setHighlightOverlay] = useState<HTMLDivElement | null>(null);
   const [draftValue, setDraftValue] = useState(value);
+  // Store latest onChange callback in a ref to avoid it constantly
+  // changing the dependency array and triggering endless effects
+  const onChangeRef = useRef(onChange);
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
 
   // Force initial sync to ensure draftValue is always up-to-date on component mount
   useEffect(() => {
@@ -55,12 +61,12 @@ export default function ChapterEditor({
     }
   }, [value, isFindReplaceOpen, draftValue]);
 
-  // Add a new effect to sync changes when draftValue changes due to find/replace
+  // Sync changes while Find & Replace is open without causing an update loop
   useEffect(() => {
     if (isFindReplaceOpen) {
-      onChange(draftValue);
+      onChangeRef.current(draftValue);
     }
-  }, [draftValue, isFindReplaceOpen, onChange]);
+  }, [draftValue, isFindReplaceOpen]);
 
   // Create and position the highlight overlay
   useEffect(() => {
@@ -322,7 +328,6 @@ export default function ChapterEditor({
         value={draftValue}
         onMatchUpdate={setMatches}
         onDraftChange={(newDraft) => {
-          console.log('Draft changed to:', newDraft.slice(0, 50) + '...');
           setDraftValue(newDraft);
         }}
       />
@@ -424,7 +429,7 @@ export default function ChapterEditor({
               <h2 className="text-lg md:text-xl font-semibold text-black dark:text-white mb-6">
                 Chapter Preview
               </h2>
-              <MarkdownPreview content={value} />
+              <ChapterPreview content={value} />
             </div>
           </div>
         ) : (
