@@ -158,7 +158,8 @@ export async function getChapter(
     }
 
     // If not unlocked and not accessible, chapter is locked
-    return { ...chapter, isLocked: true, hasTranslatorAccess: false };
+    // But preserve translator access if user has it
+    return { ...chapter, isLocked: true, hasTranslatorAccess };
   } catch (error) {
     console.error('Error fetching chapter:', error);
     return null;

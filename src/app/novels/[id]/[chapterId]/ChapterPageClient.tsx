@@ -100,11 +100,23 @@ export default function ChapterPageClient({ novelId, chapter, navigation, userId
         // Resolve numeric novel id in case we are using a slug
         const { data: novel, error: novelError } = await supabase
           .from('novels')
-          .select('id')
+          .select('id, author_profile_id, translator_id, is_author_name_custom')
           .or(`id.eq.${novelId},slug.eq.${novelId}`)
           .single();
 
         if (novelError || !novel) {
+          setUnlockCheckComplete(true);
+          return;
+        }
+
+        // Check if user is author or translator
+        const isAuthor = novel.author_profile_id === session.user.id;
+        const isTranslator = novel.translator_id === session.user.id || (novel.author_profile_id === session.user.id && novel.is_author_name_custom === true);
+        const hasTranslatorAccess = isAuthor || isTranslator;
+
+        // If user has translator access, unlock the chapter
+        if (hasTranslatorAccess) {
+          setIsLocked(false);
           setUnlockCheckComplete(true);
           return;
         }
@@ -167,7 +179,8 @@ export default function ChapterPageClient({ novelId, chapter, navigation, userId
   const shouldBeFree = isPublished && !!chapter.publish_at;
 
   // While we're verifying unlock status, show a simple loading message
-  if (!unlockCheckComplete && isLocked) {
+  // But skip loading for translators who have access
+  if (!unlockCheckComplete && isLocked && !chapter.hasTranslatorAccess) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-12 text-center text-muted-foreground">
         <Icon icon="mdi:loading" className="animate-spin text-2xl mx-auto mb-2" />
@@ -177,7 +190,8 @@ export default function ChapterPageClient({ novelId, chapter, navigation, userId
   }
 
   // Render locked states first (mirrors original order)
-  if (unlockCheckComplete && isLocked && !isIndefinitelyLocked(chapter)) {
+  // But allow translators to access their own chapters even if locked
+  if (unlockCheckComplete && isLocked && !isIndefinitelyLocked(chapter) && !chapter.hasTranslatorAccess) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-8">
         <Link 
@@ -241,7 +255,7 @@ export default function ChapterPageClient({ novelId, chapter, navigation, userId
     );
   }
 
-  if (unlockCheckComplete && isLocked && !shouldBeFree) {
+  if (unlockCheckComplete && isLocked && !shouldBeFree && !chapter.hasTranslatorAccess) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-8">
         <Link 

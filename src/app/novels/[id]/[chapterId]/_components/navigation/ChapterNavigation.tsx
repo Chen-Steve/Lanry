@@ -78,10 +78,30 @@ export default function ChapterNavigation({
       // Resolve numeric novel id (the navigation component receives slug or id)
       const { data: novel } = await supabase
         .from('novels')
-        .select('id')
+        .select('id, author_profile_id, translator_id, is_author_name_custom')
         .or(`id.eq.${novelId},slug.eq.${novelId}`)
         .single();
       if (!novel) return;
+
+      // Check if user is author or translator
+      const isAuthor = novel.author_profile_id === session.user.id;
+      const isTranslator = novel.translator_id === session.user.id || (novel.author_profile_id === session.user.id && novel.is_author_name_custom === true);
+      const hasTranslatorAccess = isAuthor || isTranslator;
+
+      // If user has translator access, all chapters are accessible
+      if (hasTranslatorAccess) {
+        setNavigation(prev => ({
+          prevChapter: prev.prevChapter ? { ...prev.prevChapter, isAccessible: true } : null,
+          nextChapter: prev.nextChapter ? { ...prev.nextChapter, isAccessible: true } : null,
+          availableChapters: prev.availableChapters.map(ch => ({
+            ...ch,
+            isAccessible: true
+          })),
+          // volumes stay the same
+          volumes: initialNavigation.volumes
+        }));
+        return;
+      }
 
       // Pull every unlock the user has for this novel (no extra filtering)
       const { data: unlocks } = await supabase
