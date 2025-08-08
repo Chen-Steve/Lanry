@@ -28,9 +28,18 @@ export default function ChapterPreview({
   const filteredContent = filterExplicitContent(content, !showProfanity);
   
   // Split content into paragraphs
-  const paragraphs = filteredContent
-    .split('\n\n')
-    .filter(p => p.trim());
+  const paragraphs = (() => {
+    const parts = filteredContent.split('\n\n');
+    const expanded: string[] = [];
+    for (let part of parts) {
+      while (part.startsWith('\n')) {
+        expanded.push('');
+        part = part.slice(1);
+      }
+      expanded.push(part);
+    }
+    return expanded;
+  })();
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -44,13 +53,17 @@ export default function ChapterPreview({
       >
         {/* Display paragraphs */}
         {paragraphs.map((paragraph, index) => (
-          <p 
-            key={index} 
-            className="mb-4 leading-relaxed"
-            dangerouslySetInnerHTML={{ 
-              __html: formatText(paragraph) 
-            }}
-          />
+          paragraph.trim() === '' ? (
+            <div key={index} className="h-5" />
+          ) : (
+            <p 
+              key={index} 
+              className="mb-4 leading-relaxed whitespace-pre-wrap"
+              dangerouslySetInnerHTML={{ 
+                __html: formatText(paragraph) 
+              }}
+            />
+          )
         ))}
         
         {/* Footnotes Section */}

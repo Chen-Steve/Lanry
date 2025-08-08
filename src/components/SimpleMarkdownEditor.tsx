@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { Icon } from '@iconify/react'
-import MarkdownPreview from '@/app/author/_components/MarkdownPreview'
+import MarkdownPreview from '@/app/forum/_components/MarkdownPreview'
 
 interface SimpleMarkdownEditorProps {
   value: string

@@ -19,7 +19,7 @@ interface CreateNovelPayload {
 
 export async function POST(request: Request) {
   try {
-    const supabase = createServerClient();
+    const supabase = await createServerClient();
 
     // Obtain current session (may be null for anonymous)
     const {
@@ -75,7 +75,7 @@ export async function POST(request: Request) {
 
 export async function GET() {
   try {
-    const supabase = createServerClient();
+    const supabase = await createServerClient();
 
     // Fetch novels and their latest chapter (if any)
     const { data: novels, error } = await supabase

@@ -7,7 +7,7 @@ import { Avatar } from '@/components/ui/avatar'
 import { useAuth } from '@/hooks/useAuth'
 import { useForumMutations } from '@/hooks/forum/useForumMutations'
 import { formatRelativeDate } from '@/lib/utils'
-import MarkdownPreview from '@/app/author/_components/MarkdownPreview'
+import MarkdownPreview from '@/app/forum/_components/MarkdownPreview'
 import SimpleMarkdownEditor from '@/components/SimpleMarkdownEditor'
 
 interface MessageItemProps {

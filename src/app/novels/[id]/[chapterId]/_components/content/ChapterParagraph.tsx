@@ -32,8 +32,12 @@ export default function ChapterParagraph({
           style={getParagraphStyles()}
         >
           <span aria-hidden="true" className="select-all invisible absolute">{scrambleText(paragraph)}</span>
-          <span className="relative" dangerouslySetInnerHTML={{ __html: formatText(paragraph) }} />
-          {!hideComments && (
+          {paragraph.trim() === '' ? (
+            <span className="block h-5" />
+          ) : (
+            <span className="relative whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: formatText(paragraph) }} />
+          )}
+          {!hideComments && paragraph.trim() !== '' && (
             <span className="inline-flex items-center ml-1">
               <button
                 onClick={(e) => {

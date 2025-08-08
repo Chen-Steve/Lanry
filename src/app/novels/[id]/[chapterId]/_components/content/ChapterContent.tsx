@@ -119,9 +119,21 @@ export default function ChapterContent({
   }, [onCommentStateChange]);
 
   // Extract paragraphs and footnotes
-  const paragraphs = filterExplicitContent(content, !showProfanity)
-    .split('\n\n')
-    .filter(p => p.trim());
+  // Preserve multiple blank lines by keeping empty segments and converting stray leading newlines
+  const paragraphs = (() => {
+    const raw = filterExplicitContent(content, !showProfanity);
+    const parts = raw.split('\n\n');
+    const expanded: string[] = [];
+    for (let part of parts) {
+      // If there are leftover leading single newlines (odd counts), convert each to an empty paragraph
+      while (part.startsWith('\n')) {
+        expanded.push('');
+        part = part.slice(1);
+      }
+      expanded.push(part);
+    }
+    return expanded;
+  })();
 
   // Handle smooth scrolling for footnote links
   useEffect(() => {
