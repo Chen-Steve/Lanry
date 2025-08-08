@@ -23,6 +23,24 @@ export const formatText = (text: string, extractFootnotes = false): string => {
     extractedFootnotes.length = 0;
   }
 
+  // Preserve explicit-content spans inserted earlier by content filtering,
+  // so we can safely escape user-provided angle brackets without breaking them
+  const CENSOR_OPEN = '__CENSORED_SPAN_OPEN__';
+  const CENSOR_CLOSE = '__CENSORED_SPAN_CLOSE__';
+  text = text
+    .replaceAll('<span class="censored-word">', CENSOR_OPEN)
+    .replaceAll('</span>', CENSOR_CLOSE);
+
+  // Escape raw HTML angle brackets and ampersands from user content so sequences like
+  // "<abc>" render as text in preview instead of being treated as HTML tags
+  const escapeHtml = (value: string): string =>
+    value
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+
+  text = escapeHtml(text);
+
   // Replace standalone Supabase image URLs with image elements
   text = text.replace(
     /(https:\/\/[a-zA-Z0-9-]+\.supabase\.co\/storage\/v1\/object\/public\/footnote-images\/[a-zA-Z0-9_-]+\.(png|jpg|jpeg|gif))/g,
@@ -132,6 +150,11 @@ export const formatText = (text: string, extractFootnotes = false): string => {
   
   // Format the remaining content (outside of footnotes)
   text = formatContent(result);
+  
+  // Restore explicit-content span wrappers
+  text = text
+    .replaceAll(CENSOR_OPEN, '<span class="censored-word">')
+    .replaceAll(CENSOR_CLOSE, '</span>');
   
   return text;
 };
