@@ -2,8 +2,7 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState, useEffect, createContext, useContext } from 'react';
-import { User } from '@supabase/auth-helpers-nextjs';
-import { SupabaseClient } from '@supabase/supabase-js';
+import type { User, SupabaseClient } from '@supabase/supabase-js';
 import { PayPalScriptProvider } from "@paypal/react-paypal-js";
 import supabase from '@/lib/supabaseClient';
 import { ServerTimeProvider } from '@/providers/ServerTimeProvider';

@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { createServerClient } from '@/lib/supabaseServer';
 import { generateUUID } from '@/lib/utils';
 
 export async function GET(
@@ -9,8 +8,7 @@ export async function GET(
 ) {
   try {
     const chapterNumber = parseInt(params.chapterNumber);
-    const cookieStore = cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    const supabase = await createServerClient();
 
     const { data: comments, error } = await supabase
       .from('chapter_comments')
@@ -41,8 +39,7 @@ export async function POST(
   { params }: { params: { chapterNumber: string } }
 ) {
   try {
-    const cookieStore = cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    const supabase = await createServerClient();
     
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) {

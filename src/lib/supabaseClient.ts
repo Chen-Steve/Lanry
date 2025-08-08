@@ -1,9 +1,12 @@
 'use client';
 
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createBrowserClient } from '@supabase/ssr';
 
-// This version of the client is specifically for client components
-// It handles auth state synchronization with the server
-const supabase = createClientComponentClient();
+// This client is for Client Components and uses @supabase/ssr's browser client
+// to keep session cookies in sync with the app-router middleware.
+const supabase = createBrowserClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 export default supabase;

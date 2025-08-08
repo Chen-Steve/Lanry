@@ -1,34 +1,76 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
-import { prisma } from "@/lib/prisma";
+import { createServerClient } from "@/lib/supabaseServer";
+
+type ProfileRow = {
+  id: string;
+  username: string | null;
+  avatar_url: string | null;
+  role: 'USER' | 'AUTHOR' | 'TRANSLATOR';
+};
+
+type DBCommentRow = {
+  id: string;
+  content: string;
+  created_at: string;
+  updated_at: string | null;
+  profile: ProfileRow | null;
+};
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string; chapterId: string } }
 ) {
   try {
-    const comments = await prisma.chapterThreadComment.findMany({
-      where: {
-        chapterId: params.chapterId,
-        chapter: {
-          novelId: params.id
-        }
-      },
-      include: {
-        profile: {
-          select: {
-            id: true,
-            username: true,
-            avatarUrl: true,
-            role: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    const supabase = await createServerClient();
+
+    // Ensure the chapter belongs to the specified novel
+    const { data: chapter, error: chapterError } = await supabase
+      .from('chapters')
+      .select('id, novel_id')
+      .eq('id', params.chapterId)
+      .single();
+
+    if (chapterError || !chapter || chapter.novel_id !== params.id) {
+      return NextResponse.json({ error: "Chapter not found" }, { status: 404 });
+    }
+
+    const { data, error } = await supabase
+      .from('chapter_thread_comments')
+      .select(`
+        id,
+        content,
+        created_at,
+        updated_at,
+        profile:profiles (
+          id,
+          username,
+          avatar_url,
+          role
+        )
+      `)
+      .eq('chapter_id', params.chapterId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      throw error;
+    }
+
+    // Map to camelCase fields similar to previous Prisma response
+    const rows = (data || []) as unknown as DBCommentRow[];
+    const comments = rows.map((c) => ({
+      id: c.id,
+      content: c.content,
+      createdAt: c.created_at,
+      updatedAt: c.updated_at,
+      profile: c.profile
+        ? {
+            id: c.profile.id,
+            username: c.profile.username,
+            avatarUrl: c.profile.avatar_url,
+            role: c.profile.role,
+          }
+        : null,
+    }));
 
     return NextResponse.json(comments);
   } catch (error) {
@@ -44,11 +86,8 @@ export async function POST(
   request: NextRequest,
   { params }: { params: { id: string; chapterId: string } }
 ) {
-  const cookieStore = cookies();
-  const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  const supabase = await createServerClient();
+  const { data: { session } } = await supabase.auth.getSession();
 
   if (!session) {
     return NextResponse.json(
@@ -68,37 +107,59 @@ export async function POST(
     }
 
     // Verify chapter belongs to novel
-    const chapter = await prisma.chapter.findFirst({
-      where: {
-        id: params.chapterId,
-        novelId: params.id
-      }
-    });
+    const { data: chapter, error: chapterError } = await supabase
+      .from('chapters')
+      .select('id, novel_id')
+      .eq('id', params.chapterId)
+      .single();
 
-    if (!chapter) {
+    if (chapterError || !chapter || chapter.novel_id !== params.id) {
       return NextResponse.json(
         { error: "Chapter not found" },
         { status: 404 }
       );
     }
 
-    const comment = await prisma.chapterThreadComment.create({
-      data: {
+    const { data, error } = await supabase
+      .from('chapter_thread_comments')
+      .insert({
         content: content.trim(),
-        chapterId: params.chapterId,
-        profileId: session.user.id,
-      },
-      include: {
-        profile: {
-          select: {
-            id: true,
-            username: true,
-            avatarUrl: true,
-            role: true,
-          },
-        },
-      },
-    });
+        chapter_id: params.chapterId,
+        profile_id: session.user.id,
+      })
+      .select(`
+        id,
+        content,
+        created_at,
+        updated_at,
+        profile:profiles (
+          id,
+          username,
+          avatar_url,
+          role
+        )
+      `)
+      .single();
+
+    if (error) throw error;
+
+    const row = data as unknown as DBCommentRow | null;
+    const comment = row
+      ? {
+          id: row.id,
+          content: row.content,
+          createdAt: row.created_at,
+          updatedAt: row.updated_at,
+          profile: row.profile
+            ? {
+                id: row.profile.id,
+                username: row.profile.username,
+                avatarUrl: row.profile.avatar_url,
+                role: row.profile.role,
+              }
+            : null,
+        }
+      : null;
 
     return NextResponse.json(comment);
   } catch (error) {
@@ -114,11 +175,8 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string; chapterId: string } }
 ) {
-  const cookieStore = cookies();
-  const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  const supabase = await createServerClient();
+  const { data: { session } } = await supabase.auth.getSession();
 
   if (!session) {
     return NextResponse.json(
@@ -137,24 +195,42 @@ export async function DELETE(
         { status: 400 }
       );
     }
+    // Fetch comment to verify ownership and novel relationship
+    const { data: commentRow, error: commentError } = await supabase
+      .from('chapter_thread_comments')
+      .select('id, profile_id, chapter_id')
+      .eq('id', commentId)
+      .single();
 
-    const comment = await prisma.chapterThreadComment.findUnique({
-      where: { id: commentId },
-      include: { 
-        chapter: { 
-          select: { 
-            novelId: true,
-            novel: { 
-              select: { 
-                authorProfileId: true 
-              } 
-            } 
-          } 
-        } 
-      },
-    });
+    if (commentError || !commentRow) {
+      return NextResponse.json(
+        { error: "Comment not found" },
+        { status: 404 }
+      );
+    }
 
-    if (!comment || comment.chapter.novelId !== params.id) {
+    // Fetch chapter to ensure it belongs to the specified novel
+    const { data: chapter, error: chapterError } = await supabase
+      .from('chapters')
+      .select('id, novel_id')
+      .eq('id', commentRow.chapter_id)
+      .single();
+
+    if (chapterError || !chapter || chapter.novel_id !== params.id) {
+      return NextResponse.json(
+        { error: "Comment not found" },
+        { status: 404 }
+      );
+    }
+
+    // Fetch novel to get author_profile_id
+    const { data: novel, error: novelError } = await supabase
+      .from('novels')
+      .select('id, author_profile_id')
+      .eq('id', chapter.novel_id)
+      .single();
+
+    if (novelError || !novel) {
       return NextResponse.json(
         { error: "Comment not found" },
         { status: 404 }
@@ -163,8 +239,8 @@ export async function DELETE(
 
     // Only allow comment owner or novel author to delete
     if (
-      comment.profileId !== session.user.id &&
-      comment.chapter.novel.authorProfileId !== session.user.id
+      commentRow.profile_id !== session.user.id &&
+      novel.author_profile_id !== session.user.id
     ) {
       return NextResponse.json(
         { error: "Not authorized to delete this comment" },
@@ -172,9 +248,12 @@ export async function DELETE(
       );
     }
 
-    await prisma.chapterThreadComment.delete({
-      where: { id: commentId },
-    });
+    const { error: deleteError } = await supabase
+      .from('chapter_thread_comments')
+      .delete()
+      .eq('id', commentId);
+
+    if (deleteError) throw deleteError;
 
     return NextResponse.json({ success: true });
   } catch (error) {

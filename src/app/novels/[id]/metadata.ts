@@ -1,10 +1,13 @@
 import { Metadata } from 'next';
-import { prisma } from '@/lib/prisma';
+import { createServerClient } from '@/lib/supabaseServer';
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
-  const novel = await prisma.novel.findUnique({
-    where: { slug: params.id }
-  });
+  const supabase = await createServerClient();
+  const { data: novel } = await supabase
+    .from('novels')
+    .select('title, description, slug')
+    .eq('slug', params.id)
+    .single();
 
   if (!novel) {
     return {
