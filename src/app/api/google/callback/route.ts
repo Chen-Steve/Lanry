@@ -9,6 +9,8 @@ export async function GET(request: NextRequest) {
   const url = new URL(request.url);
   const code = url.searchParams.get('code');
   const error = url.searchParams.get('error');
+  // Prepare a response instance to allow setting cookies across try/catch
+  const res = NextResponse.next();
 
   if (error) {
     const origin = request.headers.get('origin') || `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}`;
@@ -34,7 +36,6 @@ export async function GET(request: NextRequest) {
     const { access_token, refresh_token, expiry_date } = tokens;
 
     // Get the currently logged-in user via Supabase SSR client.
-    const res = NextResponse.next();
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -79,7 +80,7 @@ export async function GET(request: NextRequest) {
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.SUPABASE_SERVICE_ROLE_KEY,
       );
-      const res = await privileged
+      const upsertRes = await privileged
         .from('drive_accounts')
         .upsert({
           user_id: user.id,
@@ -88,7 +89,7 @@ export async function GET(request: NextRequest) {
           expires_at: new Date(expiry_date).toISOString(),
           updated_at: new Date().toISOString(),
         }, { onConflict: 'user_id' });
-      upsertError = res.error;
+      upsertError = upsertRes.error;
     }
 
     if (upsertError) {
