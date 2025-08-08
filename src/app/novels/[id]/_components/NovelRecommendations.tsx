@@ -96,8 +96,8 @@ export const NovelRecommendations = ({ novelId, categories = [], tags = [] }: No
             tags: novel.tags.map(t => ({
               id: t.tag.id,
               name: t.tag.name,
-              createdAt: new Date(),
-              updatedAt: new Date()
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
             })),
             relevanceScore
           };

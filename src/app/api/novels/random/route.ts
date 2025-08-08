@@ -3,7 +3,7 @@ import { createServerClient } from '@/lib/supabaseServer';
 
 export async function GET() {
   // Initialize shared Supabase server client
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
 
   // Attempt to fetch the currently authenticated user (null if anonymous)
   const {

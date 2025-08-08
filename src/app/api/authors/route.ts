@@ -11,7 +11,7 @@ export async function GET(request: Request) {
     const query = searchParams.get('q')?.trim().toLowerCase() || '';
     
     // Create Supabase client
-    const supabase = createServerClient();
+    const supabase = await createServerClient();
     
     // Fetch profile data from Supabase
     let queryBuilder = supabase.from('profiles')
@@ -37,7 +37,7 @@ export async function GET(request: Request) {
       return NextResponse.json([]);
     }
     
-    return NextResponse.json(data.map(user => ({
+    return NextResponse.json(data.map((user: { username: string; role: string }) => ({
       username: user.username,
       role: user.role
     })));
