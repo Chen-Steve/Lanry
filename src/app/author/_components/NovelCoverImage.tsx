@@ -52,7 +52,7 @@ export default function NovelCoverImage({ coverImageUrl, onUpdate, onDelete }: N
   return (
     <div className="relative">
       <div 
-        className="w-[180px] h-[270px] relative rounded-lg overflow-hidden shadow-md flex-shrink-0 group cursor-pointer"
+        className="w-[140px] h-[210px] sm:w-[160px] sm:h-[240px] md:w-[180px] md:h-[270px] relative rounded-lg overflow-hidden shadow-md flex-shrink-0 group cursor-pointer"
         onClick={handleCoverImageClick}
       >
         {isUploadingCover ? (

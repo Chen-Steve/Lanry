@@ -504,7 +504,7 @@ export default function ChapterList({  chapters,  volumes,  editingChapterId,  o
               e.stopPropagation();
               handleUnassignChapter(chapter.id);
             }}
-            className="px-2 py-0.5 text-xs text-muted-foreground hover:text-primary hover:bg-primary/10 rounded transition-colors"
+            className="px-2 py-1 text-xs text-muted-foreground hover:text-primary hover:bg-primary/10 rounded transition-colors"
           >
             Unassign
           </button>
@@ -514,7 +514,7 @@ export default function ChapterList({  chapters,  volumes,  editingChapterId,  o
             e.stopPropagation();
             handleDeleteClick(chapter.id);
           }}
-          className="p-1 text-muted-foreground hover:text-red-500 dark:hover:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-full transition-colors"
+          className="p-1.5 text-muted-foreground hover:text-red-500 dark:hover:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-full transition-colors"
           title="Delete chapter"
         >
           <Icon icon="mdi:delete-outline" className="w-4 h-4" />
@@ -664,11 +664,11 @@ export default function ChapterList({  chapters,  volumes,  editingChapterId,  o
     <div className="border border-border rounded-lg overflow-hidden flex flex-col h-[calc(100vh-16rem)]">
       <div className="flex flex-col flex-1 overflow-hidden">
         <div className="bg-accent/50 p-2 sm:p-3 border-b border-border sticky top-0 z-10">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-2 sm:gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-2 flex-wrap">
               <button
                 onClick={() => handleCreateChapter()}
-                className="inline-flex items-center px-2.5 py-1.5 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors"
+                className="inline-flex items-center px-3 py-2 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors min-h-[36px] sm:min-h-[40px]"
               >
                 Add Chapter
               </button>
@@ -681,54 +681,28 @@ export default function ChapterList({  chapters,  volumes,  editingChapterId,  o
                   }
                 }}
               />
-            </div>
-            <div className="flex items-center gap-4 flex-1">
-              <div className="relative w-64">
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search chapters..."
-                  className="w-full pl-8 pr-3 py-1 text-sm bg-background text-foreground placeholder:text-muted-foreground border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors"
-                />
-                <Icon 
-                  icon="mdi:magnify"
-                  className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground"
-                />
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              {isMassDeleting && chaptersToDelete.size > 0 && (
-                 <button
-                  onClick={() => setMassDeleteConfirmation(true)}
-                  className="inline-flex items-center px-2.5 py-1.5 text-sm font-medium text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-900/50 border border-red-300 dark:border-red-700 rounded-md hover:bg-red-200 dark:hover:bg-red-800/50 focus:outline-none focus:ring-2 focus:ring-red-500/50 transition-colors"
-                >
-                  <Icon icon="mdi:delete-sweep-outline" className="w-4 h-4 mr-1.5" />
-                  Delete Selected ({chaptersToDelete.size})
-                </button>
-              )}
               {!isMassDeleting && (
                 <>
+                  <button
+                    onClick={() => setIsVolumeModalOpen(true)}
+                    className="inline-flex items-center px-3 py-2 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors min-h-[36px] sm:min-h-[40px]"
+                  >
+                    Add Volume
+                  </button>
                   {/* Flip Order Button */}
                   <button
                     onClick={toggleSortOrder}
-                    className="inline-flex items-center px-2.5 py-1.5 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors"
+                    className="inline-flex items-center px-3 py-2 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors min-h-[36px] sm:min-h-[40px]"
                     title={isDescending ? 'Oldest → Newest' : 'Newest → Oldest'}
                     aria-label="Flip chapter order"
                   >
                     <Icon icon={isDescending ? 'mdi:sort-ascending' : 'mdi:sort-descending'} className="w-4 h-4" />
                   </button>
-                  <button
-                    onClick={() => setIsVolumeModalOpen(true)}
-                    className="inline-flex items-center px-2.5 py-1.5 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors"
-                  >
-                    Add Volume
-                  </button>
                 </>
               )}
               <button
                 onClick={() => setIsMassDeleting(prev => !prev)}
-                className={`inline-flex items-center px-2.5 py-1.5 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors ${isMassDeleting ? 'bg-red-500/20 text-red-700 dark:text-red-400' : ''}`}
+                className={`inline-flex items-center px-3 py-2 text-sm font-medium bg-background border border-border rounded-md hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors min-h-[36px] sm:min-h-[40px] ${isMassDeleting ? 'bg-red-500/20 text-red-700 dark:text-red-400' : 'text-foreground'}`}
               >
                 {isMassDeleting ? 'Cancel Delete' : 'Delete Chapters'}
               </button>
@@ -736,13 +710,50 @@ export default function ChapterList({  chapters,  volumes,  editingChapterId,  o
                 onClick={handleOpenGlobalSettings}
                 className="p-2 text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded-md transition-colors"
                 title="Chapter Settings"
+                aria-label="Chapter Settings"
               >
                 <Icon icon="mdi:cog" className="w-5 h-5" />
               </button>
-              <span className="text-sm text-muted-foreground ml-2 whitespace-nowrap">
+            </div>
+            <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
+              <div className="relative w-full sm:w-64">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search chapters..."
+                  className="w-full pl-8 pr-8 py-2 text-sm bg-background text-foreground placeholder:text-muted-foreground border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors min-h-[36px] sm:min-h-[40px]"
+                />
+                <Icon 
+                  icon="mdi:magnify"
+                  className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    aria-label="Clear search"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-accent/60"
+                  >
+                    <Icon icon="mdi:close" className="w-4 h-4 text-muted-foreground" />
+                  </button>
+                )}
+              </div>
+              <span className="text-sm text-muted-foreground whitespace-nowrap hidden sm:inline-block">
                 {chapters.length} {chapters.length === 1 ? 'chapter' : 'chapters'}
               </span>
             </div>
+            {isMassDeleting && chaptersToDelete.size > 0 && (
+              <button
+                onClick={() => setMassDeleteConfirmation(true)}
+                className="inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors w-full sm:w-auto"
+              >
+                <Icon icon="mdi:delete-sweep-outline" className="w-4 h-4 mr-1.5" />
+                Delete Selected ({chaptersToDelete.size})
+              </button>
+            )}
+          </div>
+          <div className="sm:hidden mt-1 text-xs text-muted-foreground">
+            {chapters.length} {chapters.length === 1 ? 'chapter' : 'chapters'}
           </div>
         </div>
 

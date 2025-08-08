@@ -113,7 +113,7 @@ export default function NovelManagement() {
     }
   };
 
-  const filteredNovels = novels.filter(novel =>
+  const filteredNovels = novels.filter((novel) =>
     novel.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -158,58 +158,76 @@ export default function NovelManagement() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center mb-2">
-        <div className="min-w-0 flex-1">
-          <h1 className="text-lg sm:text-xl lg:text-2xl font-bold truncate">Novel Management</h1>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-            Create and manage your novels
-            {filteredNovels.length > 0 && (
-              <span className="hidden sm:inline">
-                {` (${filteredNovels.length} novel${filteredNovels.length !== 1 ? 's' : ''})`}
-              </span>
-            )}
-          </p>
-          {/* Mobile-only count */}
-          {filteredNovels.length > 0 && (
-            <p className="text-xs text-muted-foreground mt-0.5 sm:hidden">
-              {filteredNovels.length} novel{filteredNovels.length !== 1 ? 's' : ''}
+    <div className="max-w-7xl mx-auto px-3 sm:px-4">
+      {/* Sticky Header + Actions */}
+      <div className="sticky top-0 z-20 -mx-3 sm:-mx-4 px-3 sm:px-4 pt-2 pb-3 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-lg sm:text-xl lg:text-2xl font-bold truncate">Novel Management</h1>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+              Create and manage your novels
+              {filteredNovels.length > 0 && (
+                <span className="hidden sm:inline">
+                  {` (${filteredNovels.length} novel${filteredNovels.length !== 1 ? 's' : ''})`}
+                </span>
+              )}
             </p>
-          )}
+            {/* Mobile-only count */}
+            {filteredNovels.length > 0 && (
+              <p className="text-[11px] text-muted-foreground mt-0.5 sm:hidden">
+                {filteredNovels.length} novel{filteredNovels.length !== 1 ? 's' : ''}
+              </p>
+            )}
+          </div>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <button
+              onClick={() => {
+                setNovelToEdit(emptyNovel);
+                setView('edit');
+              }}
+              className="flex items-center justify-center gap-2 bg-primary text-primary-foreground px-3 py-2 rounded-lg hover:bg-primary/90 active:bg-primary/95 transition-colors text-sm sm:text-base min-h-[40px] sm:min-h-[44px] w-full sm:w-auto touch-manipulation"
+            >
+              <Icon icon="ph:plus" className="h-4 w-4 sm:h-5 sm:w-5" />
+              <span className="font-medium -mb-0.5">Create</span>
+            </button>
+          </div>
         </div>
-        <button
-          onClick={() => {
-            setNovelToEdit(emptyNovel);
-            setView('edit');
-          }}
-          className="flex items-center justify-center gap-2 bg-primary text-primary-foreground px-3 py-2 rounded-lg hover:bg-primary/90 active:bg-primary/95 transition-colors text-sm sm:text-base min-h-[44px] w-full sm:w-auto touch-manipulation"
-        >
-          <Icon icon="ph:plus" className="h-4 w-4 sm:h-5 sm:w-5" />
-          <span className="font-medium -mb-0.5">Create Novel</span>
-        </button>
-      </div>
 
-      {/* Search Bar */}
-      <div className="mb-4 sm:mb-2">
-        <div className="relative">
-          <Icon icon="ph:magnifying-glass" className="h-4 w-4 sm:h-5 sm:w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search novels..."
-            className="w-full pl-10 sm:pl-11 pr-4 py-2 sm:py-2.5 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm sm:text-base min-h-[40px] sm:min-h-[44px] touch-manipulation"
-          />
+        {/* Search Bar */}
+        <div className="mt-2">
+          <div className="relative">
+            <Icon icon="ph:magnifying-glass" className="h-4 w-4 sm:h-5 sm:w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search novels..."
+              className="w-full pl-10 sm:pl-11 pr-9 py-2 sm:py-2.5 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm sm:text-base min-h-[40px] sm:min-h-[44px]"
+            />
+            {searchQuery && (
+              <button
+                aria-label="Clear search"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-accent"
+              >
+                <Icon icon="ph:x" className="h-4 w-4 text-muted-foreground" />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Loading State */}
       {isLoading && (
-        <div className="flex items-center justify-center py-8 sm:py-12">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-primary mx-auto mb-3 sm:mb-4"></div>
-            <p className="text-muted-foreground text-xs sm:text-sm">Loading novels...</p>
+        <div className="py-4 sm:py-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <div key={index} className="border border-border rounded-lg p-3 sm:p-4 animate-pulse bg-background">
+                <div className="h-40 bg-muted rounded-md mb-3" />
+                <div className="h-4 bg-muted rounded w-3/4 mb-2" />
+                <div className="h-4 bg-muted rounded w-1/2" />
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -218,7 +236,7 @@ export default function NovelManagement() {
       {!isLoading && (
         <>
           {filteredNovels.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1 sm:gap-2 lg:gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               {filteredNovels.map((novel) => (
                 <NovelCard
                   key={novel.id}
@@ -231,7 +249,7 @@ export default function NovelManagement() {
           ) : (
             /* Empty State */
             <div className="col-span-full">
-              <div className="border border-dashed border-border rounded-lg p-4 sm:p-6 lg:p-12 text-center">
+              <div className="border border-dashed border-border rounded-lg p-6 sm:p-8 lg:p-12 text-center">
                 <Icon icon="ph:book" className="h-10 w-10 sm:h-12 sm:w-12 lg:h-16 lg:w-16 text-muted-foreground mx-auto mb-3 sm:mb-4 opacity-50" />
                 <h3 className="text-sm sm:text-base lg:text-lg font-semibold mb-2">
                   {searchQuery ? 'No Novels Found' : 'No Novels Yet'}
@@ -248,7 +266,7 @@ export default function NovelManagement() {
                       setNovelToEdit(emptyNovel);
                       setView('edit');
                     }}
-                    className="inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 sm:px-6 py-3 rounded-lg hover:bg-primary/90 active:bg-primary/95 transition-colors text-sm sm:text-base min-h-[44px] w-full sm:w-auto touch-manipulation"
+                    className="inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 sm:px-6 py-3 rounded-lg hover:bg-primary/90 active:bg-primary/95 transition-colors text-sm sm:text-base min-h-[44px] w-full sm:w-auto"
                   >
                     <Icon icon="ph:plus" className="h-4 w-4" />
                     <span className="font-medium">Add Your First Novel</span>
@@ -263,7 +281,7 @@ export default function NovelManagement() {
       {/* Delete Confirmation Modal */}
       {novelToDelete && (
         <div className="fixed inset-0 bg-foreground/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-background rounded-lg p-4 sm:p-6 max-w-md w-full mx-auto shadow-xl border border-border">
+          <div className="bg-background rounded-lg p-4 sm:p-6 max-w-md w-full mx-auto shadow-xl border border-border max-h-[90vh] overflow-y-auto">
             <div className="flex items-center gap-3 mb-4">
               <div className="flex-shrink-0 w-10 h-10 bg-red-100 dark:bg-red-900/50 rounded-full flex items-center justify-center">
                 <Icon icon="ph:warning" className="h-5 w-5 text-red-600 dark:text-red-400" />

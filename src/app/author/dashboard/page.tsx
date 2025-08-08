@@ -279,7 +279,7 @@ export default function AuthorDashboard() {
       {/* Main Content */}
       <main className={`${isSidebarCollapsed ? 'lg:ml-10' : 'lg:ml-56'} flex-1 min-w-0 transition-all duration-300 ease-in-out`}>
         <div className="h-full bg-white dark:bg-gray-900 lg:rounded-tl-xl lg:border-l lg:border-gray-200 lg:dark:border-gray-700">
-          <div className="p-6 lg:p-8">
+          <div className="p-2 sm:p-4 lg:p-8">
             {activeTab === 'manage-novels' && (
               <NovelManagement />
             )}

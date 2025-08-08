@@ -273,7 +273,7 @@ export default function NovelEditForm({ novel, onCancel, onUpdate, onChapterEdit
 
   return (
     <main className="h-full w-full flex flex-col">
-      <div className="flex justify-between items-start p-4 border-b border-border sticky top-0 bg-background z-10">
+      <div className="flex items-center justify-between gap-2 p-2 sm:p-3 md:p-4 border-b border-border sticky top-0 bg-background z-10">
         <button
           onClick={onCancel}
           className="p-2 hover:bg-accent rounded-lg transition-colors"
@@ -284,20 +284,22 @@ export default function NovelEditForm({ novel, onCancel, onUpdate, onChapterEdit
         <button
           disabled={isSubmitting}
           onClick={handleSave}
-          className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[40px] sm:min-h-[44px]"
         >
           {isSubmitting ? 'Saving...' : novel.id ? 'Save Changes' : 'Create Novel'}
         </button>
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        <div className="p-4">
-          <div className="flex gap-6 items-start">
-            <NovelCoverImage 
-              coverImageUrl={coverImageUrl}
-              onUpdate={handleCoverUpdate}
-              onDelete={handleCoverDelete}
-            />
+        <div className="p-2 sm:p-3 md:p-4">
+          <div className="flex flex-col md:flex-row gap-4 md:gap-6 items-start">
+            <div className="w-full md:w-auto flex justify-center md:justify-start">
+              <NovelCoverImage 
+                coverImageUrl={coverImageUrl}
+                onUpdate={handleCoverUpdate}
+                onDelete={handleCoverDelete}
+              />
+            </div>
             <div className="flex flex-col flex-grow">
               <div>
                 <div className="flex items-center gap-2 w-full">
@@ -310,14 +312,14 @@ export default function NovelEditForm({ novel, onCancel, onUpdate, onChapterEdit
                     title={title}
                   />
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
                   <div className="relative">
                     <input
                       type="text"
                       value={author}
                       onChange={(e) => setAuthor(e.target.value)}
                       placeholder="Enter original author name"
-                      className="px-3 py-1 text-sm border-b border-border hover:border-muted-foreground focus:border-primary focus:ring-0 focus:outline-none w-fit min-w-[150px] bg-background text-foreground placeholder:text-muted-foreground"
+                      className="px-3 py-1 text-sm border-b border-border hover:border-muted-foreground focus:border-primary focus:ring-0 focus:outline-none w-full sm:w-fit min-w-[150px] bg-background text-foreground placeholder:text-muted-foreground"
                     />
                   </div>
                 </div>
@@ -373,7 +375,7 @@ export default function NovelEditForm({ novel, onCancel, onUpdate, onChapterEdit
                         >
                           <Icon icon={option.icon} className="w-3.5 h-3.5" />
                           {option.label}
-                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-0.5 bg-background border border-border text-foreground text-[10px] rounded shadow-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+                          <div className="hidden sm:block absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-0.5 bg-background border border-border text-foreground text-[10px] rounded shadow-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
                             {option.description}
                           </div>
                         </button>
@@ -406,8 +408,8 @@ export default function NovelEditForm({ novel, onCancel, onUpdate, onChapterEdit
 
           {/* Description Edit Modal */}
           {isDescriptionModalOpen && (
-            <div className="fixed inset-0 bg-foreground/50 backdrop-blur-sm flex items-center justify-center z-50">
-              <div className="bg-background rounded-lg w-[700px] shadow-lg border border-border">
+            <div className="fixed inset-0 bg-foreground/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+              <div className="bg-background rounded-lg w-full max-w-lg mx-auto shadow-lg border border-border max-h-[90vh] overflow-y-auto">
                 <div className="flex items-center justify-between border-b border-border p-3">
                   <button
                     onClick={() => setIsDescriptionModalOpen(false)}
@@ -421,7 +423,7 @@ export default function NovelEditForm({ novel, onCancel, onUpdate, onChapterEdit
                   <textarea
                     value={editingDescription}
                     onChange={(e) => setEditingDescription(e.target.value)}
-                    className="w-full px-2 py-1.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary resize-none h-[150px] bg-background text-foreground placeholder:text-muted-foreground"
+                    className="w-full px-2 py-1.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary resize-none h-[180px] sm:h-[220px] bg-background text-foreground placeholder:text-muted-foreground"
                     placeholder="Synopsis"
                   />
                 </div>
