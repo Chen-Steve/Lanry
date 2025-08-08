@@ -1,6 +1,6 @@
 'use client';
 
-import { usePWA } from '@/hooks/usePWA';
+import { useIsPWA } from '@/hooks/useIsPWA';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import Header from './Header';
 import Footer from './Footer';
@@ -11,7 +11,7 @@ interface ConditionalLayoutProps {
 }
 
 export default function ConditionalLayout({ children }: ConditionalLayoutProps) {
-  const isPWA = usePWA();
+  const isPWA = useIsPWA();
   const isMobile = useMediaQuery('(max-width: 768px)');
   const isDevelopment = process.env.NODE_ENV === 'development';
   
