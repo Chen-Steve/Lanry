@@ -1,12 +1,11 @@
 export const runtime = 'nodejs';
-import { cookies } from 'next/headers';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { google } from 'googleapis';
 import supabaseAdmin from '@/lib/supabaseAdmin';
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createServerClient } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   const url = new URL(request.url);
   const code = url.searchParams.get('code');
   const error = url.searchParams.get('error');
@@ -34,13 +33,29 @@ export async function GET(request: Request) {
     const { tokens } = await oauth2Client.getToken(code);
     const { access_token, refresh_token, expiry_date } = tokens;
 
-    // Get the currently logged-in user via Supabase auth helpers.
-    const supabase = createServerComponentClient({ cookies });
+    // Get the currently logged-in user via Supabase SSR client.
+    const res = NextResponse.next();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return request.cookies.getAll();
+          },
+          setAll(cookies) {
+            cookies.forEach(({ name, value, options }) => {
+              res.cookies.set(name, value, options);
+            });
+          },
+        },
+      }
+    );
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
       const origin = request.headers.get('origin') || `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}`;
-      return NextResponse.redirect(new URL('/auth', origin));
+      return NextResponse.redirect(new URL('/auth', origin), { headers: res.headers });
     }
 
     if (!access_token || !refresh_token || !expiry_date) {
@@ -78,14 +93,14 @@ export async function GET(request: Request) {
 
     if (upsertError) {
       console.error(upsertError);
-      return NextResponse.json({ error: 'Failed to save tokens.' }, { status: 500 });
+      return NextResponse.json({ error: 'Failed to save tokens.' }, { status: 500, headers: res.headers });
     }
 
     const origin = request.headers.get('origin') || `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}`;
-    return NextResponse.redirect(new URL('/author/dashboard?drive=connected', origin));
+    return NextResponse.redirect(new URL('/author/dashboard?drive=connected', origin), { headers: res.headers });
   } catch (err) {
     console.error('Error exchanging Google OAuth code:', err);
     const origin = request.headers.get('origin') || `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}`;
-    return NextResponse.redirect(new URL('/author/dashboard?driveError=oauth', origin));
+    return NextResponse.redirect(new URL('/author/dashboard?driveError=oauth', origin), { headers: res.headers });
   }
 } 

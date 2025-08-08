@@ -1,4 +1,4 @@
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
+import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
@@ -10,58 +10,25 @@ export async function middleware(req: NextRequest) {
   }
 
   const res = NextResponse.next();
-  const supabase = createMiddlewareClient({ req, res });
-
-  // Refresh session if expired - required for Server Components
-  await supabase.auth.getSession();
-
-  // Check if the user is authenticated
-  const { data: { session } } = await supabase.auth.getSession();
-
-  // If user is authenticated, ensure they have a profile
-  if (session?.user) {
-    // Check if profile exists
-    const { data: existingProfile } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('id', session.user.id)
-      .single();
-
-    // If profile doesn't exist, create it
-    if (!existingProfile) {
-      console.log('[Middleware] Creating profile for user:', session.user.id);
-      
-      // Create profile
-      const { error: createError } = await supabase
-        .from('profiles')
-        .insert([{
-          id: session.user.id,
-          username: session.user.email?.split('@')[0] || `user_${Math.random().toString(36).slice(2, 7)}`,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          role: 'USER',
-          coins: 0
-        }]);
-
-      if (createError) {
-        console.error('[Middleware] Error creating profile:', createError);
-      } else {
-        // Create reading time record
-        const { error: readingTimeError } = await supabase
-          .from('reading_time')
-          .insert([{
-            profile_id: session.user.id,
-            total_minutes: 0
-          }]);
-
-        if (readingTimeError) {
-          console.error('[Middleware] Error creating reading time:', readingTimeError);
-        } else {
-          console.log('[Middleware] Successfully created profile for:', session.user.id);
-        }
-      }
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return req.cookies.getAll();
+        },
+        setAll(cookies) {
+          cookies.forEach(({ name, value, options }) => {
+            res.cookies.set(name, value, options);
+          });
+        },
+      },
     }
-  }
+  );
+
+  // Refresh session if expired and retrieve it
+  await supabase.auth.getSession();
 
   return res;
 }

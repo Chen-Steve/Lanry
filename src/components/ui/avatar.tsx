@@ -1,5 +1,7 @@
 'use client'
 
+import Image from 'next/image'
+
 // Predefined cloudy gradients
 const CLOUDY_GRADIENTS = [
   'bg-gradient-to-br from-rose-200/80 via-rose-300/70 to-pink-400/60 text-rose-900',
@@ -31,23 +33,20 @@ function getGradientForUsername(username: string): string {
 }
 
 export function Avatar({ src, username, size = 40, className = '' }: AvatarProps) {
+  const gradientClasses = getGradientForUsername(username);
+
   if (src) {
     return (
-      <img
+      <Image
         src={src}
         alt={username}
         width={size}
         height={size}
         className={`rounded-full object-cover ${className}`}
-        onError={(e) => {
-          const target = e.target as HTMLImageElement;
-          target.remove();
-        }}
+        onError={() => { /* allow parent to fallback if needed */ }}
       />
     );
   }
-
-  const gradientClasses = getGradientForUsername(username);
 
   return (
     <div 
@@ -62,4 +61,4 @@ export function Avatar({ src, username, size = 40, className = '' }: AvatarProps
       {username.charAt(0).toUpperCase()}
     </div>
   );
-} 
+}

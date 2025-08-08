@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Icon } from '@iconify/react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
+import Image from 'next/image';
 
 interface UserProfile {
   username: string;
@@ -37,6 +38,7 @@ const UserProfileButton = ({
   const [isRandomizing, setIsRandomizing] = useState(false);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
   const { userId } = useAuth();
+  const [avatarError, setAvatarError] = useState(false);
   const [subscriptionStatus, setSubscriptionStatus] = useState<null | {
     hasSubscription: boolean;
     status?: string;
@@ -89,6 +91,11 @@ const UserProfileButton = ({
     fetchSubscriptionStatus();
   }, [userId]);
 
+  // Reset avatar error when avatar URL changes or profile reloads
+  useEffect(() => {
+    setAvatarError(false);
+  }, [userProfile?.avatar_url, userProfile?.username]);
+
   const getInitial = (username: string) => {
     return username.charAt(0).toUpperCase();
   };
@@ -107,18 +114,15 @@ const UserProfileButton = ({
 
     return (
       <div className="flex items-center gap-2">
-        {userProfile.avatar_url ? (
+        {userProfile.avatar_url && !avatarError ? (
           <div className="relative">
-            <img
+            <Image
               src={userProfile.avatar_url}
               alt={userProfile.username}
+              width={32}
+              height={32}
               className="w-8 h-8 rounded-full object-cover"
-              onError={() => {
-                const target = document.querySelector(`img[alt="${userProfile.username}"]`) as HTMLImageElement;
-                if (target) {
-                  target.remove();
-                }
-              }}
+              onError={() => setAvatarError(true)}
             />
           </div>
         ) : (
