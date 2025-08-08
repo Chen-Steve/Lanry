@@ -252,27 +252,28 @@ export default function ChapterEditForm({
 
   return (
     <form onSubmit={handleSave} className="flex flex-col h-full">
-      <div className="flex justify-between items-center bg-background py-2 sticky top-0 z-10 px-4">
-        <div className="flex items-center gap-3">
+      <div className="bg-background sticky top-0 z-20 px-3 sm:px-4 py-2 border-b border-border">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div className="flex items-center gap-2 sm:gap-3">
           <button
             type="button"
             onClick={onCancel}
-            className="bg-muted text-foreground py-2 px-3 rounded-lg hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors border border-border inline-flex items-center gap-1"
+            className="bg-muted text-foreground py-2 px-3 rounded-lg hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors border border-border inline-flex items-center gap-1 min-h-[40px]"
             aria-label="Go back"
           >
             <Icon icon="mdi:arrow-left" className="w-4 h-4" />
             <span className="inline-flex items-center gap-1">Back</span>
           </button>
-          <h3 className="text-lg font-semibold text-foreground">
+          <h3 className="text-base sm:text-lg font-semibold text-foreground">
             {currentChapterId ? 'Edit Chapter' : 'Add New Chapter'}
           </h3>
-        </div>
-        <div className="flex items-center gap-2">
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           <button
             type="button"
             onClick={handleSaveDraft}
             disabled={isSaving}
-            className="bg-muted text-foreground py-2 px-3 rounded-lg hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors border border-border inline-flex items-center gap-2"
+            className="bg-muted text-foreground py-2 px-3 rounded-lg hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors border border-border inline-flex items-center justify-center gap-2 min-h-[40px] w-full sm:w-auto"
           >
             {isSaving && isDraft ? (
               <span className="inline-flex items-center gap-1">
@@ -290,7 +291,7 @@ export default function ChapterEditForm({
             type="button"
             onClick={handleSave}
             disabled={isSaving}
-            className="bg-primary text-primary-foreground py-2 px-3 rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors inline-flex items-center gap-2"
+            className="bg-primary text-primary-foreground py-2 px-3 rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors inline-flex items-center justify-center gap-2 min-h-[40px] w-full sm:w-auto"
           >
             {isSaving && !isDraft ? (
               <span className="inline-flex items-center gap-1">
@@ -307,12 +308,13 @@ export default function ChapterEditForm({
           <button
             type="button"
             onClick={onCancel}
-            className="bg-muted text-foreground py-2 px-3 rounded-lg hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors border border-border inline-flex items-center gap-1"
+            className="bg-muted text-foreground py-2 px-3 rounded-lg hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors border border-border inline-flex items-center justify-center gap-1 min-h-[40px] w-full sm:w-auto"
             aria-label="Close chapter editor"
           >
             <Icon icon="mdi:close" className="w-4 h-4" />
             <span className="inline-flex items-center gap-1">Close</span>
           </button>
+          </div>
         </div>
       </div>
 
@@ -327,8 +329,9 @@ export default function ChapterEditForm({
         </div>
       )}
 
-      <div className="flex gap-3 sticky z-10 bg-background px-4">
-        <div className="w-24">
+      <div className="bg-background px-3 sm:px-4 py-2">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          <div className="w-20 sm:w-24">
           <input
             id="chapterNumber"
             type="number"
@@ -339,10 +342,10 @@ export default function ChapterEditForm({
             placeholder="Ch #"
             required
           />
-        </div>
+          </div>
 
-        {!isExtraChapter && (
-          <div className="w-24">
+          {!isExtraChapter && (
+          <div className="w-20 sm:w-24">
             <input
               id="partNumber"
               type="number"
@@ -353,12 +356,12 @@ export default function ChapterEditForm({
               placeholder="Part #"
             />
           </div>
-        )}
+          )}
 
-        <button
+          <button
           type="button"
           onClick={() => setIsExtraChapter(!isExtraChapter)}
-          className={`px-3 py-1.5 rounded-lg border border-border flex items-center gap-2 transition-colors ${
+          className={`px-3 py-2 rounded-lg border border-border flex items-center gap-2 transition-colors ${
             isExtraChapter 
               ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300 border-purple-300 dark:border-purple-700' 
               : 'text-muted-foreground hover:text-foreground hover:bg-accent'
@@ -369,29 +372,29 @@ export default function ChapterEditForm({
           <span className="text-sm font-medium">Extra</span>
         </button>
 
-        <input
+          <input
           id="title"
           type="text"
           value={formData.title}
           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-          className="flex-1 min-w-[200px] text-foreground py-2 px-3 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary placeholder:text-muted-foreground"
+          className="flex-1 min-w-[200px] w-full sm:w-auto text-foreground py-2 px-3 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary placeholder:text-muted-foreground"
           placeholder="Title (Optional)"
         />
 
-        <select
+          <select
           value={formData.ageRating}
           onChange={(e) => setFormData({ ...formData, ageRating: e.target.value as 'EVERYONE' | 'TEEN' | 'MATURE' })}
-          className="px-3 py-2 rounded-lg border border-border text-foreground bg-background hover:bg-accent transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+          className="px-3 py-2 rounded-lg border border-border text-foreground bg-background hover:bg-accent transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary w-full sm:w-auto"
           title="Age Rating"
         >
           <option value="EVERYONE">Everyone</option>
           <option value="TEEN">Teen</option>
           <option value="MATURE">Mature</option>
         </select>
-        <button
+          <button
           type="button"
           onClick={() => setShowSchedulePopup(true)}
-          className="px-3 py-2 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-accent transition-colors flex items-center gap-2 whitespace-nowrap"
+          className="px-3 py-2 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-accent transition-colors flex items-center gap-2 whitespace-nowrap w-full sm:w-auto"
           title="Configure publishing settings"
         >
           <Icon icon="mdi:calendar-clock" className="w-4 h-4" />
@@ -405,11 +408,12 @@ export default function ChapterEditForm({
               'Schedule'
             )}
           </span>
-        </button>
+          </button>
+        </div>
       </div>
 
-      <div className={`${isExpanded ? 'fixed inset-0 z-50 bg-background overflow-hidden' : 'flex-1 overflow-y-auto px-4 pt-2'}`}>
-        <div className={`${isExpanded ? 'h-full p-4 flex flex-col' : 'space-y-4'}`}>
+      <div className={`${isExpanded ? 'fixed inset-0 z-50 bg-background overflow-hidden' : 'flex-1 overflow-y-auto px-3 sm:px-4 pt-2'}`}>
+        <div className={`${isExpanded ? 'h-full p-3 sm:p-4 flex flex-col' : 'space-y-4'}`}>
           <div className={`relative ${isExpanded ? 'flex-1 flex flex-col overflow-hidden' : ''}`}>
             <button
               type="button"

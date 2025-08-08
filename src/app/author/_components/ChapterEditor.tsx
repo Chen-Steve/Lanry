@@ -51,7 +51,7 @@ export default function ChapterEditor({
   // Force initial sync to ensure draftValue is always up-to-date on component mount
   useEffect(() => {
     setDraftValue(value);
-  }, []);  // Empty dependency array - only runs once on mount
+  }, [value]);
 
   // Update draft value when main value changes
   useEffect(() => {
@@ -68,43 +68,49 @@ export default function ChapterEditor({
     }
   }, [draftValue, isFindReplaceOpen]);
 
-  // Create and position the highlight overlay
+  // Create and position the highlight overlay and keep it in sync on resize
   useEffect(() => {
     if (!textareaRef.current) return;
 
-    // Create overlay if it doesn't exist
-    if (!highlightOverlay) {
-      const overlay = document.createElement('div');
-      overlay.style.position = 'absolute';
-      overlay.style.pointerEvents = 'none';
-      overlay.style.backgroundColor = 'transparent';
-      overlay.style.whiteSpace = 'pre-wrap';
-      overlay.style.wordWrap = 'break-word';
-      overlay.style.color = 'transparent';
-      overlay.style.overflow = 'hidden';
-      textareaRef.current.parentElement?.appendChild(overlay);
-      setHighlightOverlay(overlay);
-    }
+    const ensureOverlay = () => {
+      if (!highlightOverlay && textareaRef.current) {
+        const overlay = document.createElement('div');
+        overlay.style.position = 'absolute';
+        overlay.style.pointerEvents = 'none';
+        overlay.style.backgroundColor = 'transparent';
+        overlay.style.whiteSpace = 'pre-wrap';
+        overlay.style.wordWrap = 'break-word';
+        overlay.style.color = 'transparent';
+        overlay.style.overflow = 'hidden';
+        textareaRef.current.parentElement?.appendChild(overlay);
+        setHighlightOverlay(overlay);
+      }
+    };
 
-    // Update overlay position and size
-    if (highlightOverlay && textareaRef.current) {
-      const textarea = textareaRef.current;
-      const computedStyle = window.getComputedStyle(textarea);
-      
-      Object.assign(highlightOverlay.style, {
-        top: `${textarea.offsetTop}px`,
-        left: `${textarea.offsetLeft}px`,
-        width: `${textarea.offsetWidth}px`,
-        height: `${textarea.offsetHeight}px`,
-        fontSize: computedStyle.fontSize,
-        fontFamily: computedStyle.fontFamily,
-        lineHeight: computedStyle.lineHeight,
-        padding: computedStyle.padding,
-        border: 'none',
-        boxSizing: 'border-box'
-      });
-    }
-  }, [textareaRef.current]);
+    const updateOverlayStyle = () => {
+      if (highlightOverlay && textareaRef.current) {
+        const textarea = textareaRef.current;
+        const computedStyle = window.getComputedStyle(textarea);
+        Object.assign(highlightOverlay.style, {
+          top: `${textarea.offsetTop}px`,
+          left: `${textarea.offsetLeft}px`,
+          width: `${textarea.offsetWidth}px`,
+          height: `${textarea.offsetHeight}px`,
+          fontSize: computedStyle.fontSize,
+          fontFamily: computedStyle.fontFamily,
+          lineHeight: computedStyle.lineHeight,
+          padding: computedStyle.padding,
+          border: 'none',
+          boxSizing: 'border-box'
+        });
+      }
+    };
+
+    ensureOverlay();
+    updateOverlayStyle();
+    window.addEventListener('resize', updateOverlayStyle);
+    return () => window.removeEventListener('resize', updateOverlayStyle);
+  }, [highlightOverlay]);
 
   // Update highlights when matches change
   useEffect(() => {
@@ -123,7 +129,7 @@ export default function ChapterEditor({
     // Replace newlines with <br> for proper display
     html = html.replace(/\n/g, '<br>');
     highlightOverlay.innerHTML = html;
-  }, [matches, value]);
+  }, [matches, value, highlightOverlay]);
 
   // Clean up overlay on unmount
   useEffect(() => {
@@ -132,7 +138,7 @@ export default function ChapterEditor({
         highlightOverlay.remove();
       }
     };
-  }, []);
+  }, [highlightOverlay]);
 
   // Handle textarea scroll
   const handleScroll = () => {
@@ -333,12 +339,12 @@ export default function ChapterEditor({
       />
 
       {/* Formatting Toolbar */}
-      <div className="flex flex-wrap items-center gap-1 p-1 bg-muted border border-border rounded-lg">
+      <div className="sticky top-0 z-10 bg-muted/95 backdrop-blur supports-[backdrop-filter]:bg-muted/60 border border-border rounded-lg p-1 flex items-center gap-1 overflow-x-auto scrollbar-hide flex-nowrap sm:flex-wrap">
         {!isPreviewMode && (
           <>
             <button
               onClick={() => applyFormatting('bold')}
-              className="p-1.5 md:p-2 hover:bg-accent/50 rounded-lg transition-colors"
+              className="p-1.5 md:p-2 hover:bg-accent/50 rounded-lg transition-colors touch-manipulation"
               title="Bold (Ctrl+B)"
               type="button"
             >
@@ -346,7 +352,7 @@ export default function ChapterEditor({
             </button>
             <button
               onClick={() => applyFormatting('italic')}
-              className="p-1.5 md:p-2 hover:bg-accent/50 rounded-lg transition-colors"
+              className="p-1.5 md:p-2 hover:bg-accent/50 rounded-lg transition-colors touch-manipulation"
               title="Italic (Ctrl+I)"
               type="button"
             >
@@ -354,7 +360,7 @@ export default function ChapterEditor({
             </button>
             <button
               onClick={() => applyFormatting('underline')}
-              className="p-1.5 md:p-2 hover:bg-accent/50 rounded-lg transition-colors"
+              className="p-1.5 md:p-2 hover:bg-accent/50 rounded-lg transition-colors touch-manipulation"
               title="Underline (Ctrl+U)"
               type="button"
             >
@@ -362,7 +368,7 @@ export default function ChapterEditor({
             </button>
             <button
               onClick={() => applyFormatting('footnote')}
-              className="p-1.5 md:p-2 hover:bg-accent/50 rounded-lg transition-colors"
+              className="p-1.5 md:p-2 hover:bg-accent/50 rounded-lg transition-colors touch-manipulation"
               title="Add Footnote"
               type="button"
             >
@@ -370,7 +376,7 @@ export default function ChapterEditor({
             </button>
             <button
               onClick={() => setIsFindReplaceOpen(prev => !prev)}
-              className="p-1.5 md:p-2 hover:bg-accent/50 rounded-lg transition-colors"
+              className="p-1.5 md:p-2 hover:bg-accent/50 rounded-lg transition-colors touch-manipulation"
               title="Find and Replace (Ctrl+F)"
               type="button"
             >
@@ -378,7 +384,7 @@ export default function ChapterEditor({
             </button>
             <button
               onClick={() => applyFormatting('link')}
-              className="p-1.5 md:p-2 hover:bg-accent/50 rounded-lg transition-colors"
+              className="p-1.5 md:p-2 hover:bg-accent/50 rounded-lg transition-colors touch-manipulation"
               title="Add Link (Ctrl+K)"
               type="button"
             >
@@ -388,7 +394,7 @@ export default function ChapterEditor({
             <div className="w-px h-4 md:h-5 bg-border mx-1" /> {/* Separator */}
             <button
               onClick={() => applyFormatting('divider')}
-              className="p-1.5 md:p-2 hover:bg-accent/50 rounded-lg transition-colors"
+              className="p-1.5 md:p-2 hover:bg-accent/50 rounded-lg transition-colors touch-manipulation"
               title="Insert Horizontal Line"
               type="button"
             >
@@ -415,7 +421,7 @@ export default function ChapterEditor({
         </button>
         
         <div className="flex-1 text-right px-2 mr-8">
-          <span className="text-xs md:text-sm text-muted-foreground">
+          <span className="text-[11px] sm:text-xs md:text-sm text-muted-foreground whitespace-nowrap">
             {getWordCount(value)} words
           </span>
         </div>
@@ -425,8 +431,8 @@ export default function ChapterEditor({
       <div className={`${className.includes('flex-1') ? 'flex-1 relative' : ''}`}>
         {isPreviewMode ? (
           <div className={`border border-border rounded-lg bg-background ${className.includes('flex-1') ? 'absolute inset-0 overflow-auto' : 'min-h-[300px] overflow-auto'}`}>
-            <div className="p-6 max-w-2xl mx-auto">
-              <h2 className="text-lg md:text-xl font-semibold text-black dark:text-white mb-6">
+            <div className="p-4 sm:p-6 max-w-2xl mx-auto">
+              <h2 className="text-base sm:text-lg md:text-xl font-semibold text-black dark:text-white mb-4 sm:mb-6">
                 Chapter Preview
               </h2>
               <ChapterPreview content={value} />
@@ -442,8 +448,8 @@ export default function ChapterEditor({
                 onKeyDown={handleKeyDown}
                 onPaste={handlePaste}
                 onScroll={handleScroll}
-                className={`w-full p-3 md:p-4 border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary bg-background placeholder:text-muted-foreground ${
-                  className.includes('flex-1') ? 'flex-1 absolute inset-0' : 'min-h-[400px] resize-y'
+                className={`w-full p-3 md:p-4 border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary bg-background placeholder:text-muted-foreground text-sm sm:text-base ${
+                  className.includes('flex-1') ? 'flex-1 absolute inset-0' : 'min-h-[300px] sm:min-h-[400px] resize-y'
                 }`}
                 placeholder="Write your chapter here... (Ctrl+B: Bold, Ctrl+I: Italic, Ctrl+U: Underline, Ctrl+F: Find/Replace, Ctrl+K: Link)"
                 style={className.includes('flex-1') ? { resize: 'none' } : undefined}
@@ -453,10 +459,10 @@ export default function ChapterEditor({
             {/* Author's Thoughts Section */}
             {authorThoughts !== undefined && onAuthorThoughtsChange && !className.includes('flex-1') && (
               <div className="mt-4 md:mt-6 space-y-2">
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3 sm:gap-4">
                   <div className="flex items-center gap-2">
                     <Icon icon="mdi:thought-bubble" className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
-                    <h3 className="text-base md:text-lg font-medium text-foreground">Your Thoughts</h3>
+                    <h3 className="text-sm sm:text-base md:text-lg font-medium text-foreground">Your Thoughts</h3>
                   </div>
                   <div className="h-4 w-px bg-border" />
                   <SaveDefaultThoughtsCheckbox authorThoughts={authorThoughts} />
@@ -464,7 +470,7 @@ export default function ChapterEditor({
                 <textarea
                   value={authorThoughts}
                   onChange={(e) => onAuthorThoughtsChange(e.target.value)}
-                  className="w-full p-3 md:p-4 border border-border rounded-lg text-foreground min-h-[150px] focus:outline-none focus:ring-2 focus:ring-primary resize-y bg-background placeholder:text-muted-foreground"
+                  className="w-full p-3 md:p-4 border border-border rounded-lg text-foreground min-h-[120px] sm:min-h-[150px] focus:outline-none focus:ring-2 focus:ring-primary resize-y bg-background placeholder:text-muted-foreground text-sm sm:text-base"
                   placeholder="Share your thoughts about this chapter (it will be visible at the bottom of the chapter)"
                 />
               </div>
