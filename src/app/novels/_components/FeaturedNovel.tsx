@@ -54,14 +54,16 @@ const FeaturedNovel = ({ novels }: FeaturedNovelProps) => {
 
       const containerWidth = container.clientWidth;
       const contentWidth = inner.scrollWidth;
-      const left = Math.min(0, containerWidth - contentWidth);
-      setConstraints({ left, right: 0 });
+
+      const leftBound = Math.min(0, containerWidth - contentWidth);
+      setConstraints({ left: leftBound, right: 0 });
 
       const visibleCount = isDesktop ? 3 : 1;
       setMaxStartIndex(Math.max(0, novels.length - visibleCount));
       // Snap to current index to avoid drift after resize
       const targetX = -Math.min(currentIndex, Math.max(0, novels.length - visibleCount)) * stepSize;
-      x.set(targetX);
+      const clampedX = Math.max(Math.min(targetX, 0), leftBound);
+      x.set(clampedX);
     };
 
     compute();
@@ -74,19 +76,22 @@ const FeaturedNovel = ({ novels }: FeaturedNovelProps) => {
   }, [novels.length, isDesktop, currentIndex, x, stepSize]);
 
   const animateToIndex = useCallback((index: number) => {
-    const clamped = Math.min(Math.max(index, 0), maxStartIndex);
-    setCurrentIndex(clamped);
-    const targetX = -clamped * stepSize;
-    animate(x, targetX, { type: 'spring', stiffness: 550, damping: 38 });
-  }, [maxStartIndex, stepSize, x]);
+    const clampedIndex = Math.min(Math.max(index, 0), maxStartIndex);
+    setCurrentIndex(clampedIndex);
+    const desiredX = -clampedIndex * stepSize;
+    const minX = constraints.left;
+    const maxX = constraints.right;
+    const clampedX = Math.max(Math.min(desiredX, maxX), minX);
+    animate(x, clampedX, { type: 'spring', stiffness: 550, damping: 38 });
+  }, [maxStartIndex, stepSize, x, constraints.left, constraints.right]);
 
   if (novels.length === 0) return null;
 
   return (
-    <div className="relative" ref={containerRef}>
+    <div className="relative overflow-hidden" ref={containerRef}>
       <motion.div
         ref={innerRef}
-        className="flex items-stretch gap-3 px-1"
+        className="flex items-stretch gap-3 px-1 lg:px-0"
         style={{ x }}
         drag="x"
         dragConstraints={constraints}
@@ -104,7 +109,7 @@ const FeaturedNovel = ({ novels }: FeaturedNovelProps) => {
         }}
       >
         {novels.map((novel) => (
-          <div key={novel.id} className="flex-none w-[88%] lg:w-1/3">
+          <div key={novel.id} className="flex-none w-[88%] lg:w-[calc((100%-1.5rem)/3)]">
             <Link
               href={`/novels/${novel.slug}`}
               className="group relative block p-2 overflow-hidden aspect-[3/2] lg:aspect-[3/2] min-h-[140px] lg:min-h-[220px] bg-cover bg-center rounded-lg"
@@ -149,6 +154,33 @@ const FeaturedNovel = ({ novels }: FeaturedNovelProps) => {
           </div>
         ))}
       </motion.div>
+
+      {isDesktop && novels.length > 1 && (
+        <div className="hidden lg:block">
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-1">
+            <button
+              type="button"
+              aria-label="Previous"
+              disabled={currentIndex === 0}
+              onClick={() => animateToIndex(currentIndex - 1)}
+              className={`pointer-events-auto inline-flex items-center justify-center w-9 h-9 rounded-full bg-background border border-border shadow-sm transition-colors hover:bg-accent ${currentIndex === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              <Icon icon="mdi:chevron-left" className="text-xl" />
+            </button>
+          </div>
+          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-1">
+            <button
+              type="button"
+              aria-label="Next"
+              disabled={currentIndex >= maxStartIndex}
+              onClick={() => animateToIndex(currentIndex + 1)}
+              className={`pointer-events-auto inline-flex items-center justify-center w-9 h-9 rounded-full bg-background border border-border shadow-sm transition-colors hover:bg-accent ${currentIndex >= maxStartIndex ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              <Icon icon="mdi:chevron-right" className="text-xl" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {novels.length > 1 && (
         <div className="mt-2 flex items-center justify-center gap-1.5">
