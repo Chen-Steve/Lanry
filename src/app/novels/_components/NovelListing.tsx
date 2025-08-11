@@ -11,9 +11,8 @@ import RegularNovels from './RegularNovels';
 import NovelStatistics from './NovelStatistics';
 import CuratedNovels from './CuratedNovels';
 import supabase from '@/lib/supabaseClient';
-import BulletinBoard from './BulletinBoard';
+import BulletinBoard, { PWABulletin } from './BulletinBoard';
 import CompletedNovels from './CompletedNovels';
-import PWABulletin from './PWABulletin';
 
 const NovelListing = () => {
   const [novels, setNovels] = useState<Novel[]>([]);
