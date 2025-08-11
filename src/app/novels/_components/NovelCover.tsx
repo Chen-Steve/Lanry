@@ -13,6 +13,9 @@ interface NovelCoverProps {
   size?: 'thumbnail' | 'small' | 'medium' | 'large';
   chapterCount?: number;
   isPriority?: boolean;
+  className?: string;
+  /** When true, the cover container will stretch to fill its parent height. */
+  fitParent?: boolean;
 }
 
 const NovelCover = ({ 
@@ -24,14 +27,23 @@ const NovelCover = ({
   contentType,
   category,
   chapterCount,
-  isPriority = false
+  isPriority = false,
+  size = 'small',
+  className = '',
+  fitParent = false
 }: NovelCoverProps) => {
   const imageUrl = coverUrl?.startsWith('http') 
     ? coverUrl
     : coverUrl ? `/novel-covers/${coverUrl}` : null;
 
   return (
-    <div className="relative aspect-[2/3] w-full rounded overflow-hidden bg-muted group">
+    <div
+      className={`relative w-full rounded overflow-hidden bg-muted group ${
+        // Stretch to parent height when explicitly requested or for thumbnails;
+        // otherwise, default to a 2/3 aspect container.
+        (fitParent || size === 'thumbnail') ? 'h-full' : 'aspect-[2/3]'
+      } ${className}`}
+    >
       {imageUrl ? (
         <img
           src={imageUrl}

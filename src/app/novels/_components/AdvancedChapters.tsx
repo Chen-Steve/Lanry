@@ -53,41 +53,47 @@ const AdvancedChapters = ({ initialNovels, initialTotal }: AdvancedChaptersProps
 
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {novels.map(novel => (
-            <Link
+            <div
               key={novel.id}
-              href={`/novels/${novel.slug}`}
               className="flex gap-3 rounded-lg bg-container transition-shadow hover:shadow-md min-h-0"
               draggable={false}
             >
               {/* Cover */}
-              <div className="relative w-20 h-28 sm:w-24 sm:h-32 flex-shrink-0">
+              <Link href={`/novels/${novel.slug}`} className="relative w-20 sm:w-24 self-stretch flex-shrink-0 block">
                 <NovelCover
                   coverUrl={novel.coverImageUrl}
                   title={novel.title}
                   size="thumbnail"
+                  fitParent
                 />
-              </div>
+              </Link>
 
               {/* Details */}
               <div className="flex flex-1 flex-col overflow-hidden min-w-0">
-                <h3 className="line-clamp-2 text-sm font-semibold text-foreground sm:text-base">
-                  {novel.title}
-                </h3>
+                <Link href={`/novels/${novel.slug}`} className="hover:text-primary transition-colors">
+                  <h3 className="line-clamp-2 text-sm font-semibold text-foreground sm:text-base">
+                    {novel.title}
+                  </h3>
+                </Link>
 
                 <ul className="mt-2 space-y-1">
                   {novel.chapters?.slice(0, 4).map((chapter, index) => (
                     <li
                       key={index}
-                      className="flex items-center gap-1 text-xs sm:text-sm text-amber-700 dark:text-amber-400"
+                      className="text-xs sm:text-sm"
                     >
-                      <Icon icon="ph:lock" className="h-3 w-3 flex-shrink-0" />
-                      <span className="truncate">Ch.{chapter.chapter_number}
-                      {chapter.part_number && `.${chapter.part_number}`}</span>
+                      <Link 
+                        href={`/novels/${novel.slug}/c${chapter.chapter_number}${chapter.part_number ? `-p${chapter.part_number}` : ''}`}
+                        className="flex items-center gap-1 text-amber-700 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 transition-colors"
+                      >
+                        <Icon icon="ph:lock" className="h-3 w-3 flex-shrink-0" />
+                        <span className="truncate">Ch.{chapter.chapter_number}{chapter.part_number && `.${chapter.part_number}`}</span>
+                      </Link>
                     </li>
                   ))}
                 </ul>
               </div>
-            </Link>
+            </div>
           ))}
         </div>
 
