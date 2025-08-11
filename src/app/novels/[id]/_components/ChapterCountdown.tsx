@@ -1,13 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useServerTimeContext } from '@/providers/ServerTimeProvider';
 
 interface ChapterCountdownProps {
   publishDate: string;
+  onComplete?: () => void;
 }
 
-export function ChapterCountdown({ publishDate }: ChapterCountdownProps) {
+export function ChapterCountdown({ publishDate, onComplete }: ChapterCountdownProps) {
   const { getServerTime } = useServerTimeContext();
   const [timeLeft, setTimeLeft] = useState<{
     days: number;
@@ -15,6 +16,7 @@ export function ChapterCountdown({ publishDate }: ChapterCountdownProps) {
     minutes: number;
     seconds: number;
   } | null>(null);
+  const hasFiredCompleteRef = useRef(false);
 
   useEffect(() => {
     const calculateTimeLeft = () => {
@@ -23,6 +25,10 @@ export function ChapterCountdown({ publishDate }: ChapterCountdownProps) {
       
       if (difference <= 0) {
         setTimeLeft(null);
+        if (!hasFiredCompleteRef.current) {
+          hasFiredCompleteRef.current = true;
+          onComplete?.();
+        }
         return;
       }
 
@@ -41,7 +47,7 @@ export function ChapterCountdown({ publishDate }: ChapterCountdownProps) {
     const timer = setInterval(calculateTimeLeft, 1000);
 
     return () => clearInterval(timer);
-  }, [publishDate, getServerTime]);
+  }, [publishDate, getServerTime, onComplete]);
 
   if (!timeLeft) {
     return null;

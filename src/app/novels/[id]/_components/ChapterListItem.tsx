@@ -279,7 +279,21 @@ export const ChapterListItem = memo(function ChapterListItem({
                 <span>{chapter.coins}c</span>
               )}
               <span className="text-muted-foreground flex items-center gap-1">
-                · <ChapterCountdown publishDate={chapter.publish_at} />
+                · <ChapterCountdown 
+                  publishDate={chapter.publish_at}
+                  onComplete={() => {
+                    // When countdown reaches zero, treat as published immediately
+                    // by navigating to the chapter (if it should now be free) or
+                    // by triggering a re-render through router refresh.
+                    // We opt for a soft refresh to update isPublished logic using server time.
+                    try {
+                      // Next.js app router refresh revalidates client state
+                      // without a full page reload.
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      (router as any).refresh?.();
+                    } catch {}
+                  }}
+                />
               </span>
               {chapter.age_rating === 'MATURE' && (
                 <span 
