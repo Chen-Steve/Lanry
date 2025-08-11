@@ -7,12 +7,11 @@ import LoadingGrid from './LoadingGrid';
 import AdvancedChapters from './AdvancedChapters';
 import NewReleases from './NewestNovels';
 import FeaturedNovel from './FeaturedNovel';
-import RegularNovels from './RegularNovels';
+import RegularNovels from './RecentlyUpdated';
 import NovelStatistics from './NovelStatistics';
 import CuratedNovels from './CuratedNovels';
 import supabase from '@/lib/supabaseClient';
-import BulletinBoard, { PWABulletin } from './BulletinBoard';
-import CompletedNovels from './CompletedNovels';
+import BulletinBoard, { PWABulletin, CompletedNovels } from './BulletinBoard';
 
 const NovelListing = () => {
   const [novels, setNovels] = useState<Novel[]>([]);
