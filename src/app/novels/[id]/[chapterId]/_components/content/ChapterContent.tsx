@@ -11,12 +11,10 @@ import { Icon } from '@iconify/react';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import type { ChapterComment as BaseChapterComment } from '@/types/database';
 import FootnotesList from './FootnotesList';
-import { toast } from 'sonner';
 import ScreenshotProtection from '../ScreenshotProtection';
 import ChapterParagraph from './ChapterParagraph';
 import TranslatorChapterEdit from './TranslatorChapterEdit';
-import { TranslatorLinks } from '@/app/novels/[id]/_components/TranslatorLinks';
-import supabase from '@/lib/supabaseClient';
+import AuthorWords from './AuthorWords';
 
 interface ChapterCommentWithProfile extends Omit<BaseChapterComment, 'profile'> {
   profile?: {
@@ -89,9 +87,6 @@ export default function ChapterContent({
   const contentRef = useRef<HTMLDivElement>(null);
   const [isChapterBarVisible, setIsChapterBarVisible] = useState(false);
   const [footnotes, setFootnotes] = useState<ExtractedFootnote[]>([]);
-  const [likeCount, setLikeCount] = useState(0);
-  const [isLiked, setIsLiked] = useState(false);
-  const [isLikeLoading, setIsLikeLoading] = useState(false);
   
   // Determine the display publication date
   const displayDate = publishAt || createdAt;
@@ -300,210 +295,7 @@ export default function ChapterContent({
     };
   }, []);
 
-  // Fetch initial likes count and user's like status
-  useEffect(() => {
-    const fetchLikes = async () => {
-      try {
-        console.log('Fetching initial likes for chapter:', chapterNumber, 'novel:', novelId);
-        
-        // Get chapter data
-        const { data: chapter, error: chapterError } = await supabase
-          .from('chapters')
-          .select('id, like_count')
-          .eq('chapter_number', chapterNumber)
-          .eq('novel_id', novelId)
-          .single();
-
-        if (chapterError) throw chapterError;
-        
-        console.log('Initial chapter data:', chapter);
-        setLikeCount(chapter.like_count || 0);
-        console.log('Set initial like count to:', chapter.like_count || 0);
-
-        // Check if user has liked this chapter
-        const { data: session } = await supabase.auth.getSession();
-        if (session?.session?.user) {
-          const { data, error: likeError } = await supabase
-            .from('chapter_likes')
-            .select('id')
-            .eq('chapter_id', chapter.id)
-            .eq('profile_id', session.session.user.id);
-
-          if (likeError) throw likeError;
-          const userLiked = data && data.length > 0;
-          console.log('User liked status:', userLiked);
-          setIsLiked(userLiked);
-        }
-      } catch (err) {
-        console.error('Error fetching likes:', err);
-      }
-    };
-
-    fetchLikes();
-  }, [chapterNumber, novelId]);
-
-  const handleLikeClick = async () => {
-    console.log('Chapter like button clicked');
-    
-    const { data: session } = await supabase.auth.getSession();
-    if (!session?.session?.user) {
-      toast.error('Must be logged in to like chapters');
-      return;
-    }
-
-    console.log('User authenticated:', session.session.user.id);
-
-    if (isLikeLoading) return;
-    setIsLikeLoading(true);
-
-    try {
-      // Get chapter ID first
-      const { data: chapter, error: chapterError } = await supabase
-        .from('chapters')
-        .select('id')
-        .eq('chapter_number', chapterNumber)
-        .eq('novel_id', novelId)
-        .single();
-
-      if (chapterError) throw chapterError;
-      console.log('Found chapter:', chapter);
-
-      if (isLiked) {
-        console.log('Attempting to unlike chapter');
-        
-        // Unlike
-        const { error: deleteLikeError } = await supabase
-          .from('chapter_likes')
-          .delete()
-          .eq('chapter_id', chapter.id)
-          .eq('profile_id', session.session.user.id);
-
-        if (deleteLikeError) {
-          console.error('Delete like error:', deleteLikeError);
-          throw deleteLikeError;
-        }
-        console.log('Successfully deleted like record');
-
-        // Get current like count from database
-        const { data: currentChapter, error: getCurrentError } = await supabase
-          .from('chapters')
-          .select('like_count')
-          .eq('id', chapter.id)
-          .single();
-
-        if (getCurrentError) {
-          console.error('Error getting current count:', getCurrentError);
-          throw getCurrentError;
-        }
-
-        const currentCount = currentChapter?.like_count || 0;
-        const newCount = Math.max(0, currentCount - 1);
-        
-        console.log('Current count from DB:', currentCount, 'New count will be:', newCount);
-
-        // Update the like count in chapters table
-        const { error: updateError } = await supabase
-          .from('chapters')
-          .update({ like_count: newCount })
-          .eq('id', chapter.id);
-
-        if (updateError) {
-          console.error('Update chapter count error:', updateError);
-          throw updateError;
-        }
-        console.log('Successfully updated chapter like count (unlike)');
-
-        // Verify the update worked
-        const { data: verifyChapter, error: verifyError } = await supabase
-          .from('chapters')
-          .select('like_count')
-          .eq('id', chapter.id)
-          .single();
-
-        if (verifyError) {
-          console.error('Error verifying update:', verifyError);
-        } else {
-          console.log('Verified chapter like count in DB:', verifyChapter?.like_count);
-        }
-
-        setLikeCount(newCount);
-        setIsLiked(false);
-        console.log('Updated UI state: unliked, count:', newCount);
-      } else {
-        console.log('Attempting to like chapter');
-        
-        // Like
-        const now = new Date().toISOString();
-        const { error: createLikeError } = await supabase
-          .from('chapter_likes')
-          .insert({
-            id: crypto.randomUUID(),
-            profile_id: session.session.user.id,
-            chapter_id: chapter.id,
-            novel_id: novelId,
-            created_at: now,
-            updated_at: now
-          });
-
-        if (createLikeError) {
-          console.error('Create like error:', createLikeError);
-          throw createLikeError;
-        }
-        console.log('Successfully created like record');
-
-        // Get current like count from database
-        const { data: currentChapter, error: getCurrentError } = await supabase
-          .from('chapters')
-          .select('like_count')
-          .eq('id', chapter.id)
-          .single();
-
-        if (getCurrentError) {
-          console.error('Error getting current count:', getCurrentError);
-          throw getCurrentError;
-        }
-
-        const currentCount = currentChapter?.like_count || 0;
-        const newCount = currentCount + 1;
-        
-        console.log('Current count from DB:', currentCount, 'New count will be:', newCount);
-
-        // Update the like count in chapters table
-        const { error: updateError } = await supabase
-          .from('chapters')
-          .update({ like_count: newCount })
-          .eq('id', chapter.id);
-
-        if (updateError) {
-          console.error('Update chapter count error:', updateError);
-          throw updateError;
-        }
-        console.log('Successfully updated chapter like count (like)');
-
-        // Verify the update worked
-        const { data: verifyChapter, error: verifyError } = await supabase
-          .from('chapters')
-          .select('like_count')
-          .eq('id', chapter.id)
-          .single();
-
-        if (verifyError) {
-          console.error('Error verifying update:', verifyError);
-        } else {
-          console.log('Verified chapter like count in DB:', verifyChapter?.like_count);
-        }
-
-        setLikeCount(newCount);
-        setIsLiked(true);
-        console.log('Updated UI state: liked, count:', newCount);
-      }
-    } catch (error) {
-      console.error('Error toggling like:', error);
-      toast.error('Failed to update like');
-    } finally {
-      setIsLikeLoading(false);
-    }
-  };
+  // like logic moved into AuthorWords component
 
   // Add font optimization
   useEffect(() => {
@@ -729,109 +521,16 @@ export default function ChapterContent({
 
         {/* Author's Thoughts Section - Only show if not indefinitely locked */}
         {!isIndefinitelyLocked && !hideAuthorWords && authorThoughts && authorThoughts.trim() !== '' && (
-          <div className="mt-4 max-w-2xl mx-auto">
-            <div className="relative bg-card rounded-lg p-4 border border-border shadow-sm">
-              <div className="relative mb-4">
-                {/* Like Button - Absolute positioned */}
-                <div className="absolute right-0 top-0">
-                  <button
-                    onClick={handleLikeClick}
-                    className={`flex-shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors ${
-                      isLiked 
-                        ? 'text-red-500 hover:text-red-600' 
-                        : 'text-muted-foreground hover:text-red-500'
-                    }`}
-                    title={isLiked ? 'Unlike chapter' : 'Like chapter'}
-                  >
-                    <Icon 
-                      icon={isLiked ? "mdi:heart" : "mdi:heart-outline"} 
-                      className="w-5 h-5" 
-                    />
-                    <span className="font-medium">{likeCount}</span>
-                  </button>
-                </div>
-
-                {/* Author info with max-width to prevent overlap */}
-                <div className="flex items-center gap-3 min-w-0 pr-24">
-                  {authorProfile && (
-                    <div className="flex-shrink-0">
-                      {authorProfile.avatar_url ? (
-                        <img
-                          src={authorProfile.avatar_url}
-                          alt={authorProfile.username}
-                          className="w-10 h-10 rounded-full object-cover"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.style.display = 'none';
-                            const parent = target.parentElement;
-                            if (parent) {
-                              parent.innerHTML = authorProfile.username[0]?.toUpperCase() || '?';
-                              parent.className = "w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-medium text-lg";
-                            }
-                          }}
-                        />
-                      ) : (
-                        <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-medium text-lg">
-                          {authorProfile.username[0]?.toUpperCase() || '?'}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  <div className="min-w-0">
-                    <div className="relative">
-                      <h3 
-                        className="text-lg font-medium text-foreground whitespace-nowrap overflow-hidden hover:overflow-x-auto md:overflow-visible scrollbar-none group"
-                        style={{
-                          maxWidth: 'calc(100% - 8px)',
-                          scrollbarWidth: 'none',
-                          msOverflowStyle: 'none',
-                          WebkitOverflowScrolling: 'touch'
-                        }}
-                      >
-                        <span className="inline-block min-w-fit touch-pan-x">
-                          {`${authorProfile?.username}'s words`}
-                        </span>
-                      </h3>
-                      {/* Gradient fade effect */}
-                      <div className="absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-card pointer-events-none group-hover:opacity-0 transition-opacity md:hidden" />
-                      {/* Scroll indicator */}
-                      <div 
-                        className="absolute -right-1 top-1/2 -translate-y-1/2 text-muted-foreground/50 cursor-pointer hover:text-muted-foreground transition-colors md:hidden"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const nameElement = e.currentTarget.parentElement?.querySelector('span');
-                          if (nameElement) {
-                            nameElement.scrollTo({ left: nameElement.scrollWidth, behavior: 'smooth' });
-                          }
-                        }}
-                      >
-                        <Icon icon="mdi:chevron-right" className="w-4 h-4" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div 
-                className="prose prose-sm md:prose-base text-foreground dark:prose-invert"
-                style={getTextStyles(fontFamily, fontSize - 1)}
-                dangerouslySetInnerHTML={{ __html: formatText(filterExplicitContent(authorThoughts, !showProfanity)) }}
-              />
-
-              {authorProfile && (
-                <TranslatorLinks
-                  translator={{
-                    username: authorProfile.username,
-                    profile_id: authorId,
-                    kofiUrl: authorProfile.kofiUrl,
-                    patreonUrl: authorProfile.patreonUrl,
-                    customUrl: authorProfile.customUrl,
-                    customUrlLabel: authorProfile.customUrlLabel
-                  }}
-                />
-              )}
-            </div>
-          </div>
+          <AuthorWords
+            authorThoughts={authorThoughts}
+            authorProfile={authorProfile}
+            authorId={authorId}
+            fontFamily={fontFamily}
+            fontSize={fontSize}
+            showProfanity={showProfanity}
+            novelId={novelId}
+            chapterNumber={chapterNumber}
+          />
         )}
 
         {selectedParagraphId && !isIndefinitelyLocked && (

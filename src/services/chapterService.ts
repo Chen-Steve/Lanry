@@ -8,6 +8,23 @@ type ChapterWithNovel = Chapter & {
   hasTranslatorAccess?: boolean;
 };
 
+// Shape returned by Supabase for nested authorProfile (supports snake_case and camelCase)
+interface RawAuthorProfile {
+  username: string;
+  avatar_url?: string;
+  role: 'AUTHOR' | 'TRANSLATOR' | 'USER';
+  kofi_url?: string | null;
+  patreon_url?: string | null;
+  custom_url?: string | null;
+  custom_url_label?: string | null;
+  author_bio?: string | null;
+  // Back-compat camelCase (if present)
+  kofiUrl?: string | null;
+  patreonUrl?: string | null;
+  customUrl?: string | null;
+  customUrlLabel?: string | null;
+}
+
 // Helper function to check if a chapter is published.
 // Instead of making a separate RPC call for every chapter, we simply
 // compare the provided publish date with the *current* time on the
@@ -94,8 +111,20 @@ export async function getChapter(
 
     if (error || !chapter) return null;
 
-    // Extract authorProfile from nested novel structure
-    const authorProfile = chapter.novel?.authorProfile || null;
+    // Extract and normalize authorProfile from nested novel structure
+    const rawAuthorProfile = (chapter.novel?.authorProfile ?? null) as RawAuthorProfile | null;
+    const authorProfile = rawAuthorProfile
+      ? {
+          username: rawAuthorProfile.username,
+          avatar_url: rawAuthorProfile.avatar_url,
+          role: rawAuthorProfile.role,
+          kofiUrl: rawAuthorProfile.kofi_url ?? rawAuthorProfile.kofiUrl ?? undefined,
+          patreonUrl: rawAuthorProfile.patreon_url ?? rawAuthorProfile.patreonUrl ?? undefined,
+          customUrl: rawAuthorProfile.custom_url ?? rawAuthorProfile.customUrl ?? undefined,
+          customUrlLabel: rawAuthorProfile.custom_url_label ?? rawAuthorProfile.customUrlLabel ?? undefined,
+          author_bio: rawAuthorProfile.author_bio ?? undefined,
+        }
+      : null;
     
     const chapterBase: ChapterWithNovel = {
       ...chapter,
