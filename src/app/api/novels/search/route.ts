@@ -79,6 +79,49 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // If basic search: run a simplified, title-only, minimal query and return early
+    if (isBasicSearch) {
+      const like = query ? `%${query}%` : null;
+      let qb = supabase
+        .from('novels')
+        .select('id,title,slug,author,author_profile_id,authorProfile:author_profile_id(username)')
+        .order('title', { ascending: true })
+        .limit(ITEMS_PER_PAGE);
+
+      if (like) {
+        qb = qb.ilike('title', like);
+      }
+
+      const { data: novels, error } = await qb;
+      if (error) throw error;
+
+      const rows = (novels ?? []) as Array<
+        {
+          id: string;
+          title: string;
+          slug: string;
+          author: string | null;
+          // Supabase may return 1:1 relation as object or array depending on types
+          authorProfile?: { username: string | null } | { username: string | null }[] | null;
+        }
+      >;
+
+      const transformed = rows.map((n) => {
+        const profile = Array.isArray(n.authorProfile)
+          ? n.authorProfile[0]
+          : n.authorProfile;
+        const username = profile?.username ?? null;
+        return {
+          id: n.id,
+          title: n.title,
+          slug: n.slug,
+          author: username ?? n.author ?? null,
+        };
+      });
+
+      return NextResponse.json({ novels: transformed, totalPages: 1, totalCount: transformed.length });
+    }
+
     // Combine tag/category constraints (intersection if both present)
     let constrainedNovelIds: string[] | null = null;
     if (tagFilteredNovelIds && categoryFilteredNovelIds) {
@@ -96,26 +139,17 @@ export async function GET(request: NextRequest) {
     const applyFilters = (qb: any) => {
       let queryBuilder = qb;
 
-      // Status filter: exclude DRAFT by default
+      // Status filter: exclude DRAFT by default, but allow in basic search
       if (status) {
         queryBuilder = queryBuilder.eq('status', status);
-      } else {
+      } else if (!isBasicSearch) {
         queryBuilder = queryBuilder.neq('status', 'DRAFT');
       }
 
-      // Title/description/author query
+      // Title-only query for basic search; title contains for advanced
       if (query) {
-        if (isBasicSearch) {
-          // Basic: match across title, description, author
-          const like = `%${query}%`;
-          queryBuilder = queryBuilder.or(
-            `title.ilike.${like},description.ilike.${like},author.ilike.${like}`
-          );
-        } else {
-          // Advanced: focus on title contains
-          const like = `%${query}%`;
-          queryBuilder = queryBuilder.ilike('title', like);
-        }
+        const like = `%${query}%`;
+        queryBuilder = queryBuilder.ilike('title', like);
       }
 
       // TL usernames -> author_profile_id IN (...)

@@ -1,8 +1,11 @@
+"use client";
+
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { debounce } from 'es-toolkit';
 import type { Novel } from '@/types/database';
 import { Icon } from '@iconify/react';
+
+const noop = () => {};
 
 interface SearchSectionProps {
   onSearch?: (query: string, results: Novel[]) => void;
@@ -11,10 +14,16 @@ interface SearchSectionProps {
 }
 
 const SearchSection: React.FC<SearchSectionProps> = ({ 
-  onSearch = () => {}, 
+  onSearch = noop, 
   minSearchLength = 2,
   onExpandChange
 }) => {
+  // Keep a stable reference to onSearch to avoid effect loops
+  const onSearchRef = useRef(onSearch);
+  useEffect(() => {
+    onSearchRef.current = onSearch;
+  }, [onSearch]);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<Novel[]>([]);
@@ -55,43 +64,42 @@ const SearchSection: React.FC<SearchSectionProps> = ({
     }, 300); // Match the transition duration
   };
 
-  const debouncedSearch = useRef(
-    debounce(async (query: string) => {
-      if (!query.trim() || query.length < minSearchLength) {
-        setResults([]);
-        setShowDropdown(false);
-        setIsLoading(false);
-        return;
-      }
+  // Effect-based debounce for search
+  useEffect(() => {
+    const query = searchQuery;
+    if (!query.trim() || query.length < minSearchLength) {
+      setResults([]);
+      setShowDropdown(false);
+      setIsLoading(false);
+      return;
+    }
 
+    // Cancel previous request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
+    setIsLoading(true);
+    const timeoutId = window.setTimeout(async () => {
       try {
-        if (abortControllerRef.current) {
-          abortControllerRef.current.abort();
-        }
-
-        abortControllerRef.current = new AbortController();
-        setIsLoading(true);
-
         const response = await fetch(
           `/api/novels/search?q=${encodeURIComponent(query)}&basic=true`,
-          { signal: abortControllerRef.current.signal }
+          { signal: controller.signal }
         );
-        
         if (!response.ok) {
-          const errorData = await response.json();
+          const errorData = await response.json().catch(() => ({}));
           console.error('Search failed:', errorData);
-          throw new Error(errorData.error || 'Search failed');
+          throw new Error((errorData as { error?: string }).error || 'Search failed');
         }
-
         const data = await response.json();
-        
         if (!Array.isArray(data.novels)) {
           throw new Error('Invalid response format');
         }
-        
         setResults(data.novels);
         setShowDropdown(true);
-        onSearch(query, data.novels);
+        onSearchRef.current(query, data.novels);
       } catch (error: unknown) {
         if (error instanceof Error && error.name === 'AbortError') {
           return;
@@ -101,8 +109,13 @@ const SearchSection: React.FC<SearchSectionProps> = ({
       } finally {
         setIsLoading(false);
       }
-    }, 200)
-  ).current;
+    }, 200);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+      controller.abort();
+    };
+  }, [searchQuery, minSearchLength]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -114,12 +127,11 @@ const SearchSection: React.FC<SearchSectionProps> = ({
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
-      debouncedSearch.cancel();
       if (blurTimeoutRef.current) {
         clearTimeout(blurTimeoutRef.current);
       }
     };
-  }, [debouncedSearch]);
+  }, []);
 
   const handleBlur = () => {
     if (blurTimeoutRef.current) {
@@ -147,7 +159,6 @@ const SearchSection: React.FC<SearchSectionProps> = ({
     const value = e.target.value;
     setSearchQuery(value);
     setShowDropdown(true);
-    debouncedSearch(value);
   };
 
   const handleSearchClick = (e: React.MouseEvent) => {
