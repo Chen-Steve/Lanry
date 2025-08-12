@@ -55,7 +55,6 @@ export async function GET(
       throw error;
     }
 
-    // Map to camelCase fields similar to previous Prisma response
     const rows = (data || []) as unknown as DBCommentRow[];
     const comments = rows.map((c) => ({
       id: c.id,

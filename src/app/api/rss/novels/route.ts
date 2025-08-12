@@ -1,60 +1,64 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
 import { generateNovelFeedXML } from '@/lib/rssUtils';
-import { Novel } from '@prisma/client';
+import { createServerClient } from '@/lib/supabaseServer';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
   try {
-    // Fetch the 10 most recent novels by creation date
-    const latestNovelsRaw = await prisma.novel.findMany({
-      orderBy: {
-        createdAt: 'desc',
-      },
-      take: 10,
-      where: {
-        status: {
-          not: 'DRAFT',
-        },
-      },
-      // Selecting only the fields used by the RSS generator keeps the query lightweight
-      select: {
-        id: true,
-        createdAt: true,
-        title: true,
-        slug: true,
-        description: true,
-        author: true,
-        coverImageUrl: true,
-        translator: {
-          select: {
-            username: true,
-          },
-        },
-        isAuthorNameCustom: true,
-        authorProfile: {
-          select: {
-            username: true,
-          },
-        },
-      },
-    });
+    const supabase = await createServerClient();
 
-    const latestNovels = latestNovelsRaw.map(n => {
-      // Remove the nested translator object to align with Novel type shape
-      // and attach its username as translatorUsername.
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { translator, authorProfile, ...rest } = n as any;
-      return {
-        ...rest,
-        translatorUsername: translator?.username ?? null,
-        authorProfileUsername: authorProfile?.username ?? null,
-      };
-    });
+    // Fetch the 10 most recent novels by creation date (excluding drafts)
+    const { data: latestNovelsRaw, error } = await supabase
+      .from('novels')
+      .select(`
+        id,
+        created_at,
+        title,
+        slug,
+        description,
+        author,
+        cover_image_url,
+        is_author_name_custom,
+        translator:translator_id ( username ),
+        authorProfile:author_profile_id ( username )
+      `)
+      .neq('status', 'DRAFT')
+      .order('created_at', { ascending: false })
+      .limit(10);
+
+    if (error) throw error;
+
+    interface LatestNovelRow {
+      id: string;
+      created_at: string;
+      title: string;
+      slug: string;
+      description: string | null;
+      author: string | null;
+      cover_image_url: string | null;
+      is_author_name_custom: boolean | null;
+      translator?: { username: string | null } | null;
+      authorProfile?: { username: string | null } | null;
+    }
+
+    const rows = (latestNovelsRaw || []) as unknown as LatestNovelRow[];
+    const latestNovels = rows.map((n) => ({
+      id: n.id,
+      createdAt: n.created_at,
+      title: n.title,
+      slug: n.slug,
+      description: n.description,
+      author: n.author,
+      coverImageUrl: n.cover_image_url ?? null,
+      translatorUsername: n.translator?.username ?? null,
+      isAuthorNameCustom: n.is_author_name_custom ?? false,
+      authorProfileUsername: n.authorProfile?.username ?? null,
+    }));
 
     const baseUrl = new URL(request.url).origin;
-    const xml = generateNovelFeedXML(latestNovels as unknown as Novel[], baseUrl);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const xml = generateNovelFeedXML(latestNovels as unknown as any[], baseUrl);
 
     return new NextResponse(xml, {
       headers: {

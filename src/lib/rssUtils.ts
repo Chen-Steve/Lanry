@@ -1,5 +1,28 @@
-import { Novel, Chapter } from '@prisma/client';
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
+export type FeedNovel = {
+  id?: string;
+  title: string;
+  slug: string;
+  description?: string | null;
+  createdAt: string | Date;
+  author?: string | null;
+  translatorUsername?: string | null;
+  isAuthorNameCustom?: boolean;
+  authorProfileUsername?: string | null;
+  coverImageUrl?: string | null;
+};
+
+export type FeedChapter = {
+  id: string;
+  slug: string | null;
+  title: string;
+  chapterNumber: number;
+  partNumber?: number | null;
+  createdAt: string | Date;
+  publishAt?: string | Date | null;
+  novel: FeedNovel;
+};
 
 // Prefer translator name if provided, otherwise fallback to original author.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -12,7 +35,7 @@ function getAuthorName(novel: any): string {
   return '';
 }
 
-export function generateNovelFeedXML(novels: Novel[], baseUrl: string) {
+export function generateNovelFeedXML(novels: FeedNovel[], baseUrl: string) {
   const now = new Date().toUTCString();
   
   return `<?xml version="1.0" encoding="UTF-8" ?>
@@ -32,13 +55,12 @@ export function generateNovelFeedXML(novels: Novel[], baseUrl: string) {
       <description>${escapeXml(novel.description || '')}</description>
       <pubDate>${new Date(novel.createdAt).toUTCString()}</pubDate>
       <author>${escapeXml(getAuthorName(novel))}</author>
-      ${novel.coverImageUrl ? `<enclosure url="${escapeXml(novel.coverImageUrl)}" type="image/jpeg" />` : ''}
     </item>`).join('')}
   </channel>
 </rss>`;
 }
 
-export function generateChapterFeedXML(novel: Novel | null, chapters: (Chapter & { novel: Novel })[], baseUrl: string) {
+export function generateChapterFeedXML(novel: FeedNovel | null, chapters: FeedChapter[], baseUrl: string) {
   const now = new Date().toUTCString();
   const title = novel ? `${escapeXml(novel.title)} Chapters` : 'All Latest Chapters';
   const link = novel ? `${baseUrl}/novels/${novel.slug}` : baseUrl;
@@ -70,10 +92,6 @@ export function generateChapterFeedXML(novel: Novel | null, chapters: (Chapter &
       ]]></description>
       <pubDate>${new Date((chapter as any).publishAt ?? chapter.createdAt).toUTCString()}</pubDate>
       <author>${escapeXml(novel ? getAuthorName(novel) : getAuthorName(chapter.novel))}</author>
-      ${(() => {
-        const cover = novel ? novel.coverImageUrl : chapter.novel.coverImageUrl;
-        return cover ? `<enclosure url="${escapeXml(cover)}" type="image/jpeg" />` : '';
-      })()}
       <novelTitle>${escapeXml(novel ? novel.title : chapter.novel.title)}</novelTitle>
       <chapterTitle>${`Chapter ${chapter.chapterNumber}${chapter.title ? `: ${escapeXml(chapter.title)}` : ''}`}</chapterTitle>
     </item>`).join('')}

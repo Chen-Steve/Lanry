@@ -5,7 +5,7 @@ import { cookies } from 'next/headers'
 import { ForumThread } from '@/types/forum'
 import ThreadMessages from './_components/ThreadMessages'
 import ThreadHeader from './_components/ThreadHeader'
-import { prisma } from '@/lib/prisma'
+import { createServerClient } from '@/lib/supabaseServer'
 
 interface ThreadPageProps {
   params: {
@@ -64,15 +64,20 @@ export default async function ThreadPage({ params }: ThreadPageProps) {
     notFound()
   }
 
-  // Update view count using Prisma instead of Supabase
-  await prisma.forumThread.update({
-    where: { id: params.threadId },
-    data: {
-      viewCount: {
-        increment: 1
-      }
+  // Update view count using Supabase
+  try {
+    const supabaseAdmin = await createServerClient();
+    // Increment in a single SQL expression to avoid race conditions
+    const { error: updateError } = await supabaseAdmin
+      .from('forum_threads')
+      .update({ view_count: (thread?.view_count ?? 0) + 1 })
+      .eq('id', params.threadId);
+    if (updateError) {
+      console.error('Failed to increment thread view_count', updateError);
     }
-  })
+  } catch (e) {
+    console.error('Error updating thread view_count', e);
+  }
 
   return (
     <main className="flex-1">
