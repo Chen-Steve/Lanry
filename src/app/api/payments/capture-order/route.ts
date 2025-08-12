@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { randomUUID } from 'crypto';
 import supabaseAdmin from '@/lib/supabaseAdmin';
 import checkoutNodeJssdk from "@paypal/checkout-server-sdk";
 
@@ -34,10 +34,10 @@ export async function POST(req: Request) {
   try {
     const { orderId, userId } = await req.json();
 
-    // Verify user exists
+    // Verify user exists and fetch current coins
     const { data: user, error } = await supabaseAdmin
       .from('profiles')
-      .select('id')
+      .select('id, coins')
       .eq('id', userId)
       .single();
 
@@ -72,23 +72,35 @@ export async function POST(req: Request) {
       throw new Error("Invalid payment amount");
     }
 
-    // Start a transaction to update user's coins and create transaction record
-    const updatedProfile = await prisma.profile.update({
-      where: { id: userId },
-      data: {
-        coins: { increment: coins },
-      },
-    });
-
-    // Create transaction record
-    const transaction = await prisma.coinTransaction.create({
-      data: {
-        profileId: userId,
+    // First, create transaction record (only existing columns)
+    const { data: transaction, error: insertError } = await supabaseAdmin
+      .from('coin_transactions')
+      .insert({
+        id: randomUUID(),
+        profile_id: userId,
         amount: coins,
-        type: "PURCHASE",
-        orderId,
-      },
-    });
+        type: 'PURCHASE',
+        order_id: orderId,
+      })
+      .select('*')
+      .single();
+
+    if (insertError || !transaction) {
+      throw insertError ?? new Error('Failed to record coin transaction');
+    }
+
+    // Then update user's coins
+    const newCoinBalance = (user.coins ?? 0) + coins;
+    const { data: updatedProfile, error: updateError } = await supabaseAdmin
+      .from('profiles')
+      .update({ coins: newCoinBalance })
+      .eq('id', userId)
+      .select('id, coins')
+      .single();
+
+    if (updateError || !updatedProfile) {
+      throw updateError ?? new Error('Failed to update profile coins');
+    }
 
     return NextResponse.json({ profile: updatedProfile, transaction });
   } catch (error) {

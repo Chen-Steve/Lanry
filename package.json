@@ -6,8 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "postinstall": "prisma generate"
+    "lint": "next lint"
   },
   "dependencies": {
     "@google-analytics/data": "^5.1.0",
@@ -15,7 +14,6 @@
     "@iconify/react": "^5.1.0",
     "@paypal/checkout-server-sdk": "^1.0.3",
     "@paypal/react-paypal-js": "^8.8.1",
-    "@prisma/client": "^6.3.1",
     "@supabase/auth-helpers-nextjs": "^0.10.0",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.46.1",
@@ -48,7 +46,6 @@
     "eslint": "^8",
     "eslint-config-next": "15.0.1",
     "postcss": "^8.4.48",
-    "prisma": "^6.2.1",
     "supabase": "^1.223.10",
     "tailwindcss": "^3.4.1",
     "ts-node": "^10.9.2",

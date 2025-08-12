@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import supabaseAdmin from '@/lib/supabaseAdmin';
+import { randomUUID } from 'crypto';
 
 // PayPal event types for subscriptions
 const SUBSCRIPTION_CREATED = 'BILLING.SUBSCRIPTION.CREATED';
@@ -102,11 +103,12 @@ async function handleSubscriptionUpdated(payload: PayPalWebhookEvent) {
   
   try {
     // Find the subscription by PayPal subscription ID
-    const subscription = await prisma.subscription.findFirst({
-      where: {
-        paypalSubscriptionId: subscriptionId
-      }
-    });
+    const { data: subscription, error: subError } = await supabaseAdmin
+      .from('subscriptions')
+      .select('id')
+      .eq('paypal_subscription_id', subscriptionId)
+      .maybeSingle();
+    if (subError) throw subError;
     
     if (!subscription) {
       console.log(`No subscription found for PayPal ID: ${subscriptionId}`);
@@ -114,15 +116,14 @@ async function handleSubscriptionUpdated(payload: PayPalWebhookEvent) {
     }
 
     // Update subscription status
-    await prisma.subscription.update({
-      where: {
-        id: subscription.id
-      },
-      data: {
+    const { error: updateError } = await supabaseAdmin
+      .from('subscriptions')
+      .update({
         status: status || 'ACTIVE',
-        updatedAt: updateTime,
-      }
-    });
+        updated_at: updateTime.toISOString(),
+      })
+      .eq('id', subscription.id);
+    if (updateError) throw updateError;
   } catch (error) {
     console.error('Error updating subscription status:', error);
   }
@@ -136,11 +137,12 @@ async function handleSubscriptionCancelled(payload: PayPalWebhookEvent) {
   
   try {
     // Find the subscription by PayPal subscription ID
-    const subscription = await prisma.subscription.findFirst({
-      where: {
-        paypalSubscriptionId: subscriptionId
-      }
-    });
+    const { data: subscription, error: subError } = await supabaseAdmin
+      .from('subscriptions')
+      .select('id, profile_id, paypal_subscription_id')
+      .eq('paypal_subscription_id', subscriptionId)
+      .maybeSingle();
+    if (subError) throw subError;
     
     if (!subscription) {
       console.log(`No subscription found for PayPal ID: ${subscriptionId}`);
@@ -148,27 +150,27 @@ async function handleSubscriptionCancelled(payload: PayPalWebhookEvent) {
     }
 
     // Update subscription as cancelled
-    await prisma.subscription.update({
-      where: {
-        id: subscription.id
-      },
-      data: {
+    const { error: updateError } = await supabaseAdmin
+      .from('subscriptions')
+      .update({
         status: 'CANCELLED',
-        cancelledAt: updateTime,
-        updatedAt: updateTime,
-      }
-    });
+        cancelled_at: updateTime.toISOString(),
+        updated_at: updateTime.toISOString(),
+      })
+      .eq('id', subscription.id);
+    if (updateError) throw updateError;
     
     // Record the cancellation transaction
-    await prisma.subscriptionTransaction.create({
-      data: {
-        subscriptionId: subscription.id,
-        profileId: subscription.profileId,
-        paypalSubscriptionId: subscriptionId,
+    const { error: txnError } = await supabaseAdmin
+      .from('subscription_transactions')
+      .insert({
+        subscription_id: subscription.id,
+        profile_id: subscription.profile_id,
+        paypal_subscription_id: subscription.paypal_subscription_id,
         type: 'CANCELLATION',
         amount: 0,
-      }
-    });
+      });
+    if (txnError) throw txnError;
   } catch (error) {
     console.error('Error cancelling subscription:', error);
   }
@@ -190,11 +192,12 @@ async function handleSubscriptionPayment(payload: PayPalWebhookEvent) {
   
   try {
     // Find the subscription by PayPal subscription ID
-    const subscription = await prisma.subscription.findFirst({
-      where: {
-        paypalSubscriptionId: subscriptionId
-      }
-    });
+    const { data: subscription, error: subError } = await supabaseAdmin
+      .from('subscriptions')
+      .select('id, profile_id')
+      .eq('paypal_subscription_id', subscriptionId)
+      .maybeSingle();
+    if (subError) throw subError;
     
     if (!subscription) {
       console.log(`No subscription found for PayPal ID: ${subscriptionId}`);
@@ -206,53 +209,58 @@ async function handleSubscriptionPayment(payload: PayPalWebhookEvent) {
     nextBillingDate.setMonth(nextBillingDate.getMonth() + 1);
     
     // Update subscription with new billing date and end date
-    await prisma.subscription.update({
-      where: {
-        id: subscription.id
-      },
-      data: {
-        latestBillingDate: paymentDate,
-        endDate: nextBillingDate,
+    const { error: updateError } = await supabaseAdmin
+      .from('subscriptions')
+      .update({
+        latest_billing_date: paymentDate.toISOString(),
+        end_date: nextBillingDate.toISOString(),
         status: 'ACTIVE',
-      }
-    });
+      })
+      .eq('id', subscription.id);
+    if (updateError) throw updateError;
     
     // Record the renewal transaction
-    await prisma.subscriptionTransaction.create({
-      data: {
-        subscriptionId: subscription.id,
-        profileId: subscription.profileId,
-        paypalSubscriptionId: subscriptionId,
+    const { error: renewalTxnError } = await supabaseAdmin
+      .from('subscription_transactions')
+      .insert({
+        subscription_id: subscription.id,
+        profile_id: subscription.profile_id,
+        paypal_subscription_id: subscriptionId,
         type: 'RENEWAL',
         amount: amountValue,
-      }
-    });
+      });
+    if (renewalTxnError) throw renewalTxnError;
     
     // Determine monthly bonus coins; currently a flat 55 coins per renewal
     const bonusCoins = 55;
     
     if (bonusCoins > 0) {
       // Award the bonus coins to the user
-      await prisma.profile.update({
-        where: {
-          id: subscription.profileId
-        },
-        data: {
-          coins: {
-            increment: bonusCoins
-          }
-        }
-      });
+      const { data: profile, error: profileError } = await supabaseAdmin
+        .from('profiles')
+        .select('coins')
+        .eq('id', subscription.profile_id)
+        .single();
+      if (profileError) throw profileError;
+
+      const newCoins = (profile?.coins ?? 0) + bonusCoins;
+      const { error: coinsUpdateError } = await supabaseAdmin
+        .from('profiles')
+        .update({ coins: newCoins })
+        .eq('id', subscription.profile_id);
+      if (coinsUpdateError) throw coinsUpdateError;
       
       // Record the coin transaction
-      await prisma.coinTransaction.create({
-        data: {
-          profileId: subscription.profileId,
+      const { error: coinTxnError } = await supabaseAdmin
+        .from('coin_transactions')
+      .insert({
+        id: randomUUID(),
+          profile_id: subscription.profile_id,
           amount: bonusCoins,
-          type: "SUBSCRIPTION_BONUS",
-          orderId: payload.resource.id,
-        }
-      });
+          type: 'SUBSCRIPTION_BONUS',
+          order_id: payload.resource.id,
+        });
+      if (coinTxnError) throw coinTxnError;
     }
   } catch (error) {
     console.error('Error processing subscription payment:', error);

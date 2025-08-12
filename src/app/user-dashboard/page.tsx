@@ -50,6 +50,7 @@ const fetchProfile = async (userId?: string): Promise<UserProfile> => {
 export default function UserDashboard() {
   const { theme, setTheme } = useTheme();
   const { handleSignOut, userId: authUserId } = useAuth();
+  const SUBSCRIPTIONS_ENABLED = false;
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
@@ -76,7 +77,7 @@ export default function UserDashboard() {
 
   useEffect(() => {
     const fetchSubscriptionStatus = async () => {
-      if (!authUserId) return;
+      if (!SUBSCRIPTIONS_ENABLED || !authUserId) return;
       setIsSubLoading(true);
       try {
         const res = await fetch(`/api/subscriptions/status?userId=${authUserId}`);
@@ -89,7 +90,7 @@ export default function UserDashboard() {
       }
     };
     fetchSubscriptionStatus();
-  }, [authUserId]);
+  }, [authUserId, SUBSCRIPTIONS_ENABLED]);
 
   // Analytics consent handling moved into AccountSection
 

@@ -86,6 +86,7 @@ export const membershipTiers = [
 
 export default function Membership() {
   const { userId } = useAuth();
+  const SUBSCRIPTIONS_ENABLED = false;
   const [subscriptionStatus, setSubscriptionStatus] = useState<null | {
     hasSubscription: boolean;
     status?: string;
@@ -108,7 +109,10 @@ export default function Membership() {
 
   useEffect(() => {
     const fetchSubscriptionStatus = async () => {
-      if (!userId) return;
+      if (!SUBSCRIPTIONS_ENABLED || !userId) {
+        setIsLoading(false);
+        return;
+      }
       try {
         const res = await fetch(`/api/subscriptions/status?userId=${userId}`);
         const data = await res.json();
@@ -122,7 +126,7 @@ export default function Membership() {
     };
 
     fetchSubscriptionStatus();
-  }, [userId]);
+  }, [userId, SUBSCRIPTIONS_ENABLED]);
 
   if (isLoading) {
     return (

@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { prisma } from '@/lib/prisma';
+import supabaseAdmin from '@/lib/supabaseAdmin';
+import { createServerClient } from '@/lib/supabaseServer';
 
 const PAYPAL_API_URL = process.env.NODE_ENV === 'production'
   ? 'https://api-m.paypal.com'
@@ -73,7 +72,7 @@ async function getPayPalAccessToken() {
 
 export async function POST() {
   try {
-    const supabase = createRouteHandlerClient({ cookies });
+    const supabase = await createServerClient();
     
     // Get the current user
     const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -86,9 +85,15 @@ export async function POST() {
     }
 
     // Get the user's subscription from the database
-    const subscription = await prisma.subscription.findUnique({
-      where: { profileId: user.id }
-    });
+    const { data: subscription, error: subError } = await supabaseAdmin
+      .from('subscriptions')
+      .select('id, paypal_subscription_id, status')
+      .eq('profile_id', user.id)
+      .single();
+    if (subError || !subscription) {
+      console.error('No subscription found for user:', user.id, subError);
+      throw new Error('No active subscription found');
+    }
 
     if (!subscription) {
       console.error('No subscription found for user:', user.id);
@@ -101,7 +106,7 @@ export async function POST() {
 
     // Cancel the subscription with PayPal
     const accessToken = await getPayPalAccessToken();
-    const cancelResponse = await fetch(`${PAYPAL_API_URL}/v1/billing/subscriptions/${subscription.paypalSubscriptionId}/cancel`, {
+    const cancelResponse = await fetch(`${PAYPAL_API_URL}/v1/billing/subscriptions/${subscription.paypal_subscription_id}/cancel`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
@@ -118,30 +123,29 @@ export async function POST() {
         status: cancelResponse.status,
         statusText: cancelResponse.statusText,
         error: errorData,
-        subscriptionId: subscription.paypalSubscriptionId
+        subscriptionId: subscription.paypal_subscription_id
       });
       throw new Error(`Failed to cancel PayPal subscription: ${cancelResponse.status} ${cancelResponse.statusText}`);
     }
 
     // Update the subscription status in the database
-    await prisma.subscription.update({
-      where: { id: subscription.id },
-      data: { 
-        status: 'CANCELLED',
-        cancelledAt: new Date()
-      }
-    });
+    const { error: updateError } = await supabaseAdmin
+      .from('subscriptions')
+      .update({ status: 'CANCELLED', cancelled_at: new Date().toISOString() })
+      .eq('id', subscription.id);
+    if (updateError) throw updateError;
 
     // Record the cancellation transaction
-    await prisma.subscriptionTransaction.create({
-      data: {
-        subscriptionId: subscription.id,
-        profileId: user.id,
-        paypalSubscriptionId: subscription.paypalSubscriptionId,
+    const { error: txnError } = await supabaseAdmin
+      .from('subscription_transactions')
+      .insert({
+        subscription_id: subscription.id,
+        profile_id: user.id,
+        paypal_subscription_id: subscription.paypal_subscription_id,
         type: 'CANCELLATION',
         amount: 0,
-      }
-    });
+      });
+    if (txnError) throw txnError;
 
     return NextResponse.json({ message: 'Subscription cancelled successfully' });
   } catch (error) {

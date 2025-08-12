@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import supabaseAdmin from '@/lib/supabaseAdmin';
+import { createServerClient } from '@/lib/supabaseServer';
+import { randomUUID } from 'crypto';
 
 export async function POST(req: Request) {
   try {
     const { userId, subscriptionId, membershipTierId } = await req.json();
 
-    // Create supabase client
-    const supabase = createRouteHandlerClient({ cookies });
+    // Create supabase SSR client for auth
+    const supabase = await createServerClient();
     
     // Verify the user is authenticated
     const { data: { session } } = await supabase.auth.getSession();
@@ -23,43 +23,49 @@ export async function POST(req: Request) {
 
     // Check for an existing subscription BEFORE upsert so we can decide
     // whether the user already received coins for the current billing cycle.
-    const existingSub = await prisma.subscription.findUnique({
-      where: { profileId: userId },
-    });
+    const { data: existingSub, error: existingSubError } = await supabaseAdmin
+      .from('subscriptions')
+      .select('id, end_date')
+      .eq('profile_id', userId)
+      .maybeSingle();
+    if (existingSubError && existingSubError.code !== 'PGRST116') {
+      // Ignore no rows returned; otherwise throw
+      throw existingSubError;
+    }
 
     // Create or update subscription record
-    const subscription = await prisma.subscription.upsert({
-      where: {
-        profileId: userId,
-      },
-      update: {
-        paypalSubscriptionId: subscriptionId,
-        status: "ACTIVE",
-        startDate,
-        endDate,
-        latestBillingDate: startDate,
-        cancelledAt: null,
-      },
-      create: {
-        profileId: userId,
-        paypalSubscriptionId: subscriptionId,
-        status: "ACTIVE",
-        startDate,
-        endDate,
-        latestBillingDate: startDate,
-      },
-    });
+    const { data: subscription, error: upsertError } = await supabaseAdmin
+      .from('subscriptions')
+      .upsert({
+        profile_id: userId,
+        paypal_subscription_id: subscriptionId,
+        status: 'ACTIVE',
+        start_date: startDate.toISOString(),
+        end_date: endDate.toISOString(),
+        latest_billing_date: startDate.toISOString(),
+        cancelled_at: null,
+      }, { onConflict: 'profile_id' })
+      .select('id, profile_id, paypal_subscription_id, status, start_date, end_date, latest_billing_date, cancelled_at')
+      .single();
+    if (upsertError || !subscription) {
+      throw upsertError ?? new Error('Failed to upsert subscription');
+    }
 
     // Record the subscription transaction
-    const transaction = await prisma.subscriptionTransaction.create({
-      data: {
-        subscriptionId: subscription.id,
-        profileId: userId,
-        paypalSubscriptionId: subscriptionId,
-        type: "SUBSCRIPTION_START",
+    const { data: transaction, error: transactionError } = await supabaseAdmin
+      .from('subscription_transactions')
+      .insert({
+        subscription_id: subscription.id,
+        profile_id: userId,
+        paypal_subscription_id: subscriptionId,
+        type: 'SUBSCRIPTION_START',
         amount: getMembershipAmount(membershipTierId),
-      },
-    });
+      })
+      .select('*')
+      .single();
+    if (transactionError || !transaction) {
+      throw transactionError ?? new Error('Failed to record subscription transaction');
+    }
 
     // Decide if we should award the initial 55-coin bonus.
     // Award when:
@@ -68,7 +74,7 @@ export async function POST(req: Request) {
     let shouldAwardCoins = false;
     if (!existingSub) {
       shouldAwardCoins = true;
-    } else if (existingSub.endDate < startDate) {
+    } else if (existingSub.end_date && new Date(existingSub.end_date) < startDate) {
       shouldAwardCoins = true;
     }
 
@@ -76,24 +82,31 @@ export async function POST(req: Request) {
       const awardedCoins = 55;
 
       // Update the user's coin balance
-      await prisma.profile.update({
-        where: { id: userId },
-        data: {
-          coins: {
-            increment: awardedCoins,
-          },
-        },
-      });
+      const { data: profile, error: profileError } = await supabaseAdmin
+        .from('profiles')
+        .select('coins')
+        .eq('id', userId)
+        .single();
+      if (profileError) throw profileError;
+
+      const newCoins = (profile?.coins ?? 0) + awardedCoins;
+      const { error: updateCoinsError } = await supabaseAdmin
+        .from('profiles')
+        .update({ coins: newCoins })
+        .eq('id', userId);
+      if (updateCoinsError) throw updateCoinsError;
 
       // Record the coin award transaction
-      await prisma.coinTransaction.create({
-        data: {
-          profileId: userId,
+      const { error: coinTxnError } = await supabaseAdmin
+        .from('coin_transactions')
+        .insert({
+          id: randomUUID(),
+          profile_id: userId,
           amount: awardedCoins,
-          type: "SUBSCRIPTION_BONUS",
-          orderId: subscriptionId,
-        },
-      });
+          type: 'SUBSCRIPTION_BONUS',
+          order_id: subscriptionId,
+        });
+      if (coinTxnError) throw coinTxnError;
     }
 
     return NextResponse.json({ 

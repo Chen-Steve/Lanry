@@ -39,6 +39,7 @@ const UserProfileButton = ({
   const profileDropdownRef = useRef<HTMLDivElement>(null);
   const { userId } = useAuth();
   const [avatarError, setAvatarError] = useState(false);
+  const SUBSCRIPTIONS_ENABLED = false;
   const [subscriptionStatus, setSubscriptionStatus] = useState<null | {
     hasSubscription: boolean;
     status?: string;
@@ -76,7 +77,7 @@ const UserProfileButton = ({
 
   useEffect(() => {
     const fetchSubscriptionStatus = async () => {
-      if (!userId) return;
+      if (!SUBSCRIPTIONS_ENABLED || !userId) return;
       setIsSubLoading(true);
       try {
         const res = await fetch(`/api/subscriptions/status?userId=${userId}`);
@@ -89,7 +90,7 @@ const UserProfileButton = ({
       }
     };
     fetchSubscriptionStatus();
-  }, [userId]);
+  }, [userId, SUBSCRIPTIONS_ENABLED]);
 
   // Reset avatar error when avatar URL changes or profile reloads
   useEffect(() => {
