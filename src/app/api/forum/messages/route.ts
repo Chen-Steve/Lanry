@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+import { createServerClient } from '@/lib/supabaseServer'
 
 export async function GET(req: Request) {
   try {
@@ -15,37 +13,62 @@ export async function GET(req: Request) {
       return new NextResponse('Thread ID is required', { status: 400 })
     }
 
-    const messages = await prisma.forumMessage.findMany({
-      where: {
-        threadId
-      },
-      orderBy: {
-        createdAt: 'asc'
-      },
-      include: {
-        author: {
-          select: {
-            id: true,
-            username: true,
-            avatarUrl: true,
-            role: true
-          }
-        }
-      },
-      skip,
-      take: limit
-    })
+    const supabase = await createServerClient()
 
-    const total = await prisma.forumMessage.count({
-      where: {
-        threadId
-      }
-    })
+    const { data: messageRows, error: listError } = await supabase
+      .from('forum_messages')
+      .select(`
+        *,
+        author:profiles (
+          id,
+          username,
+          avatar_url,
+          role
+        )
+      `)
+      .eq('thread_id', threadId)
+      .order('created_at', { ascending: true })
+      .range(skip, skip + limit - 1)
+
+    if (listError) throw listError
+
+    const { count: total, error: countError } = await supabase
+      .from('forum_messages')
+      .select('*', { count: 'exact', head: true })
+      .eq('thread_id', threadId)
+
+    if (countError) throw countError
+
+    type MessageRow = {
+      id: string
+      content: string
+      created_at: string
+      updated_at: string
+      thread_id: string
+      author_id: string
+      is_edited: boolean
+      author?: { id: string; username: string; avatar_url: string | null } | null
+    }
+
+    const totalExact = total ?? 0
 
     return NextResponse.json({
-      messages,
-      total,
-      pages: Math.ceil(total / limit)
+      messages: (messageRows || []).map((m: MessageRow) => ({
+        id: m.id,
+        content: m.content,
+        created_at: m.created_at,
+        updated_at: m.updated_at,
+        thread_id: m.thread_id,
+        author_id: m.author_id,
+        is_edited: m.is_edited,
+        author: {
+          id: m.author?.id,
+          username: m.author?.username,
+          avatar_url: m.author?.avatar_url ?? null,
+        }
+      })),
+      total: totalExact,
+      pages: Math.ceil(totalExact / limit)
     })
   } catch (error) {
     console.error('[FORUM_MESSAGES_GET]', error)
@@ -55,7 +78,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const supabase = createRouteHandlerClient({ cookies })
+    const supabase = await createServerClient()
     const { data: { session } } = await supabase.auth.getSession()
 
     if (!session?.user) {
@@ -69,48 +92,67 @@ export async function POST(req: Request) {
       return new NextResponse('Missing required fields', { status: 400 })
     }
 
-    const thread = await prisma.forumThread.findUnique({
-      where: { id: threadId },
-      include: {
-        discussion: true
-      }
-    })
+    const { data: thread, error: threadError } = await supabase
+      .from('forum_threads')
+      .select('*, discussion:forum_discussions(*)')
+      .eq('id', threadId)
+      .single()
+
+    if (threadError) throw threadError
 
     if (!thread) {
       return new NextResponse('Thread not found', { status: 404 })
     }
 
-    if (thread.isLocked || thread.discussion.isLocked) {
+    if (thread.is_locked || thread.discussion?.is_locked) {
       return new NextResponse('Thread is locked', { status: 403 })
     }
 
-    const message = await prisma.forumMessage.create({
-      data: {
+    const now = new Date().toISOString()
+    const { data: message, error: createError } = await supabase
+      .from('forum_messages')
+      .insert([{
         content,
-        threadId,
-        authorId: session.user.id
-      },
-      include: {
-        author: {
-          select: {
-            id: true,
-            username: true,
-            avatarUrl: true,
-            role: true
-          }
-        }
+        thread_id: threadId,
+        author_id: session.user.id,
+        created_at: now,
+        updated_at: now
+      }])
+      .select(`
+        *,
+        author:profiles (
+          id,
+          username,
+          avatar_url,
+          role
+        )
+      `)
+      .single()
+
+    if (createError) throw createError
+
+    const { error: updateError } = await supabase
+      .from('forum_threads')
+      .update({ last_message_at: now })
+      .eq('id', threadId)
+
+    if (updateError) throw updateError
+
+    return NextResponse.json({
+      id: message.id,
+      content: message.content,
+      created_at: message.created_at,
+      updated_at: message.updated_at,
+      thread_id: message.thread_id,
+      author_id: message.author_id,
+      is_edited: message.is_edited,
+      author: {
+        id: message.author?.id,
+        username: message.author?.username,
+        avatar_url: message.author?.avatar_url ?? null,
+        role: message.author?.role
       }
     })
-
-    // Update thread's lastMessageAt
-    await prisma.forumThread.update({
-      where: { id: threadId },
-      data: {
-        lastMessageAt: new Date()
-      }
-    })
-
-    return NextResponse.json(message)
   } catch (error) {
     console.error('[FORUM_MESSAGES_POST]', error)
     return new NextResponse('Internal Error', { status: 500 })
@@ -126,7 +168,7 @@ export async function DELETE(req: Request) {
       return new NextResponse('Message ID is required', { status: 400 })
     }
 
-    const supabase = createRouteHandlerClient({ cookies })
+    const supabase = await createServerClient()
     const { data: { session } } = await supabase.auth.getSession()
 
     if (!session?.user) {
@@ -134,39 +176,45 @@ export async function DELETE(req: Request) {
     }
 
     // Find the message and check ownership
-    const message = await prisma.forumMessage.findUnique({
-      where: { id: messageId },
-      select: {
-        authorId: true,
-        threadId: true
-      }
-    })
+    const { data: message, error: messageError } = await supabase
+      .from('forum_messages')
+      .select('id, author_id, thread_id, created_at')
+      .eq('id', messageId)
+      .single()
+
+    if (messageError) throw messageError
 
     if (!message) {
       return new NextResponse('Message not found', { status: 404 })
     }
 
     // Check if user is the message author
-    if (message.authorId !== session.user.id) {
+    if (message.author_id !== session.user.id) {
       return new NextResponse('Not authorized to delete this message', { status: 403 })
     }
 
     // Delete the message
-    await prisma.forumMessage.delete({
-      where: { id: messageId }
-    })
+    const { error: deleteError } = await supabase
+      .from('forum_messages')
+      .delete()
+      .eq('id', messageId)
+
+    if (deleteError) throw deleteError
 
     // Update thread's lastMessageAt to the most recent remaining message
-    const lastMessage = await prisma.forumMessage.findFirst({
-      where: { threadId: message.threadId },
-      orderBy: { createdAt: 'desc' }
-    })
+    const { data: lastMessage } = await supabase
+      .from('forum_messages')
+      .select('*')
+      .eq('thread_id', message.thread_id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
 
     if (lastMessage) {
-      await prisma.forumThread.update({
-        where: { id: message.threadId },
-        data: { lastMessageAt: lastMessage.createdAt }
-      })
+      await supabase
+        .from('forum_threads')
+        .update({ last_message_at: lastMessage.created_at })
+        .eq('id', message.thread_id)
     }
 
     return NextResponse.json({ success: true })
