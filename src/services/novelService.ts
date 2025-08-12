@@ -327,7 +327,61 @@ export async function getNovelsWithRecentUnlocks(
   offset: number = 0
 ): Promise<{ novels: Novel[]; total: number }> {
   try {
-    // First get the latest chapter dates for each novel
+    // Prefer efficient RPC if available
+    const [{ data: idRows, error: idsError }, { data: totalRows, error: totalError }] = await Promise.all([
+      // get ordered page of IDs
+      supabase.rpc('get_recently_updated_novel_ids', { p_limit: limit, p_offset: offset }),
+      // get total
+      supabase.rpc('get_recently_updated_total'),
+    ]);
+
+    if (!idsError && !totalError && idRows && totalRows !== null) {
+      const pageIds: string[] = (idRows as { novel_id: string }[]).map((r) => r.novel_id);
+      let total: number = 0;
+      if (Array.isArray(totalRows)) {
+        const first = (totalRows as Array<Record<string, unknown>>)[0] ?? {};
+        const value = (first as Record<string, unknown>).get_recently_updated_total;
+        total = typeof value === 'number' ? value : 0;
+      } else if (typeof totalRows === 'number') {
+        total = totalRows;
+      }
+
+      if (pageIds.length === 0 || total === 0) {
+        return { novels: [], total: 0 };
+      }
+
+      const { data: pageNovels, error: pageError } = await supabase
+        .from('novels')
+        .select(`
+          *,
+          chapters (
+            id,
+            chapter_number,
+            part_number,
+            title,
+            publish_at,
+            coins,
+            created_at
+          )
+        `)
+        .in('id', pageIds)
+        .neq('status', 'DRAFT');
+      if (pageError) throw pageError;
+
+      const sortedPageNovels = (pageNovels || []).sort((a, b) => {
+        const aIndex = pageIds.indexOf(a.id);
+        const bIndex = pageIds.indexOf(b.id);
+        return aIndex - bIndex;
+      });
+
+      return {
+        novels: sortedPageNovels.map(mapNovelRow),
+        total,
+      };
+    }
+
+    // Fallback: previous client-side ordering if RPC not available
+    // 1) Get latest chapters ordered by creation date (most recent first)
     const { data: latestChapters } = await supabase
       .from('chapters')
       .select('novel_id, created_at')
@@ -337,15 +391,34 @@ export async function getNovelsWithRecentUnlocks(
       throw new Error('Failed to fetch latest chapters');
     }
 
-    // Get unique novel IDs ordered by their latest chapter date
-    const orderedNovelIds = [...new Set(latestChapters.map(ch => ch.novel_id))];
-    
+    // 2) Unique novel IDs in recency order
+    const orderedNovelIds = [...new Set(latestChapters.map((ch) => ch.novel_id))];
     if (orderedNovelIds.length === 0) {
       return { novels: [], total: 0 };
     }
 
-    // Then fetch the full novel data in the correct order, excluding drafts
-    const { data: novels, error, count } = await supabase
+    // 3) Filter out drafts first, preserving recency order
+    const { data: validNovelIdRows, error: validIdsError } = await supabase
+      .from('novels')
+      .select('id')
+      .in('id', orderedNovelIds)
+      .neq('status', 'DRAFT');
+    if (validIdsError) throw validIdsError;
+
+    const validIdSet = new Set((validNovelIdRows || []).map((row) => row.id));
+    const orderedNonDraftIds = orderedNovelIds.filter((id) => validIdSet.has(id));
+
+    const total = orderedNonDraftIds.length;
+    if (total === 0) {
+      return { novels: [], total: 0 };
+    }
+
+    const pageIds = orderedNonDraftIds.slice(offset, offset + limit);
+    if (pageIds.length === 0) {
+      return { novels: [], total };
+    }
+
+    const { data: pageNovels, error: pageError } = await supabase
       .from('novels')
       .select(`
         *,
@@ -358,26 +431,20 @@ export async function getNovelsWithRecentUnlocks(
           coins,
           created_at
         )
-      `, { count: 'exact' })
-      .in('id', orderedNovelIds)
+      `)
+      .in('id', pageIds)
       .neq('status', 'DRAFT');
+    if (pageError) throw pageError;
 
-    if (error) throw error;
-
-    // Sort the novels to match the order of orderedNovelIds
-    const sortedNovels = novels?.sort((a, b) => {
-      const aIndex = orderedNovelIds.indexOf(a.id);
-      const bIndex = orderedNovelIds.indexOf(b.id);
+    const sortedPageNovels = (pageNovels || []).sort((a, b) => {
+      const aIndex = pageIds.indexOf(a.id);
+      const bIndex = pageIds.indexOf(b.id);
       return aIndex - bIndex;
     });
 
-    // Apply pagination
-    const paginatedNovels = sortedNovels?.slice(offset, offset + limit);
-
-    // Process and return novels
     return {
-      novels: (paginatedNovels || []).map(mapNovelRow),
-      total: count || 0
+      novels: sortedPageNovels.map(mapNovelRow),
+      total,
     };
   } catch (error) {
     console.error('Error fetching novels with recent unlocks:', error);
