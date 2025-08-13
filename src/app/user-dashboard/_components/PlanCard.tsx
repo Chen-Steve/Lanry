@@ -22,20 +22,21 @@ interface PlanCardProps {
   isSubLoading: boolean;
   onCancel: () => void;
   profile: UserProfile;
+  accountSection?: React.ReactNode;
 }
 
-export const PlanCard = ({ subscriptionStatus, isSubLoading, onCancel, profile }: PlanCardProps) => {
+export const PlanCard = ({ subscriptionStatus, isSubLoading, onCancel, profile, accountSection }: PlanCardProps) => {
   return (
-    <div className="bg-container border-0 rounded-lg p-4 h-full">
+    <div className="bg-container border-0 rounded-lg p-3 h-full">
       {isSubLoading ? (
         <div className="flex items-center">
-          <Icon icon="eos-icons:loading" className="w-5 h-5 animate-spin mr-2" />
-          <span className="text-muted-foreground">Checking subscription...</span>
+          <Icon icon="eos-icons:loading" className="w-4 h-4 animate-spin mr-2" />
+          <span className="text-xs text-muted-foreground">Checking subscription...</span>
         </div>
       ) : subscriptionStatus?.hasSubscription ? (
         <>
-          <h2 className="text-sm font-medium text-muted-foreground mb-1">Your plan</h2>
-          <h1 className="text-2xl font-bold text-primary mb-1">
+          <h2 className="text-xs font-medium text-muted-foreground mb-1">Your plan</h2>
+          <h1 className="text-xl font-bold text-primary mb-1">
             {subscriptionStatus.status === 'ACTIVE' ? (
               ({
                 1: 'Supporter Membership',
@@ -55,7 +56,7 @@ export const PlanCard = ({ subscriptionStatus, isSubLoading, onCancel, profile }
               'Cancelled Membership'
             )}
           </h1>
-          <p className="text-sm text-muted-foreground mb-3">
+          <p className="text-xs text-muted-foreground mb-3">
             {subscriptionStatus.status === 'CANCELLED' ? (
               `Your membership will continue `
             ) : (
@@ -85,19 +86,19 @@ export const PlanCard = ({ subscriptionStatus, isSubLoading, onCancel, profile }
             )}
           </p>
           <div className="flex items-center justify-between">
-            <div className="text-muted-foreground">PayPal</div>
+            <div className="text-xs text-muted-foreground">PayPal</div>
             <div className="flex gap-2">
               {subscriptionStatus.status === 'ACTIVE' && (
                 <>
                   <button
                     onClick={onCancel}
-                    className="px-4 py-1.5 bg-destructive/10 text-destructive rounded-full text-center font-medium hover:bg-destructive/20 transition-colors"
+                    className="px-3 py-1 bg-destructive/10 text-destructive rounded-full text-center text-sm font-medium hover:bg-destructive/20 transition-colors"
                   >
                     Cancel
                   </button>
                   <Link
                     href="/shop?tab=membership"
-                    className="inline-block px-4 py-1.5 bg-primary/10 text-primary rounded-full text-center font-medium hover:bg-primary/20 transition-colors"
+                    className="inline-block px-3 py-1 bg-primary/10 text-primary rounded-full text-center text-sm font-medium hover:bg-primary/20 transition-colors"
                   >
                     Change Plan
                   </Link>
@@ -106,7 +107,7 @@ export const PlanCard = ({ subscriptionStatus, isSubLoading, onCancel, profile }
               {subscriptionStatus.status === 'CANCELLED' && (
                 <Link
                   href="/shop?tab=membership"
-                  className="inline-block px-4 py-1.5 bg-primary text-primary-foreground rounded-full text-center font-medium hover:bg-primary/90 transition-colors"
+                  className="inline-block px-3 py-1 bg-primary text-primary-foreground rounded-full text-center text-sm font-medium hover:bg-primary/90 transition-colors"
                 >
                   Reactivate
                 </Link>
@@ -116,36 +117,41 @@ export const PlanCard = ({ subscriptionStatus, isSubLoading, onCancel, profile }
         </>
       ) : (
         <>
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
               {profile.avatar_url ? (
                 <img
                   src={profile.avatar_url}
                   alt={profile.username || 'User'}
-                  className="w-14 h-14 rounded-full object-cover border-2 border-primary/20"
+                  className="w-12 h-12 rounded-full object-cover border-2 border-primary/20"
                   onError={(e) => {
                     const target = e.currentTarget as HTMLImageElement;
                     target.style.display = 'none';
                   }}
                 />
               ) : (
-                <div className="w-14 h-14 rounded-full bg-primary flex items-center justify-center text-xl font-semibold text-primary-foreground">
+                <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-lg font-semibold text-primary-foreground">
                   {profile.username ? profile.username[0].toUpperCase() : '?'}
                 </div>
               )}
               <div>
-                <p className="font-semibold text-lg text-foreground">{profile.username || 'Anonymous User'}</p>
-                <p className="text-md text-muted-foreground">Coins: {profile.coins ?? 0}</p>
+                <p className="font-semibold text-base text-foreground">{profile.username || 'Anonymous User'}</p>
+                <p className="text-sm text-muted-foreground">Coins: {profile.coins ?? 0}</p>
               </div>
             </div>
             <Link
               href="/shop?tab=coins"
-              className="px-4 py-1.5 bg-primary text-primary-foreground rounded-full text-center font-medium hover:bg-primary/90 transition-colors"
+              className="px-3 py-1 bg-primary text-primary-foreground rounded-full text-center text-sm font-medium hover:bg-primary/90 transition-colors"
             >
               Top Up
             </Link>
           </div>
         </>
+      )}
+      {accountSection && (
+        <div className="mt-2">
+          {accountSection}
+        </div>
       )}
     </div>
   );

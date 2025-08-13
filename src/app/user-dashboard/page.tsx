@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Icon } from '@iconify/react';
 import { useTheme } from '@/lib/ThemeContext';
 import { PlanCard } from './_components/PlanCard';
 import { RewardsCard } from './_components/RewardsCard';
@@ -150,34 +149,24 @@ export default function UserDashboard() {
               isSubLoading={isSubLoading}
               onCancel={() => setIsCancelModalOpen(true)}
               profile={profile}
+              accountSection={(
+                <AccountSection
+                  profile={profile}
+                  theme={theme}
+                  setTheme={setTheme}
+                  onEditProfile={() => setIsProfileModalOpen(true)}
+                  onChangePassword={() => setIsPasswordModalOpen(true)}
+                  onWiseTag={() => setIsWiseTagModalOpen(true)}
+                />
+              )}
             />
           </div>
-          <div>
-            <RewardsCard />
+          <div className="flex flex-col gap-2">
+            <RewardsCard onLogout={handleSignOut} />
           </div>
         </div>
 
-        {/* Account Section */}
-        <AccountSection
-          profile={profile}
-          theme={theme}
-          setTheme={setTheme}
-          onEditProfile={() => setIsProfileModalOpen(true)}
-          onChangePassword={() => setIsPasswordModalOpen(true)}
-          onWiseTag={() => setIsWiseTagModalOpen(true)}
-        />
-        
-
-        {/* Log out button at the bottom */}
-        <div>
-          <button 
-            onClick={handleSignOut}
-            className="w-full bg-container border-0 rounded-lg p-4 flex items-center gap-3 hover:bg-[#faf7f2] dark:hover:bg-zinc-800 transition-colors"
-          >
-            <Icon icon="ph:sign-out" className="text-xl" />
-            <span className="font-medium">Log out</span>
-          </button>
-        </div>
+        {/* Log out button moved into RewardsCard */}
       </div>
 
       <ChangePasswordModal

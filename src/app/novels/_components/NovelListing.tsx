@@ -2,7 +2,8 @@
 
 import { Novel } from '@/types/database';
 import { useEffect, useState } from 'react';
-import { getNovels, getNovelsWithAdvancedChapters, getTopNovels, getCuratedNovels, getNovelsWithRecentUnlocks } from '@/services/novelService';
+import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import { getNovelsWithAdvancedChapters, getNovelsWithRecentUnlocks } from '@/services/novelService';
 import LoadingGrid from './LoadingGrid';
 import AdvancedChapters from './AdvancedChapters';
 import NewReleases from './NewestNovels';
@@ -14,89 +15,53 @@ import supabase from '@/lib/supabaseClient';
 import BulletinBoard, { PWABulletin, CompletedNovels } from './BulletinBoard';
 
 const NovelListing = () => {
-  const [novels, setNovels] = useState<Novel[]>([]);
-  const [totalNovels, setTotalNovels] = useState(0);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [isLoading, setIsLoading] = useState(true);
-  const [featuredNovels, setFeaturedNovels] = useState<Novel[]>([]);
-  const [advancedNovels, setAdvancedNovels] = useState<Novel[]>([]);
-  const [advancedNovelsTotal, setAdvancedNovelsTotal] = useState(0);
-  const [recentNovels, setRecentNovels] = useState<Novel[]>([]);
-  const [curatedNovels, setCuratedNovels] = useState<Novel[]>([]);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+	const [currentPage, setCurrentPage] = useState(1);
+	const [isLoggedIn, setIsLoggedIn] = useState(false);
+	const queryClient = useQueryClient();
 
   const ITEMS_PER_PAGE = 14;
 
-  useEffect(() => {
-    // Check if user is logged in
-    const checkUserSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setIsLoggedIn(!!session?.user);
-    };
-    
-    checkUserSession();
-  }, []);
+	useEffect(() => {
+		const checkUserSession = async () => {
+			const { data: { session } } = await supabase.auth.getSession();
+			setIsLoggedIn(!!session?.user);
+		};
+		checkUserSession();
+	}, []);
 
-  useEffect(() => {
-    const fetchNovels = async () => {
-      try {
-        // Fetch novels with recent chapter updates
-        const { novels: updatedNovels, total } = await getNovelsWithRecentUnlocks(
-          ITEMS_PER_PAGE,
-          (currentPage - 1) * ITEMS_PER_PAGE
-        );
-        
-        setNovels(updatedNovels);
-        setTotalNovels(total);
-        
-        // Only fetch featured novels and recent novels on first page load
-        if (currentPage === 1) {
-          const topNovels = await getTopNovels();
-          setFeaturedNovels(topNovels);
-          
-          // Fetch newest novels (no pagination needed since we only show top 10)
-          const { novels: recentNovelsList } = await getNovels({
-            limit: 10,
-            offset: 0
-          });
-          setRecentNovels(recentNovelsList);
-          
-          // Only fetch curated novels if user is logged in
-          if (isLoggedIn) {
-            const personalizedNovels = await getCuratedNovels();
-            setCuratedNovels(personalizedNovels);
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching novels:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+	// Paginated novels with recent unlocks
+	const { data: recentData, isLoading: isRecentLoading } = useQuery<{ novels: Novel[]; total: number }>({
+		queryKey: ['novels', 'recentUnlocks', currentPage],
+		queryFn: () => getNovelsWithRecentUnlocks(ITEMS_PER_PAGE, (currentPage - 1) * ITEMS_PER_PAGE),
+		placeholderData: keepPreviousData,
+		staleTime: 60_000,
+	});
 
-    fetchNovels();
-  }, [currentPage, isLoggedIn]);
+	// Prefetch the next page for smoother pagination
+	useEffect(() => {
+		if (!recentData) return;
+		const totalPages = Math.ceil((recentData.total || 0) / ITEMS_PER_PAGE);
+		if (currentPage < totalPages) {
+			queryClient.prefetchQuery({
+				queryKey: ['novels', 'recentUnlocks', currentPage + 1],
+				queryFn: () => getNovelsWithRecentUnlocks(ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE),
+				staleTime: 60_000,
+			});
+		}
+	}, [recentData, currentPage, queryClient]);
 
-  useEffect(() => {
-    const fetchAdvancedNovels = async () => {
-      try {
-        // Fetch only 8 novels to align with the ITEMS_PER_PAGE in AdvancedChapters
-        const { novels, total } = await getNovelsWithAdvancedChapters(1, 8);
-        console.log('Fetched Advanced Novels:', {
-          novelsCount: novels.length,
-          total
-        });
-        setAdvancedNovels(novels);
-        setAdvancedNovelsTotal(total);
-      } catch (error) {
-        console.error('Error fetching advanced novels:', error);
-      }
-    };
+	// Section-specific queries moved into components
 
-    fetchAdvancedNovels();
-  }, []);
+	// Advanced chapters section
+	const { data: advancedData } = useQuery<{ novels: Novel[]; total: number }>({
+		queryKey: ['novels', 'advanced', 1, 8],
+		queryFn: () => getNovelsWithAdvancedChapters(1, 8),
+		staleTime: 300_000,
+	});
 
-  const totalPages = Math.ceil(totalNovels / ITEMS_PER_PAGE);
+	const novels: Novel[] = recentData?.novels ?? [];
+	const totalNovels = recentData?.total ?? 0;
+	const totalPages = Math.ceil(totalNovels / ITEMS_PER_PAGE);
 
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
@@ -104,7 +69,7 @@ const NovelListing = () => {
     document.querySelector('.grid')?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  if (isLoading) {
+	if (isRecentLoading && !recentData) {
     return (
       <div className="max-w-5xl mx-auto px-3 sm:px-4">
         <div className="animate-pulse h-12 bg-gray-200 rounded-lg mb-6"></div>
@@ -116,34 +81,22 @@ const NovelListing = () => {
   return (
     <div className="max-w-5xl mx-auto px-3 sm:px-4">
       {/* Featured Novels */}
-      {featuredNovels.length > 0 && (
-        <div className="relative mb-2">
-          <FeaturedNovel novels={featuredNovels} />
-        </div>
-      )}
+      <div className="relative mb-2">
+        <FeaturedNovel />
+      </div>
 
       <PWABulletin />
 
-      <NewReleases
-        recentNovels={recentNovels.map(novel => ({
-          id: novel.id,
-          slug: novel.slug,
-          title: novel.title,
-          coverImageUrl: novel.coverImageUrl || null,
-          createdAt: novel.created_at
-        }))}
-        className="mb-2"
-      />
+      <NewReleases className="mb-2" />
 
       <BulletinBoard />
 
-      {isLoggedIn && <CuratedNovels 
-        novels={curatedNovels} 
-        className="mb-2"
-      />}
+      {isLoggedIn && (
+        <CuratedNovels className="mb-2" />
+      )}
 
       <RegularNovels
-        novels={novels}
+				novels={novels}
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={handlePageChange}
@@ -152,8 +105,8 @@ const NovelListing = () => {
       <CompletedNovels />
 
       <AdvancedChapters
-        initialNovels={advancedNovels}
-        initialTotal={advancedNovelsTotal}
+        initialNovels={advancedData?.novels ?? []}
+        initialTotal={advancedData?.total ?? 0}
       />
 
       <NovelStatistics />

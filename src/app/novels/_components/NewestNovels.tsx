@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import NovelCover from './NovelCover';
 import { useRef, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { getNovels } from '@/services/novelService';
 
 interface NewestNovel {
   id: string;
@@ -10,13 +12,16 @@ interface NewestNovel {
   createdAt: string; // ISO date string for when the novel was created
 }
 
-interface NewReleasesProps {
-  recentNovels: NewestNovel[];
-  className?: string;
-}
+interface NewReleasesProps { className?: string }
 
-const NewReleases = ({ recentNovels, className = '' }: NewReleasesProps) => {
+const NewReleases = ({ className = '' }: NewReleasesProps) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const { data } = useQuery<{ novels: NewestNovel[]; total: number }>({
+    queryKey: ['novels', 'newest', 10],
+    queryFn: () => getNovels({ limit: 10, offset: 0 }) as unknown as Promise<{ novels: NewestNovel[]; total: number }>,
+    staleTime: 120_000,
+  });
+  const recentNovels = (data?.novels ?? []) as NewestNovel[];
   
   // Sort novels by creation date, newest first
   const sortedNovels = [...recentNovels].sort(

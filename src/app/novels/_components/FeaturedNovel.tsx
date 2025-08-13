@@ -5,12 +5,15 @@ import { Icon } from '@iconify/react';
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, useMotionValue, animate } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
+import { getTopNovels } from '@/services/novelService';
 
-interface FeaturedNovelProps {
-  novels: Novel[];
-}
-
-const FeaturedNovel = ({ novels }: FeaturedNovelProps) => {
+const FeaturedNovel = () => {
+  const { data: novels = [] } = useQuery<Novel[]>({
+    queryKey: ['novels', 'top'],
+    queryFn: () => getTopNovels(),
+    staleTime: 300_000,
+  });
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [isDesktop, setIsDesktop] = useState<boolean>(false);
   const containerRef = useRef<HTMLDivElement | null>(null);

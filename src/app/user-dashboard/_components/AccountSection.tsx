@@ -62,81 +62,67 @@ export const AccountSection = ({
   };
 
   return (
-    <div className="bg-container border-0 rounded-lg">
-      <div className="px-4 pt-4">
-        <h2 className="text-2xl font-bold">Account</h2>
-      </div>
+    <div className="p-0">
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          onClick={onEditProfile}
+          className="w-full flex items-center p-2 gap-2 hover:bg-[#faf7f2] dark:hover:bg-zinc-800 transition-colors rounded-lg"
+        >
+          <Icon icon="ph:pencil-simple-line" className="text-lg" />
+          <span className="text-sm">Edit profile</span>
+        </button>
 
-      <button
-        onClick={onEditProfile}
-        className="w-full flex items-center justify-between p-4 hover:bg-[#faf7f2] dark:hover:bg-zinc-800 transition-colors rounded-lg"
-      >
-        <div className="flex items-center">
-          <Icon icon="ph:pencil-simple-line" className="text-xl mr-4" />
-          <span>Edit profile</span>
-        </div>
-        <Icon icon="ph:caret-right" className="text-xl text-muted-foreground" />
-      </button>
+        <button
+          onClick={onChangePassword}
+          className="w-full flex items-center p-2 gap-2 hover:bg-[#faf7f2] dark:hover:bg-zinc-800 transition-colors rounded-lg"
+        >
+          <Icon icon="ph:lock-key" className="text-lg" />
+          <span className="text-sm">Change password</span>
+        </button>
 
-      <button
-        onClick={onChangePassword}
-        className="w-full flex items-center justify-between p-4 hover:bg-[#faf7f2] dark:hover:bg-zinc-800 transition-colors rounded-lg"
-      >
-        <div className="flex items-center">
-          <Icon icon="ph:lock-key" className="text-xl mr-4" />
-          <span>Change Password</span>
-        </div>
-        <Icon icon="ph:caret-right" className="text-xl text-muted-foreground" />
-      </button>
-
-      <button
-        onClick={onWiseTag}
-        className="w-full flex items-center justify-between p-4 hover:bg-[#faf7f2] dark:hover:bg-zinc-800 transition-colors rounded-lg"
-      >
-        <div className="flex items-center">
-          <Icon icon="simple-icons:wise" className="text-xl mr-4 text-green-600" />
-          <div className="flex flex-col items-start">
-            <span>Wise Tag</span>
-            <span className="text-xs text-muted-foreground">
+        <button
+          onClick={onWiseTag}
+          className="w-full flex items-center p-2 gap-2 hover:bg-[#faf7f2] dark:hover:bg-zinc-800 transition-colors rounded-lg col-span-2 sm:col-span-1"
+        >
+          <Icon icon="simple-icons:wise" className="text-lg text-green-600" />
+          <div className="flex flex-col items-start leading-tight">
+            <span className="text-sm">Wise Tag</span>
+            <span className="text-[11px] text-muted-foreground">
               {profile?.wise_tag ? `@${profile.wise_tag}` : 'Not connected'}
             </span>
           </div>
-        </div>
-        <Icon icon="ph:caret-right" className="text-xl text-muted-foreground" />
-      </button>
+        </button>
 
-      {profile.role === 'TRANSLATOR' && (
-        <Link
-          href="/author/dashboard"
-          className="w-full flex items-center justify-between p-4 hover:bg-[#faf7f2] dark:hover:bg-zinc-800 transition-colors rounded-lg"
-        >
-          <div className="flex items-center">
-            <Icon icon="ph:pencil" className="text-xl mr-4" />
-            <span>Author Dashboard</span>
-          </div>
-          <Icon icon="ph:caret-right" className="text-xl text-muted-foreground" />
-        </Link>
-      )}
+        {profile.role === 'TRANSLATOR' && (
+          <Link
+            href="/author/dashboard"
+            className="w-full flex items-center p-2.5 gap-2 hover:bg-[#faf7f2] dark:hover:bg-zinc-800 transition-colors rounded-lg"
+          >
+            <Icon icon="ph:pencil" className="text-lg" />
+            <span className="text-sm">Author dashboard</span>
+          </Link>
+        )}
+      </div>
 
       {/* Theme picker */}
-      <div className="p-4 bg-container rounded-lg">
+      <div className="mt-2 p-2 bg-container rounded-lg">
         <div>
-          <div className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-3">Theme</div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Theme</div>
+          <div className="grid grid-cols-3 gap-2">
             {Object.entries(themeNames).map(([key, name]) => (
               <button
                 key={key}
                 onClick={() => setTheme(key as Theme)}
-                className={`flex items-center p-2.5 rounded-lg transition-colors ${
+                className={`flex items-center p-2 rounded-lg transition-colors ${
                   theme === key ? 'bg-card ring-2 ring-primary/20' : 'hover:bg-card'
                 }`}
               >
                 <Icon
                   icon={themeIcons[key as Theme]}
-                  className={`text-lg mr-2 ${theme === key ? 'text-primary' : ''}`}
+                  className={`text-base mr-2 ${theme === key ? 'text-primary' : ''}`}
                 />
-                <span className="text-sm">{name}</span>
-                {theme === key && <Icon icon="ph:check-bold" className="ml-auto text-primary text-sm" />}
+                <span className="text-xs">{name}</span>
+                {theme === key && <Icon icon="ph:check-bold" className="ml-auto text-primary text-xs" />}
               </button>
             ))}
           </div>
@@ -144,16 +130,16 @@ export const AccountSection = ({
       </div>
 
       {/* Analytics toggle */}
-      <div className="p-4 bg-container rounded-lg">
+      <div className="mt-2 p-2 bg-container rounded-lg">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Google Analytics</div>
-            <p className="text-xs text-muted-foreground">Allow anonymous usage tracking</p>
+            <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-0.5">Google Analytics</div>
+            <p className="text-[11px] text-muted-foreground">Allow anonymous usage tracking</p>
           </div>
           <button
             type="button"
             onClick={toggleAnalytics}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+            className={`relative inline-flex h-5 w-10 items-center rounded-full transition-colors ${
               analyticsEnabled ? 'bg-blue-500' : 'bg-gray-200 dark:bg-gray-700'
             }`}
             aria-label="Toggle Google Analytics"
@@ -161,7 +147,7 @@ export const AccountSection = ({
             role="switch"
           >
             <span
-              className={`${analyticsEnabled ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition`}
+              className={`${analyticsEnabled ? 'translate-x-5' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition`}
             />
           </button>
         </div>

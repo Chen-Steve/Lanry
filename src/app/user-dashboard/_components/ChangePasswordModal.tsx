@@ -75,7 +75,6 @@ export function ChangePasswordModal({ isOpen, onClose, onSuccess }: ChangePasswo
         >
           <div className="p-4 sm:p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg sm:text-xl font-semibold">Change Password</h2>
               <button
                 onClick={handleClose}
                 className="text-muted-foreground hover:text-foreground transition-colors p-1 hover:bg-accent rounded-md"
