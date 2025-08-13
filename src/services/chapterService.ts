@@ -1,6 +1,7 @@
 import { getSupabase } from '@/lib/supabase';
 import type { SupabaseClient, User } from '@supabase/supabase-js';
 import { Chapter, Novel } from '@/types/database';
+import { downloadChapterFromStorage } from '@/lib/chapterStorage';
 
 type ChapterWithNovel = Chapter & {
   novel: Novel;
@@ -111,6 +112,23 @@ export async function getChapter(
 
     if (error || !chapter) return null;
 
+    // Fallback: hydrate content from storage when missing (avoid mutating with `any`)
+    let hydratedContent = chapter.content;
+    let hydratedAuthorThoughts = chapter.author_thoughts;
+    if (hydratedContent == null) {
+      try {
+        const storage = await downloadChapterFromStorage(novel.id, chapter.id);
+        if (storage && storage.content) {
+          hydratedContent = storage.content;
+          if (hydratedAuthorThoughts == null && storage.author_thoughts !== undefined) {
+            hydratedAuthorThoughts = storage.author_thoughts;
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }
+
     // Extract and normalize authorProfile from nested novel structure
     const rawAuthorProfile = (chapter.novel?.authorProfile ?? null) as RawAuthorProfile | null;
     const authorProfile = rawAuthorProfile
@@ -128,6 +146,8 @@ export async function getChapter(
     
     const chapterBase: ChapterWithNovel = {
       ...chapter,
+      content: hydratedContent,
+      author_thoughts: hydratedAuthorThoughts,
       authorProfile
     };
 

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Icon } from '@iconify/react';
 import { toast } from 'sonner';
 import supabase from '@/lib/supabaseClient';
+import { uploadChapterToStorage, estimateWordCountFromHtml } from '@/lib/chapterStorage';
 
 interface TranslatorChapterEditProps {
   chapterId: string;
@@ -56,14 +57,28 @@ export default function TranslatorChapterEdit({
       const { error } = await supabase
         .from('chapters')
         .update({
-          content,
-          title,
-          author_thoughts: authorThoughts || null
+          // Do not keep content/author_thoughts in DB; set null so readers fall back to Storage
+          content: null,
+          author_thoughts: null,
+          title
         })
         .eq('id', chapterId)
         .eq('novel_id', novelId);
 
       if (error) throw error;
+
+      // Dual-write to storage (await to avoid navigation aborting the request)
+      const content_format = 'html';
+      const content_updated_at = new Date().toISOString();
+      const word_count = estimateWordCountFromHtml(content);
+      const uploadRes = await uploadChapterToStorage(novelId, chapterId, {
+        content,
+        author_thoughts: authorThoughts || null,
+        content_format,
+        content_updated_at,
+        word_count,
+      });
+      if (!uploadRes) throw new Error('Failed to upload chapter content to storage');
 
       toast.success('Chapter updated successfully');
       onSave();

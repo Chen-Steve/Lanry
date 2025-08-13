@@ -365,49 +365,34 @@ export default function ChapterContent({
         }}
       >
         <div className="mb-4 max-w-2xl mx-auto">
-          <div className="flex justify-between items-start">
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-lg md:text-xl font-semibold text-black dark:text-white">
-                  Chapter {chapterNumber}
-                  {partNumber && <span> Part {partNumber}</span>}
-                  {title && <span>: {title}</span>}
-                </h2>
-                {ageRating === 'MATURE' && (
-                  <span className="px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 rounded-md flex items-center gap-1">
-                    <Icon icon="mdi:alert" className="w-3.5 h-3.5" />
-                    Mature
-                  </span>
-                )}
-                {ageRating === 'TEEN' && (
-                  <span className="px-2 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300 rounded-md flex items-center gap-1">
-                    <Icon icon="mdi:alert" className="w-3.5 h-3.5" />
-                    Teen
-                  </span>
-                )}
-                {isIndefinitelyLocked && (
-                  <span className="px-2 py-0.5 text-xs font-medium bg-accent text-muted-foreground rounded-md flex items-center gap-1">
-                    <Icon icon="mdi:clock-outline" className="w-3.5 h-3.5" />
-                    Coming Soon
-                  </span>
-                )}
-              </div>
-              <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400">
-                {isIndefinitelyLocked ? 'Not yet available' : `Published ${formatDate(displayDate)}`}
-              </p>
-              {!hideComments && !isIndefinitelyLocked && (
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  You can turn off comments in settings
-                </p>
+          <div className="flex items-center justify-between gap-2 flex-nowrap">
+            <div className="flex items-center gap-2 min-w-0">
+              <h2 className="text-lg md:text-xl font-semibold text-black dark:text-white mt-0 mb-0 truncate">
+                Chapter {chapterNumber}
+                {partNumber && <span> Part {partNumber}</span>}
+                {title && <span>: {title}</span>}
+              </h2>
+              {ageRating === 'MATURE' && (
+                <span className="px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 rounded-md flex items-center gap-1">
+                  <Icon icon="mdi:alert" className="w-3.5 h-3.5" />
+                  Mature
+                </span>
               )}
-              {!showProfanity && !isIndefinitelyLocked && (
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                  You can turn off the profanity filter in settings
-                </p>
+              {ageRating === 'TEEN' && (
+                <span className="px-2 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300 rounded-md flex items-center gap-1">
+                  <Icon icon="mdi:alert" className="w-3.5 h-3.5" />
+                  Teen
+                </span>
+              )}
+              {isIndefinitelyLocked && (
+                <span className="px-2 py-0.5 text-xs font-medium bg-accent text-muted-foreground rounded-md flex items-center gap-1">
+                  <Icon icon="mdi:clock-outline" className="w-3.5 h-3.5" />
+                  Coming Soon
+                </span>
               )}
             </div>
-            
-            <div className="flex items-center gap-3">
+
+            <div className="flex items-center gap-3 shrink-0">
               {isDesktop && !isIndefinitelyLocked && (
                 <button
                   ref={settingsButtonRef}
@@ -428,9 +413,22 @@ export default function ChapterContent({
                   <span>Edit Chapter</span>
                 </button>
               )}
-
             </div>
           </div>
+
+          <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 mt-0 mb-0.5">
+            {isIndefinitelyLocked ? 'Not yet available' : `Published ${formatDate(displayDate)}`}
+          </p>
+          {!hideComments && !isIndefinitelyLocked && (
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+              You can turn off comments in settings
+            </p>
+          )}
+          {!showProfanity && !isIndefinitelyLocked && (
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+              You can turn off the profanity filter in settings
+            </p>
+          )}
         </div>
         
         {isEditing && isTranslator && !isIndefinitelyLocked ? (

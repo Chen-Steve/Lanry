@@ -1,4 +1,5 @@
 import supabase from '@/lib/supabaseClient';
+import { uploadChapterToStorage, removeChapterFromStorage, estimateWordCountFromHtml, downloadChapterFromStorage } from '@/lib/chapterStorage';
 import { generateChapterSlug, generateUUID } from '@/lib/utils';
 
 export async function fetchAuthorNovels(userId: string, authorOnly: boolean) {
@@ -61,7 +62,25 @@ export async function fetchNovelChapters(novelId: string, userId: string, author
     .order('chapter_number', { ascending: true });
 
   if (error) throw error;
-  return data;
+
+  const chapters = data || [];
+  const results = await Promise.all(
+    chapters.map(async (ch) => {
+      // Only attempt when content is strictly null/undefined, not empty string
+      if (ch.content == null) {
+        try {
+          const res = await (await import('@/lib/chapterStorage')).downloadChapterFromStorage(novelId, ch.id);
+          if (res && res.content) {
+            return { ...ch, content: res.content, author_thoughts: ch.author_thoughts ?? res.author_thoughts ?? null };
+          }
+        } catch {
+          // ignore
+        }
+      }
+      return ch;
+    })
+  );
+  return results;
 }
 
 export async function updateChapter(
@@ -84,7 +103,16 @@ export async function updateChapter(
   const { error } = await supabase
     .from('chapters')
     .update({
-      ...chapterData,
+      // Do not update content or author_thoughts in DB; those live in Storage now
+      content: null,
+      author_thoughts: null,
+      chapter_number: chapterData.chapter_number,
+      part_number: chapterData.part_number ?? null,
+      title: chapterData.title,
+      publish_at: chapterData.publish_at,
+      coins: chapterData.coins,
+      age_rating: chapterData.age_rating,
+      volume_id: (chapterData as { volume_id?: string }).volume_id ?? undefined,
       slug: generateChapterSlug(chapterData.chapter_number, chapterData.part_number),
       updated_at: new Date().toISOString()
     })
@@ -92,6 +120,28 @@ export async function updateChapter(
     .eq('novel_id', novelId);
 
   if (error) throw error;
+
+  // Dual-write to storage (non-blocking failure)
+  (async () => {
+    const existing = await downloadChapterFromStorage(novelId, chapterId);
+    const contentToWrite = chapterData.content && chapterData.content.length > 0
+      ? chapterData.content
+      : (existing?.content ?? '');
+    const authorThoughtsToWrite = (chapterData.author_thoughts !== undefined)
+      ? chapterData.author_thoughts
+      : (existing?.author_thoughts ?? null);
+
+    const content_format = 'html';
+    const content_updated_at = new Date().toISOString();
+    const word_count = estimateWordCountFromHtml(contentToWrite);
+    await uploadChapterToStorage(novelId, chapterId, {
+      content: contentToWrite,
+      author_thoughts: authorThoughtsToWrite,
+      content_format,
+      content_updated_at,
+      word_count,
+    });
+  })();
 }
 
 export async function createChapter(
@@ -175,8 +225,6 @@ export async function createChapter(
     chapter_number: chapterData.chapter_number,
     part_number: chapterData.part_number,
     title: chapterData.title,
-    content: chapterData.content,
-    author_thoughts: chapterData.author_thoughts,
     age_rating: chapterData.age_rating,
     volume_id: chapterData.volume_id,
   };
@@ -196,6 +244,20 @@ export async function createChapter(
 
   if (error) throw error;
 
+  // Dual-write to storage (non-blocking failure)
+  (async () => {
+    const content_format = 'html';
+    const content_updated_at = new Date().toISOString();
+    const word_count = estimateWordCountFromHtml(chapterData.content);
+    await uploadChapterToStorage(novelId, chapterId, {
+      content: chapterData.content,
+      author_thoughts: chapterData.author_thoughts ?? null,
+      content_format,
+      content_updated_at,
+      word_count,
+    });
+  })();
+
   // Only apply auto-release schedule if conditions are met
   if (shouldApplyAutoRelease) {
     await applyAutoReleaseSchedule(novelId, userId, chapterId);
@@ -214,6 +276,9 @@ export async function deleteChapter(chapterId: string, novelId: string, userId: 
     .eq('novel_id', novelId);
 
   if (error) throw error;
+
+  // Best-effort cleanup in storage
+  void removeChapterFromStorage(novelId, chapterId);
 }
 
 export async function fetchNovelVolumes(novelId: string, userId: string) {
