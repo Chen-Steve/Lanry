@@ -3,7 +3,6 @@
 import { useEffect, useRef } from 'react'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { ForumMessage } from '@/types/forum'
-import supabase from '@/lib/supabaseClient'
 import MessageItem from './MessageItem'
 import CreateMessage from './CreateMessage'
 import { Icon } from '@iconify/react'
@@ -26,22 +25,15 @@ export default function ThreadMessages({ threadId }: ThreadMessagesProps) {
   } = useInfiniteQuery({
     queryKey: ['forum', 'messages', threadId],
     queryFn: async ({ pageParam = 0 }) => {
-      const { data: messages, error } = await supabase
-        .from('forum_messages')
-        .select(`
-          *,
-          author:profiles (
-            id,
-            username,
-            avatar_url
-          )
-        `)
-        .eq('thread_id', threadId)
-        .order('created_at', { ascending: true })
-        .range(pageParam * PAGE_SIZE, (pageParam + 1) * PAGE_SIZE - 1)
-
-      if (error) throw error
-      return messages as ForumMessage[]
+      const params = new URLSearchParams({
+        threadId,
+        page: String(pageParam + 1),
+        limit: String(PAGE_SIZE)
+      })
+      const res = await fetch(`/api/forum/messages?${params.toString()}`, { cache: 'no-store' })
+      if (!res.ok) throw new Error('Failed to fetch messages')
+      const json: { messages: ForumMessage[] } = await res.json()
+      return json.messages
     },
     getNextPageParam: (lastPage, allPages) => {
       return lastPage.length === PAGE_SIZE ? allPages.length : undefined

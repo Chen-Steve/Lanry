@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabaseServer'
+import { randomUUID } from 'crypto'
 
 export async function GET(req: Request) {
   try {
@@ -79,9 +80,9 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const supabase = await createServerClient()
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    if (!session?.user) {
+    if (!user) {
       return new NextResponse('Unauthorized', { status: 401 })
     }
 
@@ -112,9 +113,10 @@ export async function POST(req: Request) {
     const { data: message, error: createError } = await supabase
       .from('forum_messages')
       .insert([{
+        id: randomUUID(),
         content,
         thread_id: threadId,
-        author_id: session.user.id,
+        author_id: user.id,
         created_at: now,
         updated_at: now
       }])
@@ -169,9 +171,9 @@ export async function DELETE(req: Request) {
     }
 
     const supabase = await createServerClient()
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    if (!session?.user) {
+    if (!user) {
       return new NextResponse('Unauthorized', { status: 401 })
     }
 
@@ -189,7 +191,7 @@ export async function DELETE(req: Request) {
     }
 
     // Check if user is the message author
-    if (message.author_id !== session.user.id) {
+    if (message.author_id !== user.id) {
       return new NextResponse('Not authorized to delete this message', { status: 403 })
     }
 
@@ -223,3 +225,78 @@ export async function DELETE(req: Request) {
     return new NextResponse('Internal Error', { status: 500 })
   }
 } 
+
+export async function PATCH(req: Request) {
+  try {
+    const supabase = await createServerClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return new NextResponse('Unauthorized', { status: 401 })
+    }
+
+    const body = await req.json()
+    const { id, content } = body as { id?: string; content?: string }
+
+    if (!id || !content || content.trim().length === 0) {
+      return new NextResponse('Missing required fields', { status: 400 })
+    }
+
+    const now = new Date().toISOString()
+
+    // Ensure ownership
+    const { data: existing, error: fetchError } = await supabase
+      .from('forum_messages')
+      .select('id, author_id, thread_id')
+      .eq('id', id)
+      .single()
+
+    if (fetchError) throw fetchError
+    if (!existing) {
+      return new NextResponse('Message not found', { status: 404 })
+    }
+    if (existing.author_id !== user.id) {
+      return new NextResponse('Not authorized to edit this message', { status: 403 })
+    }
+
+    const { data: message, error: updateError } = await supabase
+      .from('forum_messages')
+      .update({
+        content: content.trim(),
+        updated_at: now,
+        is_edited: true
+      })
+      .eq('id', id)
+      .select(`
+        *,
+        author:profiles (
+          id,
+          username,
+          avatar_url,
+          role
+        )
+      `)
+      .single()
+
+    if (updateError) throw updateError
+
+    return NextResponse.json({
+      id: message.id,
+      content: message.content,
+      created_at: message.created_at,
+      updated_at: message.updated_at,
+      thread_id: message.thread_id,
+      author_id: message.author_id,
+      is_edited: message.is_edited,
+      author: {
+        id: message.author?.id,
+        username: message.author?.username,
+        avatar_url: message.author?.avatar_url ?? null,
+        role: message.author?.role
+      }
+    })
+  } catch (error) {
+    console.error('[FORUM_MESSAGE_PATCH]', error)
+    return new NextResponse('Internal Error', { status: 500 })
+  }
+}

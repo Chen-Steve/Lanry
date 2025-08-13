@@ -1,7 +1,6 @@
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+// Migrate off deprecated auth-helpers to SSR client
 import { ForumThread } from '@/types/forum'
 import ThreadMessages from './_components/ThreadMessages'
 import ThreadHeader from './_components/ThreadHeader'
@@ -15,7 +14,7 @@ interface ThreadPageProps {
 }
 
 export async function generateMetadata({ params }: ThreadPageProps): Promise<Metadata> {
-  const supabase = createServerComponentClient({ cookies })
+  const supabase = await createServerClient()
 
   const { data: thread } = await supabase
     .from('forum_threads')
@@ -40,7 +39,7 @@ export async function generateMetadata({ params }: ThreadPageProps): Promise<Met
 }
 
 export default async function ThreadPage({ params }: ThreadPageProps) {
-  const supabase = createServerComponentClient({ cookies })
+  const supabase = await createServerClient()
 
   const { data: thread } = await supabase
     .from('forum_threads')

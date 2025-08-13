@@ -27,8 +27,8 @@ export async function middleware(req: NextRequest) {
     }
   );
 
-  // Refresh session if expired and retrieve it
-  await supabase.auth.getSession();
+  // Touch auth to ensure cookies are synced without trusting client state
+  await supabase.auth.getUser();
 
   return res;
 }

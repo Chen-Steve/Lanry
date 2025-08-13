@@ -1,8 +1,6 @@
 'use client'
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import supabase from '@/lib/supabaseClient'
-import { generateUUID } from '@/lib/utils'
 import { ForumThread } from '@/types/forum'
 
 interface CreateThreadVariables {
@@ -26,48 +24,15 @@ export function useThreadMutations() {
 
   const createThread = useMutation({
     mutationFn: async ({ title, discussionSlug }: CreateThreadVariables) => {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session?.user) throw new Error('Unauthorized')
-
-      const { data: discussion, error: discussionError } = await supabase
-        .from('forum_discussions')
-        .select('id')
-        .eq('slug', discussionSlug)
-        .single()
-
-      if (discussionError) throw discussionError
-      if (!discussion) throw new Error('Discussion not found')
-
-      const threadId = generateUUID()
-      const now = new Date().toISOString()
-
-      const { data: thread, error: threadError } = await supabase
-        .from('forum_threads')
-        .insert([{
-          id: threadId,
-          title,
-          discussion_id: discussion.id,
-          author_id: session.user.id,
-          created_at: now,
-          updated_at: now,
-          last_message_at: now
-        }])
-        .select(`
-          *,
-          author:profiles (
-            id,
-            username,
-            avatar_url
-          ),
-          discussion:forum_discussions (
-            slug
-          )
-        `)
-        .single()
-
-      if (threadError) throw threadError
-
-      return thread
+      const res = await fetch(`/api/forum/discussions/${encodeURIComponent(discussionSlug)}/threads`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title })
+      })
+      if (res.status === 401) throw new Error('Unauthorized')
+      if (!res.ok) throw new Error('Failed to create thread')
+      const json: ForumThread = await res.json()
+      return json
     },
     onSuccess: (thread, { discussionSlug }) => {
       // Get current data from cache
@@ -93,38 +58,19 @@ export function useThreadMutations() {
 
   const deleteThread = useMutation({
     mutationFn: async (threadId: string) => {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session?.user) throw new Error('Unauthorized')
+      // We need the discussion slug for cache keys; fetch via API GET thread
+      const getRes = await fetch(`/api/forum/threads/${encodeURIComponent(threadId)}`)
+      if (!getRes.ok) throw new Error('Failed to resolve thread')
+      const thread = await getRes.json() as ForumThread
 
-      // Get thread info first for optimistic update
-      const { data: thread, error: threadError } = await supabase
-        .from('forum_threads')
-        .select(`
-          *,
-          discussion:forum_discussions (
-            slug
-          )
-        `)
-        .eq('id', threadId)
-        .single()
+      const res = await fetch(`/api/forum/discussions/${encodeURIComponent(thread.discussion.slug)}/threads/${encodeURIComponent(threadId)}`, {
+        method: 'DELETE'
+      })
+      if (res.status === 401) throw new Error('Unauthorized')
+      if (res.status === 403) throw new Error('Not authorized to delete this thread')
+      if (!res.ok) throw new Error('Failed to delete thread')
 
-      if (threadError) throw threadError
-      if (!thread) throw new Error('Thread not found')
-      if (thread.author_id !== session.user.id) {
-        throw new Error('Not authorized to delete this thread')
-      }
-
-      const { error: deleteError } = await supabase
-        .from('forum_threads')
-        .delete()
-        .eq('id', threadId)
-
-      if (deleteError) throw deleteError
-
-      return {
-        success: true,
-        discussionSlug: thread.discussion.slug
-      }
+      return { success: true, discussionSlug: thread.discussion.slug }
     },
     onMutate: async (threadId: string) => {
       // Get the current thread from cache

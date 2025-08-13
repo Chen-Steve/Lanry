@@ -2,8 +2,7 @@ import { Metadata } from 'next'
 import { Suspense } from 'react'
 import ThreadList from '../../_components/ThreadList'
 import CreateThreadButton from '../../_components/CreateThreadButton'
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+import { createServerClient } from '@/lib/supabaseServer'
 import Link from 'next/link'
 import { Icon } from '@iconify/react'
 
@@ -27,7 +26,7 @@ export const metadata: Metadata = {
 }
 
 async function DiscussionHeader({ slug }: { slug: string }) {
-  const supabase = createServerComponentClient({ cookies })
+  const supabase = await createServerClient()
   
   const { data: discussion } = await supabase
     .from('forum_discussions')

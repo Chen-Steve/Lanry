@@ -14,7 +14,6 @@
     "@iconify/react": "^5.1.0",
     "@paypal/checkout-server-sdk": "^1.0.3",
     "@paypal/react-paypal-js": "^8.8.1",
-    "@supabase/auth-helpers-nextjs": "^0.10.0",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.46.1",
     "@tailwindcss/typography": "^0.5.16",

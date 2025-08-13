@@ -1,52 +1,22 @@
 'use client'
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import supabase from '@/lib/supabaseClient'
-import { generateUUID } from '@/lib/utils'
+// Moved to API-backed mutations for security and consistency
 
 export function useForumMutations() {
   const queryClient = useQueryClient()
 
   const createMessage = useMutation({
     mutationFn: async ({ threadId, content }: { threadId: string, content: string }) => {
-      // Get current session first
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session?.user) throw new Error('Unauthorized')
-
-      const now = new Date().toISOString()
-
-      // Create the message
-      const { data: message, error: messageError } = await supabase
-        .from('forum_messages')
-        .insert([{
-          id: generateUUID(),
-          thread_id: threadId,
-          author_id: session.user.id,
-          content,
-          created_at: now,
-          updated_at: now
-        }])
-        .select(`
-          *,
-          author:profiles (
-            id,
-            username,
-            avatar_url
-          )
-        `)
-        .single()
-
-      if (messageError) throw messageError
-
-      // Update thread's last_message_at
-      const { error: threadError } = await supabase
-        .from('forum_threads')
-        .update({ last_message_at: now })
-        .eq('id', threadId)
-
-      if (threadError) throw threadError
-
-      return message
+      const res = await fetch('/api/forum/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ threadId, content })
+      })
+      if (res.status === 401) throw new Error('Unauthorized')
+      if (res.status === 403) throw new Error('Thread is locked')
+      if (!res.ok) throw new Error('Failed to create message')
+      return res.json()
     },
     onSuccess: (_, { threadId }) => {
       // Invalidate relevant queries to trigger refetch
@@ -56,19 +26,13 @@ export function useForumMutations() {
 
   const deleteMessage = useMutation({
     mutationFn: async (messageId: string) => {
-      // Get current session first
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session?.user) throw new Error('Unauthorized')
-
-      const { error } = await supabase
-        .from('forum_messages')
-        .delete()
-        .eq('id', messageId)
-        .eq('author_id', session.user.id)
-
-      if (error) throw error
-
-      return { success: true }
+      const res = await fetch(`/api/forum/messages?messageId=${encodeURIComponent(messageId)}`, {
+        method: 'DELETE'
+      })
+      if (res.status === 401) throw new Error('Unauthorized')
+      if (res.status === 403) throw new Error('Not authorized to delete this message')
+      if (!res.ok) throw new Error('Failed to delete message')
+      return res.json()
     },
     onSuccess: () => {
       // Invalidate relevant queries to trigger refetch
@@ -78,34 +42,15 @@ export function useForumMutations() {
 
   const updateMessage = useMutation({
     mutationFn: async ({ id, content }: { id: string, content: string }) => {
-      // Get current session first
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session?.user) throw new Error('Unauthorized')
-
-      const now = new Date().toISOString()
-
-      // Update the message
-      const { data: message, error: messageError } = await supabase
-        .from('forum_messages')
-        .update({
-          content,
-          updated_at: now,
-          is_edited: true
-        })
-        .eq('id', id)
-        .eq('author_id', session.user.id)
-        .select(`
-          *,
-          author:profiles (
-            id,
-            username,
-            avatar_url
-          )
-        `)
-        .single()
-
-      if (messageError) throw messageError
-      return message
+      const res = await fetch('/api/forum/messages', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, content })
+      })
+      if (res.status === 401) throw new Error('Unauthorized')
+      if (res.status === 403) throw new Error('Not authorized to edit this message')
+      if (!res.ok) throw new Error('Failed to update message')
+      return res.json()
     },
     onSuccess: (message) => {
       // Invalidate relevant queries to trigger refetch
