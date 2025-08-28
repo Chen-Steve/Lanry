@@ -1,6 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Icon } from '@iconify/react';
-import { getCategories } from '@/app/author/_services/categoryService';
 
 interface Category {
   id: string;
@@ -10,44 +9,29 @@ interface Category {
 }
 
 interface CategorySelectorProps {
+  availableCategories: Category[];
   selectedCategories: string[];
   onCategorySelect: (categoryId: string) => void;
   onCategoryRemove: (categoryId: string) => void;
 }
 
 export default function CategorySelector({
+  availableCategories,
   selectedCategories,
   onCategorySelect,
   onCategoryRemove,
 }: CategorySelectorProps) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [search, setSearch] = useState('');
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [categories, setCategories] = useState<Category[]>(availableCategories);
+  const [isLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Fetch categories on component mount
+  // Sync categories when parent provides updates
   useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const data = await getCategories();
-        // Map NovelCategory to Category interface
-        const mappedCategories = data.map(category => ({
-          id: category.id,
-          name: category.name,
-          createdAt: new Date(category.created_at),
-          updatedAt: new Date(category.updated_at)
-        }));
-        setCategories(mappedCategories);
-      } catch (error) {
-        console.error('Error fetching categories:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchCategories();
-  }, []);
+    setCategories(availableCategories);
+  }, [availableCategories]);
 
   // Filter categories based on search
   const filteredCategories = React.useMemo(() => {
@@ -133,11 +117,7 @@ export default function CategorySelector({
             ref={dropdownRef}
             className="absolute left-0 mt-1 bg-background border border-border rounded-lg shadow-lg z-50 w-full max-h-[200px] overflow-y-auto"
           >
-            {isLoading ? (
-              <div className="px-3 py-2 text-sm text-muted-foreground text-center">
-                Loading categories...
-              </div>
-            ) : filteredCategories.length === 0 ? (
+            {filteredCategories.length === 0 ? (
               <div className="px-3 py-2 text-sm text-muted-foreground text-center">
                 No categories found
               </div>

@@ -9,6 +9,7 @@ import CategorySelector from './CategorySelector';
 import TLSelector from './TLSelector';
 import NovelList from './NovelList';
 import * as tagService from '@/app/author/_services/tagService';
+import { getCategories } from '@/app/author/_services/categoryService';
 
 type NovelStatus = 'ONGOING' | 'COMPLETED' | 'HIATUS' | 'DROPPED' | 'DRAFT';
 
@@ -36,6 +37,7 @@ export default function AdvancedSearch() {
   const [totalPages, setTotalPages] = useState(1);
   const [hasSearched, setHasSearched] = useState(false);
   const [availableTags, setAvailableTags] = useState<Tag[]>([]);
+  const [availableCategories, setAvailableCategories] = useState<{ id: string; name: string; createdAt: Date; updatedAt: Date; }[]>([]);
 
   const [showFilters, setShowFilters] = useState(false);
 
@@ -106,6 +108,25 @@ export default function AdvancedSearch() {
     loadTags();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run on mount
+
+  // Load categories once on mount and map to selector shape
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const data = await getCategories();
+        const mapped = data.map(category => ({
+          id: category.id,
+          name: category.name,
+          createdAt: new Date(category.created_at),
+          updatedAt: new Date(category.updated_at)
+        }));
+        setAvailableCategories(mapped);
+      } catch (error) {
+        console.error('Error loading categories:', error);
+      }
+    };
+    loadCategories();
+  }, []);
 
   // After tag loading and filter initialization, add:
   useEffect(() => {
@@ -345,6 +366,7 @@ export default function AdvancedSearch() {
                 {/* Category Filter */}
                 <div>
                   <CategorySelector
+                    availableCategories={availableCategories}
                     selectedCategories={filters.categories}
                     onCategorySelect={handleCategorySelect}
                     onCategoryRemove={handleCategoryRemove}
