@@ -15,6 +15,7 @@ interface NovelStats {
   total_views: number;
   ga_views?: number;
   data_source?: 'google_analytics' | 'database_fallback';
+  bookmarks: number;
 }
 
 interface NovelData {
@@ -23,6 +24,7 @@ interface NovelData {
   title: string;
   views: number;
   created_at: string;
+  bookmark_count: number;
 }
 
 export default function NovelStatistics() {
@@ -79,7 +81,8 @@ export default function NovelStatistics() {
         slug,
         title,
         views,
-        created_at
+        created_at,
+        bookmark_count
       `)
       .or(`author_profile_id.eq.${session.user.id},translator_id.eq.${session.user.id}`);
 
@@ -173,6 +176,7 @@ export default function NovelStatistics() {
         total_views: viewCount,
         ga_views: entry?.pageViews,
         data_source: dataSource,
+        bookmarks: novel.bookmark_count || 0,
       };
     });
 
@@ -473,6 +477,33 @@ export default function NovelStatistics() {
               </ul>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Bookmarks per novel */}
+      {stats.length > 0 && (
+        <div className="mt-10">
+          <h2 className="text-2xl font-semibold text-foreground mb-4 flex items-center gap-2">
+            Bookmarks by novel
+            <span className="relative group cursor-default">
+              <Icon icon="mdi:information-outline" className="text-base text-muted-foreground" />
+              <span className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-64 bg-background border border-border text-xs text-foreground rounded-lg p-2 shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-200 z-50">
+                Total number of users who bookmarked each novel.
+              </span>
+            </span>
+          </h2>
+          <ul className="space-y-1 max-h-[320px] overflow-auto pr-2 text-sm">
+            {stats
+              .slice()
+              .sort((a, b) => (b.bookmarks - a.bookmarks))
+              .map((s, idx) => (
+                <li key={s.id} className="flex items-center gap-2">
+                  <span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: colorMap.get(s.id) ?? getColor(idx) }} />
+                  <span className="flex-1 line-clamp-1" title={s.title}>{s.title}</span>
+                  <span className="font-medium tabular-nums">{s.bookmarks.toLocaleString()}</span>
+                </li>
+              ))}
+          </ul>
         </div>
       )}
     </section>
