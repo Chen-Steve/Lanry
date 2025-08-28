@@ -8,6 +8,7 @@ import TagSelector from './TagSelector';
 import CategorySelector from './CategorySelector';
 import TLSelector from './TLSelector';
 import NovelList from './NovelList';
+import * as tagService from '@/app/author/_services/tagService';
 
 type NovelStatus = 'ONGOING' | 'COMPLETED' | 'HIATUS' | 'DROPPED' | 'DRAFT';
 
@@ -84,10 +85,8 @@ export default function AdvancedSearch() {
           return;
         }
 
-        // If no cache or expired, fetch from API
-        const response = await fetch('/api/tags');
-        if (!response.ok) throw new Error('Failed to fetch tags');
-        const tags = await response.json();
+        // If no cache or expired, fetch via tagService
+        const tags = await tagService.getTags();
         
         setAvailableTags(tags);
         await initializeFromUrl(tags);

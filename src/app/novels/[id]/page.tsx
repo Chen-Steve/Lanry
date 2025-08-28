@@ -45,11 +45,11 @@ export default function NovelPage({ params }: { params: { id: string } }) {
             value: 1
           });
           
-          // Increment the view counter (logs are handled server-side)
+          // Increment the view counter via Supabase RPC
           try {
-            await fetch(`/api/novels/${data.id}/views`, { method: 'POST' });
+            await supabase.rpc('increment_novel_views', { novel_id_param: data.id });
           } catch (err) {
-            console.error('Failed to increment novel views:', err);
+            console.error('Failed to increment novel views via RPC:', err);
           }
         }
       } catch (error) {
