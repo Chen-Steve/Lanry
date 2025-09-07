@@ -12,32 +12,17 @@ import { WiseTagModal } from './_components/WiseTagModal';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
 import supabase from '@/lib/supabaseClient';
+import { useSupabase } from '@/app/providers';
 import type { UserProfile } from '@/types/database';
 import { useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { CancelMembershipModal } from './_components/CancelMembershipModal';
 
-const fetchProfile = async (userId?: string): Promise<UserProfile> => {
-  if (userId) {
-    // Fetch other user's profile
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
-
-    if (error) throw error;
-    return data;
-  }
-
-  // Fetch current user's profile
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Not authenticated');
-
+const fetchProfile = async (userId: string): Promise<UserProfile> => {
   const { data, error } = await supabase
     .from('profiles')
     .select('*')
-    .eq('id', user.id)
+    .eq('id', userId)
     .single();
 
   if (error) throw error;
@@ -49,6 +34,7 @@ const fetchProfile = async (userId?: string): Promise<UserProfile> => {
 export default function UserDashboard() {
   const { theme, setTheme } = useTheme();
   const { handleSignOut, userId: authUserId } = useAuth();
+  const { user } = useSupabase();
   const SUBSCRIPTIONS_ENABLED = false;
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -56,6 +42,7 @@ export default function UserDashboard() {
   const [isWiseTagModalOpen, setIsWiseTagModalOpen] = useState(false);
   const searchParams = useSearchParams();
   const userId = searchParams.get('userId') || searchParams.get('id');
+  const effectiveUserId = userId || authUserId || user?.id || undefined;
   const [subscriptionStatus, setSubscriptionStatus] = useState<null | {
     hasSubscription: boolean;
     status?: string;
@@ -70,8 +57,9 @@ export default function UserDashboard() {
   const [isSubLoading, setIsSubLoading] = useState(false);
 
   const { data: profile, isLoading, refetch } = useQuery({
-    queryKey: ['profile', userId],
-    queryFn: () => fetchProfile(userId || undefined),
+    queryKey: ['profile', effectiveUserId],
+    queryFn: () => fetchProfile(effectiveUserId as string),
+    enabled: !!effectiveUserId,
   });
 
   useEffect(() => {

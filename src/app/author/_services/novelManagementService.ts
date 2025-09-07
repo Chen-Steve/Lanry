@@ -7,11 +7,8 @@ interface NovelWithChapters extends Novel {
 }
 
 export async function fetchAuthorNovels(): Promise<NovelWithChapters[]> {
-  const { data: { session } } = await supabase.auth.getSession();
-      
-  if (!session?.user) {
-    return [];
-  }
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
 
   const { data: novels, error } = await supabase
     .from('novels')
@@ -27,7 +24,7 @@ export async function fetchAuthorNovels(): Promise<NovelWithChapters[]> {
         )
       )
     `)
-    .eq('author_profile_id', session.user.id)
+    .eq('author_profile_id', user.id)
     .order('created_at', { ascending: false });
 
   if (error) throw error;
@@ -53,8 +50,8 @@ export function filterNovels(novels: NovelWithChapters[], searchQuery: string, s
 }
 
 export async function updateNovel(novel: Novel): Promise<Novel> {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.user) throw new Error('Not authenticated');
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
 
   // Validate required fields
   if (!novel.title?.trim()) throw new Error('Title is required');
@@ -81,7 +78,7 @@ export async function updateNovel(novel: Novel): Promise<Novel> {
         age_rating: novel.ageRating,
         slug,
         cover_image_url: novel.coverImageUrl || null,
-        author_profile_id: session.user.id,
+        author_profile_id: user.id,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         bookmark_count: 0,

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Icon } from '@iconify/react';
 import supabase from '@/lib/supabaseClient';
+import { useSupabase } from '@/app/providers';
 import { toast } from 'sonner';
 
 export default function TranslatorLinks() {
@@ -13,11 +14,11 @@ export default function TranslatorLinks() {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const { user } = useSupabase();
 
   useEffect(() => {
     const loadLinks = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
         const { data, error } = await supabase
@@ -46,14 +47,13 @@ export default function TranslatorLinks() {
     };
 
     loadLinks();
-  }, []);
+  }, [user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
       const { error } = await supabase

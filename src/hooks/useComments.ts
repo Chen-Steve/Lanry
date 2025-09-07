@@ -4,52 +4,16 @@ import { useState, useEffect, useCallback } from 'react';
 import supabase from '@/lib/supabaseClient';
 import type { ChapterComment, CommentsByParagraph } from '@/types/database';
 import { generateUUID } from '@/lib/utils';
+import { useSupabase } from '@/app/providers';
 
 export function useComments(novelId: string, chapterNumber: number) {
+  const { user, isLoading } = useSupabase();
   const [comments, setComments] = useState<CommentsByParagraph>({});
   const [userId, setUserId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
-  // Simplified auth setup
   useEffect(() => {
-    let mounted = true;
-
-    const initAuth = async () => {
-      try {
-        const { data: { session: supabaseSession } } = await supabase.auth.getSession();
-        
-        if (mounted) {
-          if (supabaseSession?.user) {
-            setUserId(supabaseSession.user.id);
-          } else {
-            setUserId(null);
-          }
-        }
-      } catch (error) {
-        console.error('[Init] Error:', error);
-      } finally {
-        if (mounted) setIsLoading(false);
-      }
-    };
-
-    initAuth();
-    
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!mounted) return;
-
-      if (event === 'SIGNED_OUT') {
-        setUserId(null);
-      } else if (session?.user) {
-        setUserId(session.user.id);
-      }
-      setIsLoading(false);
-    });
-
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, []);
+    setUserId(user?.id ?? null);
+  }, [user]);
 
   // ------------------------------------------------------------
   // Comments fetching (single fetch, no realtime)

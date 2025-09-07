@@ -2,50 +2,15 @@
 
 import { useState, useEffect } from 'react'
 import supabase from '@/lib/supabaseClient'
+import { useSupabase } from '@/app/providers'
 
 export function useForum() {
+  const { user, isLoading } = useSupabase()
   const [userId, setUserId] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    let mounted = true
-
-    const initAuth = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession()
-        
-        if (mounted) {
-          if (session?.user) {
-            setUserId(session.user.id)
-          } else {
-            setUserId(null)
-          }
-        }
-      } catch (error) {
-        console.error('[Init] Error:', error)
-      } finally {
-        if (mounted) setIsLoading(false)
-      }
-    }
-
-    initAuth()
-    
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!mounted) return
-
-      if (event === 'SIGNED_OUT') {
-        setUserId(null)
-      } else if (session?.user) {
-        setUserId(session.user.id)
-      }
-      setIsLoading(false)
-    })
-
-    return () => {
-      mounted = false
-      subscription.unsubscribe()
-    }
-  }, [])
+    setUserId(user?.id ?? null)
+  }, [user])
 
   const createThread = async (title: string, discussionSlug: string) => {
     try {

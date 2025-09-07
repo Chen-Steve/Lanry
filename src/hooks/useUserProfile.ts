@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import supabase from '@/lib/supabaseClient';
+import { useSupabase } from '@/app/providers';
 
 interface UserProfile {
   username: string;
@@ -10,6 +11,7 @@ interface UserProfile {
 }
 
 export function useUserProfile(userId: string | null) {
+  const { user } = useSupabase();
   const { data: userProfile, isLoading, error } = useQuery<UserProfile | null>({
     queryKey: ['profile', userId],
     queryFn: async () => {
@@ -22,7 +24,6 @@ export function useUserProfile(userId: string | null) {
       if (error) throw error;
 
       // Fallbacks from auth user metadata to improve first-load UX
-      const { data: { user } } = await supabase.auth.getUser();
       if (!data && !user) return null;
 
       const fallbackUsername = data?.username || (user?.email ? user.email.split('@')[0] : undefined) || undefined;

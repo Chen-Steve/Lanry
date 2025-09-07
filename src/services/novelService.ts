@@ -526,9 +526,9 @@ export async function getTopNovels(limit: number = 5): Promise<Novel[]> {
 
 export async function getCuratedNovels(limit: number = 10): Promise<Novel[]> {
   try {
-    // Try to get the current user's session
-    const { data: { session } } = await supabase.auth.getSession();
-    const userId = session?.user?.id;
+    // Try to get the current authenticated user
+    const { data: { user } } = await supabase.auth.getUser();
+    const userId = user?.id;
 
     if (!userId) {
       // If user is not logged in, return popular novels instead

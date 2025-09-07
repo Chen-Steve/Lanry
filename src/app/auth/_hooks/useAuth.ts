@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import supabase from '@/lib/supabaseClient';
 import { generateUsername } from '@/utils/username';
@@ -28,7 +28,7 @@ export function useAuth() {
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  const createUserProfile = async (userId: string, email?: string) => {
+  const createUserProfile = useCallback(async (userId: string, email?: string) => {
     console.log('[Profile] Starting profile creation for user:', userId);
     
     // Generate username from email or random
@@ -55,7 +55,7 @@ export function useAuth() {
 
     // Invalidate cached user profile so components refetch with fresh data
     queryClient.invalidateQueries({ queryKey: ['profile', userId] });
-  };
+  }, [queryClient]);
 
   const handleSignup = async (captchaToken?: string) => {
     if (!captchaToken) {
@@ -81,28 +81,31 @@ export function useAuth() {
 
   // Subscribe to auth changes
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event) => {
+      // Always fetch authenticated user from server
+      const { data: { user } } = await supabase.auth.getUser();
+
       console.log('[Auth] Auth state changed:', { 
-        event, 
-        userId: session?.user?.id,
-        provider: session?.user?.app_metadata?.provider 
+        event,
+        userId: user?.id,
+        provider: user?.app_metadata?.provider 
       });
 
-      if (event === 'SIGNED_IN' && session?.user) {
+      if (event === 'SIGNED_IN' && user) {
         console.log('[Auth] Processing sign in for user:', {
-          id: session.user.id,
-          email: session.user.email,
-          provider: session.user.app_metadata.provider
+          id: user.id,
+          email: user.email,
+          provider: user.app_metadata?.provider
         });
 
         // For email sign-in, we need to handle profile creation here
         // Google sign-in profile creation is handled in the callback route
-        if (session.user.app_metadata.provider !== 'google') {
+        if (user.app_metadata?.provider !== 'google') {
           // Check if profile exists
           const { data: existingProfile, error: profileCheckError } = await supabase
             .from('profiles')
             .select('id')
-            .eq('id', session.user.id)
+            .eq('id', user.id)
             .maybeSingle();
 
           if (profileCheckError) {
@@ -111,7 +114,7 @@ export function useAuth() {
 
           if (!existingProfile) {
             console.log('[Auth] Creating profile for email user');
-            await createUserProfile(session.user.id, session.user.email);
+            await createUserProfile(user.id, user.email ?? undefined);
           }
           
           // Only redirect for non-Google sign-ins
@@ -129,7 +132,7 @@ export function useAuth() {
     return () => {
       subscription.unsubscribe();
     };
-  }, [router]);
+  }, [router, createUserProfile]);
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -270,8 +273,8 @@ export function useAuth() {
     const start = Date.now();
 
     while (Date.now() - start < timeoutMs) {
-      const { data: sessionCheck } = await supabase.auth.getSession();
-      if (sessionCheck.session) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
         router.push('/');
         router.refresh();
         return;
@@ -279,7 +282,7 @@ export function useAuth() {
       await new Promise(res => setTimeout(res, intervalMs));
     }
 
-    throw new Error('Failed to establish session after sign in');
+    throw new Error('Failed to establish authentication after sign in');
   };
 
   const resetForm = () => {

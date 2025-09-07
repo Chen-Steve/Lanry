@@ -7,6 +7,7 @@ import Link from 'next/link';
 import supabase from '@/lib/supabaseClient';
 import { v4 as uuidv4 } from 'uuid';
 import { CommentItem } from './CommentItem';
+import { useSupabase } from '@/app/providers';
 
 interface ChapterComment {
   id: string;
@@ -39,6 +40,7 @@ interface ChapterCommentsProps {
 }
 
 export function ChapterComments({ chapterId, authorId, isFirstChapter = false }: ChapterCommentsProps) {
+  const { user, isLoading: authLoading } = useSupabase();
   const [userId, setUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [comments, setComments] = useState<ChapterComment[]>([]);
@@ -46,36 +48,11 @@ export function ChapterComments({ chapterId, authorId, isFirstChapter = false }:
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
 
-  // Auth setup
+  // Auth setup via context
   useEffect(() => {
-    let mounted = true;
-
-    const initAuth = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (mounted && session?.user) {
-          setUserId(session.user.id);
-        }
-      } catch (error) {
-        console.error('Auth error:', error);
-      } finally {
-        if (mounted) setIsLoading(false);
-      }
-    };
-
-    initAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!mounted) return;
-      setUserId(session?.user?.id ?? null);
-      setIsLoading(false);
-    });
-
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, []);
+    setUserId(user?.id ?? null);
+    setIsLoading(false);
+  }, [user]);
 
   // Fetch comments
   useEffect(() => {
@@ -225,7 +202,7 @@ export function ChapterComments({ chapterId, authorId, isFirstChapter = false }:
     }
   };
 
-  if (isLoading || isFetching) {
+  if (isLoading || isFetching || authLoading) {
     return (
       <div className="flex justify-center items-center p-4">
         <Icon icon="eos-icons:loading" className="w-6 h-6 text-primary animate-spin" />

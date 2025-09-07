@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import supabase from '@/lib/supabaseClient';
+import { useSupabase } from '@/app/providers';
 
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import ChapterHeader from './_components/content/ChapterHeader';
@@ -43,6 +44,7 @@ const isIndefinitelyLocked = (chapter: { publish_at?: string | null }): boolean 
 export default function ChapterPageClient({ novelId, chapter, navigation, userId }: ChapterPageClientProps) {
   // Client-side authentication state
   const [clientUserId, setClientUserId] = useState<string | null>(userId);
+  const { user } = useSupabase();
   
   
   // Local UI states that should stay on the client
@@ -65,22 +67,10 @@ export default function ChapterPageClient({ novelId, chapter, navigation, userId
   const effectiveShowProfanity = zenMode ? true : showProfanity;
   const hideAuthorWords = zenMode ? true : false;
 
-  // Get client-side authentication state
+  // Derive client-side authentication state from context
   useEffect(() => {
-    const getClientAuth = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        const currentUserId = session?.user?.id || null;
-
-        setClientUserId(currentUserId);
-      } catch (error) {
-        console.error('Error getting client session:', error);
-        setClientUserId(null);
-      }
-    };
-
-    getClientAuth();
-  }, []);
+    setClientUserId(user?.id ?? null);
+  }, [user]);
 
   // If the chapter was marked as locked on the server, double-check on the client in case the user has purchased it recently
   useEffect(() => {
@@ -91,8 +81,7 @@ export default function ChapterPageClient({ novelId, chapter, navigation, userId
       }
 
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.user) {
+        if (!user) {
           setUnlockCheckComplete(true);
           return;
         }
@@ -110,8 +99,8 @@ export default function ChapterPageClient({ novelId, chapter, navigation, userId
         }
 
         // Check if user is author or translator
-        const isAuthor = novel.author_profile_id === session.user.id;
-        const isTranslator = novel.translator_id === session.user.id || (novel.author_profile_id === session.user.id && novel.is_author_name_custom === true);
+        const isAuthor = novel.author_profile_id === user.id;
+        const isTranslator = novel.translator_id === user.id || (novel.author_profile_id === user.id && novel.is_author_name_custom === true);
         const hasTranslatorAccess = isAuthor || isTranslator;
 
         // If user has translator access, unlock the chapter
@@ -124,7 +113,7 @@ export default function ChapterPageClient({ novelId, chapter, navigation, userId
         let unlockQuery = supabase
           .from('chapter_unlocks')
           .select('id')
-          .eq('profile_id', session.user.id)
+          .eq('profile_id', user.id)
           .eq('novel_id', novel.id)
           .eq('chapter_number', chapter.chapter_number);
 

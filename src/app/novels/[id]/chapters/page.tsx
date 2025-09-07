@@ -3,12 +3,14 @@
 import { Novel, UserProfile } from '@/types/database';
 import { useEffect, useState } from 'react';
 import supabase from '@/lib/supabaseClient';
+import { useSupabase } from '@/app/providers';
 import { ChapterList } from '@/app/novels/[id]/_components/ChapterList';
 import { getNovel } from '@/services/novelService';
 import { notFound } from 'next/navigation';
 
 
 export default function ChaptersPage({ params }: { params: { id: string } }) {
+  const { user } = useSupabase();
   const { id: novelSlug } = params;
   const [novel, setNovel] = useState<Novel | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -18,14 +20,13 @@ export default function ChaptersPage({ params }: { params: { id: string } }) {
   useEffect(() => {
     const fetchNovelAndAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        setIsAuthenticated(!!session?.user);
+        setIsAuthenticated(!!user);
         
-        if (session?.user) {
+        if (user) {
           let { data: profile } = await supabase
             .from('profiles')
             .select('*')
-            .eq('id', session.user.id)
+            .eq('id', user.id)
             .single();
           
           if (!profile) {
@@ -33,9 +34,9 @@ export default function ChaptersPage({ params }: { params: { id: string } }) {
               .from('profiles')
               .insert([
                 {
-                  id: session.user.id,
-                  username: session.user.user_metadata?.full_name,
-                  avatar_url: session.user.user_metadata?.avatar_url,
+                  id: user.id,
+                  username: user.user_metadata?.full_name,
+                  avatar_url: user.user_metadata?.avatar_url,
                   updated_at: new Date().toISOString(),
                 }
               ])
@@ -48,9 +49,11 @@ export default function ChaptersPage({ params }: { params: { id: string } }) {
           }
           
           setUserProfile(profile);
+        } else {
+          setUserProfile(null);
         }
         
-        const data = await getNovel(novelSlug, session?.user?.id, false);
+        const data = await getNovel(novelSlug, user?.id, false);
         if (data) {
           setNovel(data);
         }
@@ -62,15 +65,7 @@ export default function ChaptersPage({ params }: { params: { id: string } }) {
     };
 
     fetchNovelAndAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsAuthenticated(!!session);
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [novelSlug]);
+  }, [novelSlug, user]);
 
   if (isLoading) {
     return <div>Loading...</div>;

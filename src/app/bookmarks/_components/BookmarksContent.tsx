@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import supabase from '@/lib/supabaseClient';
+import { useSupabase } from '@/app/providers';
 import BookmarkList from './BookmarkList';
 import FolderGrid from './FolderGrid';
 import BulkDeleteDialog from './BulkDeleteDialog';
@@ -14,6 +15,7 @@ type Tab = 'bookmarks' | 'folders';
 type Mode = 'view' | 'select';
 
 export default function BookmarksContent() {
+  const { user } = useSupabase();
   const [activeTab, setActiveTab] = useState<Tab>('bookmarks');
   const [mode, setMode] = useState<Mode>('view');
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
@@ -23,30 +25,13 @@ export default function BookmarksContent() {
   const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(false);
   const queryClient = useQueryClient();
 
-  // Get initial auth state
+  // Derive auth from context
   useEffect(() => {
-    const getInitialUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setUserId(session?.user?.id);
-    };
-    getInitialUser();
-  }, []);
-
-  // Listen for auth changes
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
-        setUserId(session?.user?.id);
-        // Invalidate queries when auth state changes
-        queryClient.invalidateQueries({ queryKey: ['bookmarks'] });
-        queryClient.invalidateQueries({ queryKey: ['bookmarkFolders'] });
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [queryClient]);
+    setUserId(user?.id);
+    // Invalidate queries when auth state changes
+    queryClient.invalidateQueries({ queryKey: ['bookmarks'] });
+    queryClient.invalidateQueries({ queryKey: ['bookmarkFolders'] });
+  }, [user, queryClient]);
 
   const { data: folders = [] } = useQuery({
     queryKey: ['bookmarkFolders', userId],

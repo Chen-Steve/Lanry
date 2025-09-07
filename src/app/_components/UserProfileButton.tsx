@@ -37,7 +37,7 @@ const UserProfileButton = ({
   const router = useRouter();
   const [isRandomizing, setIsRandomizing] = useState(false);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
-  const { userId } = useAuth();
+  const { userId, handleSignOut } = useAuth();
   const [avatarError, setAvatarError] = useState(false);
   const SUBSCRIPTIONS_ENABLED = false;
   const [subscriptionStatus, setSubscriptionStatus] = useState<null | {
@@ -258,7 +258,7 @@ const UserProfileButton = ({
         <button
           type="button"
           onClick={() => {
-            onSignOut();
+            (onSignOut || handleSignOut)();
             onMenuClose?.();
           }}
           className="flex w-full items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-destructive/10 rounded-md transition-colors"

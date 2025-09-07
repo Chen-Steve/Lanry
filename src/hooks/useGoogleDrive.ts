@@ -1,15 +1,16 @@
 import { useEffect, useState } from 'react';
 import supabase from '@/lib/supabaseClient';
+import { useSupabase } from '@/app/providers';
 
 export function useGoogleDrive() {
+  const { user } = useSupabase();
   const [isConnected, setIsConnected] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const checkConnection = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) {
+      if (!user) {
         setIsConnected(false);
         setLoading(false);
         return;
@@ -18,7 +19,7 @@ export function useGoogleDrive() {
       const { data, error } = await supabase
         .from('drive_accounts')
         .select('id')
-        .eq('user_id', session.user.id)
+        .eq('user_id', user.id)
         .maybeSingle();
 
       if (error) {
@@ -30,7 +31,7 @@ export function useGoogleDrive() {
     };
 
     checkConnection();
-  }, []);
+  }, [user]);
 
   const connect = () => {
     window.location.href = '/api/google/auth';

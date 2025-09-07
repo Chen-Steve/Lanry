@@ -7,6 +7,7 @@ import { formatRelativeDate } from '@/lib/utils';
 import type { Comment } from '@/app/author/_types/authorTypes';
 import Link from 'next/link';
 import Select from '@/components/ui/select';
+import { useSupabase } from '@/app/providers';
 
 type RawComment = {
   id: string;
@@ -49,16 +50,16 @@ export default function NovelComments() {
   const [selectedNovel, setSelectedNovel] = useState<string>('all');
   const [novels, setNovels] = useState<{ id: string; title: string }[]>([]);
   const [commentType, setCommentType] = useState<'all' | 'novel' | 'chapter' | 'paragraph'>('all');
+  const { user } = useSupabase();
 
   useEffect(() => {
     const fetchNovels = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
+      if (!user) return;
 
       const { data: userNovels } = await supabase
         .from('novels')
         .select('id, title')
-        .eq('author_profile_id', session.user.id);
+        .eq('author_profile_id', user.id);
 
       if (userNovels) {
         setNovels(userNovels);
@@ -66,14 +67,13 @@ export default function NovelComments() {
     };
 
     fetchNovels();
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     const fetchComments = async () => {
       try {
         setIsLoading(true);
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
+        if (!user) {
           setIsLoading(false);
           return;
         }
@@ -102,7 +102,7 @@ export default function NovelComments() {
                 slug
               )
             `)
-            .eq('novel.author_profile_id', session.user.id)
+            .eq('novel.author_profile_id', user.id)
             .order('created_at', { ascending: false });
 
           if (selectedNovel !== 'all') {
@@ -136,7 +136,7 @@ export default function NovelComments() {
                 role
               )
             `)
-            .eq('chapter.novel.author_profile_id', session.user.id)
+            .eq('chapter.novel.author_profile_id', user.id)
             .order('created_at', { ascending: false });
 
           if (selectedNovel !== 'all') {
@@ -166,7 +166,7 @@ export default function NovelComments() {
                 slug
               )
             `)
-            .eq('novel.author_profile_id', session.user.id)
+            .eq('novel.author_profile_id', user.id)
             .order('created_at', { ascending: false });
 
           if (selectedNovel !== 'all') {
@@ -257,7 +257,7 @@ export default function NovelComments() {
     };
 
     fetchComments();
-  }, [selectedNovel, commentType]);
+  }, [selectedNovel, commentType, user]);
 
   if (isLoading) {
     return (

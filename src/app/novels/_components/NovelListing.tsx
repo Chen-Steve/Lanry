@@ -11,23 +11,17 @@ import FeaturedNovel from './FeaturedNovel';
 import RegularNovels from './RecentlyUpdated';
 import NovelStatistics from './NovelStatistics';
 import CuratedNovels from './CuratedNovels';
-import supabase from '@/lib/supabaseClient';
+import { useSupabase } from '@/app/providers';
 import BulletinBoard, { PWABulletin, CompletedNovels } from './BulletinBoard';
 
 const NovelListing = () => {
 	const [currentPage, setCurrentPage] = useState(1);
-	const [isLoggedIn, setIsLoggedIn] = useState(false);
+	const { isAuthenticated } = useSupabase();
 	const queryClient = useQueryClient();
 
   const ITEMS_PER_PAGE = 14;
 
-	useEffect(() => {
-		const checkUserSession = async () => {
-			const { data: { session } } = await supabase.auth.getSession();
-			setIsLoggedIn(!!session?.user);
-		};
-		checkUserSession();
-	}, []);
+  // Auth state derived from context
 
 	// Paginated novels with recent unlocks
 	const { data: recentData, isLoading: isRecentLoading } = useQuery<{ novels: Novel[]; total: number }>({
@@ -91,7 +85,7 @@ const NovelListing = () => {
 
       <BulletinBoard />
 
-      {isLoggedIn && (
+      {isAuthenticated && (
         <CuratedNovels className="mb-2" />
       )}
 

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTheme, Theme } from '@/lib/ThemeContext';
 import supabase from '@/lib/supabaseClient';
+import { useSupabase } from '@/app/providers';
 import dynamic from 'next/dynamic';
 import { Icon } from '@iconify/react';
 import Image from 'next/image';
@@ -51,6 +52,7 @@ const themeNames: Record<Theme, string> = {
 };
 
 export default function AuthorDashboard() {
+  const { user } = useSupabase();
   const [activeTab, setActiveTab] = useState('manage-novels');
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [isThemeDropdownOpen, setIsThemeDropdownOpen] = useState(false);
@@ -71,9 +73,7 @@ export default function AuthorDashboard() {
 
   useEffect(() => {
     const checkAuthorization = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session?.user) {
+      if (!user) {
         router.push('/auth');
         return;
       }
@@ -81,7 +81,7 @@ export default function AuthorDashboard() {
       const { data: profile } = await supabase
         .from('profiles')
         .select('role')
-        .eq('id', session.user.id)
+        .eq('id', user.id)
         .single();
 
       if (!profile || !['AUTHOR', 'TRANSLATOR'].includes(profile.role)) {
@@ -94,7 +94,7 @@ export default function AuthorDashboard() {
     };
 
     checkAuthorization();
-  }, [router]);
+  }, [router, user]);
 
   if (isLoading) {
     return (

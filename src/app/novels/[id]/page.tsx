@@ -5,6 +5,7 @@ import { Icon } from '@iconify/react';
 import { notFound } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import supabase from '@/lib/supabaseClient';
+import { useSupabase } from '@/app/providers';
 import { toast } from 'sonner';
 import { getNovel, toggleBookmark } from '@/services/novelService';
 import { NovelContent } from '@/app/novels/[id]/_components/NovelContent';
@@ -16,7 +17,7 @@ export default function NovelPage({ params }: { params: { id: string } }) {
   const [novel, setNovel] = useState<Novel | null>(null);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { isAuthenticated, user } = useSupabase();
   const [isBookmarkLoading, setIsBookmarkLoading] = useState(false);
   const [hasAcceptedWarning, setHasAcceptedWarning] = useState(false);
 
@@ -27,12 +28,9 @@ export default function NovelPage({ params }: { params: { id: string } }) {
   }, []);
 
   useEffect(() => {
-    const fetchNovelAndAuth = async () => {
+    const fetchNovel = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        setIsAuthenticated(!!session?.user);
-        
-        const data = await getNovel(id, session?.user?.id, false);
+        const data = await getNovel(id, user?.id, false);
         if (data) {
           setNovel(data);
           setIsBookmarked(data.isBookmarked || false);
@@ -59,16 +57,8 @@ export default function NovelPage({ params }: { params: { id: string } }) {
       }
     };
 
-    fetchNovelAndAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsAuthenticated(!!session);
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [id]);
+    fetchNovel();
+  }, [id, user]);
 
   const handleBookmark = async () => {
     if (!isAuthenticated) {
@@ -87,15 +77,7 @@ export default function NovelPage({ params }: { params: { id: string } }) {
 
     setIsBookmarkLoading(true);
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      
-      if (userError) {
-        throw new Error('Authentication error: ' + userError.message);
-      }
-      
-      if (!user) {
-        throw new Error('User not found');
-      }
+      if (!user) throw new Error('User not found');
 
       const newBookmarkState = await toggleBookmark(id, user.id, isBookmarked);
       

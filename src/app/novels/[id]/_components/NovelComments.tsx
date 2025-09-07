@@ -6,6 +6,7 @@ import supabase from '@/lib/supabaseClient';
 import type { NovelComment as BaseNovelComment } from '@/types/database';
 import { Button } from '@/components/ui/button';
 import { CommentItem } from './CommentItem';
+import { useSupabase } from '@/app/providers';
 
 interface NovelComment extends Omit<BaseNovelComment, 'profile'> {
   profile: {
@@ -47,14 +48,11 @@ export const NovelComments = ({ novelId, novelSlug, isAuthenticated }: NovelComm
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editedContent, setEditedContent] = useState('');
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const { user } = useSupabase();
 
   useEffect(() => {
-    const getCurrentUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setCurrentUserId(user?.id || null);
-    };
-    getCurrentUser();
-  }, []);
+    setCurrentUserId(user?.id ?? null);
+  }, [user]);
 
   const transformDatabaseComment = useCallback((comment: SupabaseComment): NovelComment => {
     return {
@@ -70,7 +68,6 @@ export const NovelComments = ({ novelId, novelSlug, isAuthenticated }: NovelComm
 
   const fetchComments = useCallback(async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('novel_comments')
         .select(`
@@ -111,7 +108,7 @@ export const NovelComments = ({ novelId, novelSlug, isAuthenticated }: NovelComm
     } finally {
       setIsLoading(false);
     }
-  }, [novelId, transformDatabaseComment]);
+  }, [novelId, transformDatabaseComment, user]);
 
   useEffect(() => {
     fetchComments();
@@ -132,7 +129,6 @@ export const NovelComments = ({ novelId, novelSlug, isAuthenticated }: NovelComm
 
     setIsSubmitting(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not found');
 
       const { data, error } = await supabase

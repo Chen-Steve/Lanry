@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Icon } from '@iconify/react';
 import { toast } from 'sonner';
 import supabase from '@/lib/supabaseClient';
+import { useSupabase } from '@/app/providers';
 import { uploadChapterToStorage, estimateWordCountFromHtml } from '@/lib/chapterStorage';
 
 interface TranslatorChapterEditProps {
@@ -29,13 +30,13 @@ export default function TranslatorChapterEdit({
   const [title, setTitle] = useState(initialTitle);
   const [authorThoughts, setAuthorThoughts] = useState(initialAuthorThoughts || '');
   const [isSaving, setIsSaving] = useState(false);
+  const { user } = useSupabase();
 
   const handleSave = async () => {
     try {
       setIsSaving(true);
 
       // First verify if user is the translator for this novel
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
       const { data: novel, error: novelError } = await supabase

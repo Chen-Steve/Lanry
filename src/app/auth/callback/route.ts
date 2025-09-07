@@ -13,25 +13,25 @@ export async function GET(request: Request) {
     try {
       await supabase.auth.exchangeCodeForSession(code);
       
-      // Get the current session
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      // Fetch authenticated user from Supabase Auth server
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
       
-      if (sessionError) {
-        return NextResponse.redirect(new URL('/auth?error=session_error', requestUrl.origin));
+      if (userError) {
+        return NextResponse.redirect(new URL('/auth?error=user_error', requestUrl.origin));
       }
       
-      if (session?.user) {
+      if (user) {
         
         try {
-          const userId = session.user.id;
-          const emailLocal = session.user.email ? session.user.email.split('@')[0] : undefined;
+          const userId = user.id;
+          const emailLocal = user.email ? user.email.split('@')[0] : undefined;
           const suggestedUsername = emailLocal ?? generateUsername();
           const deterministicSuffix = userId.replace(/-/g, '').slice(0, 6);
           const deterministicUsername = suggestedUsername
             ? `${suggestedUsername}-${deterministicSuffix}`
             : `user-${deterministicSuffix}`;
-          const avatarUrl = (session.user.user_metadata?.avatar_url
-            || session.user.user_metadata?.picture
+          const avatarUrl = (user.user_metadata?.avatar_url
+            || user.user_metadata?.picture
             || null) as string | null;
 
           // Check if profile exists
@@ -121,7 +121,7 @@ export async function GET(request: Request) {
           return NextResponse.redirect(new URL('/auth?error=profile_error', requestUrl.origin));
         }
       } else {
-        console.error('[Auth Callback] No user in session after authentication');
+        console.error('[Auth Callback] No user after authentication');
         return NextResponse.redirect(new URL('/auth?error=no_user', requestUrl.origin));
       }
     } catch (error) {

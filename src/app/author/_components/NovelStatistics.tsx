@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import supabase from '@/lib/supabaseClient';
+import { useSupabase } from '@/app/providers';
 import { Icon } from '@iconify/react';
 import { PieChart } from 'react-minimal-pie-chart';
 import type { AnalyticsData } from '@/services/googleAnalyticsService';
@@ -31,6 +32,7 @@ export default function NovelStatistics() {
   const [stats, setStats] = useState<NovelStats[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [analyticsError, setAnalyticsError] = useState<string | null>(null);
+  const { user } = useSupabase();
 
   // Applied date range (null values mean "all time")
   const [dateRange, setDateRange] = useState<{ start: string | null; end: string | null }>({
@@ -61,8 +63,7 @@ export default function NovelStatistics() {
 
   const fetchStats = useCallback(async () => {
     setIsLoading(true);
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) {
+    if (!user) {
       setIsLoading(false);
       return;
     }
@@ -84,7 +85,7 @@ export default function NovelStatistics() {
         created_at,
         bookmark_count
       `)
-      .or(`author_profile_id.eq.${session.user.id},translator_id.eq.${session.user.id}`);
+      .or(`author_profile_id.eq.${user.id},translator_id.eq.${user.id}`);
 
     if (error) {
       console.error('Error fetching stats:', error);
@@ -238,7 +239,7 @@ export default function NovelStatistics() {
     }
 
     setIsLoading(false);
-  }, [dateRange]);
+  }, [dateRange, user]);
 
   // Initial + dependency-triggered fetch
   useEffect(() => { fetchStats(); }, [fetchStats]);

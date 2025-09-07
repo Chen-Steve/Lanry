@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import supabase from '@/lib/supabaseClient';
+import { useSupabase } from '@/app/providers';
 import { Icon } from '@iconify/react';
 import { formatDate } from '@/lib/utils';
 import PurchaseAnalytics from './PurchaseAnalytics';
@@ -57,13 +58,13 @@ export default function ChapterPurchaseHistory() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const { user } = useSupabase();
   const pageSize = 50; // Changed back to 50 records to reduce egress
   const [totalCount, setTotalCount] = useState(0);
   const [pageInputValue, setPageInputValue] = useState('');
-  const fetchPurchaseHistory = async (pageNumber = 1) => {
+  const fetchPurchaseHistory = useCallback(async (pageNumber = 1) => {
     try {
       setIsLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
       const { data: novels } = await supabase
@@ -129,11 +130,11 @@ export default function ChapterPurchaseHistory() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user, pageSize]);
 
   useEffect(() => {
     fetchPurchaseHistory();
-  }, []);
+  }, [fetchPurchaseHistory]);
 
   const goToPage = (newPage: number) => {
     if (newPage >= 1 && (newPage - 1) * pageSize < totalCount) {

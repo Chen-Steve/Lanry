@@ -24,8 +24,8 @@ interface CategoryData {
 
 export const fetchNovels = async (authorOnly: boolean = false) => {
   try {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) return [];
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
 
     let query = supabase
       .from('novels')
@@ -43,7 +43,7 @@ export const fetchNovels = async (authorOnly: boolean = false) => {
       .order('created_at', { ascending: false });
 
     if (authorOnly) {
-      query = query.eq('author_profile_id', session.user.id);
+      query = query.eq('author_profile_id', user.id);
     }
 
     const { data, error } = await query;
@@ -95,15 +95,15 @@ export const submitNovel = async (
   userRole: string | null
 ) => {
   try {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
       throw new Error('You must be logged in to create or edit a novel');
     }
 
     const { data: profile } = await supabase
       .from('profiles')
       .select('username')
-      .eq('id', session.user.id)
+      .eq('id', user.id)
       .single();
 
     const slug = generateNovelSlug(formData.title);
@@ -114,7 +114,7 @@ export const submitNovel = async (
     let coverImageUrl = editingNovel?.cover_image_url;
     if (imageFile) {
       try {
-        coverImageUrl = await uploadImage(imageFile, session.user.id);
+        coverImageUrl = await uploadImage(imageFile, user.id);
       } catch (error) {
         console.error('Error uploading image:', error);
         throw new Error('Failed to upload cover image');
@@ -126,11 +126,11 @@ export const submitNovel = async (
       ...formData,
       author: authorName,
       slug,
-      author_profile_id: session.user.id,
+      author_profile_id: user.id,
       is_author_name_custom: isTranslator,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      translator_id: isTranslator ? session.user.id : null,
+      translator_id: isTranslator ? user.id : null,
       cover_image_url: coverImageUrl,
     };
 
@@ -183,8 +183,8 @@ export const submitNovel = async (
 
 export const deleteNovel = async (novelId: string) => {
   try {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) throw new Error('Not authenticated');
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
 
     // Delete all chapter unlocks first
     const { error: unlockError } = await supabase
@@ -263,7 +263,7 @@ export const deleteNovel = async (novelId: string) => {
       .from('novels')
       .delete()
       .eq('id', novelId)
-      .eq('author_profile_id', session.user.id);
+      .eq('author_profile_id', user.id);
 
     if (error) throw error;
   } catch (error) {

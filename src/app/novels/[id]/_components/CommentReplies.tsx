@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import supabase from '@/lib/supabaseClient';
 import { formatRelativeDate, generateUUID } from '@/lib/utils';
 import type { NovelComment } from '@/types/database';
+import { useSupabase } from '@/app/providers';
 
 interface ReplyData {
   id: string;
@@ -60,6 +61,7 @@ export const CommentReplies = ({
   const [editingReplyId, setEditingReplyId] = useState<string | null>(null);
   const [editedContent, setEditedContent] = useState('');
   const [likingReplyId, setLikingReplyId] = useState<string | null>(null);
+  const { user } = useSupabase();
 
   const fetchReplies = useCallback(async () => {
     if (!isExpanded) return;
@@ -136,7 +138,6 @@ export const CommentReplies = ({
 
     setIsSubmitting(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not found');
 
       // First get the user's profile

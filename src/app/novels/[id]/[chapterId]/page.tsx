@@ -26,10 +26,8 @@ export default async function ChapterPage({ params }: PageParams) {
   const supabase = await createServerClient();
 
   const {
-    data: { session }
-  } = await supabase.auth.getSession();
-
-  const user = session?.user || null;
+    data: { user }
+  } = await supabase.auth.getUser();
 
 
 

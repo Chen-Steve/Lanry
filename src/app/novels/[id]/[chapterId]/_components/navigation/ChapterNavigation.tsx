@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Icon } from '@iconify/react';
 import { useMemo, useState, useEffect, useRef } from 'react';
 import supabase from '@/lib/supabaseClient';
+import { useSupabase } from '@/app/providers';
 
 interface ChapterNavigationProps {
   navigation: {
@@ -64,16 +65,16 @@ export default function ChapterNavigation({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [navigation, setNavigation] = useState(initialNavigation);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { user } = useSupabase();
 
   const dropdownPosition = position === 'top' 
     ? 'top-full left-1/2 -translate-x-1/2 mt-2' 
     : 'bottom-full left-1/2 -translate-x-1/2 mb-2';
 
-  // Fetch updated unlock information for prev/next chapters on mount
+  // Fetch updated unlock information for prev/next chapters when user is known
   useEffect(() => {
     const updateAccess = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) return;
+      if (!user) return;
 
       // Resolve numeric novel id (the navigation component receives slug or id)
       const { data: novel } = await supabase
@@ -84,8 +85,8 @@ export default function ChapterNavigation({
       if (!novel) return;
 
       // Check if user is author or translator
-      const isAuthor = novel.author_profile_id === session.user.id;
-      const isTranslator = novel.translator_id === session.user.id || (novel.author_profile_id === session.user.id && novel.is_author_name_custom === true);
+      const isAuthor = novel.author_profile_id === user.id;
+      const isTranslator = novel.translator_id === user.id || (novel.author_profile_id === user.id && novel.is_author_name_custom === true);
       const hasTranslatorAccess = isAuthor || isTranslator;
 
       // If user has translator access, all chapters are accessible
@@ -108,7 +109,7 @@ export default function ChapterNavigation({
         .from('chapter_unlocks')
         .select('chapter_number, part_number')
         .eq('novel_id', novel.id)
-        .eq('profile_id', session.user.id);
+        .eq('profile_id', user.id);
 
       const isUnlocked = (chNum: number | undefined, partNum: number | null | undefined) => {
         return unlocks?.some(u => u.chapter_number === chNum && (u.part_number ?? null) === (partNum ?? null));
@@ -127,7 +128,7 @@ export default function ChapterNavigation({
     };
     updateAccess();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [user]);
 
   // Close dropdown when clicking outside
   useEffect(() => {

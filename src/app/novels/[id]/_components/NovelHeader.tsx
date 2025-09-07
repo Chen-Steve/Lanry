@@ -13,6 +13,7 @@ import { TagsModal } from './TagsModal';
 import { StatsItem } from './StatsItem';
 import { NovelAgeRating } from './NovelAgeRating';
 import supabase from '@/lib/supabaseClient';
+import { useSupabase } from '@/app/providers';
 
 interface NovelHeaderProps {
   title: string;
@@ -89,6 +90,7 @@ export const NovelHeader = ({
   const [showRatingPopup, setShowRatingPopup] = useState(false);
   const [showTagsModal, setShowTagsModal] = useState(false);
   const ratingButtonRef = useRef<HTMLButtonElement>(null);
+  const { user } = useSupabase();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -124,10 +126,7 @@ export const NovelHeader = ({
 
     setIsRating(true);
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      // console.log('User data:', user, 'Error:', userError);
-      
-      if (userError || !user) {
+      if (!user) {
         throw new Error('Authentication error');
       }
 

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import supabase from '@/lib/supabaseClient';
+import { useSupabase } from '@/app/providers';
 import { Icon } from '@iconify/react';
 
 // Utility to format Date -> YYYY-MM (e.g., 2025-07)
@@ -20,6 +21,7 @@ interface RevenueByMonth {
 
 export default function PurchaseAnalytics() {
   const [novelData, setNovelData] = useState<RevenueByNovel[]>([]);
+  const { user } = useSupabase();
   const [monthlyData, setMonthlyData] = useState<RevenueByMonth[]>([]);
   const [coinBalance, setCoinBalance] = useState<number>(0);
   const [perNovelMonth, setPerNovelMonth] = useState<Record<string, Record<string, number>>>({});
@@ -38,7 +40,6 @@ export default function PurchaseAnalytics() {
     (async () => {
       setIsLoading(true);
       try {
-        const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('Not authenticated');
 
         // Fetch profile to get current coin balance
@@ -119,7 +120,7 @@ export default function PurchaseAnalytics() {
         setIsLoading(false);
       }
     })();
-  }, []);
+  }, [user]);
 
   // Removed bar chart effect – now we only show the pie chart
 

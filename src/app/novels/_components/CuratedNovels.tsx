@@ -6,7 +6,7 @@ import NovelCover from './NovelCover';
 import { useRef, useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getCuratedNovels } from '@/services/novelService';
-import supabase from '@/lib/supabaseClient';
+import { useSupabase } from '@/app/providers';
 
 interface CuratedNovelsProps { className?: string }
 
@@ -17,20 +17,12 @@ const CuratedNovels = ({ className = '' }: CuratedNovelsProps) => {
   const [descriptionCache, setDescriptionCache] = useState<Record<string, string>>({});
   const [isLoadingDescription, setIsLoadingDescription] = useState<boolean>(false);
   const [isDesktop, setIsDesktop] = useState<boolean>(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  useEffect(() => {
-    const checkUserSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setIsLoggedIn(!!session?.user);
-    };
-    checkUserSession();
-  }, []);
+  const { isAuthenticated } = useSupabase();
 
   const { data: novels = [] } = useQuery<Novel[]>({
     queryKey: ['novels', 'curated'],
     queryFn: () => getCuratedNovels(),
-    enabled: isLoggedIn,
+    enabled: isAuthenticated,
     staleTime: 120_000,
   });
   

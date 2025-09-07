@@ -1,7 +1,7 @@
 'use client';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useState, useEffect, createContext, useContext } from 'react';
+import { useState, useEffect, createContext, useContext, useCallback } from 'react';
 import type { User, SupabaseClient } from '@supabase/supabase-js';
 import { PayPalScriptProvider } from "@paypal/react-paypal-js";
 import supabase from '@/lib/supabaseClient';
@@ -62,18 +62,13 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     const initializeAuth = async () => {
       try {
         setIsLoading(true);
-        // Get the initial session
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
+        // Get the initial authenticated user (validated by Supabase Auth server)
+        const { data: { user }, error } = await supabase.auth.getUser();
         if (error) {
-          console.error('Error getting session:', error.message);
-          return;
+          console.error('Error getting user:', error.message);
         }
-
-        if (session?.user) {
-          setUser(session.user);
-          setIsAuthenticated(true);
-        }
+        setUser(user ?? null);
+        setIsAuthenticated(!!user);
       } catch (error) {
         console.error('Error initializing auth:', error);
       } finally {
@@ -86,23 +81,48 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setIsLoading(true);
-      if (event === 'SIGNED_IN') {
-        setUser(session?.user ?? null);
-        setIsAuthenticated(true);
-      } else if (event === 'SIGNED_OUT') {
-        setUser(null);
-        setIsAuthenticated(false);
-      } else if (event === 'TOKEN_REFRESHED') {
-        setUser(session?.user ?? null);
-        setIsAuthenticated(!!session?.user);
+    } = supabase.auth.onAuthStateChange(async () => {
+      // Always re-fetch the user from Auth server instead of trusting the session param
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error) {
+        console.error('Auth state change user fetch error:', error.message);
       }
-      setIsLoading(false);
+      setUser(user ?? null);
+      setIsAuthenticated(!!user);
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Refresh user when tab regains focus/visibility or network reconnects
+  const refreshUser = useCallback(async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user ?? null);
+      setIsAuthenticated(!!user);
+    } catch (e) {
+      console.error('Auth refresh failed:', e);
+    }
+  }, []);
+
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        void refreshUser();
+      }
+    };
+    const onFocus = () => void refreshUser();
+    const onOnline = () => void refreshUser();
+
+    document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('focus', onFocus);
+    window.addEventListener('online', onOnline);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('focus', onFocus);
+      window.removeEventListener('online', onOnline);
+    };
+  }, [refreshUser]);
 
   if (!supabaseInitialized) {
     return null;
