@@ -84,11 +84,11 @@ export const NovelSynopsis = ({
         {characters.length > 0 && (
           <div className="mt-6 mb-4">
             <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Characters</h4>
-            <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
               {characters.map((character) => (
                 <div
                   key={character.id}
-                  className="relative bg-white dark:bg-gray-800 overflow-hidden rounded-lg border border-border"
+                  className="bg-white dark:bg-gray-800 overflow-hidden rounded-lg border border-border"
                 >
                   <div className="aspect-[3/4] relative">
                     <img
@@ -97,14 +97,19 @@ export const NovelSynopsis = ({
                       className="w-full h-full object-cover"
                       loading="lazy"
                     />
-                    <div className="absolute inset-x-0 bottom-0 bg-black/60 p-1">
-                      <p className="text-xs font-medium text-white leading-tight truncate">
-                        {character.name}
+                  </div>
+                  <div className="p-2">
+                    <p className="text-xs font-semibold text-gray-900 dark:text-gray-100 truncate">
+                      {character.name}
+                    </p>
+                    <p className="text-[11px] text-gray-600 dark:text-gray-400 truncate">
+                      {character.role}
+                    </p>
+                    {character.description && (
+                      <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400 line-clamp-2 whitespace-pre-line">
+                        {character.description}
                       </p>
-                      <p className="text-[10px] text-gray-300 leading-tight truncate">
-                        {character.role}
-                      </p>
-                    </div>
+                    )}
                   </div>
                 </div>
               ))}

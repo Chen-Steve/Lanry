@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Icon } from '@iconify/react';
 import { toast } from 'sonner';
 import supabase from '@/lib/supabaseClient';
+import { uploadImage } from '@/services/uploadService';
 
 interface NovelCharacter {
   id: string;
@@ -35,28 +36,15 @@ export const CharacterManagement = ({
   }, [characters]);
 
   const handleImageUpload = async (file: File) => {
-    if (!file) return;
-    
+    if (!file) return null;
     setIsUploading(true);
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Upload failed');
-      }
-
-      const data = await response.json();
-      return data.url;
+      // Use Supabase storage directly; default bucket 'novel-covers' is fine for small images too
+      const url = await uploadImage(file, null, 'novel-covers');
+      return url;
     } catch (error) {
       console.error('Error uploading image:', error);
-      toast.error('Failed to upload image');
+      toast.error(error instanceof Error ? error.message : 'Failed to upload image');
       return null;
     } finally {
       setIsUploading(false);
