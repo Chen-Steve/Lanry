@@ -386,11 +386,13 @@ export async function updateAdvancedChapterCoins(
 ) {
   await verifyNovelAuthor(novelId, userId);
 
+  // Only update upcoming chapters where coins are unset or zero, to avoid relocking free chapters
   const { error } = await supabase
     .from('chapters')
     .update({ coins: defaultCoins })
     .eq('novel_id', novelId)
-    .gt('publish_at', new Date().toISOString());
+    .gt('publish_at', new Date().toISOString())
+    .or('coins.is.null,coins.eq.0');
 
   if (error) throw error;
 }

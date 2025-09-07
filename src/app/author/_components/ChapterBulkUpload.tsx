@@ -350,12 +350,21 @@ export default function ChapterBulkUpload({ novelId, userId, onUploadComplete, v
           }
 
           // Create the chapter with publish_at based on settings and include volumeId if provided
+          // If auto-release is OFF and no bulkPublishDate set, publish immediately (now in local time → UTC)
+          const immediateNowIso = (() => {
+            if (useAutoRelease) return null;
+            if (bulkPublishDate) return bulkPublishDate;
+            const now = new Date();
+            // store as UTC ISO so server comparisons work
+            return new Date(now.getTime()).toISOString();
+          })();
+
           const chapterId = await authorChapterService.createChapter(novelId, userId, {
             chapter_number: finalChapterNumber,
             part_number: finalPartNumber,
             title: finalTitle,
             content,
-            publish_at: !useAutoRelease && bulkPublishDate ? bulkPublishDate : null,
+            publish_at: immediateNowIso,
             coins: useAutoRelease ? getDefaultCoins() : 0,
             author_thoughts: defaultAuthorThoughts || undefined,
             volume_id: volumeId
