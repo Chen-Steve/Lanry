@@ -139,7 +139,7 @@ export const NovelHeader = ({
         .select('id')
         .eq('novel_id', novelId)
         .eq('profile_id', user.id)
-        .single();
+        .maybeSingle();
 
       // console.log('Existing rating:', existingRating);
 
