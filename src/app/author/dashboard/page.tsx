@@ -52,15 +52,22 @@ const themeNames: Record<Theme, string> = {
 };
 
 export default function AuthorDashboard() {
-  const { user } = useSupabase();
+  const { user, isLoading: authLoading } = useSupabase();
   const [activeTab, setActiveTab] = useState('manage-novels');
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [isThemeDropdownOpen, setIsThemeDropdownOpen] = useState(false);
   const router = useRouter();
-  const [isAuthorized, setIsAuthorized] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  // Keep authorization sticky across focus refreshes to avoid unmounting the editor UI
+  const [hasValidatedOnce, setHasValidatedOnce] = useState(false);
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
   const { theme, setTheme } = useTheme();
   const [isSidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  // Prefetch potential redirect targets to reduce perceived blank states
+  useEffect(() => {
+    router.prefetch('/auth');
+    router.prefetch('/');
+  }, [router]);
 
   // Helper function to handle tab changes and close sidebar on mobile
   const handleTabChange = (tabName: string) => {
@@ -73,30 +80,44 @@ export default function AuthorDashboard() {
 
   useEffect(() => {
     const checkAuthorization = async () => {
+      // Wait for auth to finish initializing
+      if (authLoading) return;
+
       if (!user) {
-        router.push('/auth');
+        setIsAuthorized(false);
+        setHasValidatedOnce(true);
+        router.replace('/auth');
         return;
       }
 
-      const { data: profile } = await supabase
+      const { data: profile, error } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', user.id)
         .single();
 
+      if (error) {
+        console.error('Failed to load profile for authorization:', error);
+        // Do not unset existing authorization on transient errors
+        setHasValidatedOnce(true);
+        return;
+      }
+
       if (!profile || !['AUTHOR', 'TRANSLATOR'].includes(profile.role)) {
-        router.push('/');
+        setIsAuthorized(false);
+        setHasValidatedOnce(true);
+        router.replace('/');
         return;
       }
 
       setIsAuthorized(true);
-      setIsLoading(false);
+      setHasValidatedOnce(true);
     };
 
     checkAuthorization();
-  }, [router, user]);
+  }, [router, user, authLoading]);
 
-  if (isLoading) {
+  if (!hasValidatedOnce && isAuthorized !== true) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <Icon icon="mdi:loading" className="animate-spin text-3xl text-gray-500" />
@@ -104,8 +125,15 @@ export default function AuthorDashboard() {
     );
   }
 
-  if (!isAuthorized) {
-    return null;
+  if (isAuthorized === false) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="flex items-center gap-2 text-gray-500">
+          <Icon icon="mdi:loading" className="animate-spin text-2xl" />
+          <span>Redirecting…</span>
+        </div>
+      </div>
+    );
   }
 
   return (

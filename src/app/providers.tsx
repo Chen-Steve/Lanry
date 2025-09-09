@@ -33,7 +33,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     },
   }));
 
-  const [supabaseInitialized, setSupabaseInitialized] = useState(false);
+  // Render immediately; don't gate the entire app behind an auth fetch
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -73,7 +73,6 @@ export default function Providers({ children }: { children: React.ReactNode }) {
         console.error('Error initializing auth:', error);
       } finally {
         setIsLoading(false);
-        setSupabaseInitialized(true);
       }
     };
 
@@ -124,9 +123,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     };
   }, [refreshUser]);
 
-  if (!supabaseInitialized) {
-    return null;
-  }
+  // Always render children; downstream consumers can use isLoading to gate UX
 
   return (
     <>

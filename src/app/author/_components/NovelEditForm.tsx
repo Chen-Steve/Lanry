@@ -129,10 +129,9 @@ export default function NovelEditForm({ novel, onCancel, onUpdate, onChapterEdit
   }, [isAuthLoading, loadCategories, novel.id]);
 
   useEffect(() => {
-    if (!isAuthLoading && novel.id) {
-      loadChapters();
-    }
-  }, [isAuthLoading, loadChapters, novel.id]);
+    // Trigger whenever userId or novel changes; loadChapters handles missing userId gracefully
+    loadChapters();
+  }, [userId, novel.id, loadChapters]);
 
   useEffect(() => {
     if (!isAuthLoading && novel.id) {
