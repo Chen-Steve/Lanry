@@ -3,7 +3,7 @@
 import { Novel } from '@/types/database';
 import { Icon } from '@iconify/react';
 import { notFound } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import supabase from '@/lib/supabaseClient';
 import { useSupabase } from '@/app/providers';
 import { toast } from 'sonner';
@@ -121,36 +121,50 @@ export default function NovelPage({ params }: { params: { id: string } }) {
 
   return (
     <div className="max-w-5xl mx-auto">
-      <NovelContent 
-        title={novel.title}
-        description={novel.description}
-        chaptersCount={novel.chapters.length}
-        bookmarkCount={novel.bookmarkCount}
-        status={novel.status}
-        ageRating={novel.ageRating}
-        createdAt={novel.created_at}
-        updatedAt={novel.updated_at}
-        author={novel.author}
-        isAuthorNameCustom={novel.is_author_name_custom}
-        translator={novel.translator}
-        novelSlug={novel.slug}
-        firstChapterNumber={novel.chapters[0]?.chapter_number}
-        firstChapterPartNumber={novel.chapters[0]?.part_number}
-        isAuthenticated={isAuthenticated}
-        isBookmarked={isBookmarked}
-        isBookmarkLoading={isBookmarkLoading}
-        onBookmarkClick={handleBookmark}
-        coverImageUrl={novel.coverImageUrl}
-        chapters={novel.chapters}
-        novelId={novel.id}
-        novelAuthorId={novel.author_profile_id}
-        rating={novel.rating}
-        ratingCount={novel.ratingCount}
-        userRating={novel.userRating}
-        categories={novel.categories}
-        tags={novel.tags}
-        characters={novel.characters}
-      />
+      <Suspense fallback={
+        <div className="max-w-5xl mx-auto px-4 py-4 bg-background">
+          <div className="animate-pulse">
+            <div className="h-8 bg-muted rounded mb-4"></div>
+            <div className="h-4 bg-muted rounded mb-2"></div>
+            <div className="h-4 bg-muted rounded w-3/4 mb-4"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="h-64 bg-muted rounded"></div>
+              <div className="h-64 bg-muted rounded"></div>
+            </div>
+          </div>
+        </div>
+      }>
+        <NovelContent 
+          title={novel.title}
+          description={novel.description}
+          chaptersCount={novel.chapters.length}
+          bookmarkCount={novel.bookmarkCount}
+          status={novel.status}
+          ageRating={novel.ageRating}
+          createdAt={novel.created_at}
+          updatedAt={novel.updated_at}
+          author={novel.author}
+          isAuthorNameCustom={novel.is_author_name_custom}
+          translator={novel.translator}
+          novelSlug={novel.slug}
+          firstChapterNumber={novel.chapters[0]?.chapter_number}
+          firstChapterPartNumber={novel.chapters[0]?.part_number}
+          isAuthenticated={isAuthenticated}
+          isBookmarked={isBookmarked}
+          isBookmarkLoading={isBookmarkLoading}
+          onBookmarkClick={handleBookmark}
+          coverImageUrl={novel.coverImageUrl}
+          chapters={novel.chapters}
+          novelId={novel.id}
+          novelAuthorId={novel.author_profile_id}
+          rating={novel.rating}
+          ratingCount={novel.ratingCount}
+          userRating={novel.userRating}
+          categories={novel.categories}
+          tags={novel.tags}
+          characters={novel.characters}
+        />
+      </Suspense>
     </div>
   );
 } 

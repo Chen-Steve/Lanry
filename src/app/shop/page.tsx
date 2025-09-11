@@ -2,13 +2,13 @@
 
 import { useAuth } from '@/hooks/useAuth';
 import { PayPalScriptProvider } from "@paypal/react-paypal-js";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Coins from './Coins';
 import Membership from './Membership';
 import { useSearchParams } from 'next/navigation';
 import { Icon } from '@iconify/react';
 
-export default function ShopPage() {
+function ShopPageContent() {
   const { isAuthenticated, userId } = useAuth();
   const searchParams = useSearchParams();
   const [showMembership, setShowMembership] = useState(() => {
@@ -122,5 +122,23 @@ export default function ShopPage() {
 
       
     </div>
+  );
+}
+
+export default function ShopPage() {
+  return (
+    <Suspense fallback={
+      <div className="max-w-5xl mx-auto px-2 py-6">
+        <div className="flex justify-center mb-8">
+          <div className="inline-flex bg-muted rounded-lg p-1">
+            <div className="px-4 py-2 rounded-md bg-background shadow-sm">
+              Loading...
+            </div>
+          </div>
+        </div>
+      </div>
+    }>
+      <ShopPageContent />
+    </Suspense>
   );
 } 

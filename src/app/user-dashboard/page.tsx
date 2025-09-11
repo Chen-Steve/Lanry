@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useTheme } from '@/lib/ThemeContext';
 import { PlanCard } from './_components/PlanCard';
 import { RewardsCard } from './_components/RewardsCard';
@@ -31,7 +31,7 @@ const fetchProfile = async (userId: string): Promise<UserProfile> => {
 
 // Theme icon/name definitions moved into AccountSection component
 
-export default function UserDashboard() {
+function UserDashboardContent() {
   const { theme, setTheme } = useTheme();
   const { handleSignOut, userId: authUserId } = useAuth();
   const { user } = useSupabase();
@@ -188,5 +188,24 @@ export default function UserDashboard() {
         onClose={() => setIsCancelModalOpen(false)}
       />
     </div>
+  );
+}
+
+export default function UserDashboard() {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto px-4 py-6 max-w-5xl">
+        <div className="animate-pulse">
+          <div className="h-8 bg-muted rounded mb-4"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="h-64 bg-muted rounded"></div>
+            <div className="h-64 bg-muted rounded"></div>
+            <div className="h-64 bg-muted rounded"></div>
+          </div>
+        </div>
+      </div>
+    }>
+      <UserDashboardContent />
+    </Suspense>
   );
 } 
