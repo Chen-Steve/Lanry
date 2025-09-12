@@ -21,14 +21,19 @@ export function useIsPWA() {
   // Keep the state in sync if the display mode changes while the app is
   // running (rare, but possible on some platforms).
   useEffect(() => {
-    const handler = () => setIsPWA(detectPWA());
+    try {
+      const handler = () => setIsPWA(detectPWA());
 
-    const mq = window.matchMedia('(display-mode: standalone)');
-    mq.addEventListener?.('change', handler);
+      const mq = window.matchMedia('(display-mode: standalone)');
+      mq.addEventListener?.('change', handler);
 
-    return () => {
-      mq.removeEventListener?.('change', handler);
-    };
+      return () => {
+        mq.removeEventListener?.('change', handler);
+      };
+    } catch (error) {
+      console.error('Error in useIsPWA effect:', error);
+      return () => {};
+    }
   }, []);
 
   return isPWA;

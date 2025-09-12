@@ -6,6 +6,7 @@ import Providers from './providers';
 import { Toaster } from 'sonner';
 import { ThemeProvider } from '@/lib/ThemeContext';
 import CookieConsent from './_components/CookieConsent';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 
 export const metadata: Metadata = {
@@ -81,16 +82,22 @@ export default function RootLayout({
           `}
         </Script>
       </head>
-      <body className="min-h-screen relative overflow-x-hidden">
-        <Providers>
-          <ThemeProvider>
-            <ConditionalLayout>
-              {children}
-            </ConditionalLayout>
-            <Toaster position="bottom-right" />
-            <CookieConsent />
-          </ThemeProvider>
-        </Providers>
+      <body className="min-h-screen relative overflow-x-hidden" suppressHydrationWarning>
+        <ErrorBoundary>
+          <Providers>
+            <ErrorBoundary>
+              <ThemeProvider>
+                <ErrorBoundary>
+                  <ConditionalLayout>
+                    {children}
+                  </ConditionalLayout>
+                  <Toaster position="bottom-right" />
+                  <CookieConsent />
+                </ErrorBoundary>
+              </ThemeProvider>
+            </ErrorBoundary>
+          </Providers>
+        </ErrorBoundary>
       </body>
     </html>
   );

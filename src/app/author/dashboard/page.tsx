@@ -90,32 +90,57 @@ export default function AuthorDashboard() {
         return;
       }
 
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single();
+      try {
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
 
-      if (error) {
-        console.error('Failed to load profile for authorization:', error);
-        // Do not unset existing authorization on transient errors
+        if (error) {
+          console.error('Failed to load profile for authorization:', error);
+          // On network errors, don't redirect but show error state
+          if (error.code === 'PGRST301' || error.code === 'PGRST116') {
+            // No profile found - redirect to home
+            setIsAuthorized(false);
+            setHasValidatedOnce(true);
+            router.replace('/');
+            return;
+          }
+          // For other errors, don't unset existing authorization
+          setHasValidatedOnce(true);
+          return;
+        }
+
+        if (!profile || !['AUTHOR', 'TRANSLATOR'].includes(profile.role)) {
+          setIsAuthorized(false);
+          setHasValidatedOnce(true);
+          router.replace('/');
+          return;
+        }
+
+        setIsAuthorized(true);
         setHasValidatedOnce(true);
-        return;
-      }
-
-      if (!profile || !['AUTHOR', 'TRANSLATOR'].includes(profile.role)) {
-        setIsAuthorized(false);
+      } catch (error) {
+        console.error('Unexpected error during authorization check:', error);
         setHasValidatedOnce(true);
-        router.replace('/');
-        return;
+        // Don't redirect on unexpected errors, just log them
       }
-
-      setIsAuthorized(true);
-      setHasValidatedOnce(true);
     };
 
+    // Add timeout to prevent infinite loading
+    const timeoutId = setTimeout(() => {
+      if (!hasValidatedOnce) {
+        console.warn('Authorization check timed out');
+        setHasValidatedOnce(true);
+        setIsAuthorized(false);
+      }
+    }, 15000); // 15 second timeout
+
     checkAuthorization();
-  }, [router, user, authLoading]);
+
+    return () => clearTimeout(timeoutId);
+  }, [router, user, authLoading, hasValidatedOnce]);
 
   if (!hasValidatedOnce && isAuthorized !== true) {
     return (
